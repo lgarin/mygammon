@@ -1,3 +1,5 @@
 /.exploded/
 /classes/
 /modules/
+/.settings/
+/.ceylon/
