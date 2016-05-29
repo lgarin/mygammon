@@ -9,15 +9,22 @@ import ceylon.test {
 
 	test
 }
+import ceylon.time {
+
+	now,
+	Duration
+}
 
 shared interface Room {
 	shared formal String id;
 	
 	shared formal Player createPlayer(String id, Anything(PlayerMessage) messageListener);
 	
+	shared formal Integer removeInactivePlayers(Duration timeout);
+	
 	shared formal Map<String, Player> players;
 	
-	shared formal {Table*} tables;
+	shared formal List<Table> tables;
 }
 
 class RoomImpl(shared actual String id, shared Integer tableCount) satisfies Room {
@@ -28,53 +35,59 @@ class RoomImpl(shared actual String id, shared Integer tableCount) satisfies Roo
 	
 	value tableList = ArrayList<TableImpl>(tableCount);
 	
-	value freeTableQueue = HashSet<TableImpl>(linked);
-	
 	for (i in 1..tableCount) {
 		value table = TableImpl(i - 1);
 		tableList.add(table);
-		freeTableQueue.add(table);
 	}
 	
-	shared actual {TableImpl*} tables => tableList;
+	shared actual List<TableImpl> tables => tableList;
 	
 	shared actual PlayerImpl createPlayer(String id, Anything(PlayerMessage) messageListener) {
 		value player = PlayerImpl(id, messageListener, this);
-		playerMap.put(id, player);
+		value oldPlayer = playerMap.put(id, player);
+		if (exists oldPlayer) {
+			oldPlayer.leaveRoom();
+		}
 		return player;
 	}
 	
 	shared actual Map<String, Player> players => playerMap;
 	
 	shared Boolean sitPlayer(PlayerImpl player) {
-		if (freeTableQueue.empty || playerQueue.empty) {
-			playerQueue.add(player);
+		if (!player.isInRoom(id)) {
 			return false;
+		} else if (exists opponent = playerQueue.first) {
+			value table = tableList.find((TableImpl element) => element.queueSize == 0);
+			if (exists table) {
+				playerQueue.remove(opponent);
+				return opponent.joinTable(table.index) && player.joinTable(table.index);
+			}
 		} else {
-			value table = freeTableQueue.first;
-			assert (exists table);
-			value opponent = playerQueue.first;
-			assert (exists opponent);
-			freeTableQueue.remove(table);
-			playerQueue.remove(opponent);
-			opponent.joinTable(table);
-			player.joinTable(table);
-			return true;
-		}
-	}
-	
-	shared Boolean enqueueFreeTable(TableImpl table) {
-		if (exists currentTable = tableList[table.index], table === currentTable) {
-			if (currentTable.free) {
-				return freeTableQueue.add(currentTable);
+			value table = tableList.find((TableImpl element) => element.queueSize == 1);
+			if (exists table) {
+				return player.joinTable(table.index);
 			}
 		}
+		
+		playerQueue.add(player);
 		return false;
 	}
 	
 	shared Boolean removePlayer(PlayerImpl player) {
 		playerQueue.remove(player);
 		return playerMap.removeEntry(player.id, player);
+	}
+	
+	shared actual Integer removeInactivePlayers(Duration timeout) {
+		value timeoutTime = now().minus(timeout);
+		variable value result = 0;
+		for (player in playerMap.items) {
+			if (!playerQueue.contains(player) && !player.isWaitingSeat() && player.isInactiveSince(timeoutTime)) {
+				player.leaveRoom();
+				result++;
+			}
+		}
+		return result;
 	}
 }
 
@@ -104,8 +117,19 @@ class RoomTest() {
 	
 	test
 	shared void createPlayerAddsPlayer() {
-		room.createPlayer("player1", enqueueMessage);
+		value player = room.createPlayer("player1", enqueueMessage);
 		assert (room.players.size == 1);
+		assert (exists roomId = player.roomId);
+		assert (roomId == room.id);
+	}
+	
+	test
+	shared void createPlayerTwiceReplaceExisting() {
+		value oldPlayer = room.createPlayer("player1", enqueueMessage);
+		value newPlayer = room.createPlayer("player1", enqueueMessage);
+		assert (room.players.size == 1);
+		assert (oldPlayer.roomId is Null);
+		assert (newPlayer.roomId is String);
 	}
 	
 	test
@@ -135,22 +159,14 @@ class RoomTest() {
 	test
 	shared void sitPlayerWithOpponent() {
 		value player1 = room.createPlayer("player1", enqueueMessage);
-		value player2 = room.createPlayer("player1", enqueueMessage);
+		value player2 = room.createPlayer("player2", enqueueMessage);
 		value result1 = room.sitPlayer(player1);
 		assert (!result1);
 		value result2 = room.sitPlayer(player2);
 		assert (result2);
 		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 2);
 		assert (messageList.count((PlayerMessage element) => element is WaitingOpponentMessage) == 1);
-		assert (messageList.count((PlayerMessage element) => element is JoiningGameMessage) == 2);
+		assert (messageList.count((PlayerMessage element) => element is JoiningMatchMessage) == 2);
 		assert (room.tables.count((Table element) => !element.free) == 1);
-	}
-	
-	test
-	shared void enqueueFreeTableWhichWasFree() {
-		value table = room.tables.first;
-		assert (exists table);
-		value result = room.enqueueFreeTable(table);
-		assert (!result);
 	}
 }
