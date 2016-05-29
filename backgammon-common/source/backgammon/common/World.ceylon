@@ -20,6 +20,14 @@ shared object world {
 	
 	shared Duration maximumGameJoinTime = Duration(30 * milliseconds.perSecond);
 	
+	shared variable Anything(ApplicationMessage)? messageListener = null;
+	
+	shared void publish(ApplicationMessage message) {
+		if (exists listener = messageListener) {
+			listener(message);
+		}
+	}
+	
 	shared Map<String, Room> rooms => roomMap;
 
 	shared Room createRoom(String id, Integer tableCount) {
@@ -28,9 +36,9 @@ shared object world {
 		return room;
 	}
 	
-	shared Game createDetachedGame(String player1, String player2, Anything(PlayerMessage) messageListener) {
+	shared Game createDetachedGame(String player1, String player2) {
 		value table = TableImpl(0);
-		return GameImpl(PlayerImpl(player1, messageListener), PlayerImpl(player2, messageListener), table);
+		return GameImpl(PlayerImpl(player1), PlayerImpl(player2), table);
 	}
 }
 

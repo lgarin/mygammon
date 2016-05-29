@@ -33,7 +33,9 @@ class TableImpl(shared Integer index) satisfies Table {
 	}
 	
 	shared Boolean sitPlayer(PlayerImpl player) {
-		if (match exists){
+		if (playerQueue.contains(player)) {
+			return false;
+		} else if (match exists){
 			playerQueue.add(player);
 			return false;
 		} else if (exists opponent = playerQueue.first) {
@@ -64,13 +66,11 @@ class TableImpl(shared Integer index) satisfies Table {
 }
 
 class TableTest() {
+	
 	value table = TableImpl(0);
 	
-	value messageList = ArrayList<PlayerMessage>();
-	
-	void enqueueMessage(PlayerMessage message) {
-		messageList.add(message);
-	}
+	value messageList = ArrayList<ApplicationMessage>();
+	world.messageListener = messageList.add;
 	
 	test
 	shared void newTableIsFree() {
@@ -79,40 +79,49 @@ class TableTest() {
 	
 	test
 	shared void sitSinglePlayer() {
-		value result = table.sitPlayer(PlayerImpl("player1", enqueueMessage));
+		value result = table.sitPlayer(PlayerImpl("player1"));
 		assert (result);
 		assert (messageList.empty);
 	}
 	
 	test
+	shared void sitSamePlayerTwice() {
+		value player = PlayerImpl("player1");
+		table.sitPlayer(player);
+		value result = table.sitPlayer(player);
+		assert (!result);
+		assert (messageList.empty);
+	}
+	
+	test
 	shared void sitTwoPlayers() {
-		value result1 = table.sitPlayer(PlayerImpl("player1", enqueueMessage));
+		value result1 = table.sitPlayer(PlayerImpl("player1"));
 		assert (result1);
-		value result2 = table.sitPlayer(PlayerImpl("player2", enqueueMessage));
+		value result2 = table.sitPlayer(PlayerImpl("player2"));
 		assert (result2);
-		assert (messageList.count((PlayerMessage element) => element is JoiningMatchMessage) == 2);
+		assert (messageList.count((ApplicationMessage element) => element is JoiningMatchMessage) == 2);
 	}
 	
 	test
 	shared void queuePlayer() {
-		table.sitPlayer(PlayerImpl("player1", enqueueMessage));
-		table.sitPlayer(PlayerImpl("player2", enqueueMessage));
+		table.sitPlayer(PlayerImpl("player1"));
+		table.sitPlayer(PlayerImpl("player2"));
 		
-		value result = table.sitPlayer(PlayerImpl("player3", enqueueMessage));
+		value result = table.sitPlayer(PlayerImpl("player3"));
 		assert (!result);
 		assert (table.queueSize == 3);
 	}
 	
 	test
 	shared void removeUnknownPlayer() {
-		value result = table.removePlayer(PlayerImpl("player1", enqueueMessage));
+		value result = table.removePlayer(PlayerImpl("player1"));
 		assert (!result);
 		assert (messageList.empty);
 	}
 	
 	test
 	shared void removeKnownPlayer() {
-		value player = PlayerImpl("player1", enqueueMessage);
+		value player = PlayerImpl("player1");
 		table.sitPlayer(player);
 		value result = table.removePlayer(player);
 		assert (result);

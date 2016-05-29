@@ -26,7 +26,7 @@ shared interface Player {
 	shared formal Boolean findMatchTable();
 }
 
-class PlayerImpl(shared actual String id, shared Anything(PlayerMessage) messageListener, variable RoomImpl? room = null) satisfies Player {
+class PlayerImpl(shared actual String id, variable RoomImpl? room = null) satisfies Player {
 	variable TableImpl? table = null;
 	variable MatchImpl? match = null;
 	variable Instant lastActivity = now();
@@ -55,7 +55,7 @@ class PlayerImpl(shared actual String id, shared Anything(PlayerMessage) message
 		if (exists currentTable = table) {
 			currentTable.removePlayer(this);
 			table = null;
-			messageListener(LeaftTableMessage(this, currentTable));
+			world.publish(LeaftTableMessage(this, currentTable));
 			return true;
 		} else {
 			return false;
@@ -75,10 +75,10 @@ class PlayerImpl(shared actual String id, shared Anything(PlayerMessage) message
 		
 		table = currentTable;
 		lastActivity = now();
-		messageListener(JoinedTableMessage(this, currentTable));
+		world.publish(JoinedTableMessage(this, currentTable));
 		value seated = currentTable.sitPlayer(this);
 		if (seated && match is Null) {
-			messageListener(WaitingOpponentMessage(this, currentTable));
+			world.publish(WaitingOpponentMessage(this, currentTable));
 		}
 		return true;
 	}
@@ -94,22 +94,20 @@ class PlayerImpl(shared actual String id, shared Anything(PlayerMessage) message
 	}
 	
 	shared actual Boolean startGame() {
-		/*
 		if (exists currentMatch = match) {
-			if (currentMatch.markReady(this)) {
-				messageListener(StartGameMessage(this, currentMatch));
+			if (currentMatch.startGame(this)) {
+				assert (exists currentGame = currentMatch.game);
+				world.publish(StartGameMessage(currentGame));
 				return true;
 			}
 		}
-		 */
 		return false;
 	}
 	
 	shared actual Boolean leaveMatch() {
 		
 		if (exists currentMatch = match) {
-			currentMatch.removePlayer(this);
-			return true;
+			return currentMatch.removePlayer(this);
 		} else {
 			return false;
 		}
@@ -120,7 +118,7 @@ class PlayerImpl(shared actual String id, shared Anything(PlayerMessage) message
 		
 		match = currentMatch;
 		lastActivity = now();
-		messageListener(JoiningMatchMessage(this, currentMatch));
+		world.publish(JoiningMatchMessage(this, currentMatch));
 	}
 	
 	shared Boolean isWaitingSeat() => table exists && match is Null;
@@ -130,14 +128,11 @@ class PlayerImpl(shared actual String id, shared Anything(PlayerMessage) message
 
 class PlayerTest() {
 	
-	value messageList = ArrayList<PlayerMessage>();
-	
-	void enqueueMessage(PlayerMessage message) {
-		messageList.add(message);
-	}
+	value messageList = ArrayList<ApplicationMessage>();
+	world.messageListener = messageList.add;
 	
 	value room = RoomImpl("room", 1);
-	value player = PlayerImpl("player", enqueueMessage, room);
+	value player = PlayerImpl("player", room);
 	
 	test
 	shared void newPlayerIsInRoom() {
@@ -174,7 +169,7 @@ class PlayerTest() {
 	shared void joinMatchTableWithoutOpponent() {
 		value result = player.findMatchTable();
 		assert (!result);
-		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 0);
+		assert (messageList.count((ApplicationMessage element) => element is JoinedTableMessage) == 0);
 	}
 	
 	test
@@ -186,11 +181,11 @@ class PlayerTest() {
 	
 	test
 	shared void findMatchTableWithOpponent() {
-		value opponent = PlayerImpl("opponent", enqueueMessage, room);
+		value opponent = PlayerImpl("opponent", room);
 		opponent.findMatchTable();
 		value result = player.findMatchTable();
 		assert (result);
-		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 2);
+		assert (messageList.count((ApplicationMessage element) => element is JoinedTableMessage) == 2);
 	}
 	
 	test
@@ -199,7 +194,7 @@ class PlayerTest() {
 		assert (result);
 		assert (exists tableIndex = player.tableIndex);
 		assert (tableIndex == 0);
-		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 1);
+		assert (messageList.count((ApplicationMessage element) => element is JoinedTableMessage) == 1);
 	}
 	
 	test
@@ -211,7 +206,7 @@ class PlayerTest() {
 	
 	test
 	shared void leaveTableWithMatch() {
-		value opponent = PlayerImpl("opponent", enqueueMessage, room);
+		value opponent = PlayerImpl("opponent", room);
 		opponent.findMatchTable();
 		player.findMatchTable();
 		value result = player.leaveTable();
@@ -233,7 +228,7 @@ class PlayerTest() {
 	
 	test
 	shared void waitingSeatWithMatch() {
-		value opponent = PlayerImpl("opponent", enqueueMessage, room);
+		value opponent = PlayerImpl("opponent", room);
 		opponent.findMatchTable();
 		player.findMatchTable();
 		value result = player.isWaitingSeat();
