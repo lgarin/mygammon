@@ -35,11 +35,6 @@ shared object world {
 		roomMap.put(room.id, room);
 		return room;
 	}
-	
-	shared Game createDetachedGame(String player1, String player2) {
-		value table = TableImpl(0);
-		return GameImpl(PlayerImpl(player1), PlayerImpl(player2), table);
-	}
 }
 
 class WorldTest() {

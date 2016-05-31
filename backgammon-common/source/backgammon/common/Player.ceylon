@@ -94,23 +94,11 @@ class PlayerImpl(shared actual String id, variable RoomImpl? room = null) satisf
 	}
 	
 	shared actual Boolean startGame() {
-		if (exists currentMatch = match) {
-			if (currentMatch.startGame(this)) {
-				assert (exists currentGame = currentMatch.game);
-				world.publish(StartGameMessage(currentGame));
-				return true;
-			}
-		}
-		return false;
+		return match?.startGame(this) else false;
 	}
 	
 	shared actual Boolean leaveMatch() {
-		
-		if (exists currentMatch = match) {
-			return currentMatch.removePlayer(this);
-		} else {
-			return false;
-		}
+		return match?.removePlayer(this) else false;
 	}
 	
 	shared void joinMatch(MatchImpl currentMatch) {

@@ -1,19 +1,30 @@
+import backgammon.game {
+
+	GameMessage
+}
 shared interface ApplicationMessage {}
 
 shared interface PlayerMessage satisfies ApplicationMessage {
 	shared formal Player player;
 }
 
-shared class JoinedTableMessage(shared actual Player player, shared Table table) satisfies PlayerMessage {}
-shared class LeaftTableMessage(shared actual Player player, shared Table table) satisfies PlayerMessage {}
-shared class WaitingOpponentMessage(shared actual Player player, shared Table table) satisfies PlayerMessage {}
-shared class JoiningMatchMessage(shared actual Player player, shared Match match) satisfies PlayerMessage {}
-shared class EndedMatchMessage(shared actual Player player, shared Match match) satisfies PlayerMessage {}
-
-shared interface GameMessage satisfies ApplicationMessage {
-	shared formal Game game;
+shared interface TableMessage satisfies PlayerMessage {
+	shared formal Table table;
 }
 
-shared class StartGameMessage(shared actual Game game) satisfies GameMessage {}
-shared class SurrenderGameMessage(shared actual Game game, shared Player player) satisfies GameMessage {}
-shared class StartGameTurn(shared actual Game game, shared Player player) satisfies GameMessage {}
+shared class JoinedTableMessage(shared actual Player player, shared actual Table table) satisfies TableMessage {}
+shared class LeaftTableMessage(shared actual Player player, shared actual Table table) satisfies TableMessage {}
+shared class WaitingOpponentMessage(shared actual Player player, shared actual Table table) satisfies TableMessage {}
+
+shared interface MatchMessage satisfies TableMessage {
+	shared formal Match match;
+	shared actual Table table => match.table;
+}
+
+shared class JoiningMatchMessage(shared actual Player player, shared actual Match match) satisfies MatchMessage {}
+shared class EndedMatchMessage(shared actual Player player, shared actual Match match) satisfies MatchMessage {}
+
+shared class StartGameMessage(shared actual Player player, shared actual Match match) satisfies MatchMessage {}
+shared class SurrenderGameMessage(shared actual Player player, shared actual Match match) satisfies MatchMessage {}
+
+shared class AdaptedGameMessage(shared actual Player player, shared actual Match match, shared GameMessage sourceMessage) satisfies MatchMessage {}

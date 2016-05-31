@@ -4,6 +4,12 @@ import ceylon.time {
 	Instant,
 	now
 }
+import backgammon.game {
+
+	Game,
+	makeGame,
+	GameMessage
+}
 shared interface Match {
 	shared formal Duration remainingJoinTime;
 	
@@ -20,9 +26,13 @@ shared interface Match {
 
 class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl player2, shared actual TableImpl table) satisfies Match {
 	
-	shared actual variable GameImpl? game = null;
+	shared actual variable Game? game = null;
 	
 	shared Instant creationTime = now();
+	
+	value diceRoller = DiceRoller();
+	
+	value gameId = "``table.roomId``-``table.index``-``creationTime.millisecondsOfEpoch``";
 	
 	shared actual Duration remainingJoinTime => Duration(creationTime.durationTo(now()).milliseconds - world.maximumGameJoinTime.milliseconds);
 
@@ -59,7 +69,7 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 		if (playerIndex(player) exists) {
 			if (exists currentGame = game) {
 				// TODO should do it only with a confirmation
-				world.publish(SurrenderGameMessage(currentGame, player));
+				world.publish(SurrenderGameMessage(player, this));
 			}
 			
 			if (table.removeMatch(this)) {
@@ -94,10 +104,24 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 	
 	Boolean canStartGame() => playerStates[0].ready && playerStates[1].ready;
 	
+	void forwardGameMessage(GameMessage message) {
+		if (gameId != message.gameId) {
+			return;
+		} else if (message.playerId == player1.id) {
+			world.publish(AdaptedGameMessage(player1, this, message));
+		} else if (message.playerId == player2.id) {
+			world.publish(AdaptedGameMessage(player2, this, message));
+		}
+	}
+	
 	shared Boolean startGame(PlayerImpl player) {
 		if (markReady(player)) {
+			world.publish(StartGameMessage(player, this));
 			if (canStartGame()) {
-				game = GameImpl(player1, player2, table);
+				value currentGame = makeGame(player1.id, player2.id, gameId, forwardGameMessage);
+				game = currentGame;
+				// TODO delay ???
+				currentGame.initialRoll(diceRoller.roll());
 				return true;
 			}
 		}

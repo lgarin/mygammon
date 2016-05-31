@@ -36,7 +36,7 @@ class RoomImpl(shared actual String id, shared Integer tableCount) satisfies Roo
 	value tableList = ArrayList<TableImpl>(tableCount);
 	
 	for (i in 0:tableCount) {
-		value table = TableImpl(i);
+		value table = TableImpl(i, id);
 		tableList.add(table);
 	}
 	

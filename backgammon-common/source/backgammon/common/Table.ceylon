@@ -15,7 +15,7 @@ shared interface Table {
 	shared formal Integer queueSize;
 }
 
-class TableImpl(shared Integer index) satisfies Table {
+class TableImpl(shared Integer index, shared String roomId) satisfies Table {
 	
 	variable MatchImpl? match = null;
 	
@@ -67,7 +67,7 @@ class TableImpl(shared Integer index) satisfies Table {
 
 class TableTest() {
 	
-	value table = TableImpl(0);
+	value table = TableImpl(0, "room");
 	
 	value messageList = ArrayList<ApplicationMessage>();
 	world.messageListener = messageList.add;
