@@ -94,19 +94,30 @@ class PlayerImpl(shared actual String id, variable RoomImpl? room = null) satisf
 	}
 	
 	shared actual Boolean startGame() {
+		lastActivity = now();
 		return match?.startGame(this) else false;
 	}
 	
 	shared actual Boolean leaveMatch() {
-		return match?.removePlayer(this) else false;
+		if (exists currentMatch = match) {
+			currentMatch.end(this);
+			match = null;
+			return true;
+		}
+		return false;
 	}
 	
-	shared void joinMatch(MatchImpl currentMatch) {
+	shared Boolean joinMatch(MatchImpl currentMatch) {
+		if (currentMatch.game exists) {
+			return false;
+		}
+		
 		leaveMatch();
 		
 		match = currentMatch;
 		lastActivity = now();
 		world.publish(JoiningMatchMessage(this, currentMatch));
+		return true;
 	}
 	
 	shared Boolean isWaitingSeat() => table exists && match is Null;
@@ -220,6 +231,26 @@ class PlayerTest() {
 		opponent.findMatchTable();
 		player.findMatchTable();
 		value result = player.isWaitingSeat();
+		assert (!result);
+	}
+	
+	test
+	shared void joinMatch() {
+		value opponent = PlayerImpl("opponent", room);
+		value table = TableImpl(0, room.id);
+		value match = MatchImpl(player, opponent, table);
+		value result = player.joinMatch(match);
+		assert (result);
+	}
+	
+	test
+	shared void joinStartedMatch() {
+		value opponent = PlayerImpl("opponent", room);
+		value table = TableImpl(0, room.id);
+		value match = MatchImpl(player, opponent, table);
+		match.startGame(opponent);
+		match.startGame(player);
+		value result = player.joinMatch(match);
 		assert (!result);
 	}
 }

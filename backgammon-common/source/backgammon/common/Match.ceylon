@@ -10,14 +10,22 @@ import backgammon.game {
 	makeGame,
 	GameMessage
 }
+import ceylon.test {
+
+	test
+}
+import ceylon.collection {
+
+	ArrayList
+}
 shared interface Match {
 	shared formal Duration remainingJoinTime;
 	
 	shared formal Player player1;
-	shared formal Boolean player1Ready;
 	
 	shared formal Player player2;
-	shared formal Boolean player2Ready;
+	
+	shared formal Player? winner;
 	
 	shared formal Table table;
 	
@@ -28,13 +36,15 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 	
 	shared actual variable Game? game = null;
 	
-	shared Instant creationTime = now();
+	shared actual variable PlayerImpl? winner = null;
+	
+	Instant creationTime = now();
 	
 	value diceRoller = DiceRoller();
 	
 	value gameId = "``table.roomId``-``table.index``-``creationTime.millisecondsOfEpoch``";
 	
-	shared actual Duration remainingJoinTime => Duration(creationTime.durationTo(now()).milliseconds - world.maximumGameJoinTime.milliseconds);
+	shared actual Duration remainingJoinTime => Duration(world.maximumGameJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
 
 	class PlayerStatus() {
 		shared variable Boolean ready = false;
@@ -61,15 +71,24 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 		
 	}
 	
-	shared actual Boolean player1Ready => playerStates[0].ready;
+	PlayerImpl? opponent(PlayerImpl player)  {
+		if (player === player1) {
+			return player2;
+		} else if (player === player2) {
+			return player1;
+		} else {
+			return null;
+		}
+	}
 	
-	shared actual Boolean player2Ready => playerStates[1].ready;
-	
-	shared Boolean removePlayer(PlayerImpl player) {
-		if (playerIndex(player) exists) {
+	shared Boolean end(PlayerImpl player) {
+		if (winner exists) {
+			return false;
+		} else if (playerIndex(player) exists) {
 			if (exists currentGame = game) {
-				// TODO should do it only with a confirmation
 				world.publish(SurrenderGameMessage(player, this));
+				winner = opponent(player);
+				game = null;
 			}
 			
 			if (table.removeMatch(this)) {
@@ -84,7 +103,7 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 	}
 	
 	Boolean markReady(PlayerImpl player) {
-		if (game exists) {
+		if (game exists || winner exists) {
 			return false;
 		} else if (remainingJoinTime.milliseconds < 0) {
 			if (!playerStates[0].ready) {
@@ -120,11 +139,59 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 			if (canStartGame()) {
 				value currentGame = makeGame(player1.id, player2.id, gameId, forwardGameMessage);
 				game = currentGame;
-				// TODO delay ???
 				currentGame.initialRoll(diceRoller.roll());
 				return true;
 			}
 		}
 		return false;
 	}
+}
+
+class MatchTest() {
+	
+	value match = MatchImpl(PlayerImpl("player1"), PlayerImpl("player2"), TableImpl(0, "room"));
+	
+	value messageList = ArrayList<ApplicationMessage>();
+	world.messageListener = messageList.add;
+	
+	test
+	shared void newMatchHasRemainingJoinTime() {
+		assert (match.remainingJoinTime.milliseconds > 0);
+	}
+	
+	test
+	shared void newMatchHasNoGame() {
+		value result = match.game exists;
+		assert (!result);
+	}
+	
+	test
+	shared void newMatchHasNoWinner() {
+		value result = match.winner exists;
+		assert (!result);
+	}
+	
+	test
+	shared void startGameWithThirdPlayer() {
+		value result = match.startGame(PlayerImpl("player3"));
+		assert (!result);
+		assert (messageList.count((ApplicationMessage element) => element is StartGameMessage) == 0);
+	}
+	
+	test
+	shared void startGameWithTwoPlayers() {
+		value result1 = match.startGame(match.player1);
+		assert (!result1);
+		value result2 = match.startGame(match.player2);
+		assert (result2);
+		assert (messageList.count((ApplicationMessage element) => element is StartGameMessage) == 2);
+	}
+	
+	test
+	shared void startGameWithOnlyOnePlayer() {
+		value result = match.startGame(match.player1);
+		assert (!result);
+		assert (messageList.count((ApplicationMessage element) => element is StartGameMessage) == 1);
+	}
+	
 }

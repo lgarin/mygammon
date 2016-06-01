@@ -25,11 +25,10 @@ class TableImpl(shared Integer index, shared String roomId) satisfies Table {
 	
 	shared actual Integer queueSize => playerQueue.size;
 	
-	void createMatch(PlayerImpl player1, PlayerImpl player2) {
+	Boolean createMatch(PlayerImpl player1, PlayerImpl player2) {
 		value currentMatch = MatchImpl(player1, player2, this);
 		match = currentMatch;
-		player1.joinMatch(currentMatch);
-		player2.joinMatch(currentMatch);
+		return player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch);
 	}
 	
 	shared Boolean sitPlayer(PlayerImpl player) {
@@ -39,12 +38,9 @@ class TableImpl(shared Integer index, shared String roomId) satisfies Table {
 			playerQueue.add(player);
 			return false;
 		} else if (exists opponent = playerQueue.first) {
-			playerQueue.add(player);
-			createMatch(opponent, player);
-			return true;
+			return playerQueue.add(player) && createMatch(opponent, player);
 		} else if (playerQueue.empty) {
-			playerQueue.add(player);
-			return true;
+			return playerQueue.add(player);
 		} else {
 			playerQueue.add(player);
 			return false;
