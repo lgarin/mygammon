@@ -12,11 +12,22 @@ import ceylon.test {
 }
 final class DiceRoller() {
 	
-	value random = SecureRandom();
+	variable SecureRandom? random = null;
+	
+	SecureRandom lazyRandom => random else (random = SecureRandom());
 
-	Integer rollOne() => random.nextInt(5) + 1;
+	Integer rollOne() => lazyRandom.nextInt(5) + 1;
 	
 	shared DiceRoll roll() => DiceRoll(rollOne(), rollOne());
+	
+	shared DiceRoll rollUntilNotPair() {
+		while (true) {
+			value currentRoll = roll();
+			if (!currentRoll.isPair) {
+				return currentRoll;
+			}
+		}
+	}
 }
 
 class DiceRollerTest() {
@@ -30,5 +41,11 @@ class DiceRollerTest() {
 		assert (roll.firstValue >= 1);
 		assert (roll.secondValue <= 6);
 		assert (roll.secondValue >= 1);
+	}
+	
+	test
+	shared void rollUntilNotPair() {
+		value roll = diceRoller.rollUntilNotPair();
+		assert (!roll.isPair);
 	}
 }

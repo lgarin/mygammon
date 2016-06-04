@@ -2,45 +2,34 @@ import ceylon.time {
 	Instant,
 	now
 }
-import ceylon.language.meta.model {
-
-	Class
-}
 
 shared interface Game {
 	shared formal String player1Id;
 	shared formal String player2Id;
 	
 	shared formal Boolean initialRoll(DiceRoll diceRoll);
+	shared formal Boolean isLegalMove(String playerId, Integer source, Integer target);
+	shared formal Boolean moveChecker(String playerId, Integer source, Integer target);
 }
 
 class GameImpl(shared actual String player1Id, shared actual String player2Id, String gameId, Anything(GameMessage) messageListener) satisfies Game {
 
 	value board = GameBoard();
+	
+	board.putNewCheckers(24, black, 2);
+	board.putNewCheckers(13, black, 5);
+	board.putNewCheckers(8, black, 3);
+	board.putNewCheckers(6, black, 5);
+	
+	board.putNewCheckers(1, white, 2);
+	board.putNewCheckers(12, white, 5);
+	board.putNewCheckers(17, white, 3);
+	board.putNewCheckers(19, white, 5);
 
 	variable String? currentPlayerId = null;
+	variable DiceRoll? currentRoll = null;
 	
 	variable Instant turnStart = Instant(0);
-	
-	Class<BoardChecker,[]> checkerType(String playerId) {
-		if (playerId == player1Id) {
-			return `BlackChecker`;
-		} else if (playerId == player2Id) {
-			return `WhiteChecker`;
-		} else {
-			return `BoardChecker`;
-		}
-	}
-	
-	board.putNewCheckers(2, checkerType(player1Id), 24);
-	board.putNewCheckers(5, checkerType(player1Id), 13);
-	board.putNewCheckers(3, checkerType(player1Id), 8);
-	board.putNewCheckers(5, checkerType(player1Id), 6);
-	
-	board.putNewCheckers(2, checkerType(player2Id), 1);
-	board.putNewCheckers(5, checkerType(player2Id), 12);
-	board.putNewCheckers(3, checkerType(player2Id), 17);
-	board.putNewCheckers(5, checkerType(player2Id), 19);
 	
 	String? initialPlayerId(DiceRoll diceRoll) {
 		if (diceRoll.firstValue < diceRoll.secondValue) {
@@ -57,12 +46,80 @@ class GameImpl(shared actual String player1Id, shared actual String player2Id, S
 			return false;
 		}  else if (exists playerId = initialPlayerId(diceRoll)) {
 			currentPlayerId = playerId;
-			messageListener(StartGameTurn(gameId, playerId));
+			messageListener(StartTurnMessage(gameId, playerId, diceRoll));
 			turnStart = now();
 			return true;
 		} else {
 			return false;
 		}
+	}
+	
+	Boolean isCurrentPlayer(String playerId) => currentPlayerId?.equals(playerId) else false;
+	
+	Boolean isCorrectDirection(String playerId, Integer source, Integer target) {
+		if (playerId == player1Id) {
+			return source > target;
+		} else if (playerId == player2Id){
+			return target > source;
+		} else {
+			return false;
+		}
+	}
+	
+	CheckerColor? playerColor(String playerId) {
+		if (playerId == player1Id) {
+			return black;
+		} else if (playerId == player2Id) {
+			return white;
+		} else {
+			return null;
+		}
+	}
+	
+	Boolean isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
+		if (board.hasCheckerInGraveyard(color) && board.homePosition(color) != source) {
+			return false;
+		} else if (board.countCheckers(source, color) == 0) {
+			return false;
+		} else if (board.countCheckers(target, color.oppositeColor) >= 2) {
+			return false;
+		} else if (board.hasCheckersOutsideHomeArea(color)) {
+			if (board.homePosition(color) == target) {
+				return false;
+			} else {
+				return roll.hasValue((source - target).magnitude);
+			}
+		} else {
+			return true;
+		}
+	}
+	
+	shared actual Boolean isLegalMove(String playerId, Integer source, Integer target) {
+		if (!isCurrentPlayer(playerId)) {
+			return false;
+		} else if (!isCorrectDirection(playerId, source, target)) {
+			return false;
+		}
+		
+		if (exists color = playerColor(playerId), exists roll = currentRoll) {
+			return isLegalCheckerMove(color, roll, source, target);
+		} else {
+			return false;
+		}
+	}
+	
+	shared actual Boolean moveChecker(String playerId, Integer source, Integer target) {
+		if (isLegalMove(playerId, source, target)) {
+			return false;
+		}
+		
+		if (exists color = playerColor(playerId), board.countCheckers(target, color.oppositeColor) > 0) {
+			board.moveChecker(target, board.graveyardPosition(color.oppositeColor));
+		}
+		board.moveChecker(source, target);
+		currentRoll?.useValue((source - target).magnitude);
+		messageListener(PlayedMoveMessage(gameId, playerId, GameMove(playerId, source, target)));
+		return true;
 	}
 }
 
