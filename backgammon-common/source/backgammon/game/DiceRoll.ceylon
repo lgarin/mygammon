@@ -21,8 +21,18 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 	}
 	
 	shared List<Integer> remainingValues => values;
+
+	shared Boolean useValueAtLeast(Integer pointValue) {
+		if (values.removeFirst(pointValue)) {
+			return true;
+		} else if (nonempty currentValues = values.sequence()) {
+			return values.removeFirst(max(currentValues));
+		} else {
+			return false;
+		}
+	}
 	
-	shared Boolean useValue(Integer diceValue) => values.removeFirst(diceValue);
+	shared Integer? maxValue => max(values);
 	
 	shared Boolean hasValue(Integer diceValue) => values.contains(diceValue);
 }
@@ -51,25 +61,33 @@ class DiceRollTest() {
 	}
 	
 	test
-	shared void useValueRemovesValue() {
+	shared void useValueRemovesExactValue() {
 		value roll = DiceRoll(3, 4);
-		value result = roll.useValue(3);
+		value result = roll.useValueAtLeast(3);
 		assert (result);
 		assert (!roll.hasValue(3));
 	}
 	
 	test
-	shared void usePairValueRemovesOnly1Value() {
+	shared void usePairValueRemovesOnlyFirstValue() {
 		value roll = DiceRoll(3, 3);
-		value result = roll.useValue(3);
+		value result = roll.useValueAtLeast(3);
 		assert (result);
 		assert (roll.hasValue(3));
 	}
 	
 	test
-	shared void cannotRemoveNonExistantValue() {
+	shared void cannotRemoveTooLargeValue() {
 		value roll = DiceRoll(3, 4);
-		value result = roll.useValue(5);
+		value result = roll.useValueAtLeast(5);
 		assert (!result);
+	}
+	
+	test
+	shared void useValueRemovesMaxValue() {
+		value roll = DiceRoll(3, 4);
+		value result = roll.useValueAtLeast(2);
+		assert (!result);
+		assert (roll.hasValue(3));
 	}
 }

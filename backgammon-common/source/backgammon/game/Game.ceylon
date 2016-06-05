@@ -81,16 +81,18 @@ class GameImpl(shared actual String player1Id, shared actual String player2Id, S
 			return false;
 		} else if (board.countCheckers(source, color) == 0) {
 			return false;
-		} else if (board.countCheckers(target, color.oppositeColor) >= 2) {
+		} else if (board.countCheckers(target, color.oppositeColor) > 1) {
 			return false;
 		} else if (board.hasCheckersOutsideHomeArea(color)) {
 			if (board.homePosition(color) == target) {
 				return false;
 			} else {
-				return roll.hasValue((source - target).magnitude);
+				return roll.hasValue(board.distance(source, target));
 			}
+		} else if (exists maxValue = roll.maxValue) {
+			return maxValue >= board.distance(source, target);
 		} else {
-			return true;
+			return false;
 		}
 	}
 	
@@ -108,17 +110,36 @@ class GameImpl(shared actual String player1Id, shared actual String player2Id, S
 		}
 	}
 	
+	Boolean useRollValue(String playerId, Integer source, Integer target) {
+		if (exists roll = currentRoll) {
+			return roll.useValueAtLeast(board.distance(source, target));
+		}
+		return false;
+	}
+	
+	CheckerColor? hitChecker(String playerId, Integer source, Integer target) {
+		if (exists color = playerColor(playerId), board.countCheckers(target, color.oppositeColor) > 0) {
+			return color.oppositeColor;
+		}
+		return null;
+	}
+
 	shared actual Boolean moveChecker(String playerId, Integer source, Integer target) {
 		if (isLegalMove(playerId, source, target)) {
 			return false;
 		}
 		
-		if (exists color = playerColor(playerId), board.countCheckers(target, color.oppositeColor) > 0) {
-			board.moveChecker(target, board.graveyardPosition(color.oppositeColor));
+		if (!useRollValue(playerId, source, target)) {
+			return false;
+		}
+		
+		value bolt = hitChecker(playerId, source, target);
+		if (exists bolt) {
+			board.moveChecker(target, board.graveyardPosition(bolt));
 		}
 		board.moveChecker(source, target);
-		currentRoll?.useValue((source - target).magnitude);
-		messageListener(PlayedMoveMessage(gameId, playerId, GameMove(playerId, source, target)));
+		
+		messageListener(PlayedMoveMessage(gameId, playerId, GameMove(source, target, bolt exists)));
 		return true;
 	}
 }

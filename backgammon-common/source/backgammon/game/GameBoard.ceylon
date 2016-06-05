@@ -91,6 +91,8 @@ final class GameBoard() {
 			return false;
 		}
 	}
+	
+	shared Integer distance(Integer sourcePosition, Integer targetPosition) => (targetPosition - sourcePosition).magnitude;
 }
 
 class GameBoardTest() {
@@ -187,5 +189,11 @@ class GameBoardTest() {
 	shared void putCheckerInHomeArea() {
 		board.putNewCheckers(5, white, 1);
 		assert (!board.hasCheckersOutsideHomeArea(white));
+	}
+	
+	test
+	shared void distanceNotNegative() {
+		value result = board.distance(10, 5);
+		assert (result == 5);
 	}
 }
