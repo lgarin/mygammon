@@ -1,1 +1,1 @@
-shared final class GameMove(shared Integer sourcePosition, shared Integer targetPosition, shared Boolean hitBlot) {}
+shared final class GameMove(shared Integer sourcePosition, shared Integer targetPosition, shared Integer rollValue, shared Boolean hitBlot) {}

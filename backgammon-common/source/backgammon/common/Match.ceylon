@@ -137,7 +137,7 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 		if (markReady(player)) {
 			world.publish(StartGameMessage(player, this));
 			if (canStartGame()) {
-				value currentGame = makeGame(player1.id, player2.id, gameId, forwardGameMessage);
+				value currentGame = makeGame(player1.id, player2.id, gameId, world.maximumTurnTime, forwardGameMessage);
 				game = currentGame;
 				currentGame.initialRoll(diceRoller.roll());
 				return true;

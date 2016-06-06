@@ -19,6 +19,7 @@ shared object world {
 	value roomMap = HashMap<String, RoomImpl>(linked);
 	
 	shared Duration maximumGameJoinTime = Duration(30 * milliseconds.perSecond);
+	shared Duration maximumTurnTime = Duration(60 * milliseconds.perSecond);
 	
 	shared variable Anything(ApplicationMessage)? messageListener = null;
 	
