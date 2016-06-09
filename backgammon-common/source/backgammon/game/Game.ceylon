@@ -8,20 +8,8 @@ import ceylon.collection {
 	ArrayList
 }
 
-shared interface Game {
-	shared formal String player1Id;
-	shared formal String player2Id;
-	
-	shared formal Boolean initialRoll(DiceRoll diceRoll);
-	shared formal Boolean beginTurn(String playerId, DiceRoll diceRoll);
-	shared formal Boolean isLegalMove(String playerId, Integer source, Integer target);
-	shared formal Boolean moveChecker(String playerId, Integer source, Integer target);
-	shared formal Boolean undoPreviousMove();
-	shared formal Boolean endTurn(String playerId);
-	shared formal Boolean timedOut();
-}
 
-class GameImpl(shared actual String player1Id, shared actual String player2Id, String gameId, Duration maxTurnDuration, Anything(GameMessage) messageListener) satisfies Game {
+shared class Game(shared String player1Id, shared String player2Id, String gameId) {
 
 	value board = GameBoard();
 	value currentMoves = ArrayList<GameMove>();
@@ -36,10 +24,12 @@ class GameImpl(shared actual String player1Id, shared actual String player2Id, S
 	board.putNewCheckers(17, white, 3);
 	board.putNewCheckers(19, white, 5);
 
-	variable String? currentPlayerId = null;
-	variable DiceRoll? currentRoll = null;
+	shared variable String? currentPlayerId = null;
+	shared variable DiceRoll? currentRoll = null;
 	
-	variable Instant turnStart = Instant(0);
+	variable Boolean player1Ready = false;
+	variable Boolean player2Ready = false;
+	variable Instant nextTimeout = Instant(0);
 	
 	String? initialPlayerId(DiceRoll diceRoll) {
 		if (diceRoll.firstValue < diceRoll.secondValue) {
@@ -51,11 +41,15 @@ class GameImpl(shared actual String player1Id, shared actual String player2Id, S
 		}
 	}
 	
-	shared actual Boolean initialRoll(DiceRoll diceRoll) {
+	shared Boolean initialRoll(DiceRoll roll, Duration maxDuration) {
+		currentRoll = roll;
+		player1Ready = false;
+		player2Ready = false;
+		nextTimeout = now().plus(maxDuration);
 		if (currentPlayerId exists) {
 			return false;
-		}  else if (exists playerId = initialPlayerId(diceRoll)) {
-			return beginTurn(playerId, diceRoll); // TODO do we need a second roll?
+		}  else if (exists playerId = initialPlayerId(roll)) {
+			return true;
 		} else {
 			return false;
 		}
@@ -105,15 +99,14 @@ class GameImpl(shared actual String player1Id, shared actual String player2Id, S
 		}
 	}
 	
-	shared actual Boolean beginTurn(String playerId, DiceRoll diceRoll) {
+	shared Boolean beginTurn(String playerId, DiceRoll roll, Duration maxDuration) {
 		currentPlayerId = playerId;
-		currentRoll = diceRoll;
-		messageListener(StartTurnMessage(gameId, playerId, diceRoll));
-		turnStart = now();
+		currentRoll = roll;
+		nextTimeout = now().plus(maxDuration);
 		return true;
 	}
 	
-	shared actual Boolean isLegalMove(String playerId, Integer source, Integer target) {
+	shared Boolean isLegalMove(String playerId, Integer source, Integer target) {
 		if (!isCurrentPlayer(playerId)) {
 			return false;
 		} else if (!isCorrectDirection(playerId, source, target)) {
@@ -147,7 +140,7 @@ class GameImpl(shared actual String player1Id, shared actual String player2Id, S
 		return true;
 	}
 	
-	shared actual Boolean moveChecker(String playerId, Integer source, Integer target) {
+	shared Boolean moveChecker(String playerId, Integer source, Integer target) {
 	
 		if (isLegalMove(playerId, source, target)) {
 			return false;
@@ -160,49 +153,81 @@ class GameImpl(shared actual String player1Id, shared actual String player2Id, S
 		
 		value bolt = hitChecker(playerId, source, target);
 		if (exists bolt) {
-			board.moveChecker(target, board.graveyardPosition(bolt));
+			assert (board.moveChecker(target, board.graveyardPosition(bolt)));
 		}
-		board.moveChecker(source, target);
+		assert (board.moveChecker(source, target));
 		
 		value move = GameMove(source, target, rollValue, bolt exists);
 		currentMoves.push(move);
-		messageListener(PlayedMoveMessage(gameId, playerId, move));
 		return true;
 	}
 	
-	shared actual Boolean undoPreviousMove() {
-		if (exists move = currentMoves.pop(), exists roll = currentRoll, exists color = playerColor(currentPlayerId)) {
-			currentRoll = roll.add(move.rollValue);
-			board.moveChecker(move.targetPosition, move.sourcePosition);
-			if (move.hitBlot) {
-				board.moveChecker(board.graveyardPosition(color.oppositeColor), move.targetPosition);
-			}
-			// TODO
-			//messageListener(UndoMoveMessage(gameId, playerId, move));
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	shared actual Boolean timedOut() {
-		// TODO opponent should annouce timeout 1 second later
-		if (turnStart.durationTo(now()).milliseconds > maxTurnDuration.milliseconds, exists playerId = currentPlayerId) {
-			messageListener(TurnTimeoutMessage(gameId, playerId));
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	shared actual Boolean endTurn(String playerId) {
+	shared Boolean undoTurnMoves(String playerId) {
 		if (!isCurrentPlayer(playerId)) {
 			return false;
+		} else if (exists roll = currentRoll, exists color = playerColor(currentPlayerId)) {
+			while (exists move = currentMoves.pop()) {
+				currentRoll = roll.add(move.rollValue);
+				assert (board.moveChecker(move.targetPosition, move.sourcePosition));
+				if (move.hitBlot) {
+					assert (board.moveChecker(board.graveyardPosition(color.oppositeColor), move.targetPosition));
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean timedOut(Instant now) {
+		// TODO opponent should annouce timeout 1 second later
+		if (now > nextTimeout) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	// TODO
+	Boolean hasWon(String playerId) => false;
+	
+	shared String? switchTurn(String playerId) {
+		if (!isCurrentPlayer(playerId)) {
+			return null;
+		} else if (playerId == player1Id) {
+			currentPlayerId = player2Id;
+			return currentPlayerId;
+		} else if (playerId == player2Id) {
+			currentPlayerId = player1Id;
+			return currentPlayerId;
+		} else {
+			return null;
+		}
+	}
+	
+	shared Boolean endTurn(String playerId) {
+		if (!isCurrentPlayer(playerId)) {
+			return false;
+		} else if (hasWon(playerId)) {
+			currentPlayerId = null;
 		}
 		currentMoves.clear();
-		messageListener(EndTurnMessage(gameId, playerId));
 		return true;
 	}
+	
+	shared Boolean endInitialRoll(String playerId) {
+		if (currentPlayerId exists) {
+			return false;
+		} else if (playerId == player1Id) {
+			player1Ready = true;
+		} else if (playerId == player2Id) {
+			player2Ready = true;
+		}
+		if (player1Ready && player2Ready, exists roll = currentRoll) {
+			currentPlayerId = initialPlayerId(roll);
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
-
-shared Game makeGame(String player1Id, String player2Id, String gameId, Duration maxTurnDuration, Anything(GameMessage) messageListener) => GameImpl(player1Id, player2Id, gameId, maxTurnDuration, messageListener);

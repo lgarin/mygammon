@@ -6,9 +6,8 @@ import ceylon.time {
 }
 import backgammon.game {
 
-	Game,
-	makeGame,
-	GameMessage
+	GameMessage,
+	GameConfiguration
 }
 import ceylon.test {
 
@@ -29,18 +28,16 @@ shared interface Match {
 	
 	shared formal Table table;
 	
-	shared formal Game? game;
+	shared formal GameServer? game;
 }
 
 class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl player2, shared actual TableImpl table) satisfies Match {
 	
-	shared actual variable Game? game = null;
+	shared actual variable GameServer? game = null;
 	
 	shared actual variable PlayerImpl? winner = null;
 	
 	Instant creationTime = now();
-	
-	value diceRoller = DiceRoller();
 	
 	value gameId = "``table.roomId``-``table.index``-``creationTime.millisecondsOfEpoch``";
 	
@@ -137,10 +134,9 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 		if (markReady(player)) {
 			world.publish(StartGameMessage(player, this));
 			if (canStartGame()) {
-				value currentGame = makeGame(player1.id, player2.id, gameId, world.maximumTurnTime, forwardGameMessage);
+				value currentGame = GameServer(player1.id, player2.id, gameId, GameConfiguration(world.maximumTurnTime), forwardGameMessage);
 				game = currentGame;
-				currentGame.initialRoll(diceRoller.roll());
-				return true;
+				return currentGame.sendInitialRoll();
 			}
 		}
 		return false;
