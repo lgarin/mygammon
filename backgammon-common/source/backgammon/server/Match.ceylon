@@ -68,23 +68,12 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 		
 	}
 	
-	PlayerImpl? opponent(PlayerImpl player)  {
-		if (player === player1) {
-			return player2;
-		} else if (player === player2) {
-			return player1;
-		} else {
-			return null;
-		}
-	}
-	
 	shared Boolean end(PlayerImpl player) {
 		if (winner exists) {
 			return false;
 		} else if (playerIndex(player) exists) {
 			if (exists currentGame = game) {
-				world.publish(SurrenderGameMessage(player, this));
-				winner = opponent(player);
+				currentGame.surrenderGame(player.id);
 				game = null;
 			}
 			
@@ -128,6 +117,8 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 		} else if (message.playerId == player2.id) {
 			world.publish(AdaptedGameMessage(player2, this, message));
 		}
+		
+		// TODO intercept specific messages
 	}
 	
 	shared Boolean startGame(PlayerImpl player) {

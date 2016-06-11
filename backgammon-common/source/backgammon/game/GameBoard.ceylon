@@ -59,7 +59,7 @@ final class GameBoard() {
 		}
 	}
 	
-	Boolean hasChecker(Integer position, CheckerColor color) {
+	function hasChecker(Integer position, CheckerColor color) {
 		if (exists boardPoint = points[position]) {
 			return boardPoint.hasChecker(color);
 		} else {
@@ -69,10 +69,27 @@ final class GameBoard() {
 	
 	shared Boolean hasCheckerInGraveyard(CheckerColor color) => hasChecker(graveyardPosition(color), color);
 	
-	Range<Integer> playRange(CheckerColor color) {
+	function playRange(CheckerColor color) {
 		switch (color)
 		case (white) { return 7..23; }
 		case (black) { return 1..17; }
+	}
+	
+	shared Range<Integer> positionRange(CheckerColor color) {
+		switch (color)
+		case (white) { return 1..25; }
+		case (black) { return 25..1; }
+	}
+	
+	shared Integer directionSign(CheckerColor color) {
+		
+		switch (color)
+		case (white) { return 1; }
+		case (black) { return -1; }
+	}
+	
+	shared Boolean isInRange(Integer position) {
+		return 0 <= position < totalPointCount; 
 	}
 	
 	shared Boolean hasCheckersOutsideHomeArea(CheckerColor color) {

@@ -13,16 +13,13 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 
 	value board = GameBoard();
 	value currentMoves = ArrayList<GameMove>();
+	value initialPositionCounts = [ 1 -> 2, 12 -> 5, 17 -> 3, 19 -> 5 ];
+	value checkerCount = sum(initialPositionCounts.map((Integer->Integer element) => element.item)); 
 	
-	board.putNewCheckers(24, black, 2);
-	board.putNewCheckers(13, black, 5);
-	board.putNewCheckers(8, black, 3);
-	board.putNewCheckers(6, black, 5);
-	
-	board.putNewCheckers(1, white, 2);
-	board.putNewCheckers(12, white, 5);
-	board.putNewCheckers(17, white, 3);
-	board.putNewCheckers(19, white, 5);
+	for (value element in initialPositionCounts) {
+		assert (board.putNewCheckers(element.key - board.whiteHomePosition, white, element.item));
+		assert (board.putNewCheckers(board.blackHomePosition - element.key, black, element.item));
+	}
 
 	shared variable String? currentPlayerId = null;
 	shared variable DiceRoll? currentRoll = null;
@@ -31,7 +28,7 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 	variable Boolean player2Ready = false;
 	variable Instant nextTimeout = Instant(0);
 	
-	String? initialPlayerId(DiceRoll diceRoll) {
+	function initialPlayerId(DiceRoll diceRoll) {
 		if (diceRoll.firstValue < diceRoll.secondValue) {
 			return player1Id;
 		} else if (diceRoll.firstValue < diceRoll.secondValue) {
@@ -42,32 +39,20 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 	}
 	
 	shared Boolean initialRoll(DiceRoll roll, Duration maxDuration) {
-		currentRoll = roll;
-		player1Ready = false;
-		player2Ready = false;
-		nextTimeout = now().plus(maxDuration);
 		if (currentPlayerId exists) {
 			return false;
-		}  else if (exists playerId = initialPlayerId(roll)) {
-			return true;
-		} else {
-			return false;
 		}
+		
+		player1Ready = false;
+		player2Ready = false;
+		currentRoll = roll;
+		nextTimeout = now().plus(maxDuration);
+		return true;
 	}
 	
-	Boolean isCurrentPlayer(String playerId) => currentPlayerId?.equals(playerId) else false;
-	
-	Boolean isCorrectDirection(String playerId, Integer source, Integer target) {
-		if (playerId == player1Id) {
-			return source > target;
-		} else if (playerId == player2Id){
-			return target > source;
-		} else {
-			return false;
-		}
-	}
-	
-	CheckerColor? playerColor(String? playerId) {
+	shared Boolean isCurrentPlayer(String playerId) => currentPlayerId?.equals(playerId) else false;
+
+	function playerColor(String? playerId) {
 		if (!exists playerId) {
 			return null;
 		} else if (playerId == player1Id) {
@@ -79,8 +64,12 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 		}
 	}
 	
-	Boolean isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
-		if (board.hasCheckerInGraveyard(color) && board.homePosition(color) != source) {
+	function isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
+		if (!board.isInRange(source) || !board.isInRange(target)) {
+			return false;
+		} else if (board.directionSign(color) * target - source <= 0) {
+			return false;
+		} else if (board.hasCheckerInGraveyard(color) && board.homePosition(color) != source) {
 			return false;
 		} else if (board.countCheckers(source, color) == 0) {
 			return false;
@@ -100,16 +89,35 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 	}
 	
 	shared Boolean beginTurn(String playerId, DiceRoll roll, Duration maxDuration) {
-		currentPlayerId = playerId;
+		if (!isCurrentPlayer(playerId)) {
+			return false;
+		}
 		currentRoll = roll;
 		nextTimeout = now().plus(maxDuration);
 		return true;
 	}
 	
+	shared Boolean hasAvailableMove(String playerId) {
+		return !computeAvailableMoves(playerId).empty;
+	}
+	
+	shared {GameMove*} computeAvailableMoves(String playerId) {
+		if (isCurrentPlayer(playerId), exists color = playerColor(playerId), exists roll = currentRoll, exists maxValue = roll.maxValue) {
+			value targetRangeLength = maxValue * board.directionSign(color);
+			value sourcePositionRange = board.positionRange(color);
+			return {
+				for (source in sourcePositionRange)
+					for (target in source:targetRangeLength) 
+						if (isLegalCheckerMove(color, roll, source, target))
+							GameMove(source, target, maxValue, board.countCheckers(target, color.oppositeColor) > 0) 
+			};
+		} else {
+			return {}; 
+		}
+	}
+	
 	shared Boolean isLegalMove(String playerId, Integer source, Integer target) {
 		if (!isCurrentPlayer(playerId)) {
-			return false;
-		} else if (!isCorrectDirection(playerId, source, target)) {
 			return false;
 		}
 		
@@ -120,24 +128,18 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 		}
 	}
 	
-	Integer? useRollValue(String playerId, Integer source, Integer target) {
+	function useRollValue(String playerId, Integer source, Integer target) {
 		if (exists roll = currentRoll) {
 			return roll.useValueAtLeast(board.distance(source, target));
 		}
 		return null;
 	}
 	
-	CheckerColor? hitChecker(String playerId, Integer source, Integer target) {
+	function hitChecker(String playerId, Integer source, Integer target) {
 		if (exists color = playerColor(playerId), board.countCheckers(target, color.oppositeColor) > 0) {
 			return color.oppositeColor;
 		}
 		return null;
-	}
-	
-	// TODO
-	shared Boolean submitMove(Integer source, Integer target) {
-		//messageListener(MakeMoveMessage(gameId, playerId, GameMove(source, target, 0, false)));
-		return true;
 	}
 	
 	shared Boolean moveChecker(String playerId, Integer source, Integer target) {
@@ -180,7 +182,6 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 	}
 	
 	shared Boolean timedOut(Instant now) {
-		// TODO opponent should annouce timeout 1 second later
 		if (now > nextTimeout) {
 			return true;
 		} else {
@@ -188,8 +189,13 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 		}
 	}
 	
-	// TODO
-	Boolean hasWon(String playerId) => false;
+	shared Boolean hasWon(String playerId) {
+		if (exists color = playerColor(playerId)) {
+			return board.countCheckers(board.homePosition(color), color) == checkerCount;
+		} else {
+			return false;
+		}
+	}
 	
 	shared String? switchTurn(String playerId) {
 		if (!isCurrentPlayer(playerId)) {
@@ -215,19 +221,29 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 		return true;
 	}
 	
-	shared Boolean endInitialRoll(String playerId) {
+	shared Boolean begin(String playerId) {
 		if (currentPlayerId exists) {
 			return false;
-		} else if (playerId == player1Id) {
+		} else if (!player1Ready && playerId == player1Id) {
 			player1Ready = true;
-		} else if (playerId == player2Id) {
+		} else if (!player2Ready && playerId == player2Id) {
 			player2Ready = true;
-		}
-		if (player1Ready && player2Ready, exists roll = currentRoll) {
-			currentPlayerId = initialPlayerId(roll);
-			return true;
 		} else {
 			return false;
 		}
+		
+		if (player1Ready && player2Ready, exists roll = currentRoll) {
+			currentPlayerId = initialPlayerId(roll);
+		}
+		return true;
+	}
+	
+	shared Boolean end() {
+		if (currentRoll exists) {
+			currentPlayerId = null;
+			currentRoll = null;
+			return true;
+		}
+		return false;
 	}
 }

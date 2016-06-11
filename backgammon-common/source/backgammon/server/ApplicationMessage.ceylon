@@ -25,6 +25,5 @@ shared final class JoiningMatchMessage(shared actual Player player, shared actua
 shared final class EndedMatchMessage(shared actual Player player, shared actual Match match) satisfies MatchMessage {}
 
 shared final class StartGameMessage(shared actual Player player, shared actual Match match) satisfies MatchMessage {}
-shared final class SurrenderGameMessage(shared actual Player player, shared actual Match match) satisfies MatchMessage {}
 
 shared final class AdaptedGameMessage(shared actual Player player, shared actual Match match, shared GameMessage sourceMessage) satisfies MatchMessage {}
