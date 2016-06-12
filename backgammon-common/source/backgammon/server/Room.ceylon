@@ -15,55 +15,47 @@ import ceylon.time {
 	Duration
 }
 
-shared interface Room {
-	shared formal String id;
-	
-	shared formal Player createPlayer(String id);
-	
-	shared formal Integer removeInactivePlayers(Duration timeout);
-	
-	shared formal Map<String, Player> players;
-	
-	shared formal List<Table> tables;
-}
+shared final class RoomId(shared String roomId) extends StringIdentifier(roomId) {}
 
-class RoomImpl(shared actual String id, shared Integer tableCount) satisfies Room {
+class Room(String roomId, shared Integer tableCount) {
 	
-	value playerMap = HashMap<String, PlayerImpl>(unlinked);
+	shared RoomId id = RoomId(roomId);
 	
-	value playerQueue = HashSet<PlayerImpl>(linked);
+	value playerMap = HashMap<PlayerId, Player>(unlinked);
 	
-	value tableList = ArrayList<TableImpl>(tableCount);
+	value playerQueue = HashSet<Player>(linked);
+	
+	value tableList = ArrayList<Table>(tableCount);
 	
 	for (i in 0:tableCount) {
-		value table = TableImpl(i, id);
+		value table = Table(i, id);
 		tableList.add(table);
 	}
 	
-	shared actual List<TableImpl> tables => tableList;
+	shared List<Table> tables => tableList;
 	
-	shared actual PlayerImpl createPlayer(String id) {
-		value player = PlayerImpl(id, this);
-		value oldPlayer = playerMap.put(id, player);
+	shared Player createPlayer(String id) {
+		value player = Player(id, this);
+		value oldPlayer = playerMap.put(player.id, player);
 		if (exists oldPlayer) {
 			oldPlayer.leaveRoom();
 		}
 		return player;
 	}
 	
-	shared actual Map<String, Player> players => playerMap;
+	shared Map<PlayerId, Player> players => playerMap;
 	
-	shared Boolean sitPlayer(PlayerImpl player) {
+	shared Boolean sitPlayer(Player player) {
 		if (!player.isInRoom(id)) {
 			return false;
 		} else if (exists opponent = playerQueue.first) {
-			value table = tableList.find((TableImpl element) => element.queueSize == 0);
+			value table = tableList.find((Table element) => element.queueSize == 0);
 			if (exists table) {
 				playerQueue.remove(opponent);
 				return opponent.joinTable(table.index) && player.joinTable(table.index);
 			}
 		} else {
-			value table = tableList.find((TableImpl element) => element.queueSize == 1);
+			value table = tableList.find((Table element) => element.queueSize == 1);
 			if (exists table) {
 				return player.joinTable(table.index);
 			}
@@ -73,12 +65,12 @@ class RoomImpl(shared actual String id, shared Integer tableCount) satisfies Roo
 		return false;
 	}
 	
-	shared Boolean removePlayer(PlayerImpl player) {
+	shared Boolean removePlayer(Player player) {
 		playerQueue.remove(player);
 		return playerMap.removeEntry(player.id, player);
 	}
 	
-	shared actual Integer removeInactivePlayers(Duration timeout) {
+	shared Integer removeInactivePlayers(Duration timeout) {
 		value timeoutTime = now().minus(timeout);
 		variable value result = 0;
 		for (player in playerMap.items) {
@@ -92,9 +84,9 @@ class RoomImpl(shared actual String id, shared Integer tableCount) satisfies Roo
 }
 
 class RoomTest() {
-	value room = RoomImpl("test1", 10);
+	value room = Room("test1", 10);
 	
-	value messageList = ArrayList<ApplicationMessage>();
+	value messageList = ArrayList<TableMessage>();
 	world.messageListener = messageList.add;
 	
 	test
@@ -126,7 +118,7 @@ class RoomTest() {
 		value newPlayer = room.createPlayer("player1");
 		assert (room.players.size == 1);
 		assert (oldPlayer.roomId is Null);
-		assert (newPlayer.roomId is String);
+		assert (newPlayer.roomId is RoomId);
 	}
 	
 	test
@@ -149,7 +141,7 @@ class RoomTest() {
 		value player = room.createPlayer("player1");
 		value result = room.sitPlayer(player);
 		assert (!result);
-		assert (messageList.count((ApplicationMessage element) => element is WaitingOpponentMessage) == 0);
+		assert (messageList.count((TableMessage element) => element is WaitingOpponentMessage) == 0);
 		assert (room.tables.count((Table element) => !element.free) == 0);
 	}
 	
@@ -161,9 +153,9 @@ class RoomTest() {
 		assert (!result1);
 		value result2 = room.sitPlayer(player2);
 		assert (result2);
-		assert (messageList.count((ApplicationMessage element) => element is JoinedTableMessage) == 2);
-		assert (messageList.count((ApplicationMessage element) => element is WaitingOpponentMessage) == 1);
-		assert (messageList.count((ApplicationMessage element) => element is JoiningMatchMessage) == 2);
+		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 2);
+		assert (messageList.count((TableMessage element) => element is WaitingOpponentMessage) == 1);
+		assert (messageList.count((TableMessage element) => element is JoiningMatchMessage) == 2);
 		assert (room.tables.count((Table element) => !element.free) == 1);
 	}
 }

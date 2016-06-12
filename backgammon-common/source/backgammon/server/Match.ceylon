@@ -5,8 +5,6 @@ import ceylon.time {
 	now
 }
 import backgammon.game {
-
-	GameMessage,
 	GameConfiguration
 }
 import ceylon.test {
@@ -17,31 +15,20 @@ import ceylon.collection {
 
 	ArrayList
 }
-shared interface Match {
-	shared formal Duration remainingJoinTime;
-	
-	shared formal Player player1;
-	
-	shared formal Player player2;
-	
-	shared formal Player? winner;
-	
-	shared formal Table table;
-	
-	shared formal GameServer? game;
-}
 
-class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl player2, shared actual TableImpl table) satisfies Match {
+shared final class MatchId(shared TableId tableId, Instant creationTime) extends StringIdentifier("``tableId``-game-``creationTime.millisecondsOfEpoch``") {}
+
+class Match(shared Player player1, shared Player player2, shared Table table) {
 	
-	shared actual variable GameServer? game = null;
+	shared variable GameServer? game = null;
 	
-	shared actual variable PlayerImpl? winner = null;
+	shared variable PlayerId? winnerId = null;
 	
 	Instant creationTime = now();
 	
-	value gameId = "``table.roomId``-``table.index``-``creationTime.millisecondsOfEpoch``";
+	shared MatchId id = MatchId(table.id, creationTime);
 	
-	shared actual Duration remainingJoinTime => Duration(world.maximumGameJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
+	shared Duration remainingJoinTime => Duration(world.maximumGameJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
 
 	class PlayerStatus() {
 		shared variable Boolean ready = false;
@@ -49,7 +36,7 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 	
 	[PlayerStatus, PlayerStatus] playerStates = [PlayerStatus(), PlayerStatus()];
 	
-	Integer? playerIndex(PlayerImpl player) {
+	Integer? playerIndex(Player player) {
 		if (player === player1) {
 			return 0;
 		} else if (player === player2) {
@@ -59,7 +46,7 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 		}
 	}
 	
-	PlayerStatus? playerState(PlayerImpl player) {
+	PlayerStatus? playerState(Player player) {
 		if (exists index = playerIndex(player)) {
 			return playerStates[index];
 		} else {
@@ -68,17 +55,17 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 		
 	}
 	
-	shared Boolean end(PlayerImpl player) {
-		if (winner exists) {
+	shared Boolean end(Player player) {
+		if (winnerId exists) {
 			return false;
 		} else if (playerIndex(player) exists) {
 			if (exists currentGame = game) {
-				currentGame.surrenderGame(player.id);
+				assert (currentGame.quitGame(player.id));
 				game = null;
 			}
 			
 			if (table.removeMatch(this)) {
-				world.publish(EndedMatchMessage(player, this));
+				world.publish(LeaftMatchMessage(player.id, id));
 				return true;
 			} else {
 				return false;
@@ -88,8 +75,8 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 		}
 	}
 	
-	Boolean markReady(PlayerImpl player) {
-		if (game exists || winner exists) {
+	Boolean markReady(Player player) {
+		if (game exists || winnerId exists) {
 			return false;
 		} else if (remainingJoinTime.milliseconds < 0) {
 			if (!playerStates[0].ready) {
@@ -110,22 +97,22 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 	Boolean canStartGame() => playerStates[0].ready && playerStates[1].ready;
 	
 	void forwardGameMessage(GameMessage message) {
-		if (gameId != message.gameId) {
-			return;
-		} else if (message.playerId == player1.id) {
-			world.publish(AdaptedGameMessage(player1, this, message));
-		} else if (message.playerId == player2.id) {
-			world.publish(AdaptedGameMessage(player2, this, message));
+		if (id == message.matchId) {
+			if (is GameWonMessage message) {
+				winnerId = message.playerId;
+			} else if (is GameEndedMessage message) {
+				table.removeMatch(this);
+			}
+			world.publish(message);
 		}
 		
-		// TODO intercept specific messages
 	}
 	
-	shared Boolean startGame(PlayerImpl player) {
+	shared Boolean startGame(Player player) {
 		if (markReady(player)) {
-			world.publish(StartGameMessage(player, this));
+			world.publish(StartGameMessage(player.id, id));
 			if (canStartGame()) {
-				value currentGame = GameServer(player1.id, player2.id, gameId, GameConfiguration(world.maximumTurnTime), forwardGameMessage);
+				value currentGame = GameServer(player1.id, player2.id, id, GameConfiguration(world.maximumTurnTime), forwardGameMessage);
 				game = currentGame;
 				return currentGame.sendInitialRoll();
 			}
@@ -136,9 +123,9 @@ class MatchImpl(shared actual PlayerImpl player1, shared actual PlayerImpl playe
 
 class MatchTest() {
 	
-	value match = MatchImpl(PlayerImpl("player1"), PlayerImpl("player2"), TableImpl(0, "room"));
+	value match = Match(Player("player1"), Player("player2"), Table(0, RoomId("room")));
 	
-	value messageList = ArrayList<ApplicationMessage>();
+	value messageList = ArrayList<TableMessage>();
 	world.messageListener = messageList.add;
 	
 	test
@@ -154,15 +141,15 @@ class MatchTest() {
 	
 	test
 	shared void newMatchHasNoWinner() {
-		value result = match.winner exists;
+		value result = match.winnerId exists;
 		assert (!result);
 	}
 	
 	test
 	shared void startGameWithThirdPlayer() {
-		value result = match.startGame(PlayerImpl("player3"));
+		value result = match.startGame(Player("player3"));
 		assert (!result);
-		assert (messageList.count((ApplicationMessage element) => element is StartGameMessage) == 0);
+		assert (messageList.count((TableMessage element) => element is StartGameMessage) == 0);
 	}
 	
 	test
@@ -171,14 +158,14 @@ class MatchTest() {
 		assert (!result1);
 		value result2 = match.startGame(match.player2);
 		assert (result2);
-		assert (messageList.count((ApplicationMessage element) => element is StartGameMessage) == 2);
+		assert (messageList.count((TableMessage element) => element is StartGameMessage) == 2);
 	}
 	
 	test
 	shared void startGameWithOnlyOnePlayer() {
 		value result = match.startGame(match.player1);
 		assert (!result);
-		assert (messageList.count((ApplicationMessage element) => element is StartGameMessage) == 1);
+		assert (messageList.count((TableMessage element) => element is StartGameMessage) == 1);
 	}
 	
 }

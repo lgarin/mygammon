@@ -16,45 +16,59 @@ import ceylon.test {
 }
 
 shared object world {
-	value roomMap = HashMap<String, RoomImpl>(linked);
+	value roomMap = HashMap<RoomId, Room>(linked);
 	
 	shared Duration maximumGameJoinTime = Duration(30 * milliseconds.perSecond);
 	shared Duration maximumTurnTime = Duration(60 * milliseconds.perSecond);
 	
-	shared variable Anything(ApplicationMessage)? messageListener = null;
+	shared variable Anything(TableMessage)? messageListener = null;
 	
-	shared void publish(ApplicationMessage message) {
+	shared void publish(TableMessage message) {
 		if (exists listener = messageListener) {
 			listener(message);
 		}
 	}
 	
-	shared Map<String, Room> rooms => roomMap;
+	shared Collection<RoomId> rooms => roomMap.keys;
 
-	shared Room createRoom(String id, Integer tableCount) {
-		value room = RoomImpl(id, tableCount);
+	shared RoomId? createRoom(String id, Integer tableCount) {
+		if (roomMap.defines(RoomId(id))) {
+			return null;
+		}
+		value room = Room(id, tableCount);
 		roomMap.put(room.id, room);
-		return room;
+		return room.id;
 	}
+	
+	shared PlayerId? createPlayer(RoomId roomId, String name) {
+		if (exists room = roomMap[roomId]) {
+			return room.createPlayer(name).id;
+		} else {
+			return null;
+		}
+	}
+	
+	// TODO add all methods for Player class
 }
 
 class WorldTest() {
 	test
 	shared void createRoomAddsNewRoom() {
-		String roomId = "test1";
-		Room r = world.createRoom(roomId, 10);
-		assert (r.id == roomId);
-		assert (exists it = world.rooms[roomId]);
+		value roomId = "test1";
+		value r = world.createRoom(roomId, 10);
+		assert (exists r);
+		assert (r.string == roomId);
+		assert (world.rooms.contains(r));
 	}
-	
+
 	test
-	shared void createRoomReplaceExistingRoom() {
-		String roomId = "test1";
-		world.createRoom(roomId, 10);
-		world.createRoom(roomId, 20);
-		assert (world.rooms.size == 1);
-		assert (exists it = world.rooms[roomId]);
-		assert (it.tables.size == 20);
+	shared void cannotCreateTwoRoomsWithSameId() {
+		value roomId = "test2";
+		value r1 = world.createRoom(roomId, 10);
+		assert (exists r1);
+		value r2 = world.createRoom(roomId, 20);
+		assert (r2 is Null);
+		assert (world.rooms.contains(r1));
 	}
 }
 

@@ -8,30 +8,27 @@ import ceylon.test {
 	test
 }
 
-shared interface Table {
+final shared class TableId(shared RoomId roomId, shared Integer index) extends StringIdentifier("``roomId``-table-``index``") {}
 
-	shared formal Boolean free;
+class Table(shared Integer index, shared RoomId roomId) {
 	
-	shared formal Integer queueSize;
-}
-
-class TableImpl(shared Integer index, shared String roomId) satisfies Table {
+	shared TableId id = TableId(roomId, index);
 	
-	variable MatchImpl? match = null;
+	variable Match? match = null;
 	
-	value playerQueue = HashSet<PlayerImpl>(linked);
+	value playerQueue = HashSet<Player>(linked);
 	
-	shared actual Boolean free => playerQueue.empty;
+	shared Boolean free => playerQueue.empty;
 	
-	shared actual Integer queueSize => playerQueue.size;
+	shared Integer queueSize => playerQueue.size;
 	
-	Boolean createMatch(PlayerImpl player1, PlayerImpl player2) {
-		value currentMatch = MatchImpl(player1, player2, this);
+	Boolean createMatch(Player player1, Player player2) {
+		value currentMatch = Match(player1, player2, this);
 		match = currentMatch;
 		return player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch);
 	}
 	
-	shared Boolean sitPlayer(PlayerImpl player) {
+	shared Boolean sitPlayer(Player player) {
 		if (playerQueue.contains(player)) {
 			return false;
 		} else if (match exists){
@@ -47,11 +44,11 @@ class TableImpl(shared Integer index, shared String roomId) satisfies Table {
 		}
 	}
 	
-	shared Boolean removePlayer(PlayerImpl player) {
+	shared Boolean removePlayer(Player player) {
 		return playerQueue.remove(player);
 	}
 	
-	shared Boolean removeMatch(MatchImpl currentMatch) {
+	shared Boolean removeMatch(Match currentMatch) {
 		if (exists matchImpl = match, matchImpl === currentMatch) {
 			match = null;
 			return true;
@@ -63,9 +60,9 @@ class TableImpl(shared Integer index, shared String roomId) satisfies Table {
 
 class TableTest() {
 	
-	value table = TableImpl(0, "room");
+	value table = Table(0, RoomId("room"));
 	
-	value messageList = ArrayList<ApplicationMessage>();
+	value messageList = ArrayList<TableMessage>();
 	world.messageListener = messageList.add;
 	
 	test
@@ -75,14 +72,14 @@ class TableTest() {
 	
 	test
 	shared void sitSinglePlayer() {
-		value result = table.sitPlayer(PlayerImpl("player1"));
+		value result = table.sitPlayer(Player("player1"));
 		assert (result);
 		assert (messageList.empty);
 	}
 	
 	test
 	shared void sitSamePlayerTwice() {
-		value player = PlayerImpl("player1");
+		value player = Player("player1");
 		table.sitPlayer(player);
 		value result = table.sitPlayer(player);
 		assert (!result);
@@ -91,33 +88,33 @@ class TableTest() {
 	
 	test
 	shared void sitTwoPlayers() {
-		value result1 = table.sitPlayer(PlayerImpl("player1"));
+		value result1 = table.sitPlayer(Player("player1"));
 		assert (result1);
-		value result2 = table.sitPlayer(PlayerImpl("player2"));
+		value result2 = table.sitPlayer(Player("player2"));
 		assert (result2);
-		assert (messageList.count((ApplicationMessage element) => element is JoiningMatchMessage) == 2);
+		assert (messageList.count((TableMessage element) => element is JoiningMatchMessage) == 2);
 	}
 	
 	test
 	shared void queuePlayer() {
-		table.sitPlayer(PlayerImpl("player1"));
-		table.sitPlayer(PlayerImpl("player2"));
+		table.sitPlayer(Player("player1"));
+		table.sitPlayer(Player("player2"));
 		
-		value result = table.sitPlayer(PlayerImpl("player3"));
+		value result = table.sitPlayer(Player("player3"));
 		assert (!result);
 		assert (table.queueSize == 3);
 	}
 	
 	test
 	shared void removeUnknownPlayer() {
-		value result = table.removePlayer(PlayerImpl("player1"));
+		value result = table.removePlayer(Player("player1"));
 		assert (!result);
 		assert (messageList.empty);
 	}
 	
 	test
 	shared void removeKnownPlayer() {
-		value player = PlayerImpl("player1");
+		value player = Player("player1");
 		table.sitPlayer(player);
 		value result = table.removePlayer(player);
 		assert (result);

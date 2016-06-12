@@ -2,13 +2,13 @@ import ceylon.test {
 
 	test
 }
-abstract class CheckerColor() of black | white {
+shared abstract class CheckerColor() of black | white {
 	shared formal CheckerColor oppositeColor;
 }
-object black extends CheckerColor() {
+shared object black extends CheckerColor() {
  	oppositeColor => white;
 }
-object white extends CheckerColor() {
+shared object white extends CheckerColor() {
 	oppositeColor => black;
 }
 

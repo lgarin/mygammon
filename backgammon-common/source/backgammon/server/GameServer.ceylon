@@ -1,174 +1,190 @@
 import backgammon.game {
-
 	GameConfiguration,
 	Game,
-	InitialRollMessage,
-	InboundGameMessage,
-	OutboundGameMessage,
-	PlayerReadyMessage,
-	StartTurnMessage,
-	MakeMoveMessage,
-	PlayedMoveMessage,
-	InvalidMoveMessage,
-	UndoMovesMessage,
-	UndoneMovesMessage,
-	InvalidStateMessage,
-	EndTurnMessage,
-	GameWonMessage,
-	CheckTimeoutMessage,
-	NotYourTurnMessage,
 	GameMove,
-	EndGameMessage,
-	GameEndedMessage
+	black,
+	white,
+	CheckerColor
 }
 import ceylon.time {
 
 	Instant
 }
 
-shared class GameServer(String player1Id, String player2Id, String gameId, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster) {
+class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster) {
 	
 	value diceRoller = DiceRoller();
-	variable Integer player1Warnings = 0;
-	variable Integer player2Warnings = 0;
-	value game = Game(player1Id, player2Id, gameId);
+	variable Integer blackWarnings = 0;
+	variable Integer whiteWarnings = 0;
+	value game = Game();
+	
+	function toPlayerColor(PlayerId playerId) {
+		if (playerId == player1Id) {
+			return black;
+		} else if (playerId == player2Id) {
+			return white;
+		} else {
+			return null;
+		}
+	}
+	
+	function toPlayerId(CheckerColor color) {
+		switch (color)
+		case (black) {
+			return player1Id;
+		}
+		case (white) {
+			return player2Id;
+		}
+	}
 	
 	shared Boolean sendInitialRoll() {
 		value roll = diceRoller.roll();
 		if (game.initialRoll(roll, configuration.maxRollDuration)) {
-			messageBroadcaster(InitialRollMessage(gameId, player1Id, roll.firstValue));
-			messageBroadcaster(InitialRollMessage(gameId, player2Id, roll.secondValue));
+			messageBroadcaster(InitialRollMessage(matchId, player1Id, roll.firstValue));
+			messageBroadcaster(InitialRollMessage(matchId, player2Id, roll.secondValue));
 			return true;
 		} else {
-			messageBroadcaster(InvalidStateMessage(gameId, player1Id));
-			messageBroadcaster(InvalidStateMessage(gameId, player2Id));
+			messageBroadcaster(InvalidStateMessage(matchId, player1Id));
+			messageBroadcaster(InvalidStateMessage(matchId, player2Id));
 			return false;
 		}
 	}
 	
-	void increaseWarningCount(String playerId, Integer increment) {
-		if (playerId == player1Id) {
-			player1Warnings += 1;
-		} else if (playerId == player2Id) {
-			player2Warnings += 1;
+	void increaseWarningCount(CheckerColor playerColor, Integer increment) {
+		switch (playerColor)
+		case (black) {
+			blackWarnings += increment;
+		}
+		case (white) {
+			whiteWarnings += increment;
 		}
 	}
 	
-	void endTurn(String playerId) {
-		if (!game.isCurrentPlayer(playerId)) {
-			messageBroadcaster(NotYourTurnMessage(gameId, playerId));
-		} else if (game.endTurn(playerId)) {
-			if (exists nextPlayerId = game.switchTurn(playerId)) {
+	void endTurn(CheckerColor playerColor) {
+		if (!game.isCurrentColor(playerColor)) {
+			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor)));
+		} else if (game.endTurn(playerColor)) {
+			if (exists nextColor = game.switchTurn(playerColor)) {
 				value roll = diceRoller.roll();
-				value turnDuration = game.hasAvailableMove(nextPlayerId) then configuration.maxTurnDuration else configuration.maxEmptyTurnDuration;
-				assert (game.beginTurn(nextPlayerId, roll, turnDuration));
-				messageBroadcaster(StartTurnMessage(gameId, nextPlayerId, roll));
-			} else if (game.hasWon(playerId)) {
-				messageBroadcaster(GameWonMessage(gameId, playerId));
+				value turnDuration = game.hasAvailableMove(nextColor) then configuration.maxTurnDuration else configuration.maxEmptyTurnDuration;
+				assert (game.beginTurn(nextColor, roll, turnDuration));
+				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), roll));
+			} else if (game.hasWon(playerColor)) {
+				messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor)));
 			}
 		} else {
-			messageBroadcaster(InvalidStateMessage(gameId, playerId));
+			messageBroadcaster(InvalidStateMessage(matchId, toPlayerId(playerColor)));
 		}
 	}
 	
-	void undoMoves(String playerId) {
-		if (!game.isCurrentPlayer(playerId)) {
-				messageBroadcaster(NotYourTurnMessage(gameId, playerId));
-			} else if (game.undoTurnMoves(playerId)) {
-				messageBroadcaster(UndoneMovesMessage(gameId, playerId));
-			} else {
-				messageBroadcaster(InvalidStateMessage(gameId, playerId));
-			}
+	void undoMoves(CheckerColor playerColor) {
+		if (!game.isCurrentColor(playerColor)) {
+			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor)));
+		} else if (game.undoTurnMoves(playerColor)) {
+			messageBroadcaster(UndoneMovesMessage(matchId, toPlayerId(playerColor)));
+		} else {
+			messageBroadcaster(InvalidStateMessage(matchId, toPlayerId(playerColor)));
+		}
 	}
 	
-	void makeMove(String playerId, GameMove move) {
-		if (!game.isCurrentPlayer(playerId)) {
-				messageBroadcaster(NotYourTurnMessage(gameId, playerId));
-			} else if (game.moveChecker(playerId, move.sourcePosition, move.targetPosition)) {
-				messageBroadcaster(PlayedMoveMessage(gameId, playerId, move));
-			} else {
-				increaseWarningCount(playerId, configuration.invalidMoveWarningCount);
-				messageBroadcaster(InvalidMoveMessage(gameId, playerId, move));
-			}
+	void makeMove(CheckerColor playerColor, GameMove move) {
+		if (!game.isCurrentColor(playerColor)) {
+			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor)));
+		} else if (game.moveChecker(playerColor, move.sourcePosition, move.targetPosition)) {
+			messageBroadcaster(PlayedMoveMessage(matchId, toPlayerId(playerColor), move));
+		} else {
+			increaseWarningCount(playerColor, configuration.invalidMoveWarningCount);
+			messageBroadcaster(InvalidMoveMessage(matchId, toPlayerId(playerColor), move));
+		}
 	}
 	
-	void beginGame(String playerId) {
-		if (game.begin(playerId)) {
-			if (exists currentPlayerId = game.currentPlayerId) {
+	void beginGame(CheckerColor playerColor) {
+		if (game.begin(playerColor)) {
+			if (exists currentColor = game.currentColor) {
 				value roll = diceRoller.roll();
-				assert (game.beginTurn(currentPlayerId, roll, configuration.maxTurnDuration));
-				messageBroadcaster(StartTurnMessage(gameId, currentPlayerId, roll));
+				assert (game.beginTurn(currentColor, roll, configuration.maxTurnDuration));
+				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), roll));
 			} else {
 				sendInitialRoll();
 			}
 		} else {
-			messageBroadcaster(InvalidStateMessage(gameId, playerId));
+			messageBroadcaster(InvalidStateMessage(matchId, toPlayerId(playerColor)));
 		}
 	}
 	
-	function isGamePlayer(String playerId) => playerId == player1Id || playerId == player2Id;
-	
-	shared void surrenderGame(String playerId) {
-		if (!isGamePlayer(playerId)) {
-			return;
-		}
-		
-		if (exists currentPlayerId = game.currentPlayerId) {
-			value opponentId = playerId == player1Id then player2Id else player1Id;
-			messageBroadcaster(GameWonMessage(gameId, opponentId));
+	void surrenderGame(CheckerColor playerColor) {
+		if (exists currentColor = game.currentColor) {
+			value opponentId = toPlayerId(playerColor.oppositeColor);
+			messageBroadcaster(GameWonMessage(matchId, opponentId));
 		}
 		endGame();
 	}
 	
 	void endGame() {
 		if (game.end()) {
-			messageBroadcaster(GameEndedMessage(gameId, player1Id));
-			messageBroadcaster(GameEndedMessage(gameId, player2Id));
+			messageBroadcaster(GameEndedMessage(matchId, player1Id));
+			messageBroadcaster(GameEndedMessage(matchId, player2Id));
 		}
 	}
 	
-	void handleMessage(InboundGameMessage message) {
+	void handleMessage(InboundGameMessage message, CheckerColor playerColor) {
 		switch (message) 
 		case (is PlayerReadyMessage) {
-			beginGame(message.playerId);
+			beginGame(playerColor);
 		}
 		case (is MakeMoveMessage) {
-			makeMove(message.playerId, message.move);
+			makeMove(playerColor, message.move);
 		}
 		case (is UndoMovesMessage) {
-			undoMoves(message.playerId);
+			undoMoves(playerColor);
 		}
 		case (is EndTurnMessage) {
-			endTurn(message.playerId);
+			endTurn(playerColor);
 		}
 		case (is CheckTimeoutMessage) {
-			
+			// does nothing timeout are checked in processMessage
 		}
 		case (is EndGameMessage) {
-			surrenderGame(message.playerId);
+			surrenderGame(playerColor);
 		}
 	}
 	
-	shared void processMessage(InboundGameMessage message, Instant currentTime) {
-		if (!isGamePlayer(message.playerId)) {
-			return;
-		}
-		
-		if (game.timedOut(currentTime.minus(configuration.serverAdditionalTimeout))) {
-			if (exists playerId = game.currentPlayerId) {
-				increaseWarningCount(playerId, configuration.timeoutActionWarningCount);
-				endTurn(playerId);
-			} else {
-				endGame();
-			}
+	void handleTimeout() {
+		if (exists currentColor = game.currentColor) {
+			increaseWarningCount(currentColor, configuration.timeoutActionWarningCount);
+			endTurn(currentColor);
 		} else {
-			handleMessage(message);
+			endGame();
 		}
-		
-		if (player1Warnings > configuration.maxWarningCount) {
-			surrenderGame(player1Id);
-		} else if (player2Warnings > configuration.maxWarningCount) {
-			surrenderGame(player2Id);
+	}
+	
+	shared Boolean processMessage(InboundGameMessage message, Instant currentTime) {
+		if (exists color = toPlayerColor(message.playerId)) {
+			if (game.timedOut(currentTime.minus(configuration.serverAdditionalTimeout))) {
+				handleTimeout();
+			} else {
+				handleMessage(message, color);
+			}
+			
+			if (blackWarnings > configuration.maxWarningCount) {
+				surrenderGame(black);
+			} else if (whiteWarnings > configuration.maxWarningCount) {
+				surrenderGame(white);
+			}
+			
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean quitGame(PlayerId playerId) {
+		if (exists color = toPlayerColor(playerId)) {
+			surrenderGame(color);
+			return true;
+		} else {
+			return false;
 		}
 	}
 }

@@ -11,34 +11,24 @@ import ceylon.time {
 	now
 }
 
-shared interface Player {
+final shared class PlayerId(shared String id) extends StringIdentifier(id) {}
 
-	shared formal String id;
+class Player(String playerId, variable Room? room = null) {
 	
-	shared formal String? roomId;
-	shared formal Integer? tableIndex;
-
-	shared formal Boolean joinTable(Integer tableIndex);
-	shared formal Boolean leaveRoom();
-	shared formal Boolean leaveTable();
-	shared formal Boolean startGame();
-	shared formal Boolean leaveMatch();
-	shared formal Boolean findMatchTable();
-}
-
-class PlayerImpl(shared actual String id, variable RoomImpl? room = null) satisfies Player {
-	variable TableImpl? table = null;
-	variable MatchImpl? match = null;
+	shared PlayerId id = PlayerId(playerId);
+	
+	variable Table? table = null;
+	variable Match? match = null;
 	variable Instant lastActivity = now();
 	
-	shared actual String? roomId => room?.id;
-	shared actual Integer? tableIndex => table?.index;
+	shared RoomId? roomId => room?.id;
+	shared Integer? tableIndex => table?.index;
 	
-	shared Boolean isInRoom(String roomId) {
+	shared Boolean isInRoom(RoomId roomId) {
 		return room?.id?.equals(roomId) else false;
 	}
 	
-	shared actual Boolean leaveRoom() {
+	shared Boolean leaveRoom() {
 		leaveTable();
 		if (exists currentRoom = room) {
 			currentRoom.removePlayer(this);
@@ -49,20 +39,20 @@ class PlayerImpl(shared actual String id, variable RoomImpl? room = null) satisf
 		}
 	}
 	
-	shared actual Boolean leaveTable() {
+	shared Boolean leaveTable() {
 		leaveMatch();
 		
 		if (exists currentTable = table) {
 			currentTable.removePlayer(this);
 			table = null;
-			world.publish(LeaftTableMessage(this, currentTable));
+			world.publish(LeaftTableMessage(id, currentTable.id));
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
-	shared actual Boolean findMatchTable() {
+	shared Boolean findMatchTable() {
 		if (exists currentRoom = room) {
 			return currentRoom.sitPlayer(this);
 		} else {
@@ -70,20 +60,20 @@ class PlayerImpl(shared actual String id, variable RoomImpl? room = null) satisf
 		}
 	}
 	
-	Boolean doJoinTable(TableImpl currentTable) {
+	Boolean doJoinTable(Table currentTable) {
 		leaveTable();
 		
 		table = currentTable;
 		lastActivity = now();
-		world.publish(JoinedTableMessage(this, currentTable));
+		world.publish(JoinedTableMessage(id, currentTable.id));
 		value seated = currentTable.sitPlayer(this);
 		if (seated && match is Null) {
-			world.publish(WaitingOpponentMessage(this, currentTable));
+			world.publish(WaitingOpponentMessage(id, currentTable.id));
 		}
 		return true;
 	}
 	
-	shared actual Boolean joinTable(Integer tableIndex) {
+	shared Boolean joinTable(Integer tableIndex) {
 		if (exists currentRoom = room) {
 			value table = currentRoom.tables[tableIndex];
 			if (exists currentTable = table) {
@@ -93,12 +83,12 @@ class PlayerImpl(shared actual String id, variable RoomImpl? room = null) satisf
 		return false;
 	}
 	
-	shared actual Boolean startGame() {
+	shared Boolean startGame() {
 		lastActivity = now();
 		return match?.startGame(this) else false;
 	}
 	
-	shared actual Boolean leaveMatch() {
+	shared Boolean leaveMatch() {
 		if (exists currentMatch = match) {
 			currentMatch.end(this);
 			match = null;
@@ -107,7 +97,7 @@ class PlayerImpl(shared actual String id, variable RoomImpl? room = null) satisf
 		return false;
 	}
 	
-	shared Boolean joinMatch(MatchImpl currentMatch) {
+	shared Boolean joinMatch(Match currentMatch) {
 		if (currentMatch.game exists) {
 			return false;
 		}
@@ -116,7 +106,7 @@ class PlayerImpl(shared actual String id, variable RoomImpl? room = null) satisf
 		
 		match = currentMatch;
 		lastActivity = now();
-		world.publish(JoiningMatchMessage(this, currentMatch));
+		world.publish(JoiningMatchMessage(id, currentMatch.id));
 		return true;
 	}
 	
@@ -127,11 +117,11 @@ class PlayerImpl(shared actual String id, variable RoomImpl? room = null) satisf
 
 class PlayerTest() {
 	
-	value messageList = ArrayList<ApplicationMessage>();
+	value messageList = ArrayList<TableMessage>();
 	world.messageListener = messageList.add;
 	
-	value room = RoomImpl("room", 1);
-	value player = PlayerImpl("player", room);
+	value room = Room("room", 1);
+	value player = Player("player", room);
 	
 	test
 	shared void newPlayerIsInRoom() {
@@ -168,7 +158,7 @@ class PlayerTest() {
 	shared void joinMatchTableWithoutOpponent() {
 		value result = player.findMatchTable();
 		assert (!result);
-		assert (messageList.count((ApplicationMessage element) => element is JoinedTableMessage) == 0);
+		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 0);
 	}
 	
 	test
@@ -180,11 +170,11 @@ class PlayerTest() {
 	
 	test
 	shared void findMatchTableWithOpponent() {
-		value opponent = PlayerImpl("opponent", room);
+		value opponent = Player("opponent", room);
 		opponent.findMatchTable();
 		value result = player.findMatchTable();
 		assert (result);
-		assert (messageList.count((ApplicationMessage element) => element is JoinedTableMessage) == 2);
+		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 2);
 	}
 	
 	test
@@ -193,7 +183,7 @@ class PlayerTest() {
 		assert (result);
 		assert (exists tableIndex = player.tableIndex);
 		assert (tableIndex == 0);
-		assert (messageList.count((ApplicationMessage element) => element is JoinedTableMessage) == 1);
+		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 1);
 	}
 	
 	test
@@ -205,7 +195,7 @@ class PlayerTest() {
 	
 	test
 	shared void leaveTableWithMatch() {
-		value opponent = PlayerImpl("opponent", room);
+		value opponent = Player("opponent", room);
 		opponent.findMatchTable();
 		player.findMatchTable();
 		value result = player.leaveTable();
@@ -227,7 +217,7 @@ class PlayerTest() {
 	
 	test
 	shared void waitingSeatWithMatch() {
-		value opponent = PlayerImpl("opponent", room);
+		value opponent = Player("opponent", room);
 		opponent.findMatchTable();
 		player.findMatchTable();
 		value result = player.isWaitingSeat();
@@ -236,18 +226,18 @@ class PlayerTest() {
 	
 	test
 	shared void joinMatch() {
-		value opponent = PlayerImpl("opponent", room);
-		value table = TableImpl(0, room.id);
-		value match = MatchImpl(player, opponent, table);
+		value opponent = Player("opponent", room);
+		value table = Table(0, room.id);
+		value match = Match(player, opponent, table);
 		value result = player.joinMatch(match);
 		assert (result);
 	}
 	
 	test
 	shared void joinStartedMatch() {
-		value opponent = PlayerImpl("opponent", room);
-		value table = TableImpl(0, room.id);
-		value match = MatchImpl(player, opponent, table);
+		value opponent = Player("opponent", room);
+		value table = Table(0, room.id);
+		value match = Match(player, opponent, table);
 		match.startGame(opponent);
 		match.startGame(player);
 		value result = player.joinMatch(match);

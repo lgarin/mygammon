@@ -9,7 +9,7 @@ import ceylon.collection {
 }
 
 
-shared class Game(shared String player1Id, shared String player2Id, String gameId) {
+shared class Game() {
 
 	value board = GameBoard();
 	value currentMoves = ArrayList<GameMove>();
@@ -21,49 +21,37 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 		assert (board.putNewCheckers(board.blackHomePosition - element.key, black, element.item));
 	}
 
-	shared variable String? currentPlayerId = null;
+	shared variable CheckerColor? currentColor = null;
 	shared variable DiceRoll? currentRoll = null;
 	
-	variable Boolean player1Ready = false;
-	variable Boolean player2Ready = false;
+	variable Boolean blackReady = false;
+	variable Boolean whiteReady = false;
 	variable Instant nextTimeout = Instant(0);
 	
-	function initialPlayerId(DiceRoll diceRoll) {
+	function initialColor(DiceRoll diceRoll) {
 		if (diceRoll.firstValue < diceRoll.secondValue) {
-			return player1Id;
-		} else if (diceRoll.firstValue < diceRoll.secondValue) {
-			return player2Id;
-		} else {
-			return null;
-		}
-	}
-	
-	shared Boolean initialRoll(DiceRoll roll, Duration maxDuration) {
-		if (currentPlayerId exists) {
-			return false;
-		}
-		
-		player1Ready = false;
-		player2Ready = false;
-		currentRoll = roll;
-		nextTimeout = now().plus(maxDuration);
-		return true;
-	}
-	
-	shared Boolean isCurrentPlayer(String playerId) => currentPlayerId?.equals(playerId) else false;
-
-	function playerColor(String? playerId) {
-		if (!exists playerId) {
-			return null;
-		} else if (playerId == player1Id) {
 			return black;
-		} else if (playerId == player2Id) {
+		} else if (diceRoll.firstValue < diceRoll.secondValue) {
 			return white;
 		} else {
 			return null;
 		}
 	}
 	
+	shared Boolean initialRoll(DiceRoll roll, Duration maxDuration) {
+		if (currentColor exists) {
+			return false;
+		}
+		
+		blackReady = false;
+		whiteReady = false;
+		currentRoll = roll;
+		nextTimeout = now().plus(maxDuration);
+		return true;
+	}
+	
+	shared Boolean isCurrentColor(CheckerColor color) => currentColor?.equals(color) else false;
+
 	function isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
 		if (!board.isInRange(source) || !board.isInRange(target)) {
 			return false;
@@ -88,8 +76,8 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 		}
 	}
 	
-	shared Boolean beginTurn(String playerId, DiceRoll roll, Duration maxDuration) {
-		if (!isCurrentPlayer(playerId)) {
+	shared Boolean beginTurn(CheckerColor player, DiceRoll roll, Duration maxDuration) {
+		if (!isCurrentColor(player)) {
 			return false;
 		}
 		currentRoll = roll;
@@ -97,12 +85,12 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 		return true;
 	}
 	
-	shared Boolean hasAvailableMove(String playerId) {
-		return !computeAvailableMoves(playerId).empty;
+	shared Boolean hasAvailableMove(CheckerColor color) {
+		return !computeAvailableMoves(color).empty;
 	}
 	
-	shared {GameMove*} computeAvailableMoves(String playerId) {
-		if (isCurrentPlayer(playerId), exists color = playerColor(playerId), exists roll = currentRoll, exists maxValue = roll.maxValue) {
+	shared {GameMove*} computeAvailableMoves(CheckerColor color) {
+		if (isCurrentColor(color), exists roll = currentRoll, exists maxValue = roll.maxValue) {
 			value targetRangeLength = maxValue * board.directionSign(color);
 			value sourcePositionRange = board.positionRange(color);
 			return {
@@ -116,44 +104,44 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 		}
 	}
 	
-	shared Boolean isLegalMove(String playerId, Integer source, Integer target) {
-		if (!isCurrentPlayer(playerId)) {
+	shared Boolean isLegalMove(CheckerColor color, Integer source, Integer target) {
+		if (!isCurrentColor(color)) {
 			return false;
 		}
 		
-		if (exists color = playerColor(playerId), exists roll = currentRoll) {
+		if (exists roll = currentRoll) {
 			return isLegalCheckerMove(color, roll, source, target);
 		} else {
 			return false;
 		}
 	}
 	
-	function useRollValue(String playerId, Integer source, Integer target) {
+	function useRollValue(CheckerColor color, Integer source, Integer target) {
 		if (exists roll = currentRoll) {
 			return roll.useValueAtLeast(board.distance(source, target));
 		}
 		return null;
 	}
 	
-	function hitChecker(String playerId, Integer source, Integer target) {
-		if (exists color = playerColor(playerId), board.countCheckers(target, color.oppositeColor) > 0) {
+	function hitChecker(CheckerColor color, Integer source, Integer target) {
+		if (board.countCheckers(target, color.oppositeColor) > 0) {
 			return color.oppositeColor;
 		}
 		return null;
 	}
 	
-	shared Boolean moveChecker(String playerId, Integer source, Integer target) {
+	shared Boolean moveChecker(CheckerColor color, Integer source, Integer target) {
 	
-		if (isLegalMove(playerId, source, target)) {
+		if (isLegalMove(color, source, target)) {
 			return false;
 		}
 		
-		value rollValue = useRollValue(playerId, source, target);
+		value rollValue = useRollValue(color, source, target);
 		if (!exists rollValue) {
 			return false;
 		}
 		
-		value bolt = hitChecker(playerId, source, target);
+		value bolt = hitChecker(color, source, target);
 		if (exists bolt) {
 			assert (board.moveChecker(target, board.graveyardPosition(bolt)));
 		}
@@ -164,10 +152,10 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 		return true;
 	}
 	
-	shared Boolean undoTurnMoves(String playerId) {
-		if (!isCurrentPlayer(playerId)) {
+	shared Boolean undoTurnMoves(CheckerColor color) {
+		if (!isCurrentColor(color)) {
 			return false;
-		} else if (exists roll = currentRoll, exists color = playerColor(currentPlayerId)) {
+		} else if (exists roll = currentRoll) {
 			while (exists move = currentMoves.pop()) {
 				currentRoll = roll.add(move.rollValue);
 				assert (board.moveChecker(move.targetPosition, move.sourcePosition));
@@ -189,58 +177,47 @@ shared class Game(shared String player1Id, shared String player2Id, String gameI
 		}
 	}
 	
-	shared Boolean hasWon(String playerId) {
-		if (exists color = playerColor(playerId)) {
-			return board.countCheckers(board.homePosition(color), color) == checkerCount;
+	shared Boolean hasWon(CheckerColor color)=> board.countCheckers(board.homePosition(color), color) == checkerCount;
+	
+	shared CheckerColor? switchTurn(CheckerColor color) {
+		if (!isCurrentColor(color)) {
+			return null;
 		} else {
-			return false;
+			currentColor = color.oppositeColor;
+			return currentColor;
 		}
 	}
 	
-	shared String? switchTurn(String playerId) {
-		if (!isCurrentPlayer(playerId)) {
-			return null;
-		} else if (playerId == player1Id) {
-			currentPlayerId = player2Id;
-			return currentPlayerId;
-		} else if (playerId == player2Id) {
-			currentPlayerId = player1Id;
-			return currentPlayerId;
-		} else {
-			return null;
-		}
-	}
-	
-	shared Boolean endTurn(String playerId) {
-		if (!isCurrentPlayer(playerId)) {
+	shared Boolean endTurn(CheckerColor color) {
+		if (!isCurrentColor(color)) {
 			return false;
-		} else if (hasWon(playerId)) {
-			currentPlayerId = null;
+		} else if (hasWon(color)) {
+			currentColor = null;
 		}
 		currentMoves.clear();
 		return true;
 	}
 	
-	shared Boolean begin(String playerId) {
-		if (currentPlayerId exists) {
+	shared Boolean begin(CheckerColor color) {
+		if (currentColor exists) {
 			return false;
-		} else if (!player1Ready && playerId == player1Id) {
-			player1Ready = true;
-		} else if (!player2Ready && playerId == player2Id) {
-			player2Ready = true;
+		} else if (!blackReady && color == black) {
+			blackReady = true;
+		} else if (!whiteReady && color == white) {
+			whiteReady = true;
 		} else {
 			return false;
 		}
 		
-		if (player1Ready && player2Ready, exists roll = currentRoll) {
-			currentPlayerId = initialPlayerId(roll);
+		if (blackReady && whiteReady, exists roll = currentRoll) {
+			currentColor = initialColor(roll);
 		}
 		return true;
 	}
 	
 	shared Boolean end() {
 		if (currentRoll exists) {
-			currentPlayerId = null;
+			currentColor = null;
 			currentRoll = null;
 			return true;
 		}
