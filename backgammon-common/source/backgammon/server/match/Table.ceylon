@@ -1,16 +1,23 @@
+import backgammon.common {
+	JoiningMatchMessage,
+	TableMessage,
+	TableId,
+	RoomId,
+	OutboundTableMessage,
+	OutboundMatchMessage,
+	InboundGameMessage
+}
+
 import ceylon.collection {
 	HashSet,
 	linked,
 	ArrayList
 }
 import ceylon.test {
-
 	test
 }
 
-final shared class TableId(shared RoomId roomId, shared Integer index) extends StringIdentifier("``roomId``-table-``index``") {}
-
-class Table(shared Integer index, shared RoomId roomId) {
+class Table(shared Integer index, shared RoomId roomId, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared TableId id = TableId(roomId, index);
 	
@@ -22,7 +29,15 @@ class Table(shared Integer index, shared RoomId roomId) {
 	
 	shared Integer queueSize => playerQueue.size;
 	
-	Boolean createMatch(Player player1, Player player2) {
+	shared void publish(OutboundTableMessage|OutboundMatchMessage message) {
+		messageBroadcaster(message);
+	}
+	
+	shared void send(InboundGameMessage message) {
+		// TODO
+	}
+	
+	function createMatch(Player player1, Player player2) {
 		value currentMatch = Match(player1, player2, this);
 		match = currentMatch;
 		return player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch);
@@ -59,11 +74,9 @@ class Table(shared Integer index, shared RoomId roomId) {
 }
 
 class TableTest() {
-	
-	value table = Table(0, RoomId("room"));
-	
+
 	value messageList = ArrayList<TableMessage>();
-	world.messageListener = messageList.add;
+	value table = Table(0, RoomId("room"), messageList.add);
 	
 	test
 	shared void newTableIsFree() {

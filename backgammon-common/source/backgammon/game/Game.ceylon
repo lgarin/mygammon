@@ -155,7 +155,7 @@ shared class Game() {
 	shared Boolean undoTurnMoves(CheckerColor color) {
 		if (!isCurrentColor(color)) {
 			return false;
-		} else if (exists roll = currentRoll) {
+		} else if (exists roll = currentRoll, !currentMoves.empty) {
 			while (exists move = currentMoves.pop()) {
 				currentRoll = roll.add(move.rollValue);
 				assert (board.moveChecker(move.targetPosition, move.sourcePosition));

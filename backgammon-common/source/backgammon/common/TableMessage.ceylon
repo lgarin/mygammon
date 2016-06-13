@@ -1,5 +1,4 @@
-shared sealed interface TableMessage of OutboundTableMessage | MatchMessage {
-	shared formal PlayerId playerId;
+shared sealed interface TableMessage of OutboundTableMessage | MatchMessage satisfies PlayerMessage  {
 	shared formal TableId tableId;
 }
 

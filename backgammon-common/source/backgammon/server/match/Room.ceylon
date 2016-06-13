@@ -14,10 +14,19 @@ import ceylon.time {
 	now,
 	Duration
 }
+import backgammon.common {
 
-shared final class RoomId(shared String roomId) extends StringIdentifier(roomId) {}
+	JoiningMatchMessage,
+	WaitingOpponentMessage,
+	JoinedTableMessage,
+	RoomId,
+	PlayerId,
+	OutboundTableMessage,
+	OutboundMatchMessage,
+	PlayerMessage
+}
 
-class Room(String roomId, shared Integer tableCount) {
+class Room(String roomId, shared Integer tableCount, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared RoomId id = RoomId(roomId);
 	
@@ -28,7 +37,7 @@ class Room(String roomId, shared Integer tableCount) {
 	value tableList = ArrayList<Table>(tableCount);
 	
 	for (i in 0:tableCount) {
-		value table = Table(i, id);
+		value table = Table(i, id, messageBroadcaster);
 		tableList.add(table);
 	}
 	
@@ -84,10 +93,8 @@ class Room(String roomId, shared Integer tableCount) {
 }
 
 class RoomTest() {
-	value room = Room("test1", 10);
-	
-	value messageList = ArrayList<TableMessage>();
-	world.messageListener = messageList.add;
+	value messageList = ArrayList<PlayerMessage>();
+	value room = Room("test1", 10, messageList.add);
 	
 	test
 	shared void newRoomHasNoPlayer() {
@@ -141,7 +148,7 @@ class RoomTest() {
 		value player = room.createPlayer("player1");
 		value result = room.sitPlayer(player);
 		assert (!result);
-		assert (messageList.count((TableMessage element) => element is WaitingOpponentMessage) == 0);
+		assert (messageList.count((PlayerMessage element) => element is WaitingOpponentMessage) == 0);
 		assert (room.tables.count((Table element) => !element.free) == 0);
 	}
 	
@@ -153,9 +160,9 @@ class RoomTest() {
 		assert (!result1);
 		value result2 = room.sitPlayer(player2);
 		assert (result2);
-		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 2);
-		assert (messageList.count((TableMessage element) => element is WaitingOpponentMessage) == 1);
-		assert (messageList.count((TableMessage element) => element is JoiningMatchMessage) == 2);
+		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 2);
+		assert (messageList.count((PlayerMessage element) => element is WaitingOpponentMessage) == 1);
+		assert (messageList.count((PlayerMessage element) => element is JoiningMatchMessage) == 2);
 		assert (room.tables.count((Table element) => !element.free) == 1);
 	}
 }

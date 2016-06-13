@@ -1,17 +1,23 @@
+import backgammon.common {
+	JoiningMatchMessage,
+	LeaftTableMessage,
+	WaitingOpponentMessage,
+	JoinedTableMessage,
+	PlayerId,
+	RoomId,
+	PlayerMessage
+}
+
 import ceylon.collection {
 	ArrayList
 }
-
 import ceylon.test {
 	test
 }
-
 import ceylon.time {
 	Instant,
 	now
 }
-
-final shared class PlayerId(shared String id) extends StringIdentifier(id) {}
 
 class Player(String playerId, variable Room? room = null) {
 	
@@ -45,7 +51,7 @@ class Player(String playerId, variable Room? room = null) {
 		if (exists currentTable = table) {
 			currentTable.removePlayer(this);
 			table = null;
-			world.publish(LeaftTableMessage(id, currentTable.id));
+			currentTable.publish(LeaftTableMessage(id, currentTable.id));
 			return true;
 		} else {
 			return false;
@@ -65,10 +71,10 @@ class Player(String playerId, variable Room? room = null) {
 		
 		table = currentTable;
 		lastActivity = now();
-		world.publish(JoinedTableMessage(id, currentTable.id));
+		currentTable.publish(JoinedTableMessage(id, currentTable.id));
 		value seated = currentTable.sitPlayer(this);
 		if (seated && match is Null) {
-			world.publish(WaitingOpponentMessage(id, currentTable.id));
+			currentTable.publish(WaitingOpponentMessage(id, currentTable.id));
 		}
 		return true;
 	}
@@ -98,7 +104,7 @@ class Player(String playerId, variable Room? room = null) {
 	}
 	
 	shared Boolean joinMatch(Match currentMatch) {
-		if (currentMatch.game exists) {
+		if (currentMatch.isStarted) {
 			return false;
 		}
 		
@@ -106,7 +112,7 @@ class Player(String playerId, variable Room? room = null) {
 		
 		match = currentMatch;
 		lastActivity = now();
-		world.publish(JoiningMatchMessage(id, currentMatch.id));
+		currentMatch.table.publish(JoiningMatchMessage(id, currentMatch.id));
 		return true;
 	}
 	
@@ -117,10 +123,9 @@ class Player(String playerId, variable Room? room = null) {
 
 class PlayerTest() {
 	
-	value messageList = ArrayList<TableMessage>();
-	world.messageListener = messageList.add;
+	value messageList = ArrayList<PlayerMessage>();
 	
-	value room = Room("room", 1);
+	value room = Room("room", 1, messageList.add);
 	value player = Player("player", room);
 	
 	test
@@ -158,7 +163,7 @@ class PlayerTest() {
 	shared void joinMatchTableWithoutOpponent() {
 		value result = player.findMatchTable();
 		assert (!result);
-		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 0);
+		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 0);
 	}
 	
 	test
@@ -174,7 +179,7 @@ class PlayerTest() {
 		opponent.findMatchTable();
 		value result = player.findMatchTable();
 		assert (result);
-		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 2);
+		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 2);
 	}
 	
 	test
@@ -183,7 +188,7 @@ class PlayerTest() {
 		assert (result);
 		assert (exists tableIndex = player.tableIndex);
 		assert (tableIndex == 0);
-		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 1);
+		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 1);
 	}
 	
 	test
@@ -227,7 +232,7 @@ class PlayerTest() {
 	test
 	shared void joinMatch() {
 		value opponent = Player("opponent", room);
-		value table = Table(0, room.id);
+		value table = Table(0, room.id, messageList.add);
 		value match = Match(player, opponent, table);
 		value result = player.joinMatch(match);
 		assert (result);
@@ -236,7 +241,7 @@ class PlayerTest() {
 	test
 	shared void joinStartedMatch() {
 		value opponent = Player("opponent", room);
-		value table = Table(0, room.id);
+		value table = Table(0, room.id, messageList.add);
 		value match = Match(player, opponent, table);
 		match.startGame(opponent);
 		match.startGame(player);

@@ -4,9 +4,7 @@ import ceylon.time {
 	Instant,
 	now
 }
-import backgammon.game {
-	GameConfiguration
-}
+
 import ceylon.test {
 
 	test
@@ -16,13 +14,29 @@ import ceylon.collection {
 	ArrayList
 }
 
-shared final class MatchId(shared TableId tableId, Instant creationTime) extends StringIdentifier("``tableId``-game-``creationTime.millisecondsOfEpoch``") {}
+import backgammon.common {
+
+	StartMatchMessage,
+	LeaftMatchMessage,
+	TableMessage,
+	EndGameMessage,
+	GameWonMessage,
+	GameMessage,
+	StartGameMessage,
+	GameEndedMessage,
+	PlayerId,
+	MatchId,
+	RoomId
+}
+
 
 class Match(shared Player player1, shared Player player2, shared Table table) {
 	
-	shared variable GameServer? game = null;
+	variable Boolean started = false;
 	
-	shared variable PlayerId? winnerId = null;
+	shared Boolean isStarted => started;
+	
+	variable PlayerId? winnerId = null;
 	
 	Instant creationTime = now();
 	
@@ -34,9 +48,9 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 		shared variable Boolean ready = false;
 	}
 	
-	[PlayerStatus, PlayerStatus] playerStates = [PlayerStatus(), PlayerStatus()];
+	value playerStates = [PlayerStatus(), PlayerStatus()];
 	
-	Integer? playerIndex(Player player) {
+	function playerIndex(Player player) {
 		if (player === player1) {
 			return 0;
 		} else if (player === player2) {
@@ -46,7 +60,7 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 		}
 	}
 	
-	PlayerStatus? playerState(Player player) {
+	function playerState(Player player) {
 		if (exists index = playerIndex(player)) {
 			return playerStates[index];
 		} else {
@@ -59,13 +73,13 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 		if (winnerId exists) {
 			return false;
 		} else if (playerIndex(player) exists) {
-			if (exists currentGame = game) {
-				assert (currentGame.quitGame(player.id));
-				game = null;
+			if (started) {
+				table.send(EndGameMessage(id, player.id));
+				started = false;
 			}
 			
 			if (table.removeMatch(this)) {
-				world.publish(LeaftMatchMessage(player.id, id));
+				table.publish(LeaftMatchMessage(player.id, id));
 				return true;
 			} else {
 				return false;
@@ -75,8 +89,8 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 		}
 	}
 	
-	Boolean markReady(Player player) {
-		if (game exists || winnerId exists) {
+	function markReady(Player player) {
+		if (started || winnerId exists) {
 			return false;
 		} else if (remainingJoinTime.milliseconds < 0) {
 			if (!playerStates[0].ready) {
@@ -94,27 +108,29 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 		}
 	}
 	
-	Boolean canStartGame() => playerStates[0].ready && playerStates[1].ready;
+	function canStartGame() => playerStates[0].ready && playerStates[1].ready;
 	
-	void forwardGameMessage(GameMessage message) {
+	shared Boolean processGameMessage(GameMessage message) {
 		if (id == message.matchId) {
 			if (is GameWonMessage message) {
 				winnerId = message.playerId;
 			} else if (is GameEndedMessage message) {
 				table.removeMatch(this);
 			}
-			world.publish(message);
+			return true;
+		} else {
+			return false;
 		}
 		
 	}
 	
 	shared Boolean startGame(Player player) {
 		if (markReady(player)) {
-			world.publish(StartGameMessage(player.id, id));
+			table.publish(StartMatchMessage(player.id, id));
 			if (canStartGame()) {
-				value currentGame = GameServer(player1.id, player2.id, id, GameConfiguration(world.maximumTurnTime), forwardGameMessage);
-				game = currentGame;
-				return currentGame.sendInitialRoll();
+				table.send(StartGameMessage(id, player1.id, player2.id));
+				started = true;
+				return true;
 			}
 		}
 		return false;
@@ -123,10 +139,8 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 
 class MatchTest() {
 	
-	value match = Match(Player("player1"), Player("player2"), Table(0, RoomId("room")));
-	
 	value messageList = ArrayList<TableMessage>();
-	world.messageListener = messageList.add;
+	value match = Match(Player("player1"), Player("player2"), Table(0, RoomId("room"), messageList.add));
 	
 	test
 	shared void newMatchHasRemainingJoinTime() {
@@ -134,22 +148,15 @@ class MatchTest() {
 	}
 	
 	test
-	shared void newMatchHasNoGame() {
-		value result = match.game exists;
-		assert (!result);
-	}
-	
-	test
-	shared void newMatchHasNoWinner() {
-		value result = match.winnerId exists;
-		assert (!result);
+	shared void newMatchIsNotStarted() {
+		assert (!match.isStarted);
 	}
 	
 	test
 	shared void startGameWithThirdPlayer() {
 		value result = match.startGame(Player("player3"));
 		assert (!result);
-		assert (messageList.count((TableMessage element) => element is StartGameMessage) == 0);
+		assert (messageList.count((TableMessage element) => element is StartMatchMessage) == 0);
 	}
 	
 	test
@@ -158,14 +165,14 @@ class MatchTest() {
 		assert (!result1);
 		value result2 = match.startGame(match.player2);
 		assert (result2);
-		assert (messageList.count((TableMessage element) => element is StartGameMessage) == 2);
+		assert (messageList.count((TableMessage element) => element is StartMatchMessage) == 2);
 	}
 	
 	test
 	shared void startGameWithOnlyOnePlayer() {
 		value result = match.startGame(match.player1);
 		assert (!result);
-		assert (messageList.count((TableMessage element) => element is StartGameMessage) == 1);
+		assert (messageList.count((TableMessage element) => element is StartMatchMessage) == 1);
 	}
 	
 }
