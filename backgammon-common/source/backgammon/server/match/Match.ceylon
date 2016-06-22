@@ -32,17 +32,13 @@ import backgammon.common {
 
 class Match(shared Player player1, shared Player player2, shared Table table) {
 	
-	variable Boolean started = false;
-	
-	shared Boolean isStarted => started;
-	
 	variable PlayerId? winnerId = null;
 	
 	Instant creationTime = now();
 	
 	shared MatchId id = MatchId(table.id, creationTime);
 	
-	shared Duration remainingJoinTime => Duration(world.maximumGameJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
+	shared Duration remainingJoinTime => Duration(table.maxMatchJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
 
 	class PlayerStatus() {
 		shared variable Boolean ready = false;
@@ -73,9 +69,10 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 		if (winnerId exists) {
 			return false;
 		} else if (playerIndex(player) exists) {
-			if (started) {
+			if (isStarted) {
+				playerStates[0].ready = false;
+				playerStates[1].ready = false;
 				table.send(EndGameMessage(id, player.id));
-				started = false;
 			}
 			
 			if (table.removeMatch(this)) {
@@ -90,7 +87,7 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 	}
 	
 	function markReady(Player player) {
-		if (started || winnerId exists) {
+		if (isStarted || winnerId exists) {
 			return false;
 		} else if (remainingJoinTime.milliseconds < 0) {
 			if (!playerStates[0].ready) {
@@ -109,6 +106,8 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 	}
 	
 	function canStartGame() => playerStates[0].ready && playerStates[1].ready;
+	
+	shared Boolean isStarted => canStartGame();
 	
 	shared Boolean processGameMessage(GameMessage message) {
 		if (id == message.matchId) {
@@ -129,7 +128,6 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 			table.publish(StartMatchMessage(player.id, id));
 			if (canStartGame()) {
 				table.send(StartGameMessage(id, player1.id, player2.id));
-				started = true;
 				return true;
 			}
 		}
@@ -140,7 +138,7 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 class MatchTest() {
 	
 	value messageList = ArrayList<TableMessage>();
-	value match = Match(Player("player1"), Player("player2"), Table(0, RoomId("room"), messageList.add));
+	value match = Match(Player("player1"), Player("player2"), Table(0, RoomId("room"), Duration(1000), messageList.add));
 	
 	test
 	shared void newMatchHasRemainingJoinTime() {

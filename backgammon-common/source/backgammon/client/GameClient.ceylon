@@ -1,6 +1,24 @@
 import backgammon.game {
-	Game
+	Game,
+	GameConfiguration
 }
-shared class GameClient() {
-	Game? game = null;
+import backgammon.common {
+
+	InboundGameMessage,
+	OutboundGameMessage,
+	InitialRollMessage
+}
+shared class GameClient(GameConfiguration configuration, Anything(InboundGameMessage) messageBroadcaster) {
+	value game = Game();
+	
+	shared Boolean handleMessage(OutboundGameMessage message) {
+		// TODO add timeout in each message
+		/*
+		switch (message) 
+		case (is InitialRollMessage) {
+			game.initialRoll(message.roll, configuration.maxRollDuration);
+		}
+		 */
+		return false;
+	}
 }

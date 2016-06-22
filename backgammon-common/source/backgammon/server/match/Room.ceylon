@@ -26,7 +26,7 @@ import backgammon.common {
 	PlayerMessage
 }
 
-class Room(String roomId, shared Integer tableCount, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+final class Room(String roomId, shared Integer tableCount, Duration maxMatchJoinTime, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared RoomId id = RoomId(roomId);
 	
@@ -37,7 +37,7 @@ class Room(String roomId, shared Integer tableCount, Anything(OutboundTableMessa
 	value tableList = ArrayList<Table>(tableCount);
 	
 	for (i in 0:tableCount) {
-		value table = Table(i, id, messageBroadcaster);
+		value table = Table(i, id, maxMatchJoinTime, messageBroadcaster);
 		tableList.add(table);
 	}
 	
@@ -94,7 +94,7 @@ class Room(String roomId, shared Integer tableCount, Anything(OutboundTableMessa
 
 class RoomTest() {
 	value messageList = ArrayList<PlayerMessage>();
-	value room = Room("test1", 10, messageList.add);
+	value room = Room("test1", 10, Duration(1000), messageList.add);
 	
 	test
 	shared void newRoomHasNoPlayer() {

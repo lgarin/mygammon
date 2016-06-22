@@ -15,7 +15,7 @@ import ceylon.time {
 
 shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
-	value room = Room(configuration.roomName, configuration.tableCount, messageBroadcaster);
+	value room = Room(configuration.roomName, configuration.tableCount, configuration.maxMatchJoinTime, messageBroadcaster);
 	
 	shared Boolean processMessage(InboundPlayerMessage message, Instant currentTime) {
 		// TODO implement flooding control
@@ -26,13 +26,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 		
 		return false;
 	}
-	
-	shared PlayerId createPlayer(String name) {
-		return room.createPlayer(name).id;
-	}
-	
-	
-	
+
 	shared void removeInactivePlayers(Instant currentTime) {
 		
 	}

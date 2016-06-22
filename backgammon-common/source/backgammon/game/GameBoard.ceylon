@@ -4,6 +4,16 @@ import ceylon.collection {
 import ceylon.test {
 	test
 }
+import ceylon.buffer.base {
+
+	base64StringStandard,
+	base32StringHex,
+	base64ByteStandard
+}
+import ceylon.buffer.codec {
+
+	strict
+}
 final class GameBoard() {
 
 	shared Integer totalPointCount = 26;
@@ -15,12 +25,45 @@ final class GameBoard() {
 	shared Integer blackHomePosition = totalPointCount - 1;
 
 	class BoardPoint(shared Integer position) {
-		ArrayList<CheckerColor> checkers = ArrayList<CheckerColor>();
+		variable Integer whiteCount = 0;
+		variable Integer blackCount = 0;
 		
-		shared void pushChecker(CheckerColor color) => checkers.push(color);
-		shared CheckerColor? popChecker() => checkers.pop();
-		shared Boolean hasChecker(CheckerColor color) => checkers.any(color.equals);
-		shared Integer countCheckers(CheckerColor color) => checkers.count(color.equals);
+		
+		shared void putChecker(CheckerColor color, Integer count) => resetChecker(color, countCheckers(color) + count);
+		
+		shared void resetChecker(CheckerColor color, Integer count) {
+			switch (color)
+			case (black) {blackCount = count;}
+			case (white) {whiteCount = count;}
+		}
+		
+		shared Boolean removeChecker(CheckerColor color) {
+			switch (color)
+			case (black) { 
+				if (blackCount > 0) {
+					blackCount--;
+					return true; 
+				} else {
+					return false;
+				}
+			}
+			case (white) { 
+				if (whiteCount > 0) {
+					whiteCount--;
+					return true; 
+				} else {
+					return false;
+				}
+			}
+		}
+		
+		shared Boolean hasChecker(CheckerColor color) => countCheckers(color) > 0;
+		
+		shared Integer countCheckers(CheckerColor color) {
+			switch (color)
+			case (black) {return blackCount;}
+			case (white) {return whiteCount;}
+		}
 	}
 
 	ArrayList<BoardPoint> points = ArrayList<BoardPoint>(totalPointCount);
@@ -41,10 +84,10 @@ final class GameBoard() {
 	}
 
 	shared Boolean putNewCheckers(Integer position, CheckerColor color, Integer count) {
-		if (exists boardPoint = points[position]) {
-			for (i in 0:count) {
-				boardPoint.pushChecker(color);
-			}
+		if (count <= 0) {
+			return false; 
+		} else if (exists boardPoint = points[position]) {
+			boardPoint.putChecker(color, count);
 			return true;
 		} else {
 			return false;
@@ -96,10 +139,10 @@ final class GameBoard() {
 		return playRange(color).any((Integer element) => hasChecker(element, color));
 	}
 	
-	shared Boolean moveChecker(Integer sourcePosition, Integer targetPosition) {
+	shared Boolean moveChecker(CheckerColor color, Integer sourcePosition, Integer targetPosition) {
 		if (exists sourcePoint = points[sourcePosition], exists targetPoint = points[targetPosition]) {
-			if (exists checker = sourcePoint.popChecker()) {
-				targetPoint.pushChecker(checker);
+			if (sourcePoint.removeChecker(color)) {
+				targetPoint.putChecker(color, 1);
 				return true;
 			} else {
 				return false;
@@ -110,6 +153,28 @@ final class GameBoard() {
 	}
 	
 	shared Integer distance(Integer sourcePosition, Integer targetPosition) => (targetPosition - sourcePosition).magnitude;
+	
+	function encodeState(CheckerColor color) {
+		return {for (p in points) p.countCheckers(color).byte};
+	}
+	
+	void decodeState(CheckerColor color, Iterator<Byte> data) {
+		for (p in points) {
+			if (is Byte count = data.next()) {
+				p.resetChecker(color, count.unsigned);
+			} else {
+				p.resetChecker(color, 0);
+			}
+		}
+	}
+	
+	shared String state => base64StringStandard.encode(encodeState(black).chain(encodeState(white)));
+	
+	assign state {
+		value data = base64StringStandard.decode(state, strict).iterator();
+		decodeState(black, data);
+		decodeState(white, data);
+	}
 }
 
 class GameBoardTest() {
@@ -165,15 +230,21 @@ class GameBoardTest() {
 	}
 	
 	test
+	shared void addNegativeNumberOfCheckers() {
+		value result = board.putNewCheckers(4, black, -1);
+		assert (!result);
+	}
+	
+	test
 	shared void cannotMoveFromPositionWithoutChecker() {
-		value result = board.moveChecker(1, 2);
+		value result = board.moveChecker(white, 1, 2);
 		assert (!result);
 	}
 	
 	test
 	shared void moveCheckerToFreePosition() {
 		board.putNewCheckers(2, white, 1);
-		value result = board.moveChecker(2, 22);
+		value result = board.moveChecker(white, 2, 22);
 		assert (result);
 		assert (board.countCheckers(2, white) == 0);
 		assert (board.countCheckers(22, white) == 1);
@@ -183,7 +254,7 @@ class GameBoardTest() {
 	shared void moveCheckerToOccupiedPosition() {
 		board.putNewCheckers(2, white, 1);
 		board.putNewCheckers(22, black, 1);
-		value result = board.moveChecker(2, 22);
+		value result = board.moveChecker(white, 2, 22);
 		assert (result);
 		assert (board.countCheckers(2, white) == 0);
 		assert (board.countCheckers(22, white) == 1);
@@ -212,5 +283,50 @@ class GameBoardTest() {
 	shared void distanceNotNegative() {
 		value result = board.distance(10, 5);
 		assert (result == 5);
+	}
+	
+	test
+	shared void initialState() {
+		value result = board.state;
+		assert (result == "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==");
+	}
+	
+	test
+	shared void setStateWithInitialState() {
+		board.state = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
+		for (p in 0:25) {
+			value result1 = board.countCheckers(p, black);
+			assert (result1 == 0);
+			value result2 = board.countCheckers(p, white);
+			assert (result2 == 0);
+		}
+	}
+	
+	test
+	shared void stateWithOneBlackChecker() {
+		board.putNewCheckers(0, black, 1);
+		value result = board.state;
+		assert (result == "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==");
+	}
+	
+	test
+	shared void initStateWithOneBlackChecker() {
+		board.state = "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
+		value result = board.countCheckers(0, black);
+		assert (result == 1);
+	}
+	
+	test
+	shared void stateWithOneWhiteChecker() {
+		board.putNewCheckers(0, white, 1);
+		value result = board.state;
+		assert (result == "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==");
+	}
+	
+	test
+	shared void initStateWithOneWhiteChecker() {
+		board.state = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
+		value result = board.countCheckers(0, white);
+		assert (result == 1);
 	}
 }

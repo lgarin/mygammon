@@ -16,8 +16,12 @@ import ceylon.collection {
 import ceylon.test {
 	test
 }
+import ceylon.time {
 
-class Table(shared Integer index, shared RoomId roomId, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+	Duration
+}
+
+final class Table(shared Integer index, shared RoomId roomId, shared Duration maxMatchJoinTime, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared TableId id = TableId(roomId, index);
 	
@@ -76,7 +80,7 @@ class Table(shared Integer index, shared RoomId roomId, Anything(OutboundTableMe
 class TableTest() {
 
 	value messageList = ArrayList<TableMessage>();
-	value table = Table(0, RoomId("room"), messageList.add);
+	value table = Table(0, RoomId("room"), Duration(1000), messageList.add);
 	
 	test
 	shared void newTableIsFree() {

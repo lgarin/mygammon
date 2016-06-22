@@ -13,7 +13,7 @@ shared final class ObtainableLock() satisfies Obtainable {
 	shared Boolean locked => lock.locked;
 	
 	shared actual void obtain() {
-		lock.lock();
+		lock.lockInterruptibly();
 	}
 	
 	shared actual void release(Throwable? error) {

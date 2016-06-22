@@ -143,9 +143,9 @@ shared class Game() {
 		
 		value bolt = hitChecker(color, source, target);
 		if (exists bolt) {
-			assert (board.moveChecker(target, board.graveyardPosition(bolt)));
+			assert (board.moveChecker(color.oppositeColor, target, board.graveyardPosition(bolt)));
 		}
-		assert (board.moveChecker(source, target));
+		assert (board.moveChecker(color, source, target));
 		
 		value move = GameMove(source, target, rollValue, bolt exists);
 		currentMoves.push(move);
@@ -158,9 +158,9 @@ shared class Game() {
 		} else if (exists roll = currentRoll, !currentMoves.empty) {
 			while (exists move = currentMoves.pop()) {
 				currentRoll = roll.add(move.rollValue);
-				assert (board.moveChecker(move.targetPosition, move.sourcePosition));
+				assert (board.moveChecker(color, move.targetPosition, move.sourcePosition));
 				if (move.hitBlot) {
-					assert (board.moveChecker(board.graveyardPosition(color.oppositeColor), move.targetPosition));
+					assert (board.moveChecker(color.oppositeColor, board.graveyardPosition(color.oppositeColor), move.targetPosition));
 				}
 			}
 			return true;

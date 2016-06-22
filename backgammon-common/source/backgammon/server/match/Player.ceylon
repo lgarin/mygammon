@@ -16,10 +16,11 @@ import ceylon.test {
 }
 import ceylon.time {
 	Instant,
-	now
+	now,
+	Duration
 }
 
-class Player(String playerId, variable Room? room = null) {
+final class Player(String playerId, variable Room? room = null) {
 	
 	shared PlayerId id = PlayerId(playerId);
 	
@@ -125,7 +126,7 @@ class PlayerTest() {
 	
 	value messageList = ArrayList<PlayerMessage>();
 	
-	value room = Room("room", 1, messageList.add);
+	value room = Room("room", 1, Duration(1000), messageList.add);
 	value player = Player("player", room);
 	
 	test
@@ -232,7 +233,7 @@ class PlayerTest() {
 	test
 	shared void joinMatch() {
 		value opponent = Player("opponent", room);
-		value table = Table(0, room.id, messageList.add);
+		value table = Table(0, room.id, Duration(1000), messageList.add);
 		value match = Match(player, opponent, table);
 		value result = player.joinMatch(match);
 		assert (result);
@@ -241,7 +242,7 @@ class PlayerTest() {
 	test
 	shared void joinStartedMatch() {
 		value opponent = Player("opponent", room);
-		value table = Table(0, room.id, messageList.add);
+		value table = Table(0, room.id, Duration(1000), messageList.add);
 		value match = Match(player, opponent, table);
 		match.startGame(opponent);
 		match.startGame(player);
