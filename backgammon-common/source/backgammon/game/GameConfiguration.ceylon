@@ -11,4 +11,5 @@ shared class GameConfiguration(shared Duration maxTurnDuration) {
 	shared Integer maxWarningCount = 3;
 	shared Integer invalidMoveWarningCount = 2;
 	shared Integer timeoutActionWarningCount = 1;
+	shared Integer maxUndoPerTurn = 1;
 }

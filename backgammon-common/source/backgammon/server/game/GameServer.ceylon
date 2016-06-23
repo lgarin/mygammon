@@ -69,8 +69,8 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	function sendInitialRoll() {
 		value roll = diceRoller.roll();
 		if (game.initialRoll(roll, configuration.maxRollDuration)) {
-			messageBroadcaster(InitialRollMessage(matchId, player1Id, roll.firstValue));
-			messageBroadcaster(InitialRollMessage(matchId, player2Id, roll.secondValue));
+			messageBroadcaster(InitialRollMessage(matchId, player1Id, roll.firstValue, roll, configuration.maxRollDuration));
+			messageBroadcaster(InitialRollMessage(matchId, player2Id, roll.secondValue, roll, configuration.maxRollDuration));
 			return true;
 		} else {
 			return false;
@@ -94,8 +94,8 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			if (exists nextColor = game.switchTurn(playerColor)) {
 				value roll = diceRoller.roll();
 				value turnDuration = game.hasAvailableMove(nextColor) then configuration.maxTurnDuration else configuration.maxEmptyTurnDuration;
-				assert (game.beginTurn(nextColor, roll, turnDuration));
-				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), roll));
+				assert (game.beginTurn(nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
+				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), roll, turnDuration));
 			} else if (game.hasWon(playerColor)) {
 				messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor)));
 			}
@@ -105,7 +105,6 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	}
 	
 	void undoMoves(CheckerColor playerColor) {
-		// TODO limit the number of undo per turn
 		if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor)));
 		} else if (game.undoTurnMoves(playerColor)) {
@@ -130,8 +129,8 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		if (game.begin(playerColor)) {
 			if (exists currentColor = game.currentColor) {
 				value roll = diceRoller.roll();
-				assert (game.beginTurn(currentColor, roll, configuration.maxTurnDuration));
-				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), roll));
+				assert (game.beginTurn(currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn));
+				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), roll, configuration.maxTurnDuration));
 			} else {
 				sendInitialRoll();
 			}

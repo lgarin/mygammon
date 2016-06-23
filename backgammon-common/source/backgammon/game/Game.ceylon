@@ -24,6 +24,7 @@ shared class Game() {
 	shared variable CheckerColor? currentColor = null;
 	shared variable DiceRoll? currentRoll = null;
 	
+	variable Integer remainingUndo = 0;
 	variable Boolean blackReady = false;
 	variable Boolean whiteReady = false;
 	variable Instant nextTimeout = Instant(0);
@@ -76,10 +77,11 @@ shared class Game() {
 		}
 	}
 	
-	shared Boolean beginTurn(CheckerColor player, DiceRoll roll, Duration maxDuration) {
+	shared Boolean beginTurn(CheckerColor player, DiceRoll roll, Duration maxDuration, Integer maxUndo) {
 		if (!isCurrentColor(player)) {
 			return false;
 		}
+		remainingUndo = maxUndo;
 		currentRoll = roll;
 		nextTimeout = now().plus(maxDuration);
 		return true;
@@ -153,7 +155,7 @@ shared class Game() {
 	}
 	
 	shared Boolean undoTurnMoves(CheckerColor color) {
-		if (!isCurrentColor(color)) {
+		if (!isCurrentColor(color) || remainingUndo <= 0) {
 			return false;
 		} else if (exists roll = currentRoll, !currentMoves.empty) {
 			while (exists move = currentMoves.pop()) {
@@ -163,6 +165,7 @@ shared class Game() {
 					assert (board.moveChecker(color.oppositeColor, board.graveyardPosition(color.oppositeColor), move.targetPosition));
 				}
 			}
+			remainingUndo--;
 			return true;
 		} else {
 			return false;

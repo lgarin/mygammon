@@ -6,9 +6,7 @@ import ceylon.test {
 }
 import ceylon.buffer.base {
 
-	base64StringStandard,
-	base32StringHex,
-	base64ByteStandard
+	base64StringStandard
 }
 import ceylon.buffer.codec {
 
