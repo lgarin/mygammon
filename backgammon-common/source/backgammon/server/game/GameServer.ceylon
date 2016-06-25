@@ -46,11 +46,14 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	variable Integer whiteWarnings = 0;
 	value game = Game();
 	
+	value player1Color = black;
+	value player2Color = white;
+	
 	function toPlayerColor(PlayerId playerId) {
 		if (playerId == player1Id) {
-			return black;
+			return player1Color;
 		} else if (playerId == player2Id) {
-			return white;
+			return player2Color;
 		} else {
 			return null;
 		}
@@ -69,8 +72,8 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	function sendInitialRoll() {
 		value roll = diceRoller.roll();
 		if (game.initialRoll(roll, configuration.maxRollDuration)) {
-			messageBroadcaster(InitialRollMessage(matchId, player1Id, roll.firstValue, roll, configuration.maxRollDuration));
-			messageBroadcaster(InitialRollMessage(matchId, player2Id, roll.secondValue, roll, configuration.maxRollDuration));
+			messageBroadcaster(InitialRollMessage(matchId, player1Id, player1Color, roll.firstValue, roll, configuration.maxRollDuration));
+			messageBroadcaster(InitialRollMessage(matchId, player2Id, player2Color, roll.secondValue, roll, configuration.maxRollDuration));
 			return true;
 		} else {
 			return false;
@@ -89,39 +92,39 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	
 	void endTurn(CheckerColor playerColor) {
 		if (!game.isCurrentColor(playerColor)) {
-			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor)));
+			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 		} else if (game.endTurn(playerColor)) {
 			if (exists nextColor = game.switchTurn(playerColor)) {
 				value roll = diceRoller.roll();
 				value turnDuration = game.hasAvailableMove(nextColor) then configuration.maxTurnDuration else configuration.maxEmptyTurnDuration;
 				assert (game.beginTurn(nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
-				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), roll, turnDuration));
+				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
 			} else if (game.hasWon(playerColor)) {
-				messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor)));
+				messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor), playerColor));
 			}
 		} else {
-			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor)));
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor));
 		}
 	}
 	
 	void undoMoves(CheckerColor playerColor) {
 		if (!game.isCurrentColor(playerColor)) {
-			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor)));
+			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 		} else if (game.undoTurnMoves(playerColor)) {
-			messageBroadcaster(UndoneMovesMessage(matchId, toPlayerId(playerColor)));
+			messageBroadcaster(UndoneMovesMessage(matchId, toPlayerId(playerColor), playerColor));
 		} else {
-			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor)));
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor));
 		}
 	}
 	
 	void makeMove(CheckerColor playerColor, GameMove move) {
 		if (!game.isCurrentColor(playerColor)) {
-			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor)));
+			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 		} else if (game.moveChecker(playerColor, move.sourcePosition, move.targetPosition)) {
-			messageBroadcaster(PlayedMoveMessage(matchId, toPlayerId(playerColor), move));
+			messageBroadcaster(PlayedMoveMessage(matchId, toPlayerId(playerColor), playerColor, move));
 		} else {
 			increaseWarningCount(playerColor, configuration.invalidMoveWarningCount);
-			messageBroadcaster(InvalidMoveMessage(matchId, toPlayerId(playerColor), move));
+			messageBroadcaster(InvalidMoveMessage(matchId, toPlayerId(playerColor), playerColor, move));
 		}
 	}
 	
@@ -130,27 +133,27 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			if (exists currentColor = game.currentColor) {
 				value roll = diceRoller.roll();
 				assert (game.beginTurn(currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn));
-				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), roll, configuration.maxTurnDuration));
+				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn));
 			} else {
 				sendInitialRoll();
 			}
 		} else {
-			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor)));
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor));
 		}
 	}
 	
 	void surrenderGame(CheckerColor playerColor) {
 		if (exists currentColor = game.currentColor) {
 			value opponentId = toPlayerId(playerColor.oppositeColor);
-			messageBroadcaster(GameWonMessage(matchId, opponentId));
+			messageBroadcaster(GameWonMessage(matchId, opponentId, playerColor.oppositeColor));
 		}
 		endGame();
 	}
 	
 	void endGame() {
 		if (game.end()) {
-			messageBroadcaster(GameEndedMessage(matchId, player1Id));
-			messageBroadcaster(GameEndedMessage(matchId, player2Id));
+			messageBroadcaster(GameEndedMessage(matchId, player1Id, player1Color));
+			messageBroadcaster(GameEndedMessage(matchId, player2Id, player2Color));
 		}
 	}
 	
