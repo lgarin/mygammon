@@ -29,6 +29,14 @@ import ceylon.logging {
 
 	logger
 }
+import org.apache.http.client {
+
+	ResponseHandler
+}
+import io.vertx.ceylon.core.http {
+
+	HttpClientResponse
+}
 
 shared class HttpServerVerticle() extends Verticle() {
 	
@@ -50,8 +58,9 @@ shared class HttpServerVerticle() extends Verticle() {
 	
 	shared actual void start() {
 		value router = routerFactory.router(vertx);
-		value loginHandler = oAuth2AuthHandler.create(oauth2, "http://localhost:8080").setupCallback(router.route("/callback"));
-		loginHandler.addAuthority("profile");
+		value httpClient = vertx.createHttpClient();
+		value loginHandler = GoogleAuthHandler(oauth2, "http://localhost:8080").setupCallback(router.route("/callback"));
+		loginHandler.addAuthority("https://www.googleapis.com/auth/plus.me");
 		
 		router.route().handler(cookieHandler.create().handle);
 		//router.route().handler(bodyHandler.create().setBodyLimit(bodyLimit).handle);
@@ -74,14 +83,17 @@ shared class HttpServerVerticle() extends Verticle() {
 		
 		router.route("/private/success").handler {
 			void requestHandler(RoutingContext routingContext) {
+			
+			
 				value response = routingContext.response();
-				//response.putHeader("Location", "https://www.googleapis.com/plus/v1/people/me?fields=image%2Furl&key=AIzaSyBCs5hbaFFCdz2fs8hc53s7XRLJXwhIq-4");
-				//response.setStatusCode(302).end();
-				if (exists user = routingContext.user()) {
-					logger(`module`).info(user.principal().pretty);
-				}
-				response.putHeader("content-type", "text/plain");
-				response.end("Hello World!!!");
+				//response.putHeader("Location", "https://www.googleapis.com/plus/v1/people/me?fields=displayName%2Cimage%2Furl&key=AIzaSyBCs5hbaFFCdz2fs8hc53s7XRLJXwhIq-4");
+				response.putHeader("Location", "https://people.googleapis.com/v1/people/me?fields=names%2FdisplayName%2Cphotos%2Furl&key=AIzaSyBCs5hbaFFCdz2fs8hc53s7XRLJXwhIq-4");
+				response.setStatusCode(302).end();
+				//if (exists user = routingContext.user()) {
+				//	logger(`module`).info(user.principal().pretty);
+				//}
+				//response.putHeader("content-type", "text/plain");
+				//response.end("Hello World!!!");
 			}
 		};
 		
