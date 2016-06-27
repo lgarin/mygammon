@@ -59,19 +59,32 @@
         <div id="point24" class="point" style="top:39px;left:727px;"></div>
         <div id="point-player2-home" class="point" style="top:39px;left:785px;"></div>
         <div id="point-player1-graveyard" class="point" style="top:39px;left:395px;"></div>
-
-        <div id="player2">
-          <label id="player2Name">Player2</label>
-          <span class="white-small-checker"></span>
-          <span id="player2Moves">300</span>
-        </div>
-
-        <div id="player1">
-          <label id="player1Name">Player1</label>
-          <span class="brown-small-checker"></span>
-          <span id="player1Moves">300</span>
-        </div>
+        
       </div><!-- end of game board -->
+
+       <div id="player2">
+       	<div id="player-block">
+       		<span class="white-small-checker"></span>
+        	<label id="player2Name">Player2TestTestTest</label>
+         	
+         	</div>
+         <div id="player-block">
+         	<img id="player2Image" src="images/hourglass.gif">
+         	<span id="player2Timer">03 : 00</span>
+         </div>
+       </div>
+
+       <div id="player1">
+         <div>
+         	<span class="brown-small-checker"></span>
+	         <label id="player1Name">Player1</label>
+         </div>
+         <div style="text-align: right;">
+         	<img id="player1Image" src="images/hourglass.gif">
+         	<span id="player1Timer">03 : 00</span>
+         </div>
+         
+       </div>
 
       <div class="button pointer" style="right:5px;top:189px;">
         <div id="undo" class="undo">Undo</div>
@@ -80,7 +93,7 @@
         <div id="submit" class="submit">Submit</div>
       </div>
       <div class="button pointer" style="right:5px;bottom:0px;">
-        <div id="send" class="send">Send</div>
+        <div id="leave" class="leave">Leave</div>
       </div>
     </div><!-- end of gui -->
   </body>
