@@ -73,30 +73,32 @@ public class GoogleAuthHandler implements ReifiedType, io.vertx.ceylon.web.handl
 	  @TypeInfo("io.vertx.ceylon.web.handler::AuthHandler")
 	  public GoogleAuthHandler setupCallback(
 	    final @TypeInfo("io.vertx.ceylon.web::Route") @Name("route") io.vertx.ceylon.web.Route route) {
-	    io.vertx.ext.web.Route arg_0 = io.vertx.ceylon.web.Route.TO_JAVA.safeConvert(route);
+	    Route arg_0 = io.vertx.ceylon.web.Route.TO_JAVA.safeConvert(route);
 	    delegate.setupCallback(arg_0);
 	    return this;
 	  }
 	  
 	  private static final class GoogleAuthHandlerImpl extends AuthHandlerImpl {
 
+			private final OAuth2Auth oauth2;
 			private final String host;
 
 			private Route callback;
 
 			public GoogleAuthHandlerImpl(OAuth2Auth authProvider, String host) {
 				super(authProvider);
+				this.oauth2 = authProvider;
 				this.host = host;
 			}
 
 			@Override
-			public void handle(io.vertx.ext.web.RoutingContext ctx) {
+			public void handle(RoutingContext ctx) {
 				User user = ctx.user();
 				if (user != null) {
 					// Already authenticated.
 
 					// if this provider support JWT authorize
-					if (((OAuth2Auth) authProvider).hasJWTToken()) {
+					if (oauth2.hasJWTToken()) {
 						authorise(user, ctx);
 					} else {
 						// oauth2 used only for authentication (with or without scopes)
@@ -105,12 +107,12 @@ public class GoogleAuthHandler implements ReifiedType, io.vertx.ceylon.web.handl
 
 				} else {
 					// redirect request to the oauth2 server
-					ctx.response().putHeader("Location", authURI(ctx.normalisedPath(), (String) ctx.get("state"))).setStatusCode(302)
-							.end();
+					ctx.response().putHeader("Location", authURI(ctx.normalisedPath(), (String) ctx.get("state")))
+							.setStatusCode(302).end();
 				}
 			}
 
-			private String authURI(String redirectURL, String state) {
+			public String authURI(String redirectURL, String state) {
 				if (callback == null) {
 					throw new NullPointerException("callback is null");
 				}
@@ -126,46 +128,47 @@ public class GoogleAuthHandler implements ReifiedType, io.vertx.ceylon.web.handl
 					scopes.setLength(scopes.length() - 1);
 				}
 
-				return ((OAuth2Auth) authProvider).authorizeURL(
-						new JsonObject().put("redirect_uri", host + callback.getPath())
-								.put("scope", scopes.toString()).put("state", redirectURL));
+				return oauth2.authorizeURL(new JsonObject().put("redirect_uri", host + callback.getPath())
+						.put("scope", scopes.toString()).put("state", redirectURL));
 			}
 
-			
-			
+			private void handleCallback(final RoutingContext ctx) {
+				// Handle the callback of the flow
+				final String code = ctx.request().getParam("code");
+
+				// code is a require value
+				if (code == null) {
+					ctx.fail(400);
+					return;
+				}
+
+				final String relative_redirect_uri = ctx.request().getParam("state");
+				// for google the redirect uri must match the registered urls
+				final String redirect_uri = host + callback.getPath();
+
+				oauth2.getToken(new JsonObject().put("code", code).put("redirect_uri", redirect_uri), new Handler<AsyncResult<AccessToken>>() {
+					
+					@Override
+					public void handle(AsyncResult<AccessToken> res) {
+						if (res.failed()) {
+							ctx.fail(res.cause());
+						} else {
+							ctx.setUser(res.result());
+							ctx.reroute(relative_redirect_uri);
+						}
+						
+					}
+				});
+			}
+
 			public void setupCallback(Route route) {
 
 				this.callback = route;
-
 				route.handler(new Handler<RoutingContext>() {
 					
 					@Override
-					public void handle(final RoutingContext ctx) {
-						// Handle the callback of the flow
-						final String code = ctx.request().getParam("code");
-
-						// code is a require value
-						if (code == null) {
-							ctx.fail(400);
-							return;
-						}
-
-						final String relative_redirect_uri = ctx.request().getParam("state");
-						// for google the redirect uri must match the registered urls
-						final String redirect_uri = host + callback.getPath();
-
-						((OAuth2Auth) authProvider).getToken(new JsonObject().put("code", code).put("redirect_uri", redirect_uri),
-								new Handler<AsyncResult<AccessToken>>() {
-									public void handle(AsyncResult<AccessToken> res) {
-										if (res.failed()) {
-											ctx.fail(res.cause());
-										} else {
-											ctx.setUser(res.result());
-											ctx.reroute(relative_redirect_uri);
-										}
-									}
-								});
-						
+					public void handle(RoutingContext ctx) {
+						handleCallback(ctx);
 					}
 				});
 			}

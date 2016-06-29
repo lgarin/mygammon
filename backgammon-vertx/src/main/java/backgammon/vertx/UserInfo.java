@@ -1,7 +1,5 @@
 package backgammon.vertx;
 
-import java.net.URL;
-
 import io.vertx.core.json.JsonObject;
 
 public class UserInfo {

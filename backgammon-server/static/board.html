@@ -13,10 +13,10 @@
 	<script src="http://requirejs.org/docs/release/2.2.0/minified/require.js"></script>
 	<script type="text/javascript">
 	    require.config({
-	        baseUrl : 'modules'
+	        baseUrl : '../modules'
 	    });
 	    require(
-	            [ 'backgammon/client/1.0.0/backgammon.client-1.0.0' ],
+	            [ 'backgammon/vertx/client/1.0.0/backgammon.vertx.client-1.0.0' ],
 	            function(app) {
 	                app.run();
 	            }
@@ -75,35 +75,29 @@
 
        <div id="player2" class="selected">
          <div id="player-block">
-        	<label id="player2Message">Waiting opponent</label>
-         </div>
-         <div id="player-block">
          	<img id="player2Activity" src="images/hourglass.gif">
-         	<span id="player2Timer"></span>
+         	<span id="player2Timer">Waiting</span>
+         </div>
+         <div id="player-block" class="player-picture">
+         	<img id="player2Image" src="images/unknown.jpg"/>
+         	<span class="white-small-checker"></span>
          </div>
          <div id="player-block">
-       		<span class="white-small-checker"></span>
-        	<label id="player2Name"></label>
-         </div>
-         <div id="player-block">
-         	<img id="player2Image" src="images/unknown.jpg">
+        	<label id="player2Name">Player 2</label>
          </div>
        </div>
 
        <div id="player1">
          <div id="player-block">
-         	<img id="player1Image" src="images/unknown.jpg">
+        	<label id="player1Name">Player 1</label>
          </div>
-         <div id="player-block">
-       		<span class="brown-small-checker"></span>
-        	<label id="player1Name"></label>
+         <div id="player-block" class="player-picture">
+         	<img id="player1Image" src="images/unknown.jpg"/>
+         	<span class="brown-small-checker"></span>
          </div>
          <div id="player-block">
          	<img id="player1Activity" src="images/hourglass.gif">
-         	<span id="player1Timer"></span>
-         </div>
-       	 <div id="player-block">
-        	<label id="player1Message">Waiting opponent</label>
+         	<span id="player1Timer">Waiting</span>
          </div>
        </div>
 

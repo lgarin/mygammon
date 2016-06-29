@@ -4,10 +4,6 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.auth.oauth2.OAuth2ClientOptions;
 import io.vertx.ext.auth.oauth2.OAuth2FlowType;
@@ -42,16 +38,24 @@ public class HttpServerVerticle extends AbstractVerticle {
 		return vertx.createHttpClient(options);
 	}
 	
-	private void handleSuccess(RoutingContext routingContext) {
+	private void handleStart(RoutingContext routingContext) {
 		googleProfileClient.fetchUserInfo(routingContext, userInfo -> {
-			HttpServerResponse response = routingContext.response();
-			response.putHeader("content-type", "text/plain");
-			if (userInfo != null) {
-				response.end("Hello " + userInfo.getDisplayName());
+			if (userInfo == null) {
+				routingContext.fail(new Exception("No info returned for current user"));
 			} else {
-				response.end("Hello World");
+				routingContext.session().put("userInfo", userInfo);
+				//routingContext.reroute("/static/board.html");
+				routingContext.response().putHeader("Location", "static/board.html").setStatusCode(302).end();
 			}
 		});
+	}
+	
+	private void handleGame(RoutingContext routingContext) {
+		if (routingContext.session().get("userInfo") != null) {
+			routingContext.reroute("/static/board.html");
+		} else {
+			routingContext.response().putHeader("Location", "/start").setStatusCode(302).end();
+		}
 	}
 	
 	@Override
@@ -68,10 +72,11 @@ public class HttpServerVerticle extends AbstractVerticle {
 		router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
 		router.route().handler(LoggerHandler.create());
 
-		router.route("/private/*").handler(loginHandler);
-		router.route("/static/*").handler(StaticHandler.create("static"));
-
-		router.route("/private/success").handler(this::handleSuccess);
+		router.route("/static/*").handler(StaticHandler.create("static").setCachingEnabled(false));
+		router.route("/*").handler(loginHandler);
+		
+		router.route("/start").handler(this::handleStart);
+		router.route("/game").handler(this::handleGame);
 
 		vertx.createHttpServer().requestHandler(router::accept).listen(8080);
 	}
