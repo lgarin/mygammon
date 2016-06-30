@@ -7,9 +7,9 @@
     <meta name="viewport" content="width=1150">
 
     <link rel="stylesheet" href="css/board.css">
-    <link rel="stylesheet" href="http://code.jquery.com/ui/1.9.0/themes/base/jquery-ui.css">
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
-    <script src="http://code.jquery.com/ui/1.9.0/jquery-ui.js"></script>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/start/jquery-ui.css">
+    <script src="http://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
 	<script src="http://requirejs.org/docs/release/2.2.0/minified/require.js"></script>
 	<script type="text/javascript">
 	    require.config({
@@ -76,10 +76,10 @@
        <div id="player2" class="selected">
          <div id="player-block">
          	<img id="player2Activity" src="images/hourglass.gif">
-         	<span id="player2Timer">Waiting</span>
+         	<span style="position: absolute;" id="player2Timer">Waiting</span>
          </div>
          <div id="player-block" class="player-picture">
-         	<img id="player2Image" src="images/unknown.jpg"/>
+         	<img id="player2Image" src="images/unknown.png"/>
          	<span class="white-small-checker"></span>
          </div>
          <div id="player-block">
@@ -92,12 +92,12 @@
         	<label id="player1Name">Player 1</label>
          </div>
          <div id="player-block" class="player-picture">
-         	<img id="player1Image" src="images/unknown.jpg"/>
+         	<img id="player1Image" src="images/unknown.png"/>
          	<span class="brown-small-checker"></span>
          </div>
-         <div id="player-block">
+         <div id="player-block" >
          	<img id="player1Activity" src="images/hourglass.gif">
-         	<span id="player1Timer">Waiting</span>
+         	<span style="position: absolute;" id="player1Timer">Waiting</span>
          </div>
        </div>
 

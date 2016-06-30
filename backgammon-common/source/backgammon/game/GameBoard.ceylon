@@ -12,6 +12,49 @@ import ceylon.buffer.codec {
 
 	strict
 }
+
+final class BoardPoint(shared Integer position) {
+	variable Integer whiteCount = 0;
+	variable Integer blackCount = 0;
+	
+	
+	shared void putChecker(CheckerColor color, Integer count) => resetChecker(color, countCheckers(color) + count);
+	
+	shared void resetChecker(CheckerColor color, Integer count) {
+		switch (color)
+		case (black) {blackCount = count;}
+		case (white) {whiteCount = count;}
+	}
+	
+	shared Boolean removeChecker(CheckerColor color) {
+		switch (color)
+		case (black) { 
+			if (blackCount > 0) {
+				blackCount--;
+				return true; 
+			} else {
+				return false;
+			}
+		}
+		case (white) { 
+			if (whiteCount > 0) {
+				whiteCount--;
+				return true; 
+			} else {
+				return false;
+			}
+		}
+	}
+	
+	shared Boolean hasChecker(CheckerColor color) => countCheckers(color) > 0;
+	
+	shared Integer countCheckers(CheckerColor color) {
+		switch (color)
+		case (black) {return blackCount;}
+		case (white) {return whiteCount;}
+	}
+}
+
 final class GameBoard() {
 
 	shared Integer totalPointCount = 26;
@@ -22,47 +65,6 @@ final class GameBoard() {
 	shared Integer blackGraveyardPosition = 0;
 	shared Integer blackHomePosition = totalPointCount - 1;
 
-	class BoardPoint(shared Integer position) {
-		variable Integer whiteCount = 0;
-		variable Integer blackCount = 0;
-		
-		
-		shared void putChecker(CheckerColor color, Integer count) => resetChecker(color, countCheckers(color) + count);
-		
-		shared void resetChecker(CheckerColor color, Integer count) {
-			switch (color)
-			case (black) {blackCount = count;}
-			case (white) {whiteCount = count;}
-		}
-		
-		shared Boolean removeChecker(CheckerColor color) {
-			switch (color)
-			case (black) { 
-				if (blackCount > 0) {
-					blackCount--;
-					return true; 
-				} else {
-					return false;
-				}
-			}
-			case (white) { 
-				if (whiteCount > 0) {
-					whiteCount--;
-					return true; 
-				} else {
-					return false;
-				}
-			}
-		}
-		
-		shared Boolean hasChecker(CheckerColor color) => countCheckers(color) > 0;
-		
-		shared Integer countCheckers(CheckerColor color) {
-			switch (color)
-			case (black) {return blackCount;}
-			case (white) {return whiteCount;}
-		}
-	}
 
 	ArrayList<BoardPoint> points = ArrayList<BoardPoint>(totalPointCount);
 	for (i in 0:totalPointCount) {

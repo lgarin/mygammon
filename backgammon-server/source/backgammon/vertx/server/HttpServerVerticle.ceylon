@@ -23,6 +23,16 @@ import io.vertx.ceylon.web.handler {
 import io.vertx.ceylon.web.sstore {
 	localSessionStore
 }
+import io.vertx.ceylon.web.handler.sockjs {
+
+	BridgeOptions,
+	PermittedOptions,
+	SockJSHandler
+}
+import io.vertx.ext.web.handler.sockjs.impl {
+
+	SockJSHandlerImpl
+}
 
 shared class HttpServerVerticle() extends Verticle() {
 	
