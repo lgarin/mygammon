@@ -1,3 +1,21 @@
+import backgammon.common {
+	OutboundTableMessage,
+	OutboundMatchMessage
+}
+import backgammon.server.common {
+	RoomConfiguration
+}
+import backgammon.server.match {
+	MatchRoom
+}
+
+import ceylon.logging {
+	logger
+}
+import ceylon.time {
+	Duration
+}
+
 import io.vertx.ceylon.auth.oauth2 {
 	oAuth2Auth,
 	OAuth2ClientOptions,
@@ -8,7 +26,11 @@ import io.vertx.ceylon.core {
 }
 import io.vertx.ceylon.core.http {
 	HttpClientOptions,
-	HttpClient
+	HttpClient,
+	options,
+	get,
+	post,
+	delete
 }
 import io.vertx.ceylon.web {
 	routerFactory=router,
@@ -18,23 +40,22 @@ import io.vertx.ceylon.web.handler {
 	loggerHandler,
 	cookieHandler,
 	sessionHandler,
-	staticHandler
+	staticHandler,
+	corsHandler
+}
+import io.vertx.ceylon.web.handler.sockjs {
+	SockJSHandlerOptions,
+	BridgeOptions,
+	PermittedOptions,
+	sockJSHandler
 }
 import io.vertx.ceylon.web.sstore {
 	localSessionStore
 }
-import io.vertx.ceylon.web.handler.sockjs {
-
-	BridgeOptions,
-	PermittedOptions,
-	SockJSHandler
-}
-import io.vertx.ext.web.handler.sockjs.impl {
-
-	SockJSHandlerImpl
-}
 
 shared class HttpServerVerticle() extends Verticle() {
+	
+	value port = 8080;
 	
 	variable GoogleProfileClient? _googleProfileClient = null;
 	variable HttpClient? _httpClient = null;
@@ -72,10 +93,22 @@ shared class HttpServerVerticle() extends Verticle() {
 		return _googleProfileClient else (_googleProfileClient = GoogleProfileClient(httpClient));
 	}
 	
+	function createSockJsHandler() {
+		value options = SockJSHandlerOptions {
+			heartbeatInterval = 2000;
+		};
+		
+		value bridgeOptions = BridgeOptions {
+			outboundPermitted = {PermittedOptions { address = "test"; } };
+			inboundPermitted = {PermittedOptions { address = "test"; } };
+		};
+		return sockJSHandler.create(vertx, options).bridge(bridgeOptions);
+	}
+	
 	void handleStart(RoutingContext routingContext) {
 		void handler(UserInfo? userInfo) {
-			if (exists userInfo, exists session = routingContext.session()) {
-				session.put("userInfo", userInfo);
+			if (exists userInfo) {
+				//session.put("userInfo", userInfo);
 				routingContext.response().putHeader("Location", "static/board.html").setStatusCode(302).end();
 			} else {
 				routingContext.fail(Exception("No info returned for current user"));
@@ -85,20 +118,52 @@ shared class HttpServerVerticle() extends Verticle() {
 		googleProfileClient.fetchUserInfo(routingContext, handler);
 	}
 	
-	shared actual void start() {
+	function createCorsHandler() { 
+		value handler = corsHandler.create("http://localhost:``port``");
+		handler.allowCredentials(true);
+		handler.allowedMethod(options);
+		handler.allowedMethod(get);
+		handler.allowedMethod(post);
+		handler.allowedMethod(delete);
+		handler.allowedHeader("Authorization");
+		handler.allowedHeader("www-authenticate");		 
+		handler.allowedHeader("Content-Type");
+		return handler;
+	}
+	
+	void startHttp() {
 		value router = routerFactory.router(vertx);
-		value loginHandler = GoogleAuthHandler(oauth2, "http://localhost:8080").setupCallback(router.route("/callback")).addAuthority("profile");
-		
+		value loginHandler = GoogleAuthHandler(oauth2, "http://localhost:``port``").setupCallback(router.route("/callback")).addAuthority("profile");
+		//router.route().handler(createCorsHandler().handle);
 		router.route().handler(cookieHandler.create().handle);
-		//router.route().handler(bodyHandler.create().setBodyLimit(bodyLimit).handle);
-		router.route().handler(sessionHandler.create(localSessionStore.create(vertx)).handle);
+		//router.route().handler(bodyHandler.create().setBodyLimit(bodyLimit).handle);		router.route().handler(sessionHandler.create(localSessionStore.create(vertx)).handle);
 		router.route().handler(loggerHandler.create().handle);
-		
 		router.route("/static/*").handler(staticHandler.create("static").handle);
 		router.route("/modules/*").handler(staticHandler.create("modules").handle);
+		router.route("/eventbus/*").handler(createSockJsHandler().handle);
 		router.route("/*").handler(loginHandler.handle);
 		router.route("/start").handler(handleStart);
 		
-		vertx.createHttpServer().requestHandler(router.accept).listen(8080);
+		vertx.createHttpServer().requestHandler(router.accept).listen(port);
+		
+		logger(`package`).info("Started HTTP port ``port``");
+	}
+	
+	void startRoom(String roomId) {
+		value eb = vertx.eventBus();
+		value config = RoomConfiguration(roomId, 100, Duration(60000), Duration(30000));
+		void handler(OutboundTableMessage|OutboundMatchMessage msg) {
+			eb.send(config.roomName, msg.string);
+		}
+		
+		value room = MatchRoom(config, handler);
+		
+		vertx.setPeriodic(1000, (Integer val) => eb.publish("test", "hello"));
+		logger(`package`).info("Started ``roomId``");
+	}
+	
+	shared actual void start() {
+		startHttp();
+		startRoom("Room1");
 	}
 }

@@ -240,22 +240,9 @@ body {
     filter: alpha(opacity = 100);
 }
 
-#player1 {
+.player {
     position: absolute;
     padding: 5px;
-    bottom: 5px;
-    left: 5px;
-    width: 180px;
-    word-wrap: break-word;
-    font-size: 24px;
-    text-shadow: #000000 0px 0px 3px;
-    opacity: 0.8;
-    filter: alpha(opacity = 80);
-}
-#player2 {
-    position: absolute;
-    padding: 5px;
-    top: 5px;
     left: 5px;
     width: 180px;
     word-wrap: break-word;
@@ -265,7 +252,7 @@ body {
     filter: alpha(opacity = 80);
 }
 
-#player1.selected, #player2.selected {
+.player.selected {
   border-radius:5px;
   background-color: #804000;
   opacity: 1;

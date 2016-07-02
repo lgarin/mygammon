@@ -10,8 +10,21 @@
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/start/jquery-ui.css">
     <script src="http://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
+    <script src="http://cdn.jsdelivr.net/sockjs/1/sockjs.min.js"></script>
+    <script src="javascript/vertx-eventbus.js"></script>
 	<script src="http://requirejs.org/docs/release/2.2.0/minified/require.js"></script>
 	<script type="text/javascript">
+	
+		var eb = new EventBus('http://localhost:8080/eventbus');
+	
+		eb.onopen = function() {
+	
+		  // set a handler to receive a message
+		  eb.registerHandler('test', function(error, message) {
+		    console.log('received a message: ' + JSON.stringify(message));
+		  });
+		}
+	
 	    require.config({
 	        baseUrl : '../modules'
 	    });
@@ -73,7 +86,7 @@
         
       </div><!-- end of game board -->
 
-       <div id="player2" class="selected">
+       <div id="player2" style="top: 5px" class="player">
          <div id="player-block">
          	<img id="player2Activity" src="images/hourglass.gif">
          	<span style="position: absolute;" id="player2Timer">Waiting</span>
@@ -87,7 +100,7 @@
          </div>
        </div>
 
-       <div id="player1">
+       <div id="player1" style="bottom: 5px" class="player">
          <div id="player-block">
         	<label id="player1Name">Player 1</label>
          </div>

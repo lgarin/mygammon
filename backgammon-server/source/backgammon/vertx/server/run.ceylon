@@ -2,11 +2,6 @@ import ceylon.language.meta.declaration {
 	Module,
 	Package
 }
-
-import io.vertx.ceylon.core {
-	vertxFactory=vertx
-}
-
 import ceylon.logging {
 	addLogWriter,
 	logger,
@@ -19,16 +14,18 @@ import ceylon.logging {
 	trace
 }
 
+import io.vertx.ceylon.core {
+	vertxFactory=vertx
+}
 import io.vertx.core.logging {
-
 	LoggerFactory
 }
-import java.lang {
 
+import java.lang {
 	System
 }
-import org.apache.log4j {
 
+import org.apache.log4j {
 	BasicConfigurator
 }
 
