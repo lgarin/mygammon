@@ -4,14 +4,6 @@ import ceylon.collection {
 import ceylon.test {
 	test
 }
-import ceylon.buffer.base {
-
-	base64StringStandard
-}
-import ceylon.buffer.codec {
-
-	strict
-}
 
 final class BoardPoint(shared Integer position) {
 	variable Integer whiteCount = 0;
@@ -163,7 +155,7 @@ shared final class GameBoard() {
 		return [for (p in points) p.countCheckers(color)];
 	}
 	
-	shared void setCheckerCounts(CheckerColor color, [Integer*] counts) {
+	shared void setCheckerCounts(CheckerColor color, {Integer*} counts) {
 		value iterator = counts.iterator();
 		for (p in points) {
 			if (is Integer count = iterator.next()) {
@@ -173,7 +165,7 @@ shared final class GameBoard() {
 			}
 		}
 	}
-	
+	/*
 	function encodeState(CheckerColor color) {
 		return {for (p in points) p.countCheckers(color).byte};
 	}
@@ -195,6 +187,7 @@ shared final class GameBoard() {
 		decodeState(black, data);
 		decodeState(white, data);
 	}
+	 */
 }
 
 class GameBoardTest() {
@@ -306,47 +299,42 @@ class GameBoardTest() {
 	}
 	
 	test
-	shared void initialState() {
-		value result = board.state;
-		assert (result == "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==");
+	shared void countCheckersWithInitialState() {
+		value blackCheckers = board.checkerCounts(black);
+		assert (blackCheckers == [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+		value whiteCheckers = board.checkerCounts(white);
+		assert (whiteCheckers == [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 	}
 	
 	test
-	shared void setStateWithInitialState() {
-		board.state = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
-		for (p in 0:25) {
-			value result1 = board.countCheckers(p, black);
-			assert (result1 == 0);
-			value result2 = board.countCheckers(p, white);
-			assert (result2 == 0);
-		}
+	shared void countCheckersWithOneBlackChecker() {
+		board.putNewCheckers(1, black, 1);
+		value blackCheckers = board.checkerCounts(black);
+		assert (blackCheckers == [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+		value whiteCheckers = board.checkerCounts(white);
+		assert (whiteCheckers == [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 	}
 	
 	test
-	shared void stateWithOneBlackChecker() {
-		board.putNewCheckers(0, black, 1);
-		value result = board.state;
-		assert (result == "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==");
+	shared void countCheckersWithTwoWhiteCheckers() {
+		board.putNewCheckers(1, white, 2);
+		value blackCheckers = board.checkerCounts(black);
+		assert (blackCheckers == [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+		value whiteCheckers = board.checkerCounts(white);
+		assert (whiteCheckers == [0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 	}
 	
 	test
-	shared void initStateWithOneBlackChecker() {
-		board.state = "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
-		value result = board.countCheckers(0, black);
+	shared void setCheckerCountsWithOneBlackChecker() {
+		board.setCheckerCounts(black, [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+		value result = board.countCheckers(1, black);
 		assert (result == 1);
 	}
 	
 	test
-	shared void stateWithOneWhiteChecker() {
-		board.putNewCheckers(0, white, 1);
-		value result = board.state;
-		assert (result == "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==");
-	}
-	
-	test
-	shared void initStateWithOneWhiteChecker() {
-		board.state = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
-		value result = board.countCheckers(0, white);
+	shared void setCheckerCountsWithOneWhiteChecker() {
+		board.setCheckerCounts(white, [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+		value result = board.countCheckers(1, white);
 		assert (result == 1);
 	}
 }

@@ -12,6 +12,16 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 	
 	shared Boolean isPair => firstValue == secondValue;
 	
+	shared Integer getValue(CheckerColor color) {
+		switch (color)
+		case (black) {
+			return firstValue;  // TODO black is first player
+		}
+		case (white) {
+			return secondValue;
+		}
+	}
+	
 	values.add(firstValue);
 	values.add(secondValue);
 	

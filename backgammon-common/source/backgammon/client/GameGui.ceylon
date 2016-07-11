@@ -1,17 +1,14 @@
 import backgammon.game {
-
 	CheckerColor,
 	black,
 	white,
-	GameBoard,
-	GameMove
+	GameBoard
 }
-import ceylon.interop.browser.dom { 
+
+import ceylon.interop.browser.dom {
 	Document,
-	Event,
-	EventListener,
-	Element,
-	HTMLElement }
+	Element
+}
 
 
 shared final class GameGui(Document document) {
@@ -113,28 +110,28 @@ shared final class GameGui(Document document) {
 		for (i in 0:checkers.length) {
 			if (exists checker = checkers.item(i)) {
 				if (i < checkerCount) {
-					checker.classList.remove("hidden");
 					checker.classList.remove("temp");
+					checker.classList.remove("selected");
+					checker.classList.remove(oppositeCheckerColorClass);
 					checker.classList.add(checkerColorClass);
+					checker.classList.remove("hidden");
 				} else {
 					checker.classList.add("hidden");
-					checker.classList.remove("temp");
-					checker.classList.remove(oppositeCheckerColorClass);
-					checker.classList.remove(checkerColorClass);
 				}
 			}
 		}
 	}
 	
-	shared void redrawCheckers(CheckerColor color, [Integer*] counts) {
+	shared void redrawCheckers(CheckerColor color, {Integer*} counts) {
 		board.setCheckerCounts(color, counts);
-		for (position in 0:counts.size) {
+		for (position in 0:board.totalPointCount) {
 			value domId = getDomIdUsingPoint(color, position);
 			if (exists point = document.getElementById(domId)) {
+				value count = board.countCheckers(position, color);
 				if (position == board.homePosition(color)) {
-					resetCheckers(point, "topdown-``color.name``", "topdown-``color.oppositeColor.name``", counts[position] else 0);
+					resetCheckers(point, "topdown-``color.name``", "topdown-``color.oppositeColor.name``", count);
 				} else {
-					resetCheckers(point, "checker-``color.name``", "checker-``color.oppositeColor.name``", counts[position] else 0);
+					resetCheckers(point, "checker-``color.name``", "checker-``color.oppositeColor.name``", count);
 				}
 			}
 		}
@@ -143,10 +140,10 @@ shared final class GameGui(Document document) {
 	void addTempChecker(Element point, String checkerColorClass, String oppositeCheckerColorClass, Integer checkerCount) {
 		value checkers = point.getElementsByTagName("div");
 		if (exists checker = checkers.item(checkerCount + 1)) {
-			checker.classList.remove("hidden");
 			checker.classList.remove(oppositeCheckerColorClass);
 			checker.classList.add(checkerColorClass);
 			checker.classList.add("temp");
+			checker.classList.remove("hidden");
 		}
 	}
 	
@@ -158,12 +155,58 @@ shared final class GameGui(Document document) {
 			}
 		}
 	}
-
-	shared void onDrag(Boolean dragHandler(Integer position)) {
-		value checkers = document.getElementsByClassName("pointer");
+	
+	shared void hidePossibleMoves() {
+		value checkers = document.getElementsByClassName("checker");
+		for (i in 0:checkers.length) {
+			if (exists checker = checkers.item(i), checker.classList.contains("temp")) {
+				checker.classList.remove("temp");
+				checker.classList.add("hidden");
+			}
+		}
+	}
+	
+	shared void showSelectedChecker(Element checker) {
+		checker.classList.add("selected");
+	}
+	
+	shared void deselectAllCheckers() {
+		value checkers = document.getElementsByClassName("checker");
 		for (i in 0:checkers.length) {
 			if (exists checker = checkers.item(i)) {
-				
+				checker.classList.remove("selected");
+			}
+		}
+	}
+	
+	shared Integer? getPosition(Element element) {
+		if (element.classList.contains("point")) {
+			return getPointUsingDomId(element.id);
+		} else if (element.classList.contains("checker"), exists parent = element.parentElement) {
+			return getPosition(parent);
+		} else {
+			return null;
+		}
+	}
+	
+	shared void showPlayerInfo(CheckerColor color, String name, String pictureUrl) {
+		if (exists playerLabel = document.getElementById("``color.name``PlayerName")) {
+			playerLabel.innerHTML = name;
+		}
+		if (exists playerImage = document.getElementById("``color.name``PlayerImage")) {
+			playerImage.setAttribute("src", pictureUrl);
+		}
+	}
+	
+	shared void showPlayerMessage(CheckerColor color, String message, Boolean busy) {
+		if (exists playerTimer = document.getElementById("``color.name``PlayerTimer")) {
+			playerTimer.innerHTML = message;
+		}
+		if (exists playerActivity = document.getElementById("``color.name``PlayerActivity")) {
+			if (busy) {
+				playerActivity.classList.remove("hidden");
+			} else {
+				playerActivity.classList.add("hidden");
 			}
 		}
 	}

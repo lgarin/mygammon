@@ -1,12 +1,18 @@
 import backgammon.common {
-	PlayerId,
-	InboundPlayerMessage,
+	InboundRoomMessage,
 	EnterRoomMessage,
 	OutboundTableMessage,
-	OutboundMatchMessage
+	OutboundMatchMessage,
+	LeaveRoomMessage,
+	FindMatchTableMessage,
+	EnteredRoomMessage,
+	LeaftRoomMessage,
+	FoundMatchTableMessage,
+	OutboundRoomMessage
 }
 import backgammon.server.common {
-	RoomConfiguration
+	RoomConfiguration,
+	ObtainableLock
 }
 
 import ceylon.time {
@@ -15,19 +21,41 @@ import ceylon.time {
 
 shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
+	value lock = ObtainableLock(); 
 	value room = Room(configuration.roomName, configuration.tableCount, configuration.maxMatchJoinTime, messageBroadcaster);
 	
-	shared Boolean processMessage(InboundPlayerMessage message, Instant currentTime) {
-		// TODO implement flooding control
-		
-		if (is EnterRoomMessage message) {
-			
+	function process(InboundRoomMessage message) {
+		switch (message)
+		case (is EnterRoomMessage) {
+			if (exists player = room.players[message.playerId]) {
+				return EnteredRoomMessage(player.id, room.id, false);
+			}
+			value player = room.createPlayer(message.playerInfo);
+			return EnteredRoomMessage(player.id, room.id, true);
 		}
-		
-		return false;
+		case (is LeaveRoomMessage) {
+			if (exists player = room.players[message.playerId], player.leaveRoom()) {
+				return LeaftRoomMessage(player.id, room.id, true);
+			}
+			return LeaftRoomMessage(message.playerId, room.id, false);
+		}
+		case (is FindMatchTableMessage) {
+			if (exists player = room.players[message.playerId], player.findMatchTable()) {
+				return FoundMatchTableMessage(player.id, room.id, player.tableId);
+			}
+			return FoundMatchTableMessage(message.playerId, room.id, null);
+		}
+	}
+	
+	shared OutboundRoomMessage processPlayerMessage(InboundRoomMessage message, Instant currentTime) {
+		// TODO implement flooding control
+		try (lock) {
+			return process(message);
+		}
 	}
 
 	shared void removeInactivePlayers(Instant currentTime) {
-		
+		// TODO check session timeout
+		//room.removeInactivePlayers(timeout)
 	}
 }

@@ -1,5 +1,6 @@
-shared sealed interface TableMessage of OutboundTableMessage | MatchMessage satisfies PlayerMessage  {
+shared sealed interface TableMessage of OutboundTableMessage | MatchMessage satisfies RoomMessage  {
 	shared formal TableId tableId;
+	shared actual RoomId roomId => RoomId(tableId.roomId);
 }
 
 shared sealed interface OutboundTableMessage of JoinedTableMessage | LeaftTableMessage | WaitingOpponentMessage satisfies TableMessage {}

@@ -20,12 +20,12 @@ import io.vertx.ceylon.auth.common {
 	User
 }
 
-class UserInfo(Object json, shared User accessToken) {
+final class UserInfo(Object json, shared User accessToken) {
 	shared String displayName = json.getString("displayName");
 	shared String pictureUrl = json.getObject("image").getString("url");
 }
 
-class GoogleProfileClient(HttpClient httpClient) {
+final class GoogleProfileClient(HttpClient httpClient) {
 	
 	shared void fetchUserInfo(RoutingContext context, void handler(UserInfo? userInfo)) {
 		if (exists token = context.user()) {

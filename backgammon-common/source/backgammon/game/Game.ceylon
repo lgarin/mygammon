@@ -30,9 +30,9 @@ shared class Game() {
 	variable Instant nextTimeout = Instant(0);
 	
 	function initialColor(DiceRoll diceRoll) {
-		if (diceRoll.firstValue < diceRoll.secondValue) {
+		if (diceRoll.getValue(black) > diceRoll.getValue(white)) {
 			return black;
-		} else if (diceRoll.firstValue < diceRoll.secondValue) {
+		} else if (diceRoll.getValue(black) < diceRoll.getValue(white)) {
 			return white;
 		} else {
 			return null;
@@ -225,5 +225,34 @@ shared class Game() {
 			return true;
 		}
 		return false;
+	}
+	
+	shared [Integer*] checkerCounts(CheckerColor color) => board.checkerCounts(color);
+	
+	shared GameState state {
+		value result = GameState();
+		result.currentColor = currentColor;
+		result.currentRoll = currentRoll;
+		result.remainingUndo = remainingUndo;
+		result.blackReady = blackReady;
+		result.whiteReady = whiteReady;
+		result.nextTimeout = nextTimeout;
+		result.blackCheckerCounts = board.checkerCounts(black);
+		result.whiteCheckerCounts = board.checkerCounts(white);
+		result.currentMoves = currentMoves.sequence();
+		return result;
+	}
+	
+	assign state {
+		currentColor = state.currentColor;
+		currentRoll = state.currentRoll;
+		remainingUndo = state.remainingUndo;
+		blackReady = state.blackReady;
+		whiteReady = state.whiteReady;
+		nextTimeout = state.nextTimeout;
+		board.setCheckerCounts(black, state.blackCheckerCounts);
+		board.setCheckerCounts(white, state.whiteCheckerCounts);
+		currentMoves.clear();
+		currentMoves.addAll(state.currentMoves);
 	}
 }

@@ -46,7 +46,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	variable Integer whiteWarnings = 0;
 	value game = Game();
 	
-	value player1Color = black;
+	value player1Color = black; // TODO black is first player
 	value player2Color = white;
 	
 	function toPlayerColor(PlayerId playerId) {
@@ -72,8 +72,8 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	function sendInitialRoll() {
 		value roll = diceRoller.roll();
 		if (game.initialRoll(roll, configuration.maxRollDuration)) {
-			messageBroadcaster(InitialRollMessage(matchId, player1Id, player1Color, roll.firstValue, roll, configuration.maxRollDuration));
-			messageBroadcaster(InitialRollMessage(matchId, player2Id, player2Color, roll.secondValue, roll, configuration.maxRollDuration));
+			messageBroadcaster(InitialRollMessage(matchId, player1Id, player1Color, roll.getValue(player1Color), roll, configuration.maxRollDuration));
+			messageBroadcaster(InitialRollMessage(matchId, player2Id, player2Color, roll.getValue(player2Color), roll, configuration.maxRollDuration));
 			return true;
 		} else {
 			return false;
@@ -103,7 +103,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 				messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor), playerColor));
 			}
 		} else {
-			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor));
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
 		}
 	}
 	
@@ -113,7 +113,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		} else if (game.undoTurnMoves(playerColor)) {
 			messageBroadcaster(UndoneMovesMessage(matchId, toPlayerId(playerColor), playerColor));
 		} else {
-			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor));
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
 		}
 	}
 	
@@ -138,7 +138,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 				sendInitialRoll();
 			}
 		} else {
-			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor));
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
 		}
 	}
 	
@@ -189,6 +189,10 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		} else {
 			endGame();
 		}
+	}
+	
+	shared Boolean isInactive(Instant currentTime) {
+		return game.timedOut(currentTime.minus(configuration.gameInactiveTimeout));
 	}
 	
 	function process(InboundGameMessage message, Instant currentTime, CheckerColor color) {

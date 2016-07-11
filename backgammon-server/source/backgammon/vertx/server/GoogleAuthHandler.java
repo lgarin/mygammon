@@ -18,7 +18,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.impl.AuthHandlerImpl;
 
 @Ceylon(major = 8)
-public class GoogleAuthHandler implements ReifiedType, io.vertx.ceylon.web.handler.AuthHandler  {
+public final class GoogleAuthHandler implements ReifiedType, io.vertx.ceylon.web.handler.AuthHandler  {
 
 	  @Ignore public static final TypeDescriptor $TypeDescriptor$ = TypeDescriptor.klass(GoogleAuthHandler.class);
 	  @Ignore private final GoogleAuthHandlerImpl delegate;

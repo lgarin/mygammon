@@ -23,7 +23,8 @@ import backgammon.common {
 	PlayerId,
 	OutboundTableMessage,
 	OutboundMatchMessage,
-	PlayerMessage
+	RoomMessage,
+	PlayerInfo
 }
 
 final class Room(String roomId, shared Integer tableCount, Duration maxMatchJoinTime, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
@@ -43,8 +44,8 @@ final class Room(String roomId, shared Integer tableCount, Duration maxMatchJoin
 	
 	shared List<Table> tables => tableList;
 	
-	shared Player createPlayer(String id) {
-		value player = Player(id, this);
+	shared Player createPlayer(PlayerInfo info) {
+		value player = Player(info, this);
 		value oldPlayer = playerMap.put(player.id, player);
 		if (exists oldPlayer) {
 			oldPlayer.leaveRoom();
@@ -93,8 +94,10 @@ final class Room(String roomId, shared Integer tableCount, Duration maxMatchJoin
 }
 
 class RoomTest() {
-	value messageList = ArrayList<PlayerMessage>();
+	value messageList = ArrayList<RoomMessage>();
 	value room = Room("test1", 10, Duration(1000), messageList.add);
+	
+	function makePlayerInfo(String id) => PlayerInfo(id, id, null);
 	
 	test
 	shared void newRoomHasNoPlayer() {
@@ -113,7 +116,7 @@ class RoomTest() {
 	
 	test
 	shared void createPlayerAddsPlayer() {
-		value player = room.createPlayer("player1");
+		value player = room.createPlayer(makePlayerInfo("player1"));
 		assert (room.players.size == 1);
 		assert (exists roomId = player.roomId);
 		assert (roomId == room.id);
@@ -121,8 +124,8 @@ class RoomTest() {
 	
 	test
 	shared void createPlayerTwiceReplaceExisting() {
-		value oldPlayer = room.createPlayer("player1");
-		value newPlayer = room.createPlayer("player1");
+		value oldPlayer = room.createPlayer(makePlayerInfo("player1"));
+		value newPlayer = room.createPlayer(makePlayerInfo("player1"));
 		assert (room.players.size == 1);
 		assert (oldPlayer.roomId is Null);
 		assert (newPlayer.roomId is RoomId);
@@ -130,14 +133,14 @@ class RoomTest() {
 	
 	test
 	shared void removeExistingPlayer() {
-		value player = room.createPlayer("player1");
+		value player = room.createPlayer(makePlayerInfo("player1"));
 		value result = room.removePlayer(player);
 		assert (result);
 	}
 	
 	test
 	shared void removeNonExistingPlayer() {
-		value player = room.createPlayer("player1");
+		value player = room.createPlayer(makePlayerInfo("player1"));
 		room.removePlayer(player);
 		value result = room.removePlayer(player);
 		assert (!result);
@@ -145,24 +148,24 @@ class RoomTest() {
 	
 	test
 	shared void sitPlayerWithoutOpponent() {
-		value player = room.createPlayer("player1");
+		value player = room.createPlayer(makePlayerInfo("player1"));
 		value result = room.sitPlayer(player);
 		assert (!result);
-		assert (messageList.count((PlayerMessage element) => element is WaitingOpponentMessage) == 0);
+		assert (messageList.count((RoomMessage element) => element is WaitingOpponentMessage) == 0);
 		assert (room.tables.count((Table element) => !element.free) == 0);
 	}
 	
 	test
 	shared void sitPlayerWithOpponent() {
-		value player1 = room.createPlayer("player1");
-		value player2 = room.createPlayer("player2");
+		value player1 = room.createPlayer(makePlayerInfo("player1"));
+		value player2 = room.createPlayer(makePlayerInfo("player2"));
 		value result1 = room.sitPlayer(player1);
 		assert (!result1);
 		value result2 = room.sitPlayer(player2);
 		assert (result2);
-		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 2);
-		assert (messageList.count((PlayerMessage element) => element is WaitingOpponentMessage) == 1);
-		assert (messageList.count((PlayerMessage element) => element is JoiningMatchMessage) == 2);
+		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 2);
+		assert (messageList.count((RoomMessage element) => element is WaitingOpponentMessage) == 1);
+		assert (messageList.count((RoomMessage element) => element is JoiningMatchMessage) == 2);
 		assert (room.tables.count((Table element) => !element.free) == 1);
 	}
 }

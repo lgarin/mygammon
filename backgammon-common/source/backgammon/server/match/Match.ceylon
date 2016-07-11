@@ -26,7 +26,8 @@ import backgammon.common {
 	GameEndedMessage,
 	PlayerId,
 	MatchId,
-	RoomId
+	RoomId,
+	PlayerInfo
 }
 
 
@@ -137,8 +138,11 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 
 class MatchTest() {
 	
+	function makePlayer(String id) => Player(PlayerInfo(id, id, null), null);
+	
+	
 	value messageList = ArrayList<TableMessage>();
-	value match = Match(Player("player1"), Player("player2"), Table(0, RoomId("room"), Duration(1000), messageList.add));
+	value match = Match(makePlayer("player1"), makePlayer("player2"), Table(0, RoomId("room"), Duration(1000), messageList.add));
 	
 	test
 	shared void newMatchHasRemainingJoinTime() {
@@ -152,7 +156,7 @@ class MatchTest() {
 	
 	test
 	shared void startGameWithThirdPlayer() {
-		value result = match.startGame(Player("player3"));
+		value result = match.startGame(makePlayer("player3"));
 		assert (!result);
 		assert (messageList.count((TableMessage element) => element is StartMatchMessage) == 0);
 	}

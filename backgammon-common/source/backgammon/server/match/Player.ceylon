@@ -5,7 +5,9 @@ import backgammon.common {
 	JoinedTableMessage,
 	PlayerId,
 	RoomId,
-	PlayerMessage
+	RoomMessage,
+	PlayerInfo,
+	TableId
 }
 
 import ceylon.collection {
@@ -20,16 +22,17 @@ import ceylon.time {
 	Duration
 }
 
-final class Player(String playerId, variable Room? room = null) {
+final class Player(shared PlayerInfo info, variable Room? room = null) {
 	
-	shared PlayerId id = PlayerId(playerId);
+	shared PlayerId id = PlayerId(info.id);
 	
 	variable Table? table = null;
 	variable Match? match = null;
-	variable Instant lastActivity = now();
+	variable Instant lastActivity = now(); // TODO is it really necessary?
 	
 	shared RoomId? roomId => room?.id;
 	shared Integer? tableIndex => table?.index;
+	shared TableId? tableId => table?.id;
 	
 	shared Boolean isInRoom(RoomId roomId) {
 		return room?.id?.equals(roomId) else false;
@@ -124,10 +127,13 @@ final class Player(String playerId, variable Room? room = null) {
 
 class PlayerTest() {
 	
-	value messageList = ArrayList<PlayerMessage>();
+	value messageList = ArrayList<RoomMessage>();
 	
 	value room = Room("room", 1, Duration(1000), messageList.add);
-	value player = Player("player", room);
+	
+	function makePlayer(String id) => Player(PlayerInfo(id, id, null), room);
+	
+	value player = makePlayer("player");
 	
 	test
 	shared void newPlayerIsInRoom() {
@@ -164,7 +170,7 @@ class PlayerTest() {
 	shared void joinMatchTableWithoutOpponent() {
 		value result = player.findMatchTable();
 		assert (!result);
-		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 0);
+		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 0);
 	}
 	
 	test
@@ -176,11 +182,11 @@ class PlayerTest() {
 	
 	test
 	shared void findMatchTableWithOpponent() {
-		value opponent = Player("opponent", room);
+		value opponent = makePlayer("opponent");
 		opponent.findMatchTable();
 		value result = player.findMatchTable();
 		assert (result);
-		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 2);
+		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 2);
 	}
 	
 	test
@@ -189,7 +195,7 @@ class PlayerTest() {
 		assert (result);
 		assert (exists tableIndex = player.tableIndex);
 		assert (tableIndex == 0);
-		assert (messageList.count((PlayerMessage element) => element is JoinedTableMessage) == 1);
+		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 1);
 	}
 	
 	test
@@ -201,7 +207,7 @@ class PlayerTest() {
 	
 	test
 	shared void leaveTableWithMatch() {
-		value opponent = Player("opponent", room);
+		value opponent = makePlayer("opponent");
 		opponent.findMatchTable();
 		player.findMatchTable();
 		value result = player.leaveTable();
@@ -223,7 +229,7 @@ class PlayerTest() {
 	
 	test
 	shared void waitingSeatWithMatch() {
-		value opponent = Player("opponent", room);
+		value opponent = makePlayer("opponent");
 		opponent.findMatchTable();
 		player.findMatchTable();
 		value result = player.isWaitingSeat();
@@ -232,7 +238,7 @@ class PlayerTest() {
 	
 	test
 	shared void joinMatch() {
-		value opponent = Player("opponent", room);
+		value opponent = makePlayer("opponent");
 		value table = Table(0, room.id, Duration(1000), messageList.add);
 		value match = Match(player, opponent, table);
 		value result = player.joinMatch(match);
@@ -241,7 +247,7 @@ class PlayerTest() {
 	
 	test
 	shared void joinStartedMatch() {
-		value opponent = Player("opponent", room);
+		value opponent = makePlayer("opponent");
 		value table = Table(0, room.id, Duration(1000), messageList.add);
 		value match = Match(player, opponent, table);
 		match.startGame(opponent);

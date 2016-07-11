@@ -41,6 +41,10 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	}
 	
 	shared void removeInactiveGames(Instant currentTime) {
-		
+		for (entry in gameMap) {
+			if (entry.item.isInactive(currentTime)) {
+				gameMap.remove(entry.key);
+			}
+		}
 	}
 }

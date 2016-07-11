@@ -1,6 +1,13 @@
 import backgammon.common {
 	OutboundTableMessage,
-	OutboundMatchMessage
+	OutboundMatchMessage,
+	InboundRoomMessage,
+	FindMatchTableMessage,
+	PlayerInfo,
+	RoomId,
+	PlayerId,
+	OutboundRoomMessage,
+	EnterRoomMessage
 }
 import backgammon.server.common {
 	RoomConfiguration
@@ -13,7 +20,8 @@ import ceylon.logging {
 	logger
 }
 import ceylon.time {
-	Duration
+	Duration,
+	now
 }
 
 import io.vertx.ceylon.auth.oauth2 {
@@ -57,8 +65,9 @@ import io.vertx.ceylon.core.eventbus {
 	Message
 }
 
-shared class HttpServerVerticle() extends Verticle() {
+shared final class HttpServerVerticle() extends Verticle() {
 	
+	value roomId = "Room1";
 	value hostname = "localhost";
 	value port = 8080;
 	
@@ -122,8 +131,17 @@ shared class HttpServerVerticle() extends Verticle() {
 		
 		googleProfileClient.fetchUserInfo(routingContext, handler);
 		 */
-		routingContext.session()?.put("userInfo", "test");
-		routingContext.response().putHeader("Location", "static/board.html").setStatusCode(302).end();
+		value playerInfo = PlayerInfo("test1", "Lucien", "/static/images/unknown.png");
+		routingContext.session()?.put("playerInfo", playerInfo);
+		vertx.eventBus().send("InboundRoomMessage-``roomId``", EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|Message<OutboundRoomMessage> result) {
+			if (is Throwable result) {
+				routingContext.fail(result);
+			} else if (exists body = result.body()) {
+				routingContext.reroute("static/board.html");
+			}
+		});
+
+		//routingContext.response().putHeader("Location", "static/board.html").setStatusCode(302).end();
 	}
 	
 	function createCorsHandler() { 
@@ -140,9 +158,35 @@ shared class HttpServerVerticle() extends Verticle() {
 	}
 	
 	function createRestApiRouter() {
+		value eb = vertx.eventBus();
 		value restApi = routerFactory.router(vertx);
-		restApi.get("/products/:productID").handler((RoutingContext rc) {
-			
+		restApi.get("/room/:roomId/enter").handler((RoutingContext rc) {
+			if (exists roomId = rc.pathParam("roomId"), exists playerInfo = rc.session()?.get<PlayerInfo>("playerInfo")) {
+				rc.response().headers().add("Content-Type", "application/json");
+				eb.send("InboundRoomMessage-``roomId``", EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|Message<OutboundRoomMessage> result) {
+					if (is Throwable result) {
+						rc.fail(result);
+					} else if (exists body = result.body()) {
+						rc.response().write(body.toJson().string).end();
+					}
+				});
+			} else {
+				rc.fail(Exception("No room parameter"));
+			}
+		});
+		restApi.get("/room/:roomId/findMatchTable").handler((RoutingContext rc) {
+			if (exists roomId = rc.pathParam("roomId"), exists playerInfo = rc.session()?.get<PlayerInfo>("playerInfo")) {
+				rc.response().headers().add("Content-Type", "application/json");
+				eb.send("InboundRoomMessage-``roomId``", FindMatchTableMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Throwable|Message<OutboundRoomMessage> result) {
+					if (is Throwable result) {
+						rc.fail(result);
+					} else if (exists body = result.body()) {
+						rc.response().write(body.toJson().string).end();
+					}
+				});
+			} else {
+				rc.fail(Exception("No room parameter"));
+			}
 		});
 		return restApi;
 	}
@@ -165,7 +209,7 @@ shared class HttpServerVerticle() extends Verticle() {
 		logger(`package`).info("Started http://``hostname``:``port``");
 	}
 	
-	void startRoom(String roomId) {
+	void startRoom() {
 		value eb = vertx.eventBus();
 		value config = RoomConfiguration(roomId, 100, Duration(60000), Duration(30000));
 		void handler(OutboundTableMessage|OutboundMatchMessage msg) {
@@ -174,12 +218,19 @@ shared class HttpServerVerticle() extends Verticle() {
 		
 		value room = MatchRoom(config, handler);
 		
+		eb.consumer("InboundRoomMessage-``roomId``", void (Message<InboundRoomMessage> message) {
+			if (exists body = message.body()) {
+				value response = room.processPlayerMessage(body, now());
+				message.reply(response);
+			}
+		});
+		
 		vertx.setPeriodic(1000, (Integer val) => eb.publish("msg.to.client", "hello"));
 		logger(`package`).info("Started ``roomId``");
 	}
 	
 	shared actual void start() {
 		startHttp();
-		startRoom("Room1");
+		startRoom();
 	}
 }
