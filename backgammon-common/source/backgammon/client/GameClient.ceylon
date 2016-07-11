@@ -17,7 +17,7 @@ import backgammon.common {
 	GameWonMessage,
 	GameEndedMessage
 }
-shared class GameClient(String playerId, GameConfiguration configuration, Anything(InboundGameMessage) messageBroadcaster) {
+shared class GameClient(String playerId, Anything(InboundGameMessage) messageBroadcaster) {
 	value game = Game();
 
 	

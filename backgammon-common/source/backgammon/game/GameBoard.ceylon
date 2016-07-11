@@ -17,7 +17,6 @@ final class BoardPoint(shared Integer position) {
 	variable Integer whiteCount = 0;
 	variable Integer blackCount = 0;
 	
-	
 	shared void putChecker(CheckerColor color, Integer count) => resetChecker(color, countCheckers(color) + count);
 	
 	shared void resetChecker(CheckerColor color, Integer count) {
@@ -55,7 +54,7 @@ final class BoardPoint(shared Integer position) {
 	}
 }
 
-final class GameBoard() {
+shared final class GameBoard() {
 
 	shared Integer totalPointCount = 26;
 	
@@ -64,12 +63,6 @@ final class GameBoard() {
 	
 	shared Integer blackGraveyardPosition = 0;
 	shared Integer blackHomePosition = totalPointCount - 1;
-
-
-	ArrayList<BoardPoint> points = ArrayList<BoardPoint>(totalPointCount);
-	for (i in 0:totalPointCount) {
-		points.add(BoardPoint(i));
-	}
 	
 	shared Integer graveyardPosition(CheckerColor color) {
 		switch (color)
@@ -81,6 +74,34 @@ final class GameBoard() {
 		switch (color)
 		case (white) { return whiteHomePosition; }
 		case (black) { return blackHomePosition; }
+	}
+	
+	shared Range<Integer> playRange(CheckerColor color) {
+		switch (color)
+		case (white) { return 7..23; }
+		case (black) { return 1..17; }
+	}
+	
+	shared Range<Integer> positionRange(CheckerColor color) {
+		switch (color)
+		case (white) { return 1..25; }
+		case (black) { return 25..1; }
+	}
+	
+	shared Integer directionSign(CheckerColor color) {
+		
+		switch (color)
+		case (white) { return 1; }
+		case (black) { return -1; }
+	}
+	
+	shared Boolean isInRange(Integer position) {
+		return 0 <= position < totalPointCount; 
+	}
+
+	ArrayList<BoardPoint> points = ArrayList<BoardPoint>(totalPointCount);
+	for (i in 0:totalPointCount) {
+		points.add(BoardPoint(i));
 	}
 
 	shared Boolean putNewCheckers(Integer position, CheckerColor color, Integer count) {
@@ -111,30 +132,7 @@ final class GameBoard() {
 	}
 	
 	shared Boolean hasCheckerInGraveyard(CheckerColor color) => hasChecker(graveyardPosition(color), color);
-	
-	function playRange(CheckerColor color) {
-		switch (color)
-		case (white) { return 7..23; }
-		case (black) { return 1..17; }
-	}
-	
-	shared Range<Integer> positionRange(CheckerColor color) {
-		switch (color)
-		case (white) { return 1..25; }
-		case (black) { return 25..1; }
-	}
-	
-	shared Integer directionSign(CheckerColor color) {
-		
-		switch (color)
-		case (white) { return 1; }
-		case (black) { return -1; }
-	}
-	
-	shared Boolean isInRange(Integer position) {
-		return 0 <= position < totalPointCount; 
-	}
-	
+
 	shared Boolean hasCheckersOutsideHomeArea(CheckerColor color) {
 		return playRange(color).any((Integer element) => hasChecker(element, color));
 	}
@@ -153,6 +151,28 @@ final class GameBoard() {
 	}
 	
 	shared Integer distance(Integer sourcePosition, Integer targetPosition) => (targetPosition - sourcePosition).magnitude;
+	
+	shared void removeAllCheckers() {
+		for (p in points) {
+			p.resetChecker(black, 0);
+			p.resetChecker(white, 0);
+		}
+	}
+	
+	shared [Integer*] checkerCounts(CheckerColor color) {
+		return [for (p in points) p.countCheckers(color)];
+	}
+	
+	shared void setCheckerCounts(CheckerColor color, [Integer*] counts) {
+		value iterator = counts.iterator();
+		for (p in points) {
+			if (is Integer count = iterator.next()) {
+				p.resetChecker(color, count);
+			} else {
+				p.resetChecker(color, 0);
+			}
+		}
+	}
 	
 	function encodeState(CheckerColor color) {
 		return {for (p in points) p.countCheckers(color).byte};

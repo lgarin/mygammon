@@ -110,6 +110,7 @@ shared class HttpServerVerticle() extends Verticle() {
 	}
 	
 	void handleStart(RoutingContext routingContext) {
+		/*
 		void handler(UserInfo? userInfo) {
 			if (exists userInfo) {
 				//session.put("userInfo", userInfo);
@@ -120,6 +121,9 @@ shared class HttpServerVerticle() extends Verticle() {
 		}
 		
 		googleProfileClient.fetchUserInfo(routingContext, handler);
+		 */
+		routingContext.session()?.put("userInfo", "test");
+		routingContext.response().putHeader("Location", "static/board.html").setStatusCode(302).end();
 	}
 	
 	function createCorsHandler() { 
@@ -149,11 +153,11 @@ shared class HttpServerVerticle() extends Verticle() {
 		//router.route().handler(createCorsHandler().handle);
 		router.route().handler(cookieHandler.create().handle);
 		//router.route().handler(bodyHandler.create().setBodyLimit(bodyLimit).handle);		router.route().handler(sessionHandler.create(localSessionStore.create(vertx)).handle);
-		//router.route().handler(loggerHandler.create().handle);
+		router.route().handler(loggerHandler.create().handle);
 		router.route("/static/*").handler(staticHandler.create("static").handle);
 		router.route("/modules/*").handler(staticHandler.create("modules").handle);
 		router.route("/eventbus/*").handler(createSockJsHandler().handle);
-		router.route("/*").handler(loginHandler.handle);
+		//router.route("/*").handler(loginHandler.handle);
 		router.route("/start").handler(handleStart);
 		router.mountSubRouter("/api", createRestApiRouter());
 		vertx.createHttpServer().requestHandler(router.accept).listen(port);
