@@ -21,7 +21,7 @@ shared interface InboundGameMessage of StartGameMessage | PlayerReadyMessage | C
 shared interface OutboundGameMessage of InitialRollMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | DesynchronizedMessage | NotYourTurnMessage | GameWonMessage | GameEndedMessage satisfies GameMessage {
 	shared formal CheckerColor playerColor;
 	function toBaseJson() => Object({"matchId" -> matchId.toJson(), "playerId" -> playerId.toJson(), "playerColor" -> playerColor.name });
-	shared default Object toJson() => toBaseJson();
+	shared actual default Object toJson() => toBaseJson();
 	shared Object toExtendedJson({<String->Value>*} entries) {
 		value result = toBaseJson();
 		result.putAll(entries);

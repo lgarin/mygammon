@@ -41,7 +41,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 		}
 		case (is FindMatchTableMessage) {
 			if (exists player = room.players[message.playerId], player.findMatchTable()) {
-				return FoundMatchTableMessage(player.id, room.id, player.tableId);
+				return FoundMatchTableMessage(player.id, room.id, player.tableIndex);
 			}
 			return FoundMatchTableMessage(message.playerId, room.id, null);
 		}

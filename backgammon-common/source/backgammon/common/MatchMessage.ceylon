@@ -1,6 +1,11 @@
+import ceylon.json {
+
+	Object
+}
 shared sealed interface MatchMessage of OutboundMatchMessage | GameMessage satisfies TableMessage {
 	shared formal MatchId matchId;
 	tableId => matchId.tableId;
+	shared default actual Object toJson() => Object({"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson()});
 }
 
 shared sealed interface OutboundMatchMessage of JoiningMatchMessage | StartMatchMessage | LeaftMatchMessage satisfies MatchMessage {}

@@ -7,7 +7,14 @@ import backgammon.common {
 	RoomId,
 	PlayerId,
 	OutboundRoomMessage,
-	EnterRoomMessage
+	EnterRoomMessage,
+	EnteredRoomMessage,
+	FoundMatchTableMessage,
+	parseFoundMatchTableMessage,
+	parseFindMatchTableMessage,
+	parseEnterRoomMessage,
+	parseEnteredRoomMessage,
+	RoomMessage
 }
 import backgammon.server.common {
 	RoomConfiguration
@@ -16,6 +23,12 @@ import backgammon.server.match {
 	MatchRoom
 }
 
+import ceylon.json {
+	Object
+}
+import ceylon.language.meta {
+	type
+}
 import ceylon.logging {
 	logger
 }
@@ -31,6 +44,9 @@ import io.vertx.ceylon.auth.oauth2 {
 }
 import io.vertx.ceylon.core {
 	Verticle
+}
+import io.vertx.ceylon.core.eventbus {
+	Message
 }
 import io.vertx.ceylon.core.http {
 	HttpClientOptions,
@@ -59,10 +75,6 @@ import io.vertx.ceylon.web.handler.sockjs {
 }
 import io.vertx.ceylon.web.sstore {
 	localSessionStore
-}
-import io.vertx.ceylon.core.eventbus {
-
-	Message
 }
 
 shared final class HttpServerVerticle() extends Verticle() {
@@ -133,15 +145,33 @@ shared final class HttpServerVerticle() extends Verticle() {
 		 */
 		value playerInfo = PlayerInfo("test1", "Lucien", "/static/images/unknown.png");
 		routingContext.session()?.put("playerInfo", playerInfo);
-		vertx.eventBus().send("InboundRoomMessage-``roomId``", EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|Message<OutboundRoomMessage> result) {
+		sendRoomMessage(EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|EnteredRoomMessage result) {
 			if (is Throwable result) {
 				routingContext.fail(result);
-			} else if (exists body = result.body()) {
-				routingContext.reroute("static/board.html");
+			} else {
+				routingContext.response().putHeader("Location", "/play").setStatusCode(302).end();
 			}
 		});
-
-		//routingContext.response().putHeader("Location", "static/board.html").setStatusCode(302).end();
+	}
+	
+	void handlePlay(RoutingContext routingContext) {
+		if (exists playerInfo = routingContext.session()?.get<PlayerInfo>("playerInfo")) {
+			sendRoomMessage(FindMatchTableMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Throwable|FoundMatchTableMessage result) {
+				if (is Throwable result) {
+					routingContext.fail(result);
+				} else if (exists table = result.table) {
+					routingContext.response().putHeader("Location", "/table/``table``").setStatusCode(302).end();
+				} else {
+					routingContext.fail(Exception("No table found"));
+				}
+			});
+		} else {
+			routingContext.response().putHeader("Location", "/start").setStatusCode(302).end();
+		}
+	}
+	
+	void handleTable(RoutingContext routingContext) {
+		routingContext.reroute("static/board.html");
 	}
 	
 	function createCorsHandler() { 
@@ -203,10 +233,32 @@ shared final class HttpServerVerticle() extends Verticle() {
 		router.route("/eventbus/*").handler(createSockJsHandler().handle);
 		//router.route("/*").handler(loginHandler.handle);
 		router.route("/start").handler(handleStart);
+		router.route("/play").handler(handlePlay);
+		router.route("/table/:tableId").handler(handleTable);
 		router.mountSubRouter("/api", createRestApiRouter());
 		vertx.createHttpServer().requestHandler(router.accept).listen(port);
 		
 		logger(`package`).info("Started http://``hostname``:``port``");
+	}
+	
+	// TODO move in RoomMessage source file
+	function formatRoomMessage(RoomMessage message) {
+		return Object({type(message).declaration.name -> message.toJson()});
+	}
+	
+	// TODO move in RoomMessage source file
+	function parseRoomMessage(String typeName, Object json) {
+		if (typeName == `class EnterRoomMessage`.name) {
+			return parseEnterRoomMessage(json);
+		} else if (typeName == `class EnteredRoomMessage`.name) {
+			return parseEnteredRoomMessage(json);
+		} else if (typeName == `class FindMatchTableMessage`.name) {
+			return parseFindMatchTableMessage(json);
+		} else if (typeName == `class FoundMatchTableMessage`.name) {
+			return parseFoundMatchTableMessage(json);
+		} else {
+			return Exception("No parser found for type ``typeName``");
+		}
 	}
 	
 	void startRoom() {
@@ -218,17 +270,40 @@ shared final class HttpServerVerticle() extends Verticle() {
 		
 		value room = MatchRoom(config, handler);
 		
-		eb.consumer("InboundRoomMessage-``roomId``", void (Message<InboundRoomMessage> message) {
-			if (exists body = message.body()) {
-				value response = room.processPlayerMessage(body, now());
-				message.reply(response);
+		eb.consumer("InboundRoomMessage-``roomId``", void (Message<Object> message) {
+			if (exists body = message.body(), exists typeName = body.keys.first) {
+				if (is InboundRoomMessage request = parseRoomMessage(typeName, body.getObject(typeName))) {
+					value response = room.processPlayerMessage(request, now());
+					message.reply(formatRoomMessage(response));
+				} else {
+					message.fail(500, "Invalid request type: ``typeName``");
+				}
+			} else {
+				message.fail(500, "Invalid request: ``message``");
 			}
 		});
 		
 		vertx.setPeriodic(1000, (Integer val) => eb.publish("msg.to.client", "hello"));
 		logger(`package`).info("Started ``roomId``");
 	}
-	
+
+	void sendRoomMessage<OutboundMessage>(InboundRoomMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies OutboundRoomMessage {
+		value eb = vertx.eventBus();
+		eb.send("InboundRoomMessage-``roomId``", formatRoomMessage(message), void (Throwable|Message<Object> result) {
+			if (is Throwable result) {
+				responseHandler(result);
+			} else if (exists body = result.body(), exists typeName = body.keys.first) {
+				if (is OutboundMessage response = parseRoomMessage(typeName, body.getObject(typeName))) {
+					responseHandler(response);
+				} else {
+					responseHandler(Exception("Invalid response type: ``typeName``"));
+				}
+			} else {
+				responseHandler(Exception("Invalid response: ``result``"));
+			}
+		});
+	}
+
 	shared actual void start() {
 		startHttp();
 		startRoom();
