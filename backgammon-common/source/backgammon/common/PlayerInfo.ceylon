@@ -1,6 +1,5 @@
 import ceylon.json {
-	Object,
-	Array
+	Object
 }
 
 shared final class PlayerInfo(shared String id, shared String name, shared String? pictureUrl) {

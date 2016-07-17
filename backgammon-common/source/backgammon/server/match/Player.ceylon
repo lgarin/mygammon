@@ -120,7 +120,7 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 		return true;
 	}
 	
-	shared Boolean isWaitingSeat() => table exists && match is Null;
+	shared Boolean isWaitingOpponent() => table exists && match is Null;
 	
 	shared Boolean isInactiveSince(Instant timeoutTime) => lastActivity < timeoutTime;
 }
@@ -169,8 +169,8 @@ class PlayerTest() {
 	test
 	shared void joinMatchTableWithoutOpponent() {
 		value result = player.findMatchTable();
-		assert (!result);
-		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 0);
+		assert (result);
+		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 1);
 	}
 	
 	test
@@ -216,14 +216,14 @@ class PlayerTest() {
 	
 	test
 	shared void waitingSeatWithoutTable() {
-		value result = player.isWaitingSeat();
+		value result = player.isWaitingOpponent();
 		assert (!result);
 	}
 	
 	test
 	shared void waitingSeatWithoutMatch() {
 		player.joinTable(0);
-		value result = player.isWaitingSeat();
+		value result = player.isWaitingOpponent();
 		assert (result);
 	}
 	
@@ -232,7 +232,7 @@ class PlayerTest() {
 		value opponent = makePlayer("opponent");
 		opponent.findMatchTable();
 		player.findMatchTable();
-		value result = player.isWaitingSeat();
+		value result = player.isWaitingOpponent();
 		assert (!result);
 	}
 	

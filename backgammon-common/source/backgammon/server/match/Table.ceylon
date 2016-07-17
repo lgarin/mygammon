@@ -6,8 +6,7 @@ import backgammon.common {
 	OutboundTableMessage,
 	OutboundMatchMessage,
 	InboundGameMessage,
-	PlayerInfo,
-	PlayerId
+	PlayerInfo
 }
 
 import ceylon.collection {
@@ -19,13 +18,12 @@ import ceylon.test {
 	test
 }
 import ceylon.time {
-
 	Duration
 }
 
 final class Table(shared Integer index, shared RoomId roomId, shared Duration maxMatchJoinTime, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
-	shared TableId id = TableId(roomId.string, index);
+	shared TableId id = TableId(roomId.string, index + 1);
 	
 	variable Match? match = null;
 	

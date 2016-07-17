@@ -2,8 +2,8 @@ import ceylon.json {
 	Object
 }
 
-import io.vertx.ceylon.auth.oauth2 {
-	AccessToken
+import io.vertx.ceylon.auth.common {
+	User
 }
 import io.vertx.ceylon.core.buffer {
 	Buffer
@@ -14,10 +14,6 @@ import io.vertx.ceylon.core.http {
 }
 import io.vertx.ceylon.web {
 	RoutingContext
-}
-import io.vertx.ceylon.auth.common {
-
-	User
 }
 
 final class UserInfo(Object json, shared User accessToken) {

@@ -15,13 +15,13 @@ shared object white extends CheckerColor() {
 	name => "white";
 }
 
-shared CheckerColor? parseCheckerColor(String name) {
+shared CheckerColor parseCheckerColor(String name) {
 	if (name == white.name) {
 		return white;
 	} else if (name == black.name) {
 		return black;
 	} else {
-		return null;
+		throw Exception("Invalid color: ``name``");
 	}
 }
 
@@ -42,18 +42,21 @@ class CheckerColorTest() {
 	test
 	shared void parseBlackColor() {
 		value color = parseCheckerColor("black");
-		assert (exists color, color == black);
+		assert (color == black);
 	}
 	
 	test
 	shared void parseWhiteColor() {
 		value color = parseCheckerColor("white");
-		assert (exists color, color == white);
+		assert (color == white);
 	}
 	
 	test
 	shared void parseUnknownColor() {
-		value color = parseCheckerColor("xyz");
-		assert (color is Null);
+		try {
+			parseCheckerColor("xyz");
+		} catch (Exception e) {
+			assert (e.message == "Invalid color: xyz");
+		}
 	}
 }

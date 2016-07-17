@@ -1,6 +1,10 @@
 import backgammon.client {
 	GameGui
 }
+import backgammon.common {
+	TableId,
+	parseRoomMessage
+}
 import backgammon.game {
 	white,
 	black
@@ -13,7 +17,11 @@ import ceylon.interop.browser.dom {
 	HTMLElement
 }
 import ceylon.json {
-	parse
+	parse,
+	Object
+}
+import ceylon.regex {
+	regex
 }
 
 GameGui gui = GameGui(window.document);
@@ -54,26 +62,54 @@ shared Boolean onChecker(HTMLElement target) {
 	return true;
 }
 
-void onServerMessage(String messageString) {
-	value message = parse(messageString);
-	print(message);
+void onServerMessage(dynamic eventBus, String messageString) {
+	print(messageString);
+	value json = parse(messageString);
+	if (is Object json, exists typeName = json.keys.first) {
+		value message = parseRoomMessage(typeName, json.getObject(typeName));
+		print(message);
+	}
+}
+
+TableId? extractTableId(String pageUrl) {
+	
+	value match = regex("/room/(\\w+)/table/(\\d+)").find(pageUrl);
+	if (exists match, exists roomId = match.groups[0], exists table = match.groups[1]) {
+		if (exists tableIndex = parseInteger(table)) {
+			return TableId(roomId, tableIndex);
+		} 
+	}
+	return null;
+}
+
+void registerMessageHandler(dynamic eventBus, String address) {
+	dynamic {
+		eventBus.onopen = void() {
+			eventBus.registerHandler(address, (dynamic error, dynamic message) {
+				onServerMessage(eventBus, JSON.stringify(message));
+			});
+		};
+	}
 }
 
 "Run the module `backgammon.vertx.client`."
 shared void run() {
-
-	value location = window.location.string;
-	print(location);
 	
 	gui.redrawCheckers(black, [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10]);
 	gui.redrawCheckers(white, [10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]);
 
-    dynamic {
-        dynamic eb = EventBus("/eventbus/");
-        eb.onopen = void() {
-            eb.registerHandler("msg.to.client", (dynamic error, dynamic message) {
-                onServerMessage(JSON.stringify(message));
-            });
-        };
-    }
+	if (exists tableId = extractTableId(window.location.string)) {
+	    dynamic {
+			dynamic eb = EventBus("/eventbus/");
+			registerMessageHandler(eb, "OutboundTableMessage-``tableId``");
+	    }
+	}
+    /*
+    value request = newXMLHttpRequest();
+    request.open("GET", "/api/player/gamestate", true);
+    request.send();
+    request.onload = void (Event event) {
+      print(request.responseText);  
+    };
+     */
 }

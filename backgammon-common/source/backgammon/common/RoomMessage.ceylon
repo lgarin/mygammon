@@ -3,21 +3,24 @@ import ceylon.json {
 	Object,
 	Value
 }
+import ceylon.language.meta {
+
+	type
+}
 shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage | TableMessage {
 	shared formal PlayerId playerId;
 	shared formal RoomId roomId;
-	shared formal Object toJson();
-}
-
-shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage satisfies RoomMessage {
-	function toBaseJson() => Object({"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson()});
-	shared default actual Object toJson() => toBaseJson();
+	
+	shared default Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson()});
+	shared default Object toJson() => toBaseJson();
 	shared Object toExtendedJson({<String->Value>*} entries) {
 		value result = toBaseJson();
 		result.putAll(entries);
 		return result;
 	}
 }
+
+shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage satisfies RoomMessage {}
 
 shared final class EnterRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared PlayerInfo playerInfo) satisfies InboundRoomMessage {
 	toJson() => toExtendedJson({"playerInfo" -> playerInfo.toJson()});
@@ -36,13 +39,7 @@ shared FindMatchTableMessage parseFindMatchTableMessage(Object json) {
 
 shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeaftRoomMessage | FoundMatchTableMessage satisfies RoomMessage {
 	shared formal Boolean success;
-	function toBaseJson() => Object({"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success });
-	shared default actual Object toJson() => toBaseJson();
-	shared Object toExtendedJson({<String->Value>*} entries) {
-		value result = toBaseJson();
-		result.putAll(entries);
-		return result;
-	}
+	shared default actual Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success });
 }
 
 shared final class EnteredRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}
@@ -61,3 +58,20 @@ shared FoundMatchTableMessage parseFoundMatchTableMessage(Object json) {
 	return FoundMatchTableMessage(parsePlayerId(json.get("playerId")), parseRoomId(json.get("roomId")), json.getIntegerOrNull("table"));
 }
 
+shared Object formatRoomMessage(RoomMessage message) {
+	return Object({type(message).declaration.name -> message.toJson()});
+}
+
+shared RoomMessage? parseRoomMessage(String typeName, Object json) {
+	if (typeName == `class EnterRoomMessage`.name) {
+		return parseEnterRoomMessage(json);
+	} else if (typeName == `class EnteredRoomMessage`.name) {
+		return parseEnteredRoomMessage(json);
+	} else if (typeName == `class FindMatchTableMessage`.name) {
+		return parseFindMatchTableMessage(json);
+	} else if (typeName == `class FoundMatchTableMessage`.name) {
+		return parseFoundMatchTableMessage(json);
+	} else {
+		return parseTableMessage(typeName, json);
+	}
+}

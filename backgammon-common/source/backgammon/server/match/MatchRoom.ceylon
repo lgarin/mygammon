@@ -47,7 +47,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 		}
 	}
 	
-	shared OutboundRoomMessage processPlayerMessage(InboundRoomMessage message, Instant currentTime) {
+	shared OutboundRoomMessage processRoomMessage(InboundRoomMessage message, Instant currentTime) {
 		// TODO implement flooding control
 		try (lock) {
 			return process(message);
@@ -55,7 +55,6 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 	}
 
 	shared void removeInactivePlayers(Instant currentTime) {
-		// TODO check session timeout
-		//room.removeInactivePlayers(timeout)
+		room.removeInactivePlayers(currentTime.plus(configuration.playerInactiveTimeout));
 	}
 }

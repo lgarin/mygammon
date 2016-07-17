@@ -10,24 +10,25 @@ import backgammon.common {
 	EnterRoomMessage,
 	EnteredRoomMessage,
 	FoundMatchTableMessage,
-	parseFoundMatchTableMessage,
-	parseFindMatchTableMessage,
-	parseEnterRoomMessage,
-	parseEnteredRoomMessage,
-	RoomMessage
+	parseRoomMessage,
+	formatRoomMessage,
+	OutboundGameMessage,
+	InboundGameMessage,
+	parseGameMessage
 }
 import backgammon.server.common {
 	RoomConfiguration
+}
+import backgammon.server.game {
+	GameRoom
 }
 import backgammon.server.match {
 	MatchRoom
 }
 
 import ceylon.json {
-	Object
-}
-import ceylon.language.meta {
-	type
+	Object,
+	Value
 }
 import ceylon.logging {
 	logger
@@ -43,7 +44,9 @@ import io.vertx.ceylon.auth.oauth2 {
 	OAuth2Auth
 }
 import io.vertx.ceylon.core {
-	Verticle
+	Verticle,
+	Future,
+	WorkerExecutor
 }
 import io.vertx.ceylon.core.eventbus {
 	Message
@@ -79,7 +82,7 @@ import io.vertx.ceylon.web.sstore {
 
 shared final class HttpServerVerticle() extends Verticle() {
 	
-	value roomId = "Room1";
+	value roomId = "test";
 	value hostname = "localhost";
 	value port = 8080;
 	
@@ -120,14 +123,30 @@ shared final class HttpServerVerticle() extends Verticle() {
 	}
 	
 	function createSockJsHandler() {
-		value options = SockJSHandlerOptions {
+		value sockJsOptions = SockJSHandlerOptions {
 			heartbeatInterval = 2000;
 		};
 		
 		value bridgeOptions = BridgeOptions {
-			outboundPermitteds = {PermittedOptions { address = "msg.to.client"; } };
+			outboundPermitteds = {PermittedOptions { addressRegex = "^OutboundTableMessage-.*"; }, PermittedOptions { addressRegex = "^OutboundGameMessage-.*"; } };
 		};
-		return sockJSHandler.create(vertx).bridge(bridgeOptions);
+		return sockJSHandler.create(vertx, sockJsOptions).bridge(bridgeOptions);
+	}
+	
+	void sendInboundRoomMessage<OutboundMessage>(InboundRoomMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies OutboundRoomMessage {
+		vertx.eventBus().send("InboundRoomMessage-``message.roomId``", formatRoomMessage(message), void (Throwable|Message<Object> result) {
+			if (is Throwable result) {
+				responseHandler(result);
+			} else if (exists body = result.body(), exists typeName = body.keys.first) {
+				if (is OutboundMessage response = parseRoomMessage(typeName, body.getObject(typeName))) {
+					responseHandler(response);
+				} else {
+					responseHandler(Exception("Invalid response type: ``typeName``"));
+				}
+			} else {
+				responseHandler(Exception("Invalid response: ``result``"));
+			}
+		});
 	}
 	
 	void handleStart(RoutingContext routingContext) {
@@ -145,24 +164,24 @@ shared final class HttpServerVerticle() extends Verticle() {
 		 */
 		value playerInfo = PlayerInfo("test1", "Lucien", "/static/images/unknown.png");
 		routingContext.session()?.put("playerInfo", playerInfo);
-		sendRoomMessage(EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|EnteredRoomMessage result) {
+		sendInboundRoomMessage(EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|EnteredRoomMessage result) {
 			if (is Throwable result) {
 				routingContext.fail(result);
 			} else {
-				routingContext.response().putHeader("Location", "/play").setStatusCode(302).end();
+				routingContext.response().putHeader("Location", "/room/``roomId``/play").setStatusCode(302).end();
 			}
 		});
 	}
 	
 	void handlePlay(RoutingContext routingContext) {
-		if (exists playerInfo = routingContext.session()?.get<PlayerInfo>("playerInfo")) {
-			sendRoomMessage(FindMatchTableMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Throwable|FoundMatchTableMessage result) {
+		if (exists playerInfo = routingContext.session()?.get<PlayerInfo>("playerInfo"), exists roomId = routingContext.request().getParam("roomId")) {
+			sendInboundRoomMessage(FindMatchTableMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Throwable|FoundMatchTableMessage result) {
 				if (is Throwable result) {
 					routingContext.fail(result);
 				} else if (exists table = result.table) {
-					routingContext.response().putHeader("Location", "/table/``table``").setStatusCode(302).end();
+					routingContext.response().putHeader("Location", "/room/``roomId``/table/``table``").setStatusCode(302).end();
 				} else {
-					routingContext.fail(Exception("No table found"));
+					routingContext.fail(503);
 				}
 			});
 		} else {
@@ -187,17 +206,24 @@ shared final class HttpServerVerticle() extends Verticle() {
 		return handler;
 	}
 	
+	void writeJsonResponse(RoutingContext rc, Object json) {
+		value response = json.string;
+		rc.response().headers().add("Content-Length", response.size.string);
+		rc.response().headers().add("Content-Type", "application/json");
+		rc.response().write(response).end();
+	}
+	
+	function getCurrentPlayerInfo(RoutingContext rc) => rc.session()?.get<PlayerInfo>("playerInfo");
+	
 	function createRestApiRouter() {
-		value eb = vertx.eventBus();
 		value restApi = routerFactory.router(vertx);
 		restApi.get("/room/:roomId/enter").handler((RoutingContext rc) {
-			if (exists roomId = rc.pathParam("roomId"), exists playerInfo = rc.session()?.get<PlayerInfo>("playerInfo")) {
-				rc.response().headers().add("Content-Type", "application/json");
-				eb.send("InboundRoomMessage-``roomId``", EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|Message<OutboundRoomMessage> result) {
+			if (exists roomId = rc.request().getParam("roomId"), exists playerInfo = getCurrentPlayerInfo(rc)) {
+				sendInboundRoomMessage(EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|OutboundRoomMessage result) {
 					if (is Throwable result) {
 						rc.fail(result);
-					} else if (exists body = result.body()) {
-						rc.response().write(body.toJson().string).end();
+					} else {
+						writeJsonResponse(rc, result.toJson());
 					}
 				});
 			} else {
@@ -205,17 +231,23 @@ shared final class HttpServerVerticle() extends Verticle() {
 			}
 		});
 		restApi.get("/room/:roomId/findMatchTable").handler((RoutingContext rc) {
-			if (exists roomId = rc.pathParam("roomId"), exists playerInfo = rc.session()?.get<PlayerInfo>("playerInfo")) {
-				rc.response().headers().add("Content-Type", "application/json");
-				eb.send("InboundRoomMessage-``roomId``", FindMatchTableMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Throwable|Message<OutboundRoomMessage> result) {
+			if (exists roomId = rc.request().getParam("roomId"), exists playerInfo = getCurrentPlayerInfo(rc)) {
+				sendInboundRoomMessage(FindMatchTableMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Throwable|OutboundRoomMessage result) {
 					if (is Throwable result) {
 						rc.fail(result);
-					} else if (exists body = result.body()) {
-						rc.response().write(body.toJson().string).end();
+					} else {
+						writeJsonResponse(rc, result.toJson());
 					}
 				});
 			} else {
 				rc.fail(Exception("No room parameter"));
+			}
+		});
+		restApi.get("/player/current").handler((RoutingContext rc) {
+			if (exists playerInfo = getCurrentPlayerInfo(rc)) {
+				writeJsonResponse(rc, playerInfo.toJson());
+			} else {
+				rc.fail(Exception("No player information available"));
 			}
 		});
 		return restApi;
@@ -226,82 +258,90 @@ shared final class HttpServerVerticle() extends Verticle() {
 		value loginHandler = GoogleAuthHandler(oauth2, "http://``hostname``:``port``").setupCallback(router.route("/callback")).addAuthority("profile");
 		//router.route().handler(createCorsHandler().handle);
 		router.route().handler(cookieHandler.create().handle);
-		//router.route().handler(bodyHandler.create().setBodyLimit(bodyLimit).handle);		router.route().handler(sessionHandler.create(localSessionStore.create(vertx)).handle);
+		//router.route().handler(bodyHandler.create().setBodyLimit(bodyLimit).handle);		router.route().handler(sessionHandler.create(localSessionStore.create(vertx)).setNagHttps(false).handle);
 		router.route().handler(loggerHandler.create().handle);
 		router.route("/static/*").handler(staticHandler.create("static").handle);
 		router.route("/modules/*").handler(staticHandler.create("modules").handle);
 		router.route("/eventbus/*").handler(createSockJsHandler().handle);
 		//router.route("/*").handler(loginHandler.handle);
 		router.route("/start").handler(handleStart);
-		router.route("/play").handler(handlePlay);
-		router.route("/table/:tableId").handler(handleTable);
+		router.route("/room/:roomId/play").handler(handlePlay);
+		router.route("/room/:roomId/table/:tableId").handler(handleTable);
 		router.mountSubRouter("/api", createRestApiRouter());
 		vertx.createHttpServer().requestHandler(router.accept).listen(port);
 		
 		logger(`package`).info("Started http://``hostname``:``port``");
 	}
 	
-	// TODO move in RoomMessage source file
-	function formatRoomMessage(RoomMessage message) {
-		return Object({type(message).declaration.name -> message.toJson()});
-	}
-	
-	// TODO move in RoomMessage source file
-	function parseRoomMessage(String typeName, Object json) {
-		if (typeName == `class EnterRoomMessage`.name) {
-			return parseEnterRoomMessage(json);
-		} else if (typeName == `class EnteredRoomMessage`.name) {
-			return parseEnteredRoomMessage(json);
-		} else if (typeName == `class FindMatchTableMessage`.name) {
-			return parseFindMatchTableMessage(json);
-		} else if (typeName == `class FoundMatchTableMessage`.name) {
-			return parseFoundMatchTableMessage(json);
-		} else {
-			return Exception("No parser found for type ``typeName``");
-		}
-	}
-	
-	void startRoom() {
-		value eb = vertx.eventBus();
-		value config = RoomConfiguration(roomId, 100, Duration(60000), Duration(30000));
-		void handler(OutboundTableMessage|OutboundMatchMessage msg) {
-			eb.send(config.roomName, msg.string);
-		}
-		
-		value room = MatchRoom(config, handler);
-		
-		eb.consumer("InboundRoomMessage-``roomId``", void (Message<Object> message) {
-			if (exists body = message.body(), exists typeName = body.keys.first) {
-				if (is InboundRoomMessage request = parseRoomMessage(typeName, body.getObject(typeName))) {
-					value response = room.processPlayerMessage(request, now());
-					message.reply(formatRoomMessage(response));
-				} else {
-					message.fail(500, "Invalid request type: ``typeName``");
-				}
+	void registerParallelConsumer(WorkerExecutor executor, String address, Value process(Object msg)) {
+		vertx.eventBus().consumer(address, void (Message<Object> message) {
+			if (exists body = message.body()) {
+				executor.executeBlocking(
+					void (Future<Value> result) {
+						result.complete(process(body));
+					},
+					void (Throwable|Value result) {
+						if (is Throwable result) {
+							message.fail(500, "Error: ``result.message``");
+						} else {
+							message.reply(result);
+						}
+					});
 			} else {
 				message.fail(500, "Invalid request: ``message``");
 			}
 		});
-		
-		vertx.setPeriodic(1000, (Integer val) => eb.publish("msg.to.client", "hello"));
-		logger(`package`).info("Started ``roomId``");
 	}
-
-	void sendRoomMessage<OutboundMessage>(InboundRoomMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies OutboundRoomMessage {
-		value eb = vertx.eventBus();
-		eb.send("InboundRoomMessage-``roomId``", formatRoomMessage(message), void (Throwable|Message<Object> result) {
-			if (is Throwable result) {
-				responseHandler(result);
-			} else if (exists body = result.body(), exists typeName = body.keys.first) {
-				if (is OutboundMessage response = parseRoomMessage(typeName, body.getObject(typeName))) {
-					responseHandler(response);
+	
+	void startRoom() {
+		// TODO read config from vertx.getOrCreateContext().config() 
+		value config = RoomConfiguration(roomId, 100, Duration(60000), Duration(30000));
+		value executor = vertx.createSharedWorkerExecutor("room-``roomId``");
+		
+		value matchRoom = MatchRoom(config, void (OutboundTableMessage|OutboundMatchMessage msg) {
+			logger(`package`).info(formatRoomMessage(msg).string);
+			vertx.eventBus().send("OutboundTableMessage-``msg.tableId``", formatRoomMessage(msg));
+		});
+		
+		registerParallelConsumer(executor, "InboundRoomMessage-``roomId``", function (Object msg) {
+			logger(`package`).info(msg.string);
+			if (exists typeName = msg.keys.first) {
+				if (is InboundRoomMessage request = parseRoomMessage(typeName, msg.getObject(typeName))) {
+					value response = matchRoom.processRoomMessage(request, now());
+					return formatRoomMessage(response);
 				} else {
-					responseHandler(Exception("Invalid response type: ``typeName``"));
+					throw Exception("Invalid request type: ``typeName``");
 				}
 			} else {
-				responseHandler(Exception("Invalid response: ``result``"));
+				throw Exception("Invalid request: ``msg``");
 			}
 		});
+		
+		value gameRoom = GameRoom(config, void (OutboundGameMessage msg) {
+			logger(`package`).info(formatRoomMessage(msg).string);
+			vertx.eventBus().send("OutboundGameMessage-``msg.matchId``", formatRoomMessage(msg));
+		});
+		
+		registerParallelConsumer(executor, "InboundGameMessage-``roomId``",  function (Object msg) {
+			logger(`package`).info(msg.string);
+			if (exists typeName = msg.keys.first) {
+				if (is InboundGameMessage request = parseGameMessage(typeName, msg.getObject(typeName))) {
+					return gameRoom.processGameMessage(request, now());
+				} else {
+					throw Exception("Invalid request type: ``typeName``");
+				}
+			} else {
+				throw Exception("Invalid request: ``msg``");
+			}
+		});
+		
+		vertx.setPeriodic(config.gameInactiveTimeout.milliseconds, void (Integer val) {
+			value currentTime = now();
+			matchRoom.removeInactivePlayers(currentTime);
+			gameRoom.removeInactiveGames(currentTime);
+		});
+		
+		logger(`package`).info("Started room ``roomId``");
 	}
 
 	shared actual void start() {

@@ -1,12 +1,4 @@
-import backgammon.game {
-	Game,
-	GameConfiguration,
-	CheckerColor,
-	black,
-	white
-}
 import backgammon.common {
-
 	InboundGameMessage,
 	OutboundGameMessage,
 	InitialRollMessage,
@@ -19,13 +11,17 @@ import backgammon.common {
 	GameWonMessage,
 	GameEndedMessage
 }
-import ceylon.interop.browser {
+import backgammon.game {
+	Game,
+	CheckerColor,
+	black,
+	white
+}
 
+import ceylon.interop.browser {
 	window
 }
 import ceylon.time {
-
-	Duration,
 	Period
 }
 shared class GameClient(String playerId, Anything(InboundGameMessage) messageBroadcaster) {
