@@ -17,7 +17,10 @@ import backgammon.common {
 	parseGameMessage,
 	TableStateRequestMessage,
 	TableId,
-	TableStateResponseMessage
+	TableStateResponseMessage,
+	GameStateRequestMessage,
+	GameStateResponseMessage,
+	MatchId
 }
 import backgammon.server.common {
 	RoomConfiguration
@@ -38,7 +41,8 @@ import ceylon.logging {
 }
 import ceylon.time {
 	Duration,
-	now
+	now,
+	Instant
 }
 
 import io.vertx.ceylon.auth.oauth2 {
@@ -153,6 +157,22 @@ shared final class HttpServerVerticle() extends Verticle() {
 		});
 	}
 	
+	void sendInboundGameMessage<OutboundMessage>(InboundGameMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies OutboundGameMessage {
+		vertx.eventBus().send("InboundGameMessage-``message.roomId``", formatRoomMessage(message), void (Throwable|Message<Object> result) {
+			if (is Throwable result) {
+				responseHandler(result);
+			} else if (exists body = result.body(), exists typeName = body.keys.first) {
+				if (is OutboundMessage response = parseGameMessage(typeName, body.getObject(typeName))) {
+					responseHandler(response);
+				} else {
+					responseHandler(Exception("Invalid response type: ``typeName``"));
+				}
+			} else {
+				responseHandler(Exception("Invalid response: ``result``"));
+			}
+		});
+	}
+	
 	void handleStart(RoutingContext routingContext) {
 		/*
 		void handler(UserInfo? userInfo) {
@@ -209,6 +229,18 @@ shared final class HttpServerVerticle() extends Verticle() {
 		}
 	}
 	
+	function getRequestMatchId(RoutingContext rc) {
+		if (exists match = rc.request().getParam("matchTimestamp"), exists tableId = getRequestTableId(rc)) {
+			if (exists matchTimestamp = parseInteger(match)) {
+				return MatchId(tableId, Instant(matchTimestamp));
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	
 	void handlePlay(RoutingContext routingContext) {
 		if (exists playerId = getCurrentPlayerId(routingContext), exists roomId = getRequestRoomId(routingContext)) {
 			sendInboundRoomMessage(FindMatchTableMessage(playerId, roomId), void (Throwable|FoundMatchTableMessage result) {
@@ -253,11 +285,25 @@ shared final class HttpServerVerticle() extends Verticle() {
 	
 	void handleTableStateRequest(RoutingContext rc) {
 		if (exists tableId = getRequestTableId(rc), exists playerId = getCurrentPlayerId(rc)) {
-			sendInboundRoomMessage(TableStateRequestMessage(playerId, tableId), void (Throwable|TableStateResponseMessage result) {
+			sendInboundRoomMessage(TableStateRequestMessage(playerId, RoomId(tableId.roomId), tableId.table), void (Throwable|TableStateResponseMessage result) {
 				if (is Throwable result) {
 					rc.fail(result);
 				} else {
-					writeJsonResponse(rc, result.toJson());
+					writeJsonResponse(rc, formatRoomMessage(result));
+				}
+			});
+		} else {
+			rc.fail(Exception("Invalid request: ``rc.request().uri``"));
+		}
+	}
+	
+	void handleGameStateRequest(RoutingContext rc) {
+		if (exists matchId = getRequestMatchId(rc), exists playerId = getCurrentPlayerId(rc)) {
+			sendInboundGameMessage(GameStateRequestMessage(matchId, playerId), void (Throwable|GameStateResponseMessage result) {
+				if (is Throwable result) {
+					rc.fail(result);
+				} else {
+					writeJsonResponse(rc, formatRoomMessage(result));
 				}
 			});
 		} else {
@@ -268,6 +314,7 @@ shared final class HttpServerVerticle() extends Verticle() {
 	function createRestApiRouter() {
 		value restApi = routerFactory.router(vertx);
 		restApi.get("/room/:roomId/table/:tableIndex/state").handler(handleTableStateRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);
 		return restApi;
 	}
 	
@@ -344,7 +391,8 @@ shared final class HttpServerVerticle() extends Verticle() {
 			logger(`package`).info(msg.string);
 			if (exists typeName = msg.keys.first) {
 				if (is InboundGameMessage request = parseGameMessage(typeName, msg.getObject(typeName))) {
-					return gameRoom.processGameMessage(request, now());
+					value response = gameRoom.processGameMessage(request, now());
+					return formatRoomMessage(response);
 				} else {
 					throw Exception("Invalid request type: ``typeName``");
 				}

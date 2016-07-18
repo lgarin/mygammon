@@ -7,7 +7,7 @@ import backgammon.common {
 	OutboundMatchMessage,
 	InboundGameMessage,
 	PlayerInfo,
-	MatchInfo
+	MatchState
 }
 
 import ceylon.collection {
@@ -77,9 +77,9 @@ final class Table(shared Integer index, shared RoomId roomId, shared Duration ma
 		}
 	}
 	
-	shared MatchInfo? matchInfo {
+	shared MatchState? matchInfo {
 		if (exists currentMatch = match) {
-			return currentMatch.info;
+			return currentMatch.state;
 		} else {
 			return null;
 		}

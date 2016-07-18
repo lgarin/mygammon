@@ -31,7 +31,10 @@ import backgammon.common {
 	InitialRollMessage,
 	InvalidMoveMessage,
 	UndoMovesMessage,
-	EndTurnMessage
+	EndTurnMessage,
+	GameStateResponseMessage,
+	GameStateRequestMessage,
+	GameActionResponseMessage
 }
 import backgammon.server.common {
 
@@ -90,9 +93,10 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		}
 	}
 	
-	void endTurn(CheckerColor playerColor) {
+	function endTurn(CheckerColor playerColor) {
 		if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
+			return false;
 		} else if (game.endTurn(playerColor)) {
 			if (exists nextColor = game.switchTurn(playerColor)) {
 				value roll = diceRoller.roll();
@@ -102,33 +106,41 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			} else if (game.hasWon(playerColor)) {
 				messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor), playerColor));
 			}
+			return true;
 		} else {
 			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
+			return false;
 		}
 	}
 	
-	void undoMoves(CheckerColor playerColor) {
+	function undoMoves(CheckerColor playerColor) {
 		if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
+			return false;
 		} else if (game.undoTurnMoves(playerColor)) {
 			messageBroadcaster(UndoneMovesMessage(matchId, toPlayerId(playerColor), playerColor));
+			return true;
 		} else {
 			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
+			return false;
 		}
 	}
 	
-	void makeMove(CheckerColor playerColor, GameMove move) {
+	function makeMove(CheckerColor playerColor, GameMove move) {
 		if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
+			return false;
 		} else if (game.moveChecker(playerColor, move.sourcePosition, move.targetPosition)) {
 			messageBroadcaster(PlayedMoveMessage(matchId, toPlayerId(playerColor), playerColor, move));
+			return true;
 		} else {
 			increaseWarningCount(playerColor, configuration.invalidMoveWarningCount);
 			messageBroadcaster(InvalidMoveMessage(matchId, toPlayerId(playerColor), playerColor, move));
+			return false;
 		}
 	}
 	
-	void beginGame(CheckerColor playerColor) {
+	function beginGame(CheckerColor playerColor) {
 		if (game.begin(playerColor)) {
 			if (exists currentColor = game.currentColor) {
 				value roll = diceRoller.roll();
@@ -137,58 +149,67 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			} else {
 				sendInitialRoll();
 			}
+			return true;
 		} else {
 			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
+			return false;
 		}
 	}
 	
-	void surrenderGame(CheckerColor playerColor) {
+	function endGame() {
+		if (game.end()) {
+			messageBroadcaster(GameEndedMessage(matchId, player1Id, player1Color));
+			messageBroadcaster(GameEndedMessage(matchId, player2Id, player2Color));
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	function surrenderGame(CheckerColor playerColor) {
 		if (exists currentColor = game.currentColor) {
 			value opponentId = toPlayerId(playerColor.oppositeColor);
 			messageBroadcaster(GameWonMessage(matchId, opponentId, playerColor.oppositeColor));
 		}
-		endGame();
+		return endGame();
 	}
 	
-	void endGame() {
-		if (game.end()) {
-			messageBroadcaster(GameEndedMessage(matchId, player1Id, player1Color));
-			messageBroadcaster(GameEndedMessage(matchId, player2Id, player2Color));
-		}
-	}
-	
-	void handleMessage(InboundGameMessage message, CheckerColor playerColor) {
+	function handleMessage(InboundGameMessage message, CheckerColor playerColor) {
 		switch (message) 
 		case (is StartGameMessage) {
-			sendInitialRoll();
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, sendInitialRoll());
 		}
 		case (is PlayerReadyMessage) {
-			beginGame(playerColor);
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, beginGame(playerColor));
 		}
 		case (is MakeMoveMessage) {
-			makeMove(playerColor, message.move);
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, makeMove(playerColor, message.move));
 		}
 		case (is UndoMovesMessage) {
-			undoMoves(playerColor);
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, undoMoves(playerColor));
 		}
 		case (is EndTurnMessage) {
-			endTurn(playerColor);
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, endTurn(playerColor));
 		}
 		case (is CheckTimeoutMessage) {
-			// does nothing timeout are checked in processMessage
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, false);
 		}
 		case (is EndGameMessage) {
-			surrenderGame(playerColor);
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, surrenderGame(playerColor));
+		}
+		case (is GameStateRequestMessage) {
+			return GameStateResponseMessage(matchId, message.playerId, playerColor, game.state);
 		}
 	}
 	
-	void handleTimeout() {
+	function handleTimeout(InboundGameMessage message, CheckerColor playerColor) {
 		if (exists currentColor = game.currentColor) {
 			increaseWarningCount(currentColor, configuration.timeoutActionWarningCount);
 			endTurn(currentColor);
 		} else {
 			endGame();
 		}
+		return GameActionResponseMessage(matchId, message.playerId, playerColor, message is CheckTimeoutMessage);
 	}
 	
 	shared Boolean isInactive(Instant currentTime) {
@@ -196,26 +217,28 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	}
 	
 	function process(InboundGameMessage message, Instant currentTime, CheckerColor color) {
+		variable GameActionResponseMessage|GameStateResponseMessage result;
 		if (game.timedOut(currentTime.minus(configuration.serverAdditionalTimeout))) {
-			handleTimeout();
+			result = handleTimeout(message, color);
 		} else {
-			handleMessage(message, color);
+			result = handleMessage(message, color);
 		}
 		if (blackWarnings > configuration.maxWarningCount) {
 			surrenderGame(black);
 		} else if (whiteWarnings > configuration.maxWarningCount) {
 			surrenderGame(white);
 		}
-		return true;
+		return result;
 	}
 	
-	shared Boolean processGameMessage(InboundGameMessage message, Instant currentTime) {
+	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message, Instant currentTime) {
 		if (exists color = toPlayerColor(message.playerId)) {
 			try (lock) {
 				return process(message, currentTime, color);
 			}
 		} else {
-			return false;
+			// TODO cannot determine color
+			return GameActionResponseMessage(matchId, message.playerId, player1Color, false);
 		}
 	}
 }

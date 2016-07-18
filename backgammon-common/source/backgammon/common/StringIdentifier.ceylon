@@ -31,22 +31,18 @@ shared final class PlayerId(shared String id) extends StringIdentifier(id) {
 	toJson() => id;
 }
 
-shared RoomId parseRoomId(Value json) {
-	assert (is String json);
+shared RoomId parseRoomId(String json) {
 	return RoomId(json);
 }
 
-shared TableId parseTableId(Value json) {
-	assert (is JsonObject json);
+shared TableId parseTableId(JsonObject json) {
 	return TableId(json.getString("roomId"), json.getInteger("table"));
 }
 
-shared MatchId parseMatchId(Value json) {
-	assert (is JsonObject json);
+shared MatchId parseMatchId(JsonObject json) {
 	return MatchId(parseTableId(json), Instant(json.getInteger("timestamp")));
 }
 
-shared PlayerId parsePlayerId(Value json) {
-	assert (is String json);
+shared PlayerId parsePlayerId(String json) {
 	return PlayerId(json);
 }

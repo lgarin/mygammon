@@ -12,17 +12,17 @@ shared sealed interface OutboundMatchMessage of JoiningMatchMessage | StartMatch
 
 shared final class JoiningMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId) satisfies OutboundMatchMessage {}
 shared JoiningMatchMessage parseJoiningMatchMessage(Object json) {
-	return JoiningMatchMessage(parsePlayerId(json.get("playerId")), parseMatchId(json.get("matchId")));
+	return JoiningMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")));
 }
 
 shared final class LeaftMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId) satisfies OutboundMatchMessage {}
 shared LeaftMatchMessage parseLeaftMatchMessage(Object json) {
-	return LeaftMatchMessage(parsePlayerId(json.get("playerId")), parseMatchId(json.get("matchId")));
+	return LeaftMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")));
 }
 
 shared final class StartMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId) satisfies OutboundMatchMessage {}
 shared StartMatchMessage parseStartMatchMessage(Object json) {
-	return StartMatchMessage(parsePlayerId(json.get("playerId")), parseMatchId(json.get("matchId")));
+	return StartMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")));
 }
 
 shared MatchMessage? parseMatchMessage(String typeName, Object json) {

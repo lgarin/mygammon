@@ -32,19 +32,19 @@ shared final class EnterRoomMessage(shared actual PlayerId playerId, shared actu
 	toJson() => toExtendedJson({"playerInfo" -> playerInfo.toJson()});
 }
 shared EnterRoomMessage parseEnterRoomMessage(Object json) {
-	return EnterRoomMessage(parsePlayerId(json.get("playerId")), parseRoomId(json.get("roomId")), parsePlayerInfo(json.getObject("playerInfo")));
+	return EnterRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), parsePlayerInfo(json.getObject("playerInfo")));
 }
 
 shared final class LeaveRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
 
 shared final class FindMatchTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
 shared FindMatchTableMessage parseFindMatchTableMessage(Object json) {
-	return FindMatchTableMessage(parsePlayerId(json.get("playerId")), parseRoomId(json.get("roomId")));
+	return FindMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
 }
 
 shared final class EnteredRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}
 shared EnteredRoomMessage parseEnteredRoomMessage(Object json) {
-	return EnteredRoomMessage(parsePlayerId(json.get("playerId")), parseRoomId(json.get("roomId")), json.getBoolean("success"));
+	return EnteredRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getBoolean("success"));
 }
 
 shared final class LeaftRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}
@@ -54,24 +54,23 @@ shared final class FoundMatchTableMessage(shared actual PlayerId playerId, share
 	toJson() => toExtendedJson({"table" -> table});
 }
 shared FoundMatchTableMessage parseFoundMatchTableMessage(Object json) {
-	return FoundMatchTableMessage(parsePlayerId(json.get("playerId")), parseRoomId(json.get("roomId")), json.getIntegerOrNull("table"));
+	return FoundMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getIntegerOrNull("table"));
 }
 
-shared final class TableStateRequestMessage(shared actual PlayerId playerId, shared TableId tableId) satisfies InboundRoomMessage {
-	shared actual RoomId roomId => RoomId(tableId.roomId);
+shared final class TableStateRequestMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer table) satisfies InboundRoomMessage {
+	toJson() => toExtendedJson({"table" -> table});
 }
 shared TableStateRequestMessage parseTableStateRequestMessage(Object json) {
-	return TableStateRequestMessage(parsePlayerId(json.get("playerId")), parseTableId(json.get("tableId")));
+	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getInteger("table"));
 }
 
-shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared TableId tableId, shared MatchInfo? match) satisfies OutboundRoomMessage {
-	shared actual RoomId roomId => RoomId(tableId.roomId);
+shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer table, shared MatchState? match) satisfies OutboundRoomMessage {
 	shared actual Boolean success => match exists;
-	toJson() => toExtendedJson({"match" -> match?.toJson()});
+	toJson() => toExtendedJson({"table" -> table, "match" -> match?.toJson()});
 	
 }
 shared TableStateResponseMessage parseTableStateResponseMessage(Object json) {
-	return TableStateResponseMessage(parsePlayerId(json.get("playerId")), parseTableId(json.get("tableId")), parseMatchInfo(json.getObjectOrNull("match")));
+	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getInteger("table"), parseMatchState(json.getObjectOrNull("match")));
 }
 
 shared Object formatRoomMessage(RoomMessage message) {

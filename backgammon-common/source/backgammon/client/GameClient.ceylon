@@ -9,7 +9,9 @@ import backgammon.common {
 	DesynchronizedMessage,
 	NotYourTurnMessage,
 	GameWonMessage,
-	GameEndedMessage
+	GameEndedMessage,
+	GameStateResponseMessage,
+	GameActionResponseMessage
 }
 import backgammon.game {
 	Game,
@@ -116,6 +118,8 @@ shared class GameClient(String playerId, Anything(InboundGameMessage) messageBro
 		case (is GameEndedMessage) {
 			return true;
 		}
+		case (is GameStateResponseMessage) {}
+		case (is GameActionResponseMessage) {}
 		
 		return false;
 	}

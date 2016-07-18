@@ -28,7 +28,7 @@ import backgammon.common {
 	MatchId,
 	RoomId,
 	PlayerInfo,
-	MatchInfo
+	MatchState
 }
 
 
@@ -38,13 +38,14 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 	Instant creationTime = now();
 	
 	shared MatchId id = MatchId(table.id, creationTime);
-	shared MatchInfo info = MatchInfo(id, player1.info, player2.info);
 	
 	shared Duration remainingJoinTime => Duration(table.maxMatchJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
 
 	variable PlayerId? winnerId = null;
 	variable Boolean player1Ready = false;
 	variable Boolean player2Ready = false;
+	
+	shared MatchState state => MatchState(id, player1.info, player2.info, remainingJoinTime, player1Ready, player2Ready, winnerId);
 	
 	function canStartGame() => player1Ready && player2Ready;
 	

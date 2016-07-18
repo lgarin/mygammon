@@ -3,7 +3,9 @@ import backgammon.common {
 	MatchId,
 	InboundGameMessage,
 	StartGameMessage,
-	EndGameMessage
+	EndGameMessage,
+	GameActionResponseMessage,
+	GameStateResponseMessage
 }
 import backgammon.server.common {
 	RoomConfiguration,
@@ -15,6 +17,10 @@ import ceylon.collection {
 }
 import ceylon.time {
 	Instant
+}
+import backgammon.game {
+
+	black
 }
 
 shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster) {
@@ -39,12 +45,13 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		}
 	}
 	
-	shared Boolean processGameMessage(InboundGameMessage message, Instant currentTime) {
+	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message, Instant currentTime) {
 		// TODO implement flooding control
 		if (exists server = getGameServer(message)) {
 			return server.processGameMessage(message, currentTime);
 		} else {
-			return false;
+			// TODO cannot determine color
+			return GameActionResponseMessage(message.matchId, message.playerId, black, false);
 		}
 	}
 	

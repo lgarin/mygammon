@@ -11,17 +11,17 @@ shared sealed interface OutboundTableMessage of JoinedTableMessage | LeaftTableM
 
 shared final class JoinedTableMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies OutboundTableMessage {}
 shared JoinedTableMessage parseJoinedTableMessage(Object json) {
-	return JoinedTableMessage(parsePlayerId(json.get("playerId")), parseTableId(json.get("tableId")));
+	return JoinedTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
 }
 
 shared final class LeaftTableMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies OutboundTableMessage {}
 shared LeaftTableMessage parseLeaftTableMessage(Object json) {
-	return LeaftTableMessage(parsePlayerId(json.get("playerId")), parseTableId(json.get("tableId")));
+	return LeaftTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
 }
 
 shared final class WaitingOpponentMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies OutboundTableMessage {}
 shared WaitingOpponentMessage parseWaitingOpponentMessage(Object json) {
-	return WaitingOpponentMessage(parsePlayerId(json.get("playerId")), parseTableId(json.get("tableId")));
+	return WaitingOpponentMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
 }
 
 shared TableMessage? parseTableMessage(String typeName, Object json) {

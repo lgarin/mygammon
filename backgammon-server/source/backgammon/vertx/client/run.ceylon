@@ -6,7 +6,8 @@ import backgammon.common {
 	parseRoomMessage,
 	parsePlayerInfo,
 	PlayerInfo,
-	parseBase64PlayerInfo
+	parseBase64PlayerInfo,
+	GameEndedMessage
 }
 import backgammon.game {
 	white,
@@ -14,10 +15,12 @@ import backgammon.game {
 }
 
 import ceylon.interop.browser {
-	window
+	window,
+	newXMLHttpRequest
 }
 import ceylon.interop.browser.dom {
-	HTMLElement
+	HTMLElement,
+	Event
 }
 import ceylon.json {
 	parse,
@@ -27,6 +30,7 @@ import ceylon.regex {
 	regex
 }
 
+variable PlayerInfo? playerInfo = null; 
 GameGui gui = GameGui(window.document);
 
 shared Boolean onStartDrag(HTMLElement source) {
@@ -65,17 +69,17 @@ shared Boolean onChecker(HTMLElement target) {
 	return true;
 }
 
-void onServerMessage(dynamic eventBus, String messageString) {
+void onServerMessage(String messageString) {
 	print(messageString);
 	value json = parse(messageString);
 	if (is Object json, exists typeName = json.keys.first) {
+		print(typeName);
 		value message = parseRoomMessage(typeName, json.getObject(typeName));
 		print(message);
 	}
 }
 
 TableId? extractTableId(String pageUrl) {
-	
 	value match = regex("/room/(\\w+)/table/(\\d+)").find(pageUrl);
 	if (exists match, exists roomId = match.groups[0], exists table = match.groups[1]) {
 		if (exists tableIndex = parseInteger(table)) {
@@ -85,11 +89,12 @@ TableId? extractTableId(String pageUrl) {
 	return null;
 }
 
-void registerMessageHandler(dynamic eventBus, String address) {
+void registerMessageHandler(String address) {
 	dynamic {
+		dynamic eventBus = EventBus("/eventbus/");
 		eventBus.onopen = void() {
 			eventBus.registerHandler(address, (dynamic error, dynamic message) {
-				onServerMessage(eventBus, JSON.stringify(message));
+				onServerMessage(JSON.stringify(message));
 			});
 		};
 	}
@@ -103,26 +108,31 @@ PlayerInfo? extractPlayerInfo(String cookie) {
 	return null;
 }
 
+void makeApiRequest(String url) {
+	value request = newXMLHttpRequest();
+	request.open("GET", url, true);
+	request.send();
+	request.onload = void (Event event) {
+		if (request.status == 200) {
+			onServerMessage(request.responseText);
+		}  
+	};
+}
+
+void requestTableState(TableId tableId) {
+	makeApiRequest("/api/room/``tableId.roomId``/table/``tableId.table``/state");
+}
+
 "Run the module `backgammon.vertx.client`."
 shared void run() {
 	
-	print(extractPlayerInfo(window.document.cookie));
+	playerInfo = extractPlayerInfo(window.document.cookie);
 	
 	gui.redrawCheckers(black, [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10]);
 	gui.redrawCheckers(white, [10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]);
 
 	if (exists tableId = extractTableId(window.location.string)) {
-	    dynamic {
-			dynamic eb = EventBus("/eventbus/");
-			registerMessageHandler(eb, "OutboundTableMessage-``tableId``");
-	    }
+		registerMessageHandler("OutboundTableMessage-``tableId``");
+		requestTableState(tableId);
 	}
-    /*
-    value request = newXMLHttpRequest();
-    request.open("GET", "/api/player/gamestate", true);
-    request.send();
-    request.onload = void (Event event) {
-      print(request.responseText);  
-    };
-     */
 }
