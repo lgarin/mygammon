@@ -8,7 +8,9 @@ import backgammon.common {
 	EnteredRoomMessage,
 	LeaftRoomMessage,
 	FoundMatchTableMessage,
-	OutboundRoomMessage
+	OutboundRoomMessage,
+	TableStateRequestMessage,
+	TableStateResponseMessage
 }
 import backgammon.server.common {
 	RoomConfiguration,
@@ -45,9 +47,16 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 			}
 			return FoundMatchTableMessage(message.playerId, room.id, null);
 		}
+		case (is TableStateRequestMessage) {
+			if (exists table = room.tables[message.tableId.table]) {
+				return TableStateResponseMessage(message.playerId, message.tableId, table.matchInfo);
+			} else {
+				return TableStateResponseMessage(message.playerId, message.tableId, null);
+			}
+		}
 	}
 	
-	shared OutboundRoomMessage processRoomMessage(InboundRoomMessage message, Instant currentTime) {
+	shared OutboundRoomMessage|OutboundTableMessage processRoomMessage(InboundRoomMessage message, Instant currentTime) {
 		// TODO implement flooding control
 		try (lock) {
 			return process(message);

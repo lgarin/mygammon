@@ -14,7 +14,10 @@ import backgammon.common {
 	formatRoomMessage,
 	OutboundGameMessage,
 	InboundGameMessage,
-	parseGameMessage
+	parseGameMessage,
+	TableStateRequestMessage,
+	TableId,
+	TableStateResponseMessage
 }
 import backgammon.server.common {
 	RoomConfiguration
@@ -61,7 +64,8 @@ import io.vertx.ceylon.core.http {
 }
 import io.vertx.ceylon.web {
 	routerFactory=router,
-	RoutingContext
+	RoutingContext,
+	cookieFactory=cookie
 }
 import io.vertx.ceylon.web.handler {
 	loggerHandler,
@@ -164,6 +168,8 @@ shared final class HttpServerVerticle() extends Verticle() {
 		 */
 		value playerInfo = PlayerInfo("test1", "Lucien", "/static/images/unknown.png");
 		routingContext.session()?.put("playerInfo", playerInfo);
+		routingContext.addCookie(cookieFactory.cookie("playerInfo", playerInfo.toBase64()));
+		
 		sendInboundRoomMessage(EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|EnteredRoomMessage result) {
 			if (is Throwable result) {
 				routingContext.fail(result);
@@ -173,9 +179,39 @@ shared final class HttpServerVerticle() extends Verticle() {
 		});
 	}
 	
+	function getCurrentPlayerInfo(RoutingContext rc) => rc.session()?.get<PlayerInfo>("playerInfo");
+	
+	function getCurrentPlayerId(RoutingContext rc) {
+		if (exists playerInfo = getCurrentPlayerInfo(rc)) {
+			return PlayerId(playerInfo.id);
+		} else {
+			return null;
+		}
+	}
+	
+	function getRequestRoomId(RoutingContext rc) {
+		if (exists roomId = rc.request().getParam("roomId")) {
+			return RoomId(roomId);
+		} else {
+			return null;
+		}
+	}
+	
+	function getRequestTableId(RoutingContext rc) {
+		if (exists roomId = rc.request().getParam("roomId"), exists table = rc.request().getParam("tableIndex")) {
+			if (exists tableIndex = parseInteger(table)) {
+				return TableId(roomId, tableIndex);
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	
 	void handlePlay(RoutingContext routingContext) {
-		if (exists playerInfo = routingContext.session()?.get<PlayerInfo>("playerInfo"), exists roomId = routingContext.request().getParam("roomId")) {
-			sendInboundRoomMessage(FindMatchTableMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Throwable|FoundMatchTableMessage result) {
+		if (exists playerId = getCurrentPlayerId(routingContext), exists roomId = getRequestRoomId(routingContext)) {
+			sendInboundRoomMessage(FindMatchTableMessage(playerId, roomId), void (Throwable|FoundMatchTableMessage result) {
 				if (is Throwable result) {
 					routingContext.fail(result);
 				} else if (exists table = result.table) {
@@ -213,43 +249,25 @@ shared final class HttpServerVerticle() extends Verticle() {
 		rc.response().write(response).end();
 	}
 	
-	function getCurrentPlayerInfo(RoutingContext rc) => rc.session()?.get<PlayerInfo>("playerInfo");
+	
+	
+	void handleTableStateRequest(RoutingContext rc) {
+		if (exists tableId = getRequestTableId(rc), exists playerId = getCurrentPlayerId(rc)) {
+			sendInboundRoomMessage(TableStateRequestMessage(playerId, tableId), void (Throwable|TableStateResponseMessage result) {
+				if (is Throwable result) {
+					rc.fail(result);
+				} else {
+					writeJsonResponse(rc, result.toJson());
+				}
+			});
+		} else {
+			rc.fail(Exception("Invalid request: ``rc.request().uri``"));
+		}
+	}
 	
 	function createRestApiRouter() {
 		value restApi = routerFactory.router(vertx);
-		restApi.get("/room/:roomId/enter").handler((RoutingContext rc) {
-			if (exists roomId = rc.request().getParam("roomId"), exists playerInfo = getCurrentPlayerInfo(rc)) {
-				sendInboundRoomMessage(EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|OutboundRoomMessage result) {
-					if (is Throwable result) {
-						rc.fail(result);
-					} else {
-						writeJsonResponse(rc, result.toJson());
-					}
-				});
-			} else {
-				rc.fail(Exception("No room parameter"));
-			}
-		});
-		restApi.get("/room/:roomId/findMatchTable").handler((RoutingContext rc) {
-			if (exists roomId = rc.request().getParam("roomId"), exists playerInfo = getCurrentPlayerInfo(rc)) {
-				sendInboundRoomMessage(FindMatchTableMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Throwable|OutboundRoomMessage result) {
-					if (is Throwable result) {
-						rc.fail(result);
-					} else {
-						writeJsonResponse(rc, result.toJson());
-					}
-				});
-			} else {
-				rc.fail(Exception("No room parameter"));
-			}
-		});
-		restApi.get("/player/current").handler((RoutingContext rc) {
-			if (exists playerInfo = getCurrentPlayerInfo(rc)) {
-				writeJsonResponse(rc, playerInfo.toJson());
-			} else {
-				rc.fail(Exception("No player information available"));
-			}
-		});
+		restApi.get("/room/:roomId/table/:tableIndex/state").handler(handleTableStateRequest);
 		return restApi;
 	}
 	

@@ -27,52 +27,36 @@ import backgammon.common {
 	PlayerId,
 	MatchId,
 	RoomId,
-	PlayerInfo
+	PlayerInfo,
+	MatchInfo
 }
 
 
 class Match(shared Player player1, shared Player player2, shared Table table) {
 	
-	variable PlayerId? winnerId = null;
 	
 	Instant creationTime = now();
 	
 	shared MatchId id = MatchId(table.id, creationTime);
+	shared MatchInfo info = MatchInfo(id, player1.info, player2.info);
 	
 	shared Duration remainingJoinTime => Duration(table.maxMatchJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
 
-	class PlayerStatus() {
-		shared variable Boolean ready = false;
-	}
+	variable PlayerId? winnerId = null;
+	variable Boolean player1Ready = false;
+	variable Boolean player2Ready = false;
 	
-	value playerStates = [PlayerStatus(), PlayerStatus()];
+	function canStartGame() => player1Ready && player2Ready;
 	
-	function playerIndex(Player player) {
-		if (player === player1) {
-			return 0;
-		} else if (player === player2) {
-			return 1;
-		} else {
-			return null;
-		}
-	}
-	
-	function playerState(Player player) {
-		if (exists index = playerIndex(player)) {
-			return playerStates[index];
-		} else {
-			return null;
-		}
-		
-	}
-	
+	shared Boolean isStarted => canStartGame();
+
 	shared Boolean end(Player player) {
 		if (winnerId exists) {
 			return false;
-		} else if (playerIndex(player) exists) {
+		} else if (player == player1 || player == player2) {
 			if (isStarted) {
-				playerStates[0].ready = false;
-				playerStates[1].ready = false;
+				player1Ready = false;
+				player2Ready = false;
 				table.send(EndGameMessage(id, player.id));
 			}
 			
@@ -91,24 +75,23 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 		if (isStarted || winnerId exists) {
 			return false;
 		} else if (remainingJoinTime.milliseconds < 0) {
-			if (!playerStates[0].ready) {
+			if (!player1Ready) {
 				player1.leaveMatch();
 			}
-			if (!playerStates[1].ready) {
+			if (!player2Ready) {
 				player2.leaveMatch();
 			}
 			return false;
-		} else if (exists state = playerState(player)) {
-			state.ready = true;
+		} else if (player == player1) {
+			player1Ready = true;
+			return true;
+		} else if (player == player2) {
+			player2Ready = true;
 			return true;
 		} else {
 			return false;
 		}
 	}
-	
-	function canStartGame() => playerStates[0].ready && playerStates[1].ready;
-	
-	shared Boolean isStarted => canStartGame();
 	
 	shared Boolean processGameMessage(GameMessage message) {
 		if (id == message.matchId) {

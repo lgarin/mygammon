@@ -6,7 +6,8 @@ import backgammon.common {
 	OutboundTableMessage,
 	OutboundMatchMessage,
 	InboundGameMessage,
-	PlayerInfo
+	PlayerInfo,
+	MatchInfo
 }
 
 import ceylon.collection {
@@ -73,6 +74,14 @@ final class Table(shared Integer index, shared RoomId roomId, shared Duration ma
 			return true;
 		} else {
 			return false;
+		}
+	}
+	
+	shared MatchInfo? matchInfo {
+		if (exists currentMatch = match) {
+			return currentMatch.info;
+		} else {
+			return null;
 		}
 	}
 }

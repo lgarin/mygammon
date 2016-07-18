@@ -6,6 +6,10 @@ shared final class MatchInfo(shared MatchId id, shared PlayerInfo player1, share
 	shared Object toJson() => Object({"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson()});
 }
 
-shared MatchInfo parseMatchInfo(Object json) {
-	return MatchInfo(parseMatchId(json.get("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")));
+shared MatchInfo? parseMatchInfo(Object? json) {
+	if (exists json) {
+		return MatchInfo(parseMatchId(json.get("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")));
+	} else {
+		return null;
+	}
 }

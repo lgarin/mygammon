@@ -3,7 +3,10 @@ import backgammon.client {
 }
 import backgammon.common {
 	TableId,
-	parseRoomMessage
+	parseRoomMessage,
+	parsePlayerInfo,
+	PlayerInfo,
+	parseBase64PlayerInfo
 }
 import backgammon.game {
 	white,
@@ -92,8 +95,18 @@ void registerMessageHandler(dynamic eventBus, String address) {
 	}
 }
 
+PlayerInfo? extractPlayerInfo(String cookie) {
+	value match = regex("playerInfo=([^\\;\\s]+)").find(cookie);
+	if (exists match, exists infoString = match.groups[0]) {
+		return parseBase64PlayerInfo(infoString);
+	}
+	return null;
+}
+
 "Run the module `backgammon.vertx.client`."
 shared void run() {
+	
+	print(extractPlayerInfo(window.document.cookie));
 	
 	gui.redrawCheckers(black, [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10]);
 	gui.redrawCheckers(white, [10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]);

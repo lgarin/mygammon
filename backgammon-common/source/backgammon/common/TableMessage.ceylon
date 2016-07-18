@@ -1,5 +1,4 @@
 import ceylon.json {
-
 	Object
 }
 shared sealed interface TableMessage of OutboundTableMessage | MatchMessage satisfies RoomMessage  {
