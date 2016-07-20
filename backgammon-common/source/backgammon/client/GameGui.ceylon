@@ -12,7 +12,12 @@ import ceylon.interop.browser.dom {
 
 
 shared final class GameGui(Document document) {
+	shared String undoButtonId = "undo";
+	shared String leaveButtonId = "leave";
+	shared String submitButtonId = "submit";
 	
+	value defaultPlayerName = "";
+	value initalPlayerMessage = "Waiting...";
 	value board = GameBoard();
 	
 	void setClass(String elementId, String* classNames) {
@@ -36,16 +41,39 @@ shared final class GameGui(Document document) {
 		document.getElementById(elementId)?.classList?.remove(className);
 	}
 	
-	shared void disableUndoButton() {
-		addClass("undo", "hidden");
+	shared void hideUndoButton() {
+		addClass(undoButtonId, "hidden");
+	}
+	
+	shared void showUndoButton(String? text) {
+		removeClass(undoButtonId, "hidden");
+		if (exists button = document.getElementById("``undoButtonId``Text")) {
+			button.innerHTML = text else "Undo";
+			button.classList.remove("hidden");
+		}
 	}
 
-	shared void disableSubmitButton() {
-		addClass("submit", "hidden");
+	shared void hideSubmitButton() {
+		addClass(undoButtonId, "hidden");
+	}
+	
+	shared void showSubmitButton(String? text) {
+		removeClass(submitButtonId, "hidden");
+		if (exists button = document.getElementById("``undoButtonId``Text")) {
+			button.innerHTML = text else "Submit";
+		}
 	}
 
-	shared void disableLeaveButton() {
-		addClass("leave", "hidden");
+	shared void hideLeaveButton() {
+		addClass(leaveButtonId, "hidden");
+	}
+	
+	shared void showLeaveButton(String? text) {
+		removeClass(leaveButtonId, "hidden");
+		if (exists button = document.getElementById("``leaveButtonId``Text")) {
+			button.innerHTML = text else "Leave";
+			button.classList.remove("hidden");
+		}
 	}
 
 	shared void showCurrentPlayer(CheckerColor? currentColor) {
@@ -189,12 +217,18 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
-	shared void showPlayerInfo(CheckerColor color, String name, String pictureUrl) {
+	shared void showPlayerInfo(CheckerColor color, String? name, String? pictureUrl) {
 		if (exists playerLabel = document.getElementById("``color.name``PlayerName")) {
-			playerLabel.innerHTML = name;
+			playerLabel.innerHTML = name else defaultPlayerName;
 		}
 		if (exists playerImage = document.getElementById("``color.name``PlayerImage")) {
-			playerImage.setAttribute("src", pictureUrl);
+			if (exists pictureUrl) {
+				playerImage.setAttribute("src", pictureUrl);
+				playerImage.classList.remove("player-unknown");
+			} else {
+				playerImage.setAttribute("src", "");
+				playerImage.classList.add("player-unknown");
+			}
 		}
 	}
 	
@@ -204,10 +238,28 @@ shared final class GameGui(Document document) {
 		}
 		if (exists playerActivity = document.getElementById("``color.name``PlayerActivity")) {
 			if (busy) {
-				playerActivity.classList.remove("hidden");
+				playerActivity.classList.add("player-busy");
+				playerActivity.classList.remove("player-ready");
 			} else {
-				playerActivity.classList.add("hidden");
+				playerActivity.classList.remove("player-busy");
+				playerActivity.classList.add("player-ready");
 			}
 		}
+	}
+	
+	void resetState(CheckerColor color, String playerMessage) {
+		showDiceValues(color, null, null);
+		redrawCheckers(color, []);
+		showPlayerInfo(color, null, null);
+		showPlayerMessage(color, playerMessage, true);
+		hideLeaveButton();
+		hideUndoButton();
+		hideSubmitButton();
+	}
+	
+	shared void showInitialState(String playerMessage = initalPlayerMessage) {
+		showCurrentPlayer(null);
+		resetState(black, playerMessage);
+		resetState(white, playerMessage);
 	}
 }

@@ -18,7 +18,7 @@ import io.vertx.ceylon.web {
 
 final class UserInfo(Object json, shared User accessToken) {
 	shared String displayName = json.getString("displayName");
-	shared String pictureUrl = json.getObject("image").getString("url");
+	shared String pictureUrl = json.getObject("image").getString("url").replace("sz=50", "sz=100");
 }
 
 final class GoogleProfileClient(HttpClient httpClient) {

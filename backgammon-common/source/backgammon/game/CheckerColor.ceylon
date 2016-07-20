@@ -15,6 +15,9 @@ shared object white extends CheckerColor() {
 	name => "white";
 }
 
+shared CheckerColor player1Color = black;
+shared CheckerColor player2Color = white;
+
 shared CheckerColor parseCheckerColor(String name) {
 	if (name == white.name) {
 		return white;

@@ -22,9 +22,11 @@ shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage 
 
 shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage | TableStateRequestMessage satisfies RoomMessage {}
 
-
-shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeaftRoomMessage | FoundMatchTableMessage | TableStateResponseMessage satisfies RoomMessage {
+shared sealed interface RoomResponseMessage {
 	shared formal Boolean success;
+}
+
+shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeaftRoomMessage | FoundMatchTableMessage | TableStateResponseMessage satisfies RoomMessage & RoomResponseMessage {
 	shared default actual Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success });
 }
 
@@ -64,13 +66,13 @@ shared TableStateRequestMessage parseTableStateRequestMessage(Object json) {
 	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getInteger("table"));
 }
 
-shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer table, shared MatchState? match) satisfies OutboundRoomMessage {
-	shared actual Boolean success => match exists;
+shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer table, shared MatchState? match, shared actual Boolean success) satisfies OutboundRoomMessage {
 	toJson() => toExtendedJson({"table" -> table, "match" -> match?.toJson()});
+	shared Boolean gameStarted => match?.gameStarted else false;
 	
 }
 shared TableStateResponseMessage parseTableStateResponseMessage(Object json) {
-	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getInteger("table"), parseMatchState(json.getObjectOrNull("match")));
+	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getInteger("table"), parseMatchState(json.getObjectOrNull("match")), json.getBoolean("success"));
 }
 
 shared Object formatRoomMessage(RoomMessage message) {

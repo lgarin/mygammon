@@ -143,40 +143,40 @@
 
        <div id="whitePlayer" style="top: 5px" class="player">
          <div>
-         	<img id="whitePlayerActivity" src="/static/images/hourglass.gif">
-         	<span style="position: absolute;" id="whitePlayerTimer">Waiting</span>
+         	<img class="player-busy" id="whitePlayerActivity" src="/static/images/hourglass.gif"></img>
+         	<label style="position: absolute;" id="whitePlayerTimer">Loading...</label>
          </div>
          <div class="player-picture">
-         	<img id="whitePlayerImage" src="/static/images/unknown.png"/>
+         	<img id="whitePlayerImage" src="/static/images/unknown.png"/></img>
          	<span class="white-small-checker"></span>
          </div>
          <div>
-        	<label id="whitePlayerName">Player 2</label>
+        	<label id="whitePlayerName"></label>
          </div>
        </div>
 
        <div id="blackPlayer" style="bottom: 5px" class="player">
          <div>
-        	<label id="blackPlayerName">Player 1</label>
+        	<label id="blackPlayerName"></label>
          </div>
          <div class="player-picture">
-         	<img id="blackPlayerImage" src="/static/images/unknown.png"/>
+         	<img id="blackPlayerImage" src="/static/images/unknown.png"/></img>
          	<span class="black-small-checker"></span>
          </div>
          <div>
-         	<img id="blackPlayerActivity" src="/static/images/hourglass.gif">
-         	<span style="position: absolute;" id="blackPlayerTimer">Waiting</span>
+         	<img class="player-busy" id="blackPlayerActivity" src="/static/images/hourglass.gif"></img>
+         	<label style="position: absolute;" id="blackPlayerTimer">Loading...</label>
          </div>
        </div>
 
-      <div id="undo" class="button pointer" style="right:5px;top:189px;">
-        <div class="undo">Undo</div>
+      <div id="undo" class="button pointer hidden" style="right:5px;top:189px;">
+        <div id="undoText" class="undo">Undo</div>
       </div>
-      <div id="submit" class="button pointer" style="right:5px;top:303px;">
-        <div class="submit">Submit</div>
+      <div id="submit" class="button pointer hidden" style="right:5px;top:303px;">
+        <div id="submitText" class="submit">Submit</div>
       </div>
-      <div id="leave" class="button pointer" style="right:5px;bottom:0px;">
-        <div class="leave">Leave</div>
+      <div id="leave" class="button pointer hidden" style="right:5px;bottom:0px;">
+        <div id="leaveText" class="leave">Leave</div>
       </div>
     </div><!-- end of gui -->
   </body>

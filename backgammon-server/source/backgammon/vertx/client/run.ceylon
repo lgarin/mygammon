@@ -7,11 +7,18 @@ import backgammon.common {
 	parsePlayerInfo,
 	PlayerInfo,
 	parseBase64PlayerInfo,
-	GameEndedMessage
+	GameEndedMessage,
+	OutboundMatchMessage,
+	RoomMessage,
+	TableStateResponseMessage,
+	OutboundRoomMessage,
+	RoomResponseMessage
 }
 import backgammon.game {
 	white,
-	black
+	black,
+	player1Color,
+	player2Color
 }
 
 import ceylon.interop.browser {
@@ -59,7 +66,9 @@ shared Boolean onDrop(HTMLElement target, HTMLElement source) {
 shared Boolean onButton(HTMLElement target) {
 	
 	print("button:``target.id``");
-	gui.disableUndoButton();
+	if (target.id == gui.leaveButtonId) {
+		window.location.\iassign("/start");
+	}
 	return true;
 }
 
@@ -69,13 +78,108 @@ shared Boolean onChecker(HTMLElement target) {
 	return true;
 }
 
+void handleTableStateResponseMessage(TableStateResponseMessage message) {
+	if (exists match = message.match) {
+		gui.showPlayerInfo(player1Color, match.player1.name, match.player1.pictureUrl);
+		gui.showPlayerInfo(player2Color, match.player2.name, match.player2.pictureUrl);
+		if (match.gameStarted) {
+			gui.showPlayerMessage(player1Color, "Loading...", true);
+			gui.showPlayerMessage(player2Color, "Loading...", true);
+			gui.hideSubmitButton();
+			gui.hideUndoButton();
+			gui.showLeaveButton(null);
+			// TODO fetch game state
+		} else if (match.gameEnded) {
+			if (exists winnerId = match.winnerId, winnerId == match.player1.id) {
+				gui.showPlayerMessage(player1Color, "Winner", false);
+				gui.showPlayerMessage(player2Color, "", false);
+			} else if (exists winnerId = match.winnerId, winnerId == match.player2.id) {
+				gui.showPlayerMessage(player1Color, "", false);
+				gui.showPlayerMessage(player2Color, "Winner", false);
+			} else {
+				gui.showPlayerMessage(player1Color, "Tie", false);
+				gui.showPlayerMessage(player2Color, "Tie", false);
+			}
+			gui.hideSubmitButton();
+			gui.hideUndoButton();
+			gui.showLeaveButton(null);
+		} else {
+			if (match.player1Ready) {
+				gui.showPlayerMessage(player1Color, "Ready", false);
+			} else {
+				gui.showPlayerMessage(player1Color, "Play?", true);
+			}
+			if (match.player2Ready) {
+				gui.showPlayerMessage(player2Color, "Ready", false);
+			} else {
+				gui.showPlayerMessage(player2Color, "Play?", true);
+			}
+			
+			if (exists currentPlayer = playerInfo) {
+				if (currentPlayer.id == match.player1.id && !match.player1Ready) {
+					gui.showSubmitButton("Start");
+				} else if (currentPlayer.id == match.player2.id && !match.player2Ready) {
+					gui.showSubmitButton("Start");
+				} else {
+					gui.hideSubmitButton();
+				}
+			} else {
+				gui.hideSubmitButton();
+			}
+			
+			gui.hideUndoButton();
+			gui.showLeaveButton(null);
+		}
+	} else if (exists currentPlayer = playerInfo) {
+		gui.showPlayerInfo(player1Color, currentPlayer.name, currentPlayer.pictureUrl);
+		gui.showPlayerMessage(player1Color, "Joined", false);
+		gui.showPlayerInfo(player2Color, null, null);
+		gui.showPlayerMessage(player2Color, "Waiting...", true);
+		gui.hideSubmitButton();
+		gui.hideUndoButton();
+		gui.showLeaveButton(null);
+	} else {
+		gui.showPlayerInfo(player1Color, null, null);
+		gui.showPlayerMessage(player1Color, "Waiting...", true);
+		gui.showPlayerInfo(player2Color, null, null);
+		gui.showPlayerMessage(player2Color, "Waiting...", true);
+		gui.hideSubmitButton();
+		gui.hideUndoButton();
+		gui.showLeaveButton(null);
+	}
+}
+
+void handleRoomMessage(RoomMessage message) {
+	if (is RoomResponseMessage message, !message.success) {
+		window.location.reload();
+		return;
+	}
+	switch (message)
+	case (is TableStateResponseMessage) {
+		handleTableStateResponseMessage(message);
+	}
+	else {
+		onServerError("Unsupported message response: ``message.toJson()``");
+	}
+}
+
 void onServerMessage(String messageString) {
-	print(messageString);
-	value json = parse(messageString);
-	if (is Object json, exists typeName = json.keys.first) {
+	if (is Object json = parse(messageString), exists typeName = json.keys.first) {
 		print(typeName);
 		value message = parseRoomMessage(typeName, json.getObject(typeName));
-		print(message);
+		if (exists message) {
+			handleRoomMessage(message);
+		} else {
+			onServerError("Cannot parse server response: ``messageString``");
+		}
+	} else {
+		onServerError("Cannot parse server response: ``messageString``");
+	}
+}
+
+void onServerError(String messageString) {
+	dynamic {
+		alert(messageString);
 	}
 }
 
@@ -115,7 +219,9 @@ void makeApiRequest(String url) {
 	request.onload = void (Event event) {
 		if (request.status == 200) {
 			onServerMessage(request.responseText);
-		}  
+		} else {
+			onServerError(request.responseText);
+		}
 	};
 }
 
@@ -127,10 +233,9 @@ void requestTableState(TableId tableId) {
 shared void run() {
 	
 	playerInfo = extractPlayerInfo(window.document.cookie);
-	
-	gui.redrawCheckers(black, [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10]);
-	gui.redrawCheckers(white, [10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]);
 
+	gui.showInitialState();
+	
 	if (exists tableId = extractTableId(window.location.string)) {
 		registerMessageHandler("OutboundTableMessage-``tableId``");
 		requestTableState(tableId);

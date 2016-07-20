@@ -41,6 +41,7 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 	
 	shared Duration remainingJoinTime => Duration(table.maxMatchJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
 
+	value noWinnerId = PlayerId("");
 	variable PlayerId? winnerId = null;
 	variable Boolean player1Ready = false;
 	variable Boolean player2Ready = false;
@@ -50,6 +51,7 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 	function canStartGame() => player1Ready && player2Ready;
 	
 	shared Boolean isStarted => canStartGame();
+	shared Boolean isEnded => winnerId exists;
 
 	shared Boolean end(Player player) {
 		if (winnerId exists) {
@@ -62,6 +64,9 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 			}
 			
 			if (table.removeMatch(this)) {
+				if (winnerId is Null) {
+					winnerId = noWinnerId;
+				}
 				table.publish(LeaftMatchMessage(player.id, id));
 				return true;
 			} else {
@@ -99,6 +104,9 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 			if (is GameWonMessage message) {
 				winnerId = message.playerId;
 			} else if (is GameEndedMessage message) {
+				if (winnerId is Null) {
+					winnerId = noWinnerId;
+				}
 				table.removeMatch(this);
 			}
 			return true;

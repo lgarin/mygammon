@@ -4,7 +4,9 @@ import backgammon.game {
 	GameMove,
 	black,
 	white,
-	CheckerColor
+	CheckerColor,
+	player1Color,
+	player2Color
 }
 import ceylon.time {
 
@@ -48,9 +50,6 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	variable Integer blackWarnings = 0;
 	variable Integer whiteWarnings = 0;
 	value game = Game();
-	
-	value player1Color = black; // TODO black is first player
-	value player2Color = white;
 	
 	function toPlayerColor(PlayerId playerId) {
 		if (playerId == player1Id) {

@@ -49,9 +49,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 		}
 		case (is TableStateRequestMessage) {
 			if (exists table = room.tables[message.table]) {
-				return TableStateResponseMessage(message.playerId, message.roomId, message.table, table.matchInfo);
+				return TableStateResponseMessage(message.playerId, message.roomId, message.table, table.matchInfo, true);
 			} else {
-				return TableStateResponseMessage(message.playerId, message.roomId, message.table, null);
+				return TableStateResponseMessage(message.playerId, message.roomId, message.table, null, false);
 			}
 		}
 	}

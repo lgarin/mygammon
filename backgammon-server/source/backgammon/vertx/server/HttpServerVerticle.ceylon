@@ -60,11 +60,7 @@ import io.vertx.ceylon.core.eventbus {
 }
 import io.vertx.ceylon.core.http {
 	HttpClientOptions,
-	HttpClient,
-	options,
-	get,
-	post,
-	delete
+	HttpClient
 }
 import io.vertx.ceylon.web {
 	routerFactory=router,
@@ -76,7 +72,7 @@ import io.vertx.ceylon.web.handler {
 	cookieHandler,
 	sessionHandler,
 	staticHandler,
-	corsHandler
+	userSessionHandler
 }
 import io.vertx.ceylon.web.handler.sockjs {
 	SockJSHandlerOptions,
@@ -94,7 +90,9 @@ shared final class HttpServerVerticle() extends Verticle() {
 	value hostname = "localhost";
 	value port = 8080;
 	
-	variable GoogleProfileClient? _googleProfileClient = null;
+	// TODO read config from vertx.getOrCreateContext().config() 
+	value config = RoomConfiguration(roomId, 100, Duration(60000), Duration(30000));
+	
 	variable HttpClient? _httpClient = null;
 	variable OAuth2Auth? _oauth2 = null;
 	
@@ -124,10 +122,6 @@ shared final class HttpServerVerticle() extends Verticle() {
 	
 	value httpClient {
 		return _httpClient else (_httpClient = createHttpClient());
-	}
-	
-	value googleProfileClient {
-		return _googleProfileClient else (_googleProfileClient = GoogleProfileClient(httpClient));
 	}
 	
 	function createSockJsHandler() {
@@ -173,23 +167,9 @@ shared final class HttpServerVerticle() extends Verticle() {
 		});
 	}
 	
-	void handleStart(RoutingContext routingContext) {
-		/*
-		void handler(UserInfo? userInfo) {
-			if (exists userInfo) {
-				//session.put("userInfo", userInfo);
-				routingContext.response().putHeader("Location", "static/board.html").setStatusCode(302).end();
-			} else {
-				routingContext.fail(Exception("No info returned for current user"));
-			}
-		}
-		
-		googleProfileClient.fetchUserInfo(routingContext, handler);
-		 */
-		value playerInfo = PlayerInfo("test1", "Lucien", "/static/images/unknown.png");
+	void completeLogin(RoutingContext routingContext, PlayerInfo playerInfo) {
 		routingContext.session()?.put("playerInfo", playerInfo);
 		routingContext.addCookie(cookieFactory.cookie("playerInfo", playerInfo.toBase64()));
-		
 		sendInboundRoomMessage(EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|EnteredRoomMessage result) {
 			if (is Throwable result) {
 				routingContext.fail(result);
@@ -197,6 +177,20 @@ shared final class HttpServerVerticle() extends Verticle() {
 				routingContext.response().putHeader("Location", "/room/``roomId``/play").setStatusCode(302).end();
 			}
 		});
+	}
+	
+	void handleStart(RoutingContext routingContext) {
+
+		void handler(UserInfo? userInfo) {
+			if (exists userInfo) {
+				value playerInfo = PlayerInfo(userInfo.accessToken.principal().getString("access_token"), userInfo.displayName, userInfo.pictureUrl);
+				completeLogin(routingContext, playerInfo);
+			} else {
+				routingContext.fail(Exception("No info returned for current user"));
+			}
+		}
+		
+		GoogleProfileClient(httpClient).fetchUserInfo(routingContext, handler);
 	}
 	
 	function getCurrentPlayerInfo(RoutingContext rc) => rc.session()?.get<PlayerInfo>("playerInfo");
@@ -260,28 +254,13 @@ shared final class HttpServerVerticle() extends Verticle() {
 	void handleTable(RoutingContext routingContext) {
 		routingContext.reroute("static/board.html");
 	}
-	
-	function createCorsHandler() { 
-		value handler = corsHandler.create("http://``hostname``:``port``");
-		handler.allowCredentials(true);
-		handler.allowedMethod(options);
-		handler.allowedMethod(get);
-		handler.allowedMethod(post);
-		handler.allowedMethod(delete);
-		handler.allowedHeader("Authorization");
-		handler.allowedHeader("www-authenticate");		 
-		handler.allowedHeader("Content-Type");
-		return handler;
-	}
-	
+
 	void writeJsonResponse(RoutingContext rc, Object json) {
 		value response = json.string;
 		rc.response().headers().add("Content-Length", response.size.string);
 		rc.response().headers().add("Content-Type", "application/json");
 		rc.response().write(response).end();
 	}
-	
-	
 	
 	void handleTableStateRequest(RoutingContext rc) {
 		if (exists tableId = getRequestTableId(rc), exists playerId = getCurrentPlayerId(rc)) {
@@ -293,7 +272,7 @@ shared final class HttpServerVerticle() extends Verticle() {
 				}
 			});
 		} else {
-			rc.fail(Exception("Invalid request: ``rc.request().uri``"));
+			rc.fail(Exception("Invalid request: ``rc.request().uri()``"));
 		}
 	}
 	
@@ -307,7 +286,7 @@ shared final class HttpServerVerticle() extends Verticle() {
 				}
 			});
 		} else {
-			rc.fail(Exception("Invalid request: ``rc.request().uri``"));
+			rc.fail(Exception("Invalid request: ``rc.request().uri()``"));
 		}
 	}
 	
@@ -317,18 +296,19 @@ shared final class HttpServerVerticle() extends Verticle() {
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);
 		return restApi;
 	}
+
 	
 	void startHttp() {
 		value router = routerFactory.router(vertx);
 		value loginHandler = GoogleAuthHandler(oauth2, "http://``hostname``:``port``").setupCallback(router.route("/callback")).addAuthority("profile");
-		//router.route().handler(createCorsHandler().handle);
 		router.route().handler(cookieHandler.create().handle);
-		//router.route().handler(bodyHandler.create().setBodyLimit(bodyLimit).handle);		router.route().handler(sessionHandler.create(localSessionStore.create(vertx)).setNagHttps(false).handle);
+		//router.route().handler(bodyHandler.create().setBodyLimit(bodyLimit).handle);		router.route().handler(sessionHandler.create(localSessionStore.create(vertx)).setSessionTimeout(config.sessionTimeout.milliseconds).setNagHttps(false).handle);
 		router.route().handler(loggerHandler.create().handle);
+		router.route().handler(userSessionHandler.create(oauth2).handle);
 		router.route("/static/*").handler(staticHandler.create("static").handle);
 		router.route("/modules/*").handler(staticHandler.create("modules").handle);
 		router.route("/eventbus/*").handler(createSockJsHandler().handle);
-		//router.route("/*").handler(loginHandler.handle);
+		router.route().handler(loginHandler.handle);
 		router.route("/start").handler(handleStart);
 		router.route("/room/:roomId/play").handler(handlePlay);
 		router.route("/room/:roomId/table/:tableId").handler(handleTable);
@@ -347,7 +327,7 @@ shared final class HttpServerVerticle() extends Verticle() {
 					},
 					void (Throwable|Value result) {
 						if (is Throwable result) {
-							message.fail(500, "Error: ``result.message``");
+							message.fail(500, "Processing error: ``result.message``");
 						} else {
 							message.reply(result);
 						}
@@ -359,8 +339,8 @@ shared final class HttpServerVerticle() extends Verticle() {
 	}
 	
 	void startRoom() {
-		// TODO read config from vertx.getOrCreateContext().config() 
-		value config = RoomConfiguration(roomId, 100, Duration(60000), Duration(30000));
+		
+		// TODO set number of thread
 		value executor = vertx.createSharedWorkerExecutor("room-``roomId``");
 		
 		value matchRoom = MatchRoom(config, void (OutboundTableMessage|OutboundMatchMessage msg) {
