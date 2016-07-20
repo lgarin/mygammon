@@ -64,6 +64,8 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 	}
 
 	shared void removeInactivePlayers(Instant currentTime) {
-		room.removeInactivePlayers(currentTime.plus(configuration.playerInactiveTimeout));
+		try (lock) {
+			room.removeInactivePlayers(currentTime.plus(configuration.playerInactiveTimeout));
+		}
 	}
 }
