@@ -4,19 +4,13 @@ import backgammon.client {
 import backgammon.common {
 	TableId,
 	parseRoomMessage,
-	parsePlayerInfo,
 	PlayerInfo,
 	parseBase64PlayerInfo,
-	GameEndedMessage,
-	OutboundMatchMessage,
 	RoomMessage,
 	TableStateResponseMessage,
-	OutboundRoomMessage,
 	RoomResponseMessage
 }
 import backgammon.game {
-	white,
-	black,
 	player1Color,
 	player2Color
 }
@@ -39,6 +33,7 @@ import ceylon.regex {
 
 variable PlayerInfo? playerInfo = null; 
 GameGui gui = GameGui(window.document);
+EventBusClient eventBus = EventBusClient();
 
 shared Boolean onStartDrag(HTMLElement source) {
 	gui.deselectAllCheckers();
@@ -194,14 +189,13 @@ TableId? extractTableId(String pageUrl) {
 }
 
 void registerMessageHandler(String address) {
-	dynamic {
-		dynamic eventBus = EventBus("/eventbus/");
-		eventBus.onopen = void() {
-			eventBus.registerHandler(address, (dynamic error, dynamic message) {
-				onServerMessage(JSON.stringify(message));
-			});
-		};
-	}
+	eventBus.registerHandler(void (String? message, String? error) {
+		if (exists message) {
+			onServerMessage(message);
+		} else if (exists error) {
+			onServerError(error);
+		}
+	});
 }
 
 PlayerInfo? extractPlayerInfo(String cookie) {

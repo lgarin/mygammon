@@ -67,6 +67,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 	}
 	
 	void handleTable(RoutingContext routingContext) {
+		// TODO magic value
 		routingContext.reroute("static/board.html");
 	}
 

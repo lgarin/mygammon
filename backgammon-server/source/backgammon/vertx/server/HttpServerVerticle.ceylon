@@ -30,12 +30,6 @@ import io.vertx.ceylon.web.handler {
 	loggerHandler,
 	staticHandler
 }
-import io.vertx.ceylon.web.handler.sockjs {
-	SockJSHandlerOptions,
-	BridgeOptions,
-	PermittedOptions,
-	sockJSHandler
-}
 
 shared final class HttpServerVerticle() extends Verticle() {
 	
@@ -46,35 +40,27 @@ shared final class HttpServerVerticle() extends Verticle() {
 	// TODO read config from vertx.getOrCreateContext().config() 
 	value config = RoomConfiguration(roomId, 100, Duration(60000), Duration(30000));
 
-	function createSockJsHandler() {
-		value sockJsOptions = SockJSHandlerOptions {
-			heartbeatInterval = 2000;
-		};
-		
-		value bridgeOptions = BridgeOptions {
-			outboundPermitteds = {PermittedOptions { addressRegex = "^OutboundTableMessage-.*"; }, PermittedOptions { addressRegex = "^OutboundGameMessage-.*"; } };
-		};
-		return sockJSHandler.create(vertx, sockJsOptions).bridge(bridgeOptions);
-	}
-	
 	void startHttp() {
-		value router = routerFactory.router(vertx);
 		value authRouterFactory = GoogleAuthRouterFactory(vertx, hostname, port);
+		value router = routerFactory.router(vertx);
+
 		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(config.sessionTimeout.milliseconds));
 		router.route().handler(loggerHandler.create().handle);
+		
 		router.route("/static/*").handler(staticHandler.create("static").handle);
 		router.route("/modules/*").handler(staticHandler.create("modules").handle);
-		router.route("/eventbus/*").handler(createSockJsHandler().handle);
+		router.mountSubRouter("/eventbus", GameRoomEventBus(vertx).createEventBusRouter());
+		
 		router.mountSubRouter("/", authRouterFactory.createGoogleLoginRouter());
 		router.mountSubRouter("/", GameRoomRouterFactory(vertx, roomId).createRouter());
 		router.mountSubRouter("/api", GameRoomRestApi(vertx).createRouter());
+		
 		vertx.createHttpServer().requestHandler(router.accept).listen(port);
 		
 		logger(`package`).info("Started http://``hostname``:``port``");
 	}
 	
 	void startRoom() {
-		
 		value eventBus = GameRoomEventBus(vertx);
 		
 		value matchRoom = MatchRoom(config, eventBus.sendOutboundTableMessage);

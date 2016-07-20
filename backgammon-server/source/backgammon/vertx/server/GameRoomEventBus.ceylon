@@ -27,6 +27,16 @@ import io.vertx.ceylon.core {
 import io.vertx.ceylon.core.eventbus {
 	Message
 }
+import io.vertx.ceylon.web {
+	Router,
+	routerFactory=router
+}
+import io.vertx.ceylon.web.handler.sockjs {
+	PermittedOptions,
+	SockJSHandlerOptions,
+	sockJSHandler,
+	BridgeOptions
+}
 
 final class GameRoomEventBus(Vertx vertx) {
 	
@@ -131,5 +141,22 @@ final class GameRoomEventBus(Vertx vertx) {
 	shared void registerInboundGameMessageConsumer(String roomId, Integer threadCount, OutboundGameMessage process(InboundGameMessage request)) {
 		value executor = vertx.createSharedWorkerExecutor("game-thread-``roomId``", threadCount);
 		registerParallelRoomMessageCosumer(executor, "InboundGameMessage-``roomId``", parseInboundGameMesssage, process);
+	}
+	
+	function createSockJsHandler() {
+		value sockJsOptions = SockJSHandlerOptions {
+			heartbeatInterval = 2000;
+		};
+		
+		value bridgeOptions = BridgeOptions {
+			outboundPermitteds = {PermittedOptions { addressRegex = "^OutboundTableMessage-.*"; }, PermittedOptions { addressRegex = "^OutboundGameMessage-.*"; } };
+		};
+		return sockJSHandler.create(vertx, sockJsOptions).bridge(bridgeOptions);
+	}
+	
+	shared Router createEventBusRouter() {
+		value router = routerFactory.router(vertx);
+		router.route().handler(createSockJsHandler().handle);
+		return router;
 	}
 }

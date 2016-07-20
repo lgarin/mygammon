@@ -9,6 +9,12 @@ import ceylon.interop.browser.dom {
 	Document,
 	Element
 }
+import ceylon.time {
+	Duration
+}
+import ceylon.time.base {
+	milliseconds
+}
 
 
 shared final class GameGui(Document document) {
@@ -39,6 +45,14 @@ shared final class GameGui(Document document) {
 	
 	void removeClass(String elementId, String className) {
 		document.getElementById(elementId)?.classList?.remove(className);
+	}
+	
+	function formatSeconds(Integer seconds) => if (seconds < 10) then "0" + seconds.string else seconds.string;
+	
+	shared String formatPeriod(Duration duration) {
+		value minutes = duration.milliseconds / milliseconds.perMinute;
+		value seconds = duration.milliseconds - minutes * milliseconds.perMinute;
+		return "``minutes``:``formatSeconds(seconds)``";
 	}
 	
 	shared void hideUndoButton() {
@@ -261,5 +275,13 @@ shared final class GameGui(Document document) {
 		showCurrentPlayer(null);
 		resetState(black, playerMessage);
 		resetState(white, playerMessage);
+	}
+	
+	shared void showEmptyGame() {
+		showCurrentPlayer(null);
+		showDiceValues(black, null, null);
+		redrawCheckers(black, []);
+		showDiceValues(white, null, null);
+		redrawCheckers(white, []);
 	}
 }
