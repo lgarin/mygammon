@@ -75,7 +75,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, GameGui gui, Anythin
 		gui.redrawCheckers(white, state.whiteCheckerCounts);
 		gui.showCurrentPlayer(state.currentColor);
 		if (exists currentColor = state.currentColor) {
-			gui.showPlayerMessage(currentColor, gui.formatPeriod(state.remainingTime()), true);
+			gui.showPlayerMessage(currentColor, gui.formatPeriod(state.remainingTime), true);
 			gui.showPlayerMessage(currentColor.oppositeColor, "Waiting...", true);
 			if (exists color = playerColor, currentColor == color) {
 				gui.showSubmitButton(null);
@@ -184,8 +184,10 @@ shared class GameClient(PlayerId playerId, MatchId matchId, GameGui gui, Anythin
 			return message.success;
 		}
 	}
-	shared void handleTimerEvent(Instant time) {
+	
+	shared Boolean handleTimerEvent(Instant time) {
 		// TODO implement
+		return true;
 	}
 	
 	shared void showState() {

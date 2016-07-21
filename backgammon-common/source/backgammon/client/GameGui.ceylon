@@ -12,9 +12,6 @@ import ceylon.interop.browser.dom {
 import ceylon.time {
 	Duration
 }
-import ceylon.time.base {
-	milliseconds
-}
 
 
 shared final class GameGui(Document document) {
@@ -50,8 +47,9 @@ shared final class GameGui(Document document) {
 	function formatSeconds(Integer seconds) => if (seconds < 10) then "0" + seconds.string else seconds.string;
 	
 	shared String formatPeriod(Duration duration) {
-		value minutes = duration.milliseconds / milliseconds.perMinute;
-		value seconds = duration.milliseconds - minutes * milliseconds.perMinute;
+		value totalSeconds = (duration.milliseconds + 999) / 1000;
+		value minutes = max({totalSeconds / 60, 0});
+		value seconds = max({totalSeconds - minutes * 60, 0});
 		return "``minutes``:``formatSeconds(seconds)``";
 	}
 	

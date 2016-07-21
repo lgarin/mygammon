@@ -1,13 +1,13 @@
 import backgammon.common {
-	JoiningMatchMessage,
-	LeaftTableMessage,
 	WaitingOpponentMessage,
 	JoinedTableMessage,
 	PlayerId,
 	RoomId,
 	RoomMessage,
 	PlayerInfo,
-	TableId
+	TableId,
+	LeftTableMessage,
+	MatchId
 }
 
 import ceylon.collection {
@@ -55,7 +55,7 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 		if (exists currentTable = table) {
 			currentTable.removePlayer(this);
 			table = null;
-			currentTable.publish(LeaftTableMessage(id, currentTable.id));
+			currentTable.publish(LeftTableMessage(id, currentTable.id));
 			return true;
 		} else {
 			return false;
@@ -96,10 +96,18 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 		return false;
 	}
 	
-	shared Boolean startGame() {
+	shared Boolean acceptMatch() {
 		lastActivity = now();
-		return match?.startGame(this) else false;
+		if (exists currentMatch = match) {
+			return currentMatch.acceptMatch(this);
+		} else {
+			return false;
+		}
 	}
+	
+	shared MatchId? matchId => match?.id;
+	
+	shared PlayerId? opponentId => match?.opponentId(id);
 	
 	shared Boolean leaveMatch() {
 		if (exists currentMatch = match) {
@@ -119,7 +127,6 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 		
 		match = currentMatch;
 		lastActivity = now();
-		currentMatch.table.publish(JoiningMatchMessage(id, currentMatch.id));
 		return true;
 	}
 	
@@ -253,8 +260,8 @@ class PlayerTest() {
 		value opponent = makePlayer("opponent");
 		value table = Table(0, room.id, Duration(1000), messageList.add);
 		value match = Match(player, opponent, table);
-		match.startGame(opponent);
-		match.startGame(player);
+		match.acceptMatch(opponent);
+		match.acceptMatch(player);
 		value result = player.joinMatch(match);
 		assert (!result);
 	}

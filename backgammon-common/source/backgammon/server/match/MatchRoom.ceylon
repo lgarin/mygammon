@@ -10,7 +10,15 @@ import backgammon.common {
 	FoundMatchTableMessage,
 	OutboundRoomMessage,
 	TableStateRequestMessage,
-	TableStateResponseMessage
+	TableStateResponseMessage,
+	InboundMatchMessage,
+	AcceptMatchMessage,
+	AcceptedMatchMessage,
+	InboundTableMessage,
+	LeaveTableMessage,
+	LeftTableMessage,
+	InboundGameMessage,
+	StartGameMessage
 }
 import backgammon.server.common {
 	RoomConfiguration,
@@ -18,15 +26,16 @@ import backgammon.server.common {
 }
 
 import ceylon.time {
-	Instant
+	Instant,
+	Duration
 }
 
-shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander) {
 	
 	value lock = ObtainableLock(); 
-	value room = Room(configuration.roomName, configuration.tableCount, configuration.maxMatchJoinTime, messageBroadcaster);
+	value room = Room(configuration.roomName, configuration.tableCount, Duration(configuration.maxMatchJoinTime.milliseconds + configuration.serverAdditionalTimeout.milliseconds), messageBroadcaster);
 	
-	function process(InboundRoomMessage message) {
+	function process(InboundRoomMessage|InboundTableMessage|InboundMatchMessage message) {
 		switch (message)
 		case (is EnterRoomMessage) {
 			if (exists player = room.players[message.playerId]) {
@@ -54,9 +63,27 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 				return TableStateResponseMessage(message.playerId, message.roomId, message.table, null, false);
 			}
 		}
+		case (is LeaveTableMessage) {
+			if (exists player = room.players[message.playerId], player.leaveTable()) {
+				return LeftTableMessage(message.playerId, message.tableId, true);
+			} else {
+				return LeftTableMessage(message.playerId, message.tableId, false);
+			}
+		}
+		case (is AcceptMatchMessage) {
+			if (exists player = room.players[message.playerId], player.acceptMatch()) {
+				if (exists matchId = player.matchId, exists opponentId = player.opponentId) {
+					gameCommander(StartGameMessage(matchId, message.playerId, opponentId));
+				}
+				return AcceptedMatchMessage(message.playerId, message.matchId, true);
+			} else {
+				return AcceptedMatchMessage(message.playerId, message.matchId, false);
+			}
+		}
+		
 	}
 	
-	shared OutboundRoomMessage|OutboundTableMessage processRoomMessage(InboundRoomMessage message, Instant currentTime) {
+	shared OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage processRoomMessage(InboundRoomMessage|InboundTableMessage|InboundMatchMessage message, Instant currentTime) {
 		// TODO implement flooding control
 		try (lock) {
 			return process(message);

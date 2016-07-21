@@ -1,39 +1,32 @@
-import ceylon.time {
-
-	Duration,
-	Instant,
-	now
-}
-
-import ceylon.test {
-
-	test
-}
-import ceylon.collection {
-
-	ArrayList
-}
-
 import backgammon.common {
-
-	StartMatchMessage,
-	LeaftMatchMessage,
 	TableMessage,
-	EndGameMessage,
 	GameWonMessage,
 	GameMessage,
-	StartGameMessage,
 	GameEndedMessage,
 	PlayerId,
 	MatchId,
 	RoomId,
 	PlayerInfo,
-	MatchState
+	MatchState,
+	AcceptedMatchMessage,
+	LeftMatchMessage,
+	CreatedGameMessage
+}
+
+import ceylon.collection {
+	ArrayList
+}
+import ceylon.test {
+	test
+}
+import ceylon.time {
+	Duration,
+	Instant,
+	now
 }
 
 
 class Match(shared Player player1, shared Player player2, shared Table table) {
-	
 	
 	Instant creationTime = now();
 	
@@ -48,9 +41,7 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 	
 	shared MatchState state => MatchState(id, player1.info, player2.info, remainingJoinTime, player1Ready, player2Ready, winnerId);
 	
-	function canStartGame() => player1Ready && player2Ready;
-	
-	shared Boolean isStarted => canStartGame();
+	shared Boolean isStarted => player1Ready && player2Ready;
 	shared Boolean isEnded => winnerId exists;
 
 	shared Boolean end(Player player) {
@@ -60,14 +51,13 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 			if (isStarted) {
 				player1Ready = false;
 				player2Ready = false;
-				table.send(EndGameMessage(id, player.id));
 			}
 			
 			if (table.removeMatch(this)) {
 				if (winnerId is Null) {
 					winnerId = noWinnerId;
 				}
-				table.publish(LeaftMatchMessage(player.id, id));
+				table.publish(LeftMatchMessage(player.id, id));
 				return true;
 			} else {
 				return false;
@@ -115,16 +105,27 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 		}
 		
 	}
-	
-	shared Boolean startGame(Player player) {
+
+	shared Boolean acceptMatch(Player player) {
 		if (markReady(player)) {
-			table.publish(StartMatchMessage(player.id, id));
-			if (canStartGame()) {
-				table.send(StartGameMessage(id, player1.id, player2.id));
-				return true;
+			table.publish(AcceptedMatchMessage(player.id, id));
+			if (isStarted) {
+				table.publish(CreatedGameMessage(player.id, id));
 			}
+			return true;
+		} else {
+			return false;
 		}
-		return false;
+	}
+	
+	shared PlayerId? opponentId(PlayerId playerId) {
+		if (playerId == player1.id) {
+			return player2.id;
+		} else if (playerId == player2.id) {
+			return player1.id;
+		} else {
+			return null;
+		}
 	}
 }
 
@@ -148,25 +149,26 @@ class MatchTest() {
 	
 	test
 	shared void startGameWithThirdPlayer() {
-		value result = match.startGame(makePlayer("player3"));
+		value result = match.acceptMatch(makePlayer("player3"));
 		assert (!result);
-		assert (messageList.count((TableMessage element) => element is StartMatchMessage) == 0);
+		assert (messageList.count((TableMessage element) => element is AcceptedMatchMessage) == 0);
 	}
 	
 	test
 	shared void startGameWithTwoPlayers() {
-		value result1 = match.startGame(match.player1);
-		assert (!result1);
-		value result2 = match.startGame(match.player2);
+		value result1 = match.acceptMatch(match.player1);
+		assert (result1);
+		value result2 = match.acceptMatch(match.player2);
 		assert (result2);
-		assert (messageList.count((TableMessage element) => element is StartMatchMessage) == 2);
+		assert (messageList.count((TableMessage element) => element is AcceptedMatchMessage) == 2);
+		assert (messageList.count((TableMessage element) => element is CreatedGameMessage) == 1);
 	}
 	
 	test
 	shared void startGameWithOnlyOnePlayer() {
-		value result = match.startGame(match.player1);
-		assert (!result);
-		assert (messageList.count((TableMessage element) => element is StartMatchMessage) == 1);
+		value result = match.acceptMatch(match.player1);
+		assert (result);
+		assert (messageList.count((TableMessage element) => element is AcceptedMatchMessage) == 1);
 	}
 	
 }

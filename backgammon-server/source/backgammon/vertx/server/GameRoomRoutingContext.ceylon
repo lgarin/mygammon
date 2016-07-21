@@ -78,4 +78,8 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 		rc.response().headers().add("Content-Type", "application/json");
 		rc.response().write(response).end();
 	}
+	
+	shared void fail(Throwable error) {
+		rc.fail(error);
+	}
 }

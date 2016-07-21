@@ -1,6 +1,7 @@
 import backgammon.common {
 	InboundRoomMessage,
-	InboundGameMessage
+	InboundGameMessage,
+	InboundMatchMessage
 }
 import backgammon.server.common {
 	RoomConfiguration
@@ -45,7 +46,7 @@ shared final class HttpServerVerticle() extends Verticle() {
 		value router = routerFactory.router(vertx);
 
 		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(config.sessionTimeout.milliseconds));
-		router.route().handler(loggerHandler.create().handle);
+		//router.route().handler(loggerHandler.create().handle);
 		
 		router.route("/static/*").handler(staticHandler.create("static").handle);
 		router.route("/modules/*").handler(staticHandler.create("modules").handle);
@@ -63,8 +64,12 @@ shared final class HttpServerVerticle() extends Verticle() {
 	void startRoom() {
 		value eventBus = GameRoomEventBus(vertx);
 		
-		value matchRoom = MatchRoom(config, eventBus.sendOutboundTableMessage);
-		eventBus.registerInboundRoomMessageConsumer(roomId, config.roomThreadCount, (InboundRoomMessage request) => matchRoom.processRoomMessage(request, now()));
+		void sendGameCommand(InboundGameMessage message) {
+			eventBus.sendInboundGameMessage(message, void (Anything response) {});
+		}
+		
+		value matchRoom = MatchRoom(config, eventBus.sendOutboundTableMessage, sendGameCommand);
+		eventBus.registerInboundRoomMessageConsumer(roomId, config.roomThreadCount, (InboundRoomMessage|InboundMatchMessage request) => matchRoom.processRoomMessage(request, now()));
 		
 		value gameRoom = GameRoom(config, eventBus.sendOutboundGameMessage);
 		eventBus.registerInboundGameMessageConsumer(roomId, config.gameThreadCount, (InboundGameMessage request) => gameRoom.processGameMessage(request, now()));

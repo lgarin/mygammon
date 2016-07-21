@@ -1,17 +1,22 @@
 import backgammon.common {
 	PlayerInfo,
 	TableStateResponseMessage,
-	RoomResponseMessage,
 	InboundGameMessage,
-	JoiningMatchMessage,
 	OutboundMatchMessage,
-	LeaftMatchMessage,
-	StartMatchMessage,
-	TableId
+	TableId,
+	MatchState,
+	CreatedMatchMessage,
+	OutboundRoomMessage,
+	OutboundTableMessage,
+	OutboundGameMessage
 }
 import backgammon.game {
 	player2Color,
 	player1Color
+}
+
+import ceylon.time {
+	Instant
 }
 
 shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui gui, Anything(InboundGameMessage) messageBroadcaster) {
@@ -42,7 +47,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	}
 	
 	
-	shared Boolean handleRoomMessage(RoomResponseMessage message) {
+	shared Boolean handleRoomMessage(OutboundRoomMessage message) {
 		if (!message.success) {
 			return false;
 		}
@@ -57,28 +62,53 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		}
 	}
 	
+	shared Boolean handleTableMessage(OutboundTableMessage message) {
+		if (tableId != message.tableId) {
+			return false;
+		}
+
+		switch (message)
+		case (is CreatedMatchMessage) {
+			value match = MatchState(message.matchId, message.player1, message.player2, message.remainingJoinTime);
+			matchClient = MatchClient(playerInfo, match, gui, messageBroadcaster);
+			matchClient?.showState();
+			return true;
+		}
+		else {
+			// ignore other messages
+			return true;
+		}
+	}
 	
-	shared Boolean handleTableMessage(OutboundMatchMessage message) {
+	shared Boolean handleMatchMessage(OutboundMatchMessage message) {
 		if (tableId != message.tableId) {
 			return false;
 		}
 		
 		if (exists currentMatchClient = matchClient) {
-			return currentMatchClient.handleTableMessage(message);
+			return currentMatchClient.handleMatchMessage(message);
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean handleGameMessage(OutboundGameMessage message) {
+		if (tableId != message.tableId) {
+			return false;
 		}
 		
-		switch (message)
-		case (is JoiningMatchMessage) {
-			// TODO match state
-			//matchClient = MatchClient(playerInfo, message.state, gui, messageBroadcaster);
-			matchClient?.showState();
+		if (exists currentMatchClient = matchClient) {
+			return currentMatchClient.handleGameMessage(message);
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean handleTimerEvent(Instant time) {
+		if (exists currentMatchClient = matchClient) {
+			return currentMatchClient.handleTimerEvent(time);
+		} else {
 			return true;
-		}
-		case (is StartMatchMessage) {
-			return false;
-		}
-		case (is LeaftMatchMessage) {
-			return false;
 		}
 	}
 }

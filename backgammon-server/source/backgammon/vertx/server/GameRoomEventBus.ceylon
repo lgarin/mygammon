@@ -10,7 +10,11 @@ import backgammon.common {
 	OutboundMatchMessage,
 	RoomMessage,
 	parseOutboundRoomMessage,
-	parseOutboundGameMessage
+	parseOutboundGameMessage,
+	InboundMatchMessage,
+	parseOutboundMatchMessage,
+	InboundTableMessage,
+	parseOutboundTableMessage
 }
 
 import ceylon.json {
@@ -48,6 +52,38 @@ final class GameRoomEventBus(Vertx vertx) {
 				responseHandler(result);
 			} else if (exists body = result.body(), exists typeName = body.keys.first) {
 				if (is OutboundMessage response = parseOutboundRoomMessage(typeName, body.getObject(typeName))) {
+					responseHandler(response);
+				} else {
+					responseHandler(Exception("Invalid response type: ``typeName``"));
+				}
+			} else {
+				responseHandler(Exception("Invalid response: ``result``"));
+			}
+		});
+	}
+	
+	shared void sendInboundTableMessage<OutboundMessage>(InboundTableMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies OutboundTableMessage {
+		vertx.eventBus().send("InboundRoomMessage-``message.roomId``", formatRoomMessage(message), void (Throwable|Message<Object> result) {
+			if (is Throwable result) {
+				responseHandler(result);
+			} else if (exists body = result.body(), exists typeName = body.keys.first) {
+				if (is OutboundMessage response = parseOutboundTableMessage(typeName, body.getObject(typeName))) {
+					responseHandler(response);
+				} else {
+					responseHandler(Exception("Invalid response type: ``typeName``"));
+				}
+			} else {
+				responseHandler(Exception("Invalid response: ``result``"));
+			}
+		});
+	}
+	
+	shared void sendInboundMatchMessage<OutboundMessage>(InboundMatchMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies OutboundMatchMessage {
+		vertx.eventBus().send("InboundRoomMessage-``message.roomId``", formatRoomMessage(message), void (Throwable|Message<Object> result) {
+			if (is Throwable result) {
+				responseHandler(result);
+			} else if (exists body = result.body(), exists typeName = body.keys.first) {
+				if (is OutboundMessage response = parseOutboundMatchMessage(typeName, body.getObject(typeName))) {
 					responseHandler(response);
 				} else {
 					responseHandler(Exception("Invalid response type: ``typeName``"));
@@ -119,7 +155,7 @@ final class GameRoomEventBus(Vertx vertx) {
 		});
 	}
 	
-	shared void registerInboundRoomMessageConsumer(String roomId, Integer threadCount, OutboundRoomMessage|OutboundTableMessage process(InboundRoomMessage request)) {
+	shared void registerInboundRoomMessageConsumer(String roomId, Integer threadCount, OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage process(InboundRoomMessage|InboundMatchMessage request)) {
 		value executor = vertx.createSharedWorkerExecutor("room-thread-``roomId``", threadCount);
 		registerParallelRoomMessageCosumer(executor, "InboundRoomMessage-``roomId``", parseInboundRoomMessage, process);
 	}
@@ -142,7 +178,7 @@ final class GameRoomEventBus(Vertx vertx) {
 	
 	shared Router createEventBusRouter() {
 		value router = routerFactory.router(vertx);
-		router.route().handler(createSockJsHandler().handle);
+		router.route("/*").handler(createSockJsHandler().handle);
 		return router;
 	}
 }

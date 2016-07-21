@@ -1,5 +1,4 @@
 import backgammon.common {
-	JoiningMatchMessage,
 	WaitingOpponentMessage,
 	JoinedTableMessage,
 	RoomId,
@@ -7,7 +6,8 @@ import backgammon.common {
 	OutboundTableMessage,
 	OutboundMatchMessage,
 	RoomMessage,
-	PlayerInfo
+	PlayerInfo,
+	CreatedMatchMessage
 }
 
 import ceylon.collection {
@@ -149,7 +149,7 @@ class RoomTest() {
 		assert (result2);
 		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 2);
 		assert (messageList.count((RoomMessage element) => element is WaitingOpponentMessage) == 1);
-		assert (messageList.count((RoomMessage element) => element is JoiningMatchMessage) == 2);
+		assert (messageList.count((RoomMessage element) => element is CreatedMatchMessage) == 1);
 		assert (room.tables.count((Table element) => !element.free) == 1);
 	}
 }

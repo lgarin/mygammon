@@ -1,13 +1,12 @@
 import backgammon.common {
-	JoiningMatchMessage,
 	TableMessage,
 	TableId,
 	RoomId,
 	OutboundTableMessage,
 	OutboundMatchMessage,
-	InboundGameMessage,
 	PlayerInfo,
-	MatchState
+	MatchState,
+	CreatedMatchMessage
 }
 
 import ceylon.collection {
@@ -37,15 +36,16 @@ final class Table(shared Integer index, shared RoomId roomId, shared Duration ma
 	shared void publish(OutboundTableMessage|OutboundMatchMessage message) {
 		messageBroadcaster(message);
 	}
-	
-	shared void send(InboundGameMessage message) {
-		// TODO
-	}
-	
+
 	function createMatch(Player player1, Player player2) {
 		value currentMatch = Match(player1, player2, this);
-		match = currentMatch;
-		return player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch);
+		if (player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch)) {
+			match = currentMatch;
+			publish(CreatedMatchMessage(player2.id, currentMatch.id, player1.info, player2.info, currentMatch.remainingJoinTime));
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	shared Boolean sitPlayer(Player player) {
@@ -120,7 +120,7 @@ class TableTest() {
 		assert (result1);
 		value result2 = table.sitPlayer(makePlayer("player2"));
 		assert (result2);
-		assert (messageList.count((TableMessage element) => element is JoiningMatchMessage) == 2);
+		assert (messageList.count((TableMessage element) => element is CreatedMatchMessage) == 1);
 	}
 	
 	test

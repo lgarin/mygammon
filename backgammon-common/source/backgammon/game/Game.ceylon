@@ -236,7 +236,7 @@ shared class Game() {
 		result.remainingUndo = remainingUndo;
 		result.blackReady = blackReady;
 		result.whiteReady = whiteReady;
-		result.nextTimeout = nextTimeout;
+		result.remainingTime = now().durationTo(nextTimeout);
 		result.blackCheckerCounts = board.checkerCounts(black);
 		result.whiteCheckerCounts = board.checkerCounts(white);
 		result.currentMoves = currentMoves.sequence();
@@ -249,7 +249,7 @@ shared class Game() {
 		remainingUndo = state.remainingUndo;
 		blackReady = state.blackReady;
 		whiteReady = state.whiteReady;
-		nextTimeout = state.nextTimeout;
+		nextTimeout = now().plus(state.remainingTime);
 		board.setCheckerCounts(black, state.blackCheckerCounts);
 		board.setCheckerCounts(white, state.whiteCheckerCounts);
 		currentMoves.clear();

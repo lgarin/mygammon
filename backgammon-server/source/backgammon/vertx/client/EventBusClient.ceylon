@@ -6,7 +6,7 @@ final class EventBusClient() {
 		eventBus = EventBus("/eventbus/");
 	}
 	
-	shared void registerHandler(Anything process(String? message, String? error)) {
+	shared void registerHandler(String address, Anything process(String? message, String? error)) {
 		if (initialized) {
 			dynamic {
 				eventBus.registerHandler(address, (dynamic error, dynamic message) {

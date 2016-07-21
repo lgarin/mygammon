@@ -3,8 +3,6 @@ import ceylon.json {
 	Array
 }
 import ceylon.time {
-	Instant,
-	now,
 	Duration
 }
 shared final class GameState() {
@@ -15,7 +13,7 @@ shared final class GameState() {
 	shared variable Integer remainingUndo = 0;
 	shared variable Boolean blackReady = false;
 	shared variable Boolean whiteReady = false;
-	shared variable Instant nextTimeout = Instant(0);
+	shared variable Duration remainingTime = Duration(0);
 	
 	shared variable {Integer*} blackCheckerCounts = {};
 	shared variable {Integer*} whiteCheckerCounts = {};
@@ -49,14 +47,12 @@ shared final class GameState() {
 		result.put("remainingUndo", remainingUndo);
 		result.put("blackReady", blackReady);
 		result.put("whiteReady", whiteReady);
-		result.put("nextTimeout", nextTimeout.millisecondsOfEpoch);
+		result.put("remainingTime", remainingTime.milliseconds);
 		result.put("blackCheckerCounts", Array(blackCheckerCounts));
 		result.put("whiteCheckerCounts", Array(whiteCheckerCounts));
 		result.put("currentMoves", Array(currentMoves.map((element) => element.toJson())));
 		return result;
 	}
-	
-	shared Duration remainingTime() => now().durationTo(nextTimeout);
 }
 
 shared GameState parseGameState(Object json) {
@@ -70,7 +66,7 @@ shared GameState parseGameState(Object json) {
 	result.remainingUndo = json.getInteger("remainingUndo");
 	result.blackReady = json.getBoolean("blackReady");
 	result.whiteReady = json.getBoolean("whiteReady");
-	result.nextTimeout = Instant(json.getInteger("nextTimeout"));
+	result.remainingTime = Duration(json.getInteger("remainingTime"));
 	result.blackCheckerCounts = json.getArray("blackCheckerCounts").narrow<Integer>();
 	result.whiteCheckerCounts = json.getArray("whiteCheckerCounts").narrow<Integer>();
 	result.currentMoves = json.getArray("currentMoves").narrow<Object>().collect((element) => parseGameMove(element));
