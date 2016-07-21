@@ -26,7 +26,7 @@ shared sealed interface RoomResponseMessage {
 	shared formal Boolean success;
 }
 
-shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeaftRoomMessage | FoundMatchTableMessage | TableStateResponseMessage satisfies RoomMessage & RoomResponseMessage {
+shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeftRoomMessage | FoundMatchTableMessage | TableStateResponseMessage satisfies RoomMessage & RoomResponseMessage {
 	shared default actual Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success });
 }
 
@@ -49,7 +49,7 @@ shared EnteredRoomMessage parseEnteredRoomMessage(Object json) {
 	return EnteredRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getBoolean("success"));
 }
 
-shared final class LeaftRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}
+shared final class LeftRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}
 
 shared final class FoundMatchTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer? table) satisfies OutboundRoomMessage {
 	shared actual Boolean success => table exists;
@@ -79,20 +79,26 @@ shared Object formatRoomMessage(RoomMessage message) {
 	return Object({type(message).declaration.name -> message.toJson()});
 }
 
-shared RoomMessage? parseRoomMessage(String typeName, Object json) {
+shared InboundRoomMessage? parseInboundRoomMessage(String typeName, Object json) {
 	if (typeName == `class EnterRoomMessage`.name) {
 		return parseEnterRoomMessage(json);
-	} else if (typeName == `class EnteredRoomMessage`.name) {
-		return parseEnteredRoomMessage(json);
 	} else if (typeName == `class FindMatchTableMessage`.name) {
 		return parseFindMatchTableMessage(json);
-	} else if (typeName == `class FoundMatchTableMessage`.name) {
-		return parseFoundMatchTableMessage(json);
 	} else if (typeName == `class TableStateRequestMessage`.name) {
 		return parseTableStateRequestMessage(json);
+	} else {
+		return null;
+	}
+}
+
+shared OutboundRoomMessage? parseOutboundRoomMessage(String typeName, Object json) {
+	if (typeName == `class EnteredRoomMessage`.name) {
+		return parseEnteredRoomMessage(json);
+	} else if (typeName == `class FoundMatchTableMessage`.name) {
+		return parseFoundMatchTableMessage(json);
 	} else if (typeName == `class TableStateResponseMessage`.name) {
 		return parseTableStateResponseMessage(json);
 	} else {
-		return parseTableMessage(typeName, json);
+		return null;
 	}
 }

@@ -1,14 +1,16 @@
 import backgammon.common {
-	parseGameMessage,
+	parseInboundGameMessage,
 	InboundGameMessage,
 	OutboundGameMessage,
 	formatRoomMessage,
 	OutboundRoomMessage,
 	InboundRoomMessage,
-	parseRoomMessage,
+	parseInboundRoomMessage,
 	OutboundTableMessage,
 	OutboundMatchMessage,
-	RoomMessage
+	RoomMessage,
+	parseOutboundRoomMessage,
+	parseOutboundGameMessage
 }
 
 import ceylon.json {
@@ -45,7 +47,7 @@ final class GameRoomEventBus(Vertx vertx) {
 			if (is Throwable result) {
 				responseHandler(result);
 			} else if (exists body = result.body(), exists typeName = body.keys.first) {
-				if (is OutboundMessage response = parseRoomMessage(typeName, body.getObject(typeName))) {
+				if (is OutboundMessage response = parseOutboundRoomMessage(typeName, body.getObject(typeName))) {
 					responseHandler(response);
 				} else {
 					responseHandler(Exception("Invalid response type: ``typeName``"));
@@ -61,7 +63,7 @@ final class GameRoomEventBus(Vertx vertx) {
 			if (is Throwable result) {
 				responseHandler(result);
 			} else if (exists body = result.body(), exists typeName = body.keys.first) {
-				if (is OutboundMessage response = parseGameMessage(typeName, body.getObject(typeName))) {
+				if (is OutboundMessage response = parseOutboundGameMessage(typeName, body.getObject(typeName))) {
 					responseHandler(response);
 				} else {
 					responseHandler(Exception("Invalid response type: ``typeName``"));
@@ -117,30 +119,14 @@ final class GameRoomEventBus(Vertx vertx) {
 		});
 	}
 	
-	function parseInboundRoomMesssage(String typeName, Object json) {
-		if (is InboundRoomMessage request = parseRoomMessage(typeName, json)) {
-			return request;
-		} else {
-			return null;
-		}
-	}
-	
 	shared void registerInboundRoomMessageConsumer(String roomId, Integer threadCount, OutboundRoomMessage|OutboundTableMessage process(InboundRoomMessage request)) {
 		value executor = vertx.createSharedWorkerExecutor("room-thread-``roomId``", threadCount);
-		registerParallelRoomMessageCosumer(executor, "InboundRoomMessage-``roomId``", parseInboundRoomMesssage, process);
+		registerParallelRoomMessageCosumer(executor, "InboundRoomMessage-``roomId``", parseInboundRoomMessage, process);
 	}
 	
-	function parseInboundGameMesssage(String typeName, Object json) {
-		if (is InboundGameMessage request = parseGameMessage(typeName, json)) {
-			return request;
-		} else {
-			return null;
-		}
-	}
-
 	shared void registerInboundGameMessageConsumer(String roomId, Integer threadCount, OutboundGameMessage process(InboundGameMessage request)) {
 		value executor = vertx.createSharedWorkerExecutor("game-thread-``roomId``", threadCount);
-		registerParallelRoomMessageCosumer(executor, "InboundGameMessage-``roomId``", parseInboundGameMesssage, process);
+		registerParallelRoomMessageCosumer(executor, "InboundGameMessage-``roomId``", parseInboundGameMessage, process);
 	}
 	
 	function createSockJsHandler() {

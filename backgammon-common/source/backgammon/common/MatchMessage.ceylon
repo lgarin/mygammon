@@ -25,7 +25,7 @@ shared StartMatchMessage parseStartMatchMessage(Object json) {
 	return StartMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")));
 }
 
-shared MatchMessage? parseMatchMessage(String typeName, Object json) {
+shared OutboundMatchMessage?|OutboundGameMessage? parseOutboundMatchMessage(String typeName, Object json) {
 	if (typeName == `class JoiningMatchMessage`.name) {
 		return parseJoiningMatchMessage(json);
 	} else if (typeName == `class LeaftMatchMessage`.name) {
@@ -33,6 +33,6 @@ shared MatchMessage? parseMatchMessage(String typeName, Object json) {
 	} else if (typeName == `class StartMatchMessage`.name) {
 		return parseStartMatchMessage(json);
 	} else {
-		return parseGameMessage(typeName, json);
+		return parseOutboundGameMessage(typeName, json);
 	}
 }

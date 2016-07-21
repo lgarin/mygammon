@@ -12,12 +12,9 @@ import backgammon.common {
 	GameEndedMessage,
 	GameStateResponseMessage,
 	GameActionResponseMessage,
-	TableStateResponseMessage,
-	RoomResponseMessage,
-	PlayerInfo,
 	PlayerId,
-	MatchState,
-	GameStateRequestMessage
+	MatchId,
+	UndoMovesMessage
 }
 import backgammon.game {
 	Game,
@@ -29,38 +26,23 @@ import backgammon.game {
 	GameState
 }
 
-import ceylon.interop.browser {
-	window
-}
 import ceylon.time {
-
 	Instant
 }
-shared class GameClient(Anything(InboundGameMessage) messageBroadcaster) {
-	
-	variable PlayerInfo? playerInfo = null;
-	
-	value playerId {
-		if (exists id = playerInfo?.id) {
-			return PlayerId(id);
-		} else {
-			return null;
-		}
-	}
+shared class GameClient(PlayerId playerId, MatchId matchId, GameGui gui, Anything(InboundGameMessage) messageBroadcaster) {
 	
 	value game = Game();
-	value gui = GameGui(window.document);
 	
 	variable Integer? initialDiceValue = null;
 	variable CheckerColor? playerColor = null;
 	
 	function showInitialRoll(InitialRollMessage message) {
-		if (exists currentPlayerId = playerId, message.playerId == currentPlayerId) {
+		if (message.playerId == playerId) {
 			// TODO check return value
 			game.initialRoll(message.roll, message.maxDuration);
 			initialDiceValue = message.diceValue;
 			playerColor = message.playerColor;
-			// TODO start timer
+			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration), true);
 		} else {
 			gui.showDiceValues(message.playerColor.oppositeColor, message.diceValue, null);
 		}
@@ -71,19 +53,18 @@ shared class GameClient(Anything(InboundGameMessage) messageBroadcaster) {
 		if (game.beginTurn(message.playerColor, message.roll, message.maxDuration, message.maxUndo)) {
 			gui.showDiceValues(message.playerColor.oppositeColor, null, null);
 			gui.showDiceValues(message.playerColor, message.roll.firstValue, message.roll.secondValue);
-			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration), false);
-			gui.showPlayerMessage(message.playerColor.oppositeColor, "Waiting...", false); // TODO start timer			return true;
+			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration), true);
+			gui.showPlayerMessage(message.playerColor.oppositeColor, "Waiting...", false);			return true;
 		} else {
 			return false;
 		}
 	}
 	
-	void restoreBoardState(GameState state) {
-		game.state = state;
-		if (exists currentColor = game.currentColor, exists currentRoll = game.currentRoll) {
+	void showGameState(GameState state) {
+		if (exists currentColor = state.currentColor, exists currentRoll = state.currentRoll) {
 			gui.showDiceValues(currentColor, currentRoll.firstValue, currentRoll.secondValue);
 			gui.showDiceValues(currentColor.oppositeColor, null, null);
-		} else if (exists currentRoll = game.currentRoll) {
+		} else if (exists currentRoll = state.currentRoll) {
 			gui.showDiceValues(black, currentRoll.getValue(black), null);
 			gui.showDiceValues(white, currentRoll.getValue(white), null);
 		} else {
@@ -92,9 +73,7 @@ shared class GameClient(Anything(InboundGameMessage) messageBroadcaster) {
 		}
 		gui.redrawCheckers(black, state.blackCheckerCounts);
 		gui.redrawCheckers(white, state.whiteCheckerCounts);
-		gui.showCurrentPlayer(game.currentColor);
-		
-		
+		gui.showCurrentPlayer(state.currentColor);
 		if (exists currentColor = state.currentColor) {
 			gui.showPlayerMessage(currentColor, gui.formatPeriod(state.remainingTime()), true);
 			gui.showPlayerMessage(currentColor.oppositeColor, "Waiting...", true);
@@ -122,7 +101,6 @@ shared class GameClient(Anything(InboundGameMessage) messageBroadcaster) {
 				gui.hideSubmitButton();
 			}
 		}
-
 		if (exists color = playerColor, state.canUndoMoves(color)) {
 			gui.showUndoButton(null);
 		} else {
@@ -161,7 +139,7 @@ shared class GameClient(Anything(InboundGameMessage) messageBroadcaster) {
 		gui.showLeaveButton(null);
 	}
 	
-	shared Boolean handleMessage(OutboundGameMessage message) {
+	shared Boolean handleGameMessage(OutboundGameMessage message) {
 		
 		switch (message) 
 		case (is InitialRollMessage) {
@@ -177,12 +155,12 @@ shared class GameClient(Anything(InboundGameMessage) messageBroadcaster) {
 			return showUndoneMoves(message);
 		}
 		case (is InvalidMoveMessage) {
-			// TODO restore state
-			//messageBroadcaster(UndoMovesMessage(matchId, playerId));
-			return false;
+			messageBroadcaster(UndoMovesMessage(matchId, playerId));
+			return true;
 		}
 		case (is DesynchronizedMessage) {
-			restoreBoardState(message.state);
+			game.state = message.state;
+			showGameState(message.state);
 			return true;
 		}
 		case (is NotYourTurnMessage) {
@@ -198,91 +176,19 @@ shared class GameClient(Anything(InboundGameMessage) messageBroadcaster) {
 			return true;
 		}
 		case (is GameStateResponseMessage) {
-			restoreBoardState(message.state);
+			game.state = message.state;
+			showGameState(message.state);
 			return true;
 		}
 		case (is GameActionResponseMessage) {
-			return false;
+			return message.success;
 		}
 	}
-	
-	void showMatchBegin(MatchState match) {
-		gui.showPlayerMessage(player1Color, match.playerReady(player1Color) then "Ready" else "Play?", false);
-		gui.showPlayerMessage(player2Color, match.playerReady(player2Color) then "Ready" else "Play?", false);
-		if (exists currentPlayerId = playerId, match.mustStartMatch(currentPlayerId)) {
-			gui.showSubmitButton("Start");
-		} else {
-			gui.hideSubmitButton();
-		}
-		gui.hideUndoButton();
-		gui.showLeaveButton(null);
-	}
-	
-	void showFirstPlayer(PlayerInfo currentPlayer) {
-		gui.showPlayerInfo(player1Color, currentPlayer.name, currentPlayer.pictureUrl);
-		gui.showPlayerMessage(player1Color, "Joined", false);
-		gui.showPlayerInfo(player2Color, null, null);
-		gui.showPlayerMessage(player2Color, "Waiting...", true);
-		gui.hideSubmitButton();
-		gui.hideUndoButton();
-		gui.showLeaveButton(null);
-	}
-	
-	void showEmptyTable() {
-		gui.showPlayerInfo(player1Color, null, null);
-		gui.showPlayerMessage(player1Color, "Waiting...", true);
-		gui.showPlayerInfo(player2Color, null, null);
-		gui.showPlayerMessage(player2Color, "Waiting...", true);
-		gui.hideSubmitButton();
-		gui.hideUndoButton();
-		gui.showLeaveButton(null);
-	}
-	
-	void showResumingGame() {
-		gui.showPlayerMessage(player1Color, "Loading...", true);
-		gui.showPlayerMessage(player2Color, "Loading...", true);
-		gui.hideSubmitButton();
-		gui.hideUndoButton();
-		gui.showLeaveButton(null);	}
-
-	void handleTableStateResponseMessage(TableStateResponseMessage message) {
-		gui.showEmptyGame();
-		
-		if (exists match = message.match, exists currentPlayerId = playerId) {
-			gui.showPlayerInfo(player1Color, match.player1.name, match.player1.pictureUrl);
-			gui.showPlayerInfo(player2Color, match.player2.name, match.player2.pictureUrl);
-			if (match.gameStarted) {
-				showResumingGame();
-				messageBroadcaster(GameStateRequestMessage(match.id, currentPlayerId));
-			} else if (match.gameEnded) {
-				showWin(match.winnerColor);
-			} else {
-				showMatchBegin(match);
-			}
-		} else if (exists currentPlayer = playerInfo) {
-			showFirstPlayer(currentPlayer);
-		} else {
-			showEmptyTable();
-		}
-	}
-	
 	shared void handleTimerEvent(Instant time) {
 		// TODO implement
 	}
 	
-	shared Boolean handleRoomMessage(RoomResponseMessage message) {
-		if (!message.success) {
-			return false;
-		}
-		switch (message)
-		case (is TableStateResponseMessage) {
-			handleTableStateResponseMessage(message);
-			return true;
-		}
-		else {
-			// TODO handle all messages
-			return false;
-		}
-		
+	shared void showState() {
+		showGameState(game.state);
 	}
 }

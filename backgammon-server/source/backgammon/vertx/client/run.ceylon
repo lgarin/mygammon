@@ -3,12 +3,12 @@ import backgammon.client {
 }
 import backgammon.common {
 	TableId,
-	parseRoomMessage,
 	PlayerInfo,
 	parseBase64PlayerInfo,
 	RoomMessage,
 	TableStateResponseMessage,
-	RoomResponseMessage
+	RoomResponseMessage,
+	parseOutboundRoomMessage
 }
 import backgammon.game {
 	player1Color,
@@ -29,6 +29,10 @@ import ceylon.json {
 }
 import ceylon.regex {
 	regex
+}
+import ceylon.time {
+
+	now
 }
 
 variable PlayerInfo? playerInfo = null; 
@@ -70,6 +74,11 @@ shared Boolean onButton(HTMLElement target) {
 shared Boolean onChecker(HTMLElement target) {
 	gui.deselectAllCheckers();
 	gui.showSelectedChecker(target);
+	return true;
+}
+
+shared Boolean onTimer() {
+	print(now());
 	return true;
 }
 
@@ -161,8 +170,7 @@ void handleRoomMessage(RoomMessage message) {
 void onServerMessage(String messageString) {
 	if (is Object json = parse(messageString), exists typeName = json.keys.first) {
 		print(typeName);
-		value message = parseRoomMessage(typeName, json.getObject(typeName));
-		if (exists message) {
+		if (exists message = parseOutboundRoomMessage(typeName, json.getObject(typeName))) {
 			handleRoomMessage(message);
 		} else {
 			onServerError("Cannot parse server response: ``messageString``");

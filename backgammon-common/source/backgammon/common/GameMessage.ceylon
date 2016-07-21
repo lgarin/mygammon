@@ -138,23 +138,13 @@ shared GameActionResponseMessage parseGameActionResponseMessage(Object json) {
 	return GameActionResponseMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getBoolean("success"));
 }
 
-shared GameMessage? parseGameMessage(String typeName, Object json) {
-	if (typeName == `class StartGameMessage`.name) {
-		return parseStartGameMessage(json);
-	} else if (typeName == `class InitialRollMessage`.name) {
+shared OutboundGameMessage? parseOutboundGameMessage(String typeName, Object json) {
+	if (typeName == `class InitialRollMessage`.name) {
 		return parseInitialRollMessage(json);
-	} else if (typeName == `class PlayerReadyMessage`.name) {
-		return parsePlayerReadyMessage(json);
-	} else if (typeName == `class CheckTimeoutMessage`.name) {
-		return parseCheckTimeoutMessage(json);
 	} else if (typeName == `class StartTurnMessage`.name) {
 		return parseStartTurnMessage(json);
-	} else if (typeName == `class MakeMoveMessage`.name) {
-		return parseMakeMoveMessage(json);
 	} else if (typeName == `class PlayedMoveMessage`.name) {
 		return parsePlayedMoveMessage(json);
-	} else if (typeName == `class UndoMovesMessage`.name) {
-		return parseUndoMovesMessage(json);
 	} else if (typeName == `class UndoneMovesMessage`.name) {
 		return parseUndoneMovesMessage(json);
 	} else if (typeName == `class InvalidMoveMessage`.name) {
@@ -163,20 +153,36 @@ shared GameMessage? parseGameMessage(String typeName, Object json) {
 		return parseDesynchronizedMessage(json);
 	} else if (typeName == `class NotYourTurnMessage`.name) {
 		return parseNotYourTurnMessage(json);
-	} else if (typeName == `class EndTurnMessage`.name) {
-		return parseEndTurnMessage(json);
 	} else if (typeName == `class GameWonMessage`.name) {
 		return parseGameWonMessage(json);
-	} else if (typeName == `class EndGameMessage`.name) {
-		return parseEndGameMessage(json);
 	} else if (typeName == `class GameEndedMessage`.name) {
 		return parseGameEndedMessage(json);
-	} else if (typeName == `class GameStateRequestMessage`.name) {
-		return parseGameStateRequestMessage(json);
 	} else if (typeName == `class GameStateResponseMessage`.name) {
 		return parseGameStateResponseMessage(json);
 	} else if (typeName == `class GameActionResponseMessage`.name) {
 		return parseGameActionResponseMessage(json);
+	} else {
+		return null;
+	}
+}
+
+shared InboundGameMessage? parseInboundGameMessage(String typeName, Object json) {
+	if (typeName == `class StartGameMessage`.name) {
+		return parseStartGameMessage(json);
+	} else if (typeName == `class PlayerReadyMessage`.name) {
+		return parsePlayerReadyMessage(json);
+	} else if (typeName == `class CheckTimeoutMessage`.name) {
+		return parseCheckTimeoutMessage(json);
+	} else if (typeName == `class MakeMoveMessage`.name) {
+		return parseMakeMoveMessage(json);
+	} else if (typeName == `class UndoMovesMessage`.name) {
+		return parseUndoMovesMessage(json);
+	} else if (typeName == `class EndTurnMessage`.name) {
+		return parseEndTurnMessage(json);
+	} else if (typeName == `class EndGameMessage`.name) {
+		return parseEndGameMessage(json);
+	} else if (typeName == `class GameStateRequestMessage`.name) {
+		return parseGameStateRequestMessage(json);
 	} else {
 		return null;
 	}

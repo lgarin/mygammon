@@ -1,13 +1,11 @@
-import ceylon.time {
-
-	Instant,
-	now,
-	Duration,
-	Period
-}
 import ceylon.json {
 	Object,
 	Array
+}
+import ceylon.time {
+	Instant,
+	now,
+	Duration
 }
 shared final class GameState() {
 	

@@ -24,7 +24,7 @@ shared WaitingOpponentMessage parseWaitingOpponentMessage(Object json) {
 	return WaitingOpponentMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
 }
 
-shared TableMessage? parseTableMessage(String typeName, Object json) {
+shared OutboundTableMessage? parseOutboundTableMessage(String typeName, Object json) {
 	if (typeName == `class JoinedTableMessage`.name) {
 		return parseWaitingOpponentMessage(json);
 	} else if (typeName == `class LeaftTableMessage`.name) {
@@ -32,6 +32,6 @@ shared TableMessage? parseTableMessage(String typeName, Object json) {
 	} else if (typeName == `class WaitingOpponentMessage`.name) {
 		return parseWaitingOpponentMessage(json);
 	} else {
-		return parseMatchMessage(typeName, json);
+		return null;
 	}
 }

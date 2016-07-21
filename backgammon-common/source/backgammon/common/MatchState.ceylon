@@ -43,6 +43,15 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 			return false;
 		}
 	}
+	shared CheckerColor? playerColor(PlayerId playerId) {
+		if (playerId.id == player1.id) {
+			return player1Color;
+		} else if (playerId.id == player2.id) {
+			return player2Color;
+		} else {
+			return null;
+		}
+	}
 }
 
 shared MatchState? parseMatchState(Object? json) {

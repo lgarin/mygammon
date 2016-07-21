@@ -6,7 +6,7 @@ import backgammon.common {
 	LeaveRoomMessage,
 	FindMatchTableMessage,
 	EnteredRoomMessage,
-	LeaftRoomMessage,
+	LeftRoomMessage,
 	FoundMatchTableMessage,
 	OutboundRoomMessage,
 	TableStateRequestMessage,
@@ -37,9 +37,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 		}
 		case (is LeaveRoomMessage) {
 			if (exists player = room.players[message.playerId], player.leaveRoom()) {
-				return LeaftRoomMessage(player.id, room.id, true);
+				return LeftRoomMessage(player.id, room.id, true);
 			}
-			return LeaftRoomMessage(message.playerId, room.id, false);
+			return LeftRoomMessage(message.playerId, room.id, false);
 		}
 		case (is FindMatchTableMessage) {
 			if (exists player = room.players[message.playerId], player.findMatchTable()) {

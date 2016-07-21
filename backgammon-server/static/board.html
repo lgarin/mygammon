@@ -30,6 +30,7 @@
 	            	});
 	            	$(".button").on("click", function(event) { app.onButton(event.currentTarget); });
 	            	$(".checker").on("click", function(event) { app.onChecker(event.currentTarget); });
+	            	window.setInterval(function() { app.onTimer(); }, 500);
 	                app.run();
 	            }
 	    );
