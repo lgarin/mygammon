@@ -43,6 +43,14 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 			return null;
 		}
 	}
+	
+	shared void markReady(PlayerId playerId) {
+		if (playerId == player1Id) {
+			player1Ready = true;
+		} else if (playerId == player2Id) {
+			player2Ready = true;
+		}
+	}
 }
 
 shared MatchState? parseMatchState(Object? json) {

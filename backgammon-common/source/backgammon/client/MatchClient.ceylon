@@ -83,11 +83,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 		
 		switch (message)
 		case (is AcceptedMatchMessage) {
-			if (message.playerId == match.player1Id) {
-				match.player1Ready = true;
-			} else if (message.playerId == match.player2Id) {
-				match.player2Ready = true;
-			}
+			match.markReady(message.playerId);
 			if (exists color = match.playerColor(message.playerId)) {
 				gui.showPlayerMessage(color, "Ready", false);
 				gui.hideSubmitButton();
@@ -96,7 +92,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 		}
 		case (is LeftMatchMessage) {
 			if (exists color = match.playerColor(message.playerId)) {
-				gui.showPlayerMessage(color, "Left", false);
+				gui.showPlayerMessage(color, "Left", true);
 			}
 			// TODO show winner
 			//gameClient?.endGame();
@@ -137,6 +133,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 		if (exists currentGameClient = gameClient) {
 			return currentGameClient.handleSubmitEvent();
 		} else if (match.mustStartMatch(playerId)) {
+			gui.hideSubmitButton();
 			messageBroadcaster(AcceptMatchMessage(playerId, matchId));
 			return true;
 		} else {

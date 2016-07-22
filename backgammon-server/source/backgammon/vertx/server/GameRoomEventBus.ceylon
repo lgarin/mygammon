@@ -80,14 +80,14 @@ final class GameRoomEventBus(Vertx vertx) {
 		}
 	}
 
-	shared void sendOutboundTableMessage(OutboundTableMessage|OutboundMatchMessage msg) {
+	shared void publishOutboundTableMessage(OutboundTableMessage|OutboundMatchMessage msg) {
 		logger(`package`).info(formatRoomMessage(msg).string);
-		vertx.eventBus().send("OutboundTableMessage-``msg.tableId``", formatRoomMessage(msg));
+		vertx.eventBus().publish("OutboundTableMessage-``msg.tableId``", formatRoomMessage(msg));
 	}
 	
-	shared void sendOutboundGameMessage(OutboundGameMessage msg) {
+	shared void publishOutboundGameMessage(OutboundGameMessage msg) {
 		logger(`package`).info(formatRoomMessage(msg).string);
-		vertx.eventBus().send("OutboundGameMessage-``msg.matchId``", formatRoomMessage(msg));
+		vertx.eventBus().publish("OutboundGameMessage-``msg.matchId``", formatRoomMessage(msg));
 	}
 	
 	void registerParallelConsumer(WorkerExecutor executor, String address, Object process(Object msg)) {

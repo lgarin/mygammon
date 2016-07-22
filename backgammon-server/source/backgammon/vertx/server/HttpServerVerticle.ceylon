@@ -36,7 +36,7 @@ shared final class HttpServerVerticle() extends Verticle() {
 	value port = 8080;
 	
 	// TODO read config from vertx.getOrCreateContext().config() 
-	value config = RoomConfiguration(roomId, 100, Duration(60000));
+	value config = RoomConfiguration(roomId, 100, Duration(60000), false);
 
 	void startHttp() {
 		value authRouterFactory = GoogleAuthRouterFactory(vertx, hostname, port);
@@ -45,8 +45,8 @@ shared final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(config.sessionTimeout.milliseconds));
 		//router.route().handler(loggerHandler.create().handle);
 		
-		router.route("/static/*").handler(staticHandler.create("static").setCachingEnabled(false).handle);
-		router.route("/modules/*").handler(staticHandler.create("modules").setCachingEnabled(false).handle);
+		router.route("/static/*").handler(staticHandler.create("static").setCachingEnabled(config.useCaching).handle);
+		router.route("/modules/*").handler(staticHandler.create("modules").setCachingEnabled(config.useCaching).handle);
 		router.mountSubRouter("/eventbus", GameRoomEventBus(vertx).createEventBusRouter());
 		
 		router.mountSubRouter("/", authRouterFactory.createGoogleLoginRouter());
@@ -65,12 +65,12 @@ shared final class HttpServerVerticle() extends Verticle() {
 			eventBus.sendInboundMessage(message, void (Anything response) {});
 		}
 		
-		value matchRoom = MatchRoom(config, eventBus.sendOutboundTableMessage, sendGameCommand);
+		value matchRoom = MatchRoom(config, eventBus.publishOutboundTableMessage, sendGameCommand);
 		eventBus.registerInboundRoomMessageConsumer(roomId, config.roomThreadCount, matchRoom.processRoomMessage);
 		eventBus.registerInboundTableMessageConsumer(roomId, config.roomThreadCount, matchRoom.processTableMessage);
 		eventBus.registerInboundMatchMessageConsumer(roomId, config.roomThreadCount, matchRoom.processMatchMessage);
 		
-		value gameRoom = GameRoom(config, eventBus.sendOutboundGameMessage);
+		value gameRoom = GameRoom(config, eventBus.publishOutboundGameMessage);
 		eventBus.registerInboundGameMessageConsumer(roomId, config.gameThreadCount, gameRoom.processGameMessage);
 		
 		vertx.setPeriodic(config.gameInactiveTimeout.milliseconds, void (Integer val) {

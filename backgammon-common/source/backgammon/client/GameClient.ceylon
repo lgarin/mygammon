@@ -78,8 +78,8 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		gui.redrawCheckers(black, state.blackCheckerCounts);
 		gui.redrawCheckers(white, state.whiteCheckerCounts);
 		gui.showCurrentPlayer(state.currentColor);
-		if (exists currentColor = state.currentColor) {
-			gui.showPlayerMessage(currentColor, gui.formatPeriod(state.remainingTime), true);
+		if (exists currentColor = state.currentColor, exists remainingTime = state.remainingTime) {
+			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime), true);
 			gui.showPlayerMessage(currentColor.oppositeColor, "Waiting...", true);
 			if (exists color = playerColor, currentColor == color) {
 				gui.showSubmitButton(null);
@@ -88,15 +88,15 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			}
 		} else { 
 			
-			if (state.mustRollDice(black)) {
-				gui.showPlayerMessage(black, "Ready", false);
+			if (state.mustRollDice(black), exists remainingTime = state.remainingTime) {
+				gui.showPlayerMessage(black, gui.formatPeriod(remainingTime), true);
 			} else {
-				gui.showPlayerMessage(black, "Roll?", true);
+				gui.showPlayerMessage(black, "Ready", false);
 			}
-			if (state.mustRollDice(white)) {
-				gui.showPlayerMessage(white, "Ready", false);
+			if (state.mustRollDice(white), exists remainingTime = state.remainingTime) {
+				gui.showPlayerMessage(white, gui.formatPeriod(remainingTime), true);
 			}  else {
-				gui.showPlayerMessage(white, "Roll?", false);
+				gui.showPlayerMessage(white, "Ready", false);
 			}
 			
 			if (exists color = playerColor, state.mustRollDice(color)) {
@@ -201,15 +201,15 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			}
 			messageBroadcaster(CheckTimeoutMessage(matchId, playerId));
 			return true;
-		} else if (exists currentColor = game.currentColor) {
-			gui.showPlayerMessage(currentColor, gui.formatPeriod(game.remainingTime(time)), true);
+		} else if (exists currentColor = game.currentColor, exists remainingTime = game.remainingTime(time)) {
+			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime), true);
 			return true;
 		} else if (game.mustRollDice(player1Color) || game.mustRollDice(player2Color)) {
-			if (game.mustRollDice(player1Color)) {
-				gui.showPlayerMessage(player1Color, gui.formatPeriod(game.remainingTime(time)), true);
+			if (game.mustRollDice(player1Color), exists remainingTime = game.remainingTime(time)) {
+				gui.showPlayerMessage(player1Color, gui.formatPeriod(remainingTime), true);
 			}
-			if (game.mustRollDice(player2Color)) {
-				gui.showPlayerMessage(player2Color, gui.formatPeriod(game.remainingTime(time)), true);
+			if (game.mustRollDice(player2Color), exists remainingTime = game.remainingTime(time)) {
+				gui.showPlayerMessage(player2Color, gui.formatPeriod(remainingTime), true);
 			}
 			return true;
 		} else {

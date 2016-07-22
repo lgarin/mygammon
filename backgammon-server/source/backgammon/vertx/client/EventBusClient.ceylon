@@ -1,12 +1,22 @@
 final class EventBusClient() {
 	variable Boolean initialized = false;
-	
+	/*
 	dynamic eventBus;
 	dynamic {
 		eventBus = EventBus("/eventbus/");
 	}
-	
+	*/
 	shared void registerHandler(String address, Anything process(String? message, String? error)) {
+		dynamic {
+			dynamic eventBus = EventBus("/eventbus/");
+			eventBus.onopen = void() {
+				initialized = true;
+				eventBus.registerHandler(address, (dynamic error, dynamic message) {
+					process(JSON.stringify(message.body), JSON.stringify(error));
+				});
+			};
+		}
+		/*
 		if (initialized) {
 			dynamic {
 				eventBus.registerHandler(address, (dynamic error, dynamic message) {
@@ -23,5 +33,6 @@ final class EventBusClient() {
 				};
 			}
 		}
+		 */
 	}
 }

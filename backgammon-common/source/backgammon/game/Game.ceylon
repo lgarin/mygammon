@@ -193,7 +193,9 @@ shared class Game() {
 	}
 	
 	shared Boolean timedOut(Instant now) {
-		if (now > nextTimeout) {
+		if (nextTimeout.millisecondsOfEpoch == 0) {
+			return false;
+		} else if (now > nextTimeout) {
 			return true;
 		} else {
 			return false;
@@ -250,9 +252,9 @@ shared class Game() {
 	
 	shared [Integer*] checkerCounts(CheckerColor color) => board.checkerCounts(color);
 	
-	shared Duration remainingTime(Instant time) {
+	shared Duration? remainingTime(Instant time) {
 		if (nextTimeout.millisecondsOfEpoch == 0) {
-			return Duration(0);
+			return null;
 		}
 		Duration result = nextTimeout.durationFrom(time);
 		if (result.milliseconds < 0) {
@@ -282,7 +284,11 @@ shared class Game() {
 		remainingUndo = state.remainingUndo;
 		blackReady = state.blackReady;
 		whiteReady = state.whiteReady;
-		nextTimeout = now().plus(state.remainingTime);
+		if (exists remainingTime = state.remainingTime) {
+			nextTimeout = now().plus(remainingTime);
+		} else {
+			nextTimeout = Instant(0);
+		}
 		board.setCheckerCounts(black, state.blackCheckerCounts);
 		board.setCheckerCounts(white, state.whiteCheckerCounts);
 		currentMoves.clear();

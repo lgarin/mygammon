@@ -48,8 +48,8 @@ shared final class GameGui(Document document) {
 	
 	shared String formatPeriod(Duration duration) {
 		value totalSeconds = (duration.milliseconds + 999) / 1000;
-		value minutes = max({totalSeconds / 60, 0});
-		value seconds = max({totalSeconds - minutes * 60, 0});
+		value minutes = totalSeconds / 60;
+		value seconds = totalSeconds - minutes * 60;
 		return "``minutes``:``formatSeconds(seconds)``";
 	}
 	
