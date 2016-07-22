@@ -66,12 +66,12 @@ shared final class GameGui(Document document) {
 	}
 
 	shared void hideSubmitButton() {
-		addClass(undoButtonId, "hidden");
+		addClass(submitButtonId, "hidden");
 	}
 	
 	shared void showSubmitButton(String? text) {
 		removeClass(submitButtonId, "hidden");
-		if (exists button = document.getElementById("``undoButtonId``Text")) {
+		if (exists button = document.getElementById("``submitButtonId``Text")) {
 			button.innerHTML = text else "Submit";
 		}
 	}
@@ -145,6 +145,22 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
+	void hideAllCheckers() {
+		value checkers = document.getElementsByClassName("checker");
+		for (i in 0:checkers.length) {
+			if (exists checker = checkers.item(i)) {
+				checker.classList.add("hidden");
+			}
+		}
+		
+		value topdownCheckers = document.getElementsByClassName("topdown-checker");
+		for (i in 0:topdownCheckers.length) {
+			if (exists topdownChecker = topdownCheckers.item(i)) {
+				topdownChecker.classList.add("hidden");
+			}
+		}
+	}
+	
 	void resetCheckers(Element point, String checkerColorClass, String oppositeCheckerColorClass, Integer checkerCount) {
 		value checkers = point.getElementsByTagName("div");
 		for (i in 0:checkers.length) {
@@ -162,19 +178,39 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
-	shared void redrawCheckers(CheckerColor color, {Integer*} counts) {
-		board.setCheckerCounts(color, counts);
+	void redrawNonEmptyPoints(CheckerColor color) {
 		for (position in 0:board.totalPointCount) {
 			value domId = getDomIdUsingPoint(color, position);
 			if (exists point = document.getElementById(domId)) {
 				value count = board.countCheckers(position, color);
 				if (position == board.homePosition(color)) {
 					resetCheckers(point, "topdown-``color.name``", "topdown-``color.oppositeColor.name``", count);
-				} else {
+				} else if (count > 0) {
 					resetCheckers(point, "checker-``color.name``", "checker-``color.oppositeColor.name``", count);
 				}
 			}
 		}
+	}
+	
+	void redrawEmptyPoints() {
+		for (position in board.positionRange(black)) {
+			value domId = getDomIdUsingPoint(black, position);
+			if (exists point = document.getElementById(domId)) {
+				value count = board.countCheckers(position, black) + board.countCheckers(position, white);
+				if (count == 0) {
+					resetCheckers(point, "checker-``black.name``", "checker-``black.oppositeColor.name``", count);
+				}
+			}
+		}
+	}
+	
+	// TODO this is ugly
+	shared void redrawCheckers({Integer*} blackCounts, {Integer*} whiteCounts) {
+		board.setCheckerCounts(black, blackCounts);
+		board.setCheckerCounts(white, whiteCounts);
+		redrawEmptyPoints();
+		redrawNonEmptyPoints(black);
+		redrawNonEmptyPoints(white);
 	}
 	
 	void addTempChecker(Element point, String checkerColorClass, String oppositeCheckerColorClass, Integer checkerCount) {
@@ -261,7 +297,6 @@ shared final class GameGui(Document document) {
 	
 	void resetState(CheckerColor color, String playerMessage) {
 		showDiceValues(color, null, null);
-		redrawCheckers(color, []);
 		showPlayerInfo(color, null, null);
 		showPlayerMessage(color, playerMessage, true);
 		hideLeaveButton();
@@ -271,6 +306,7 @@ shared final class GameGui(Document document) {
 	
 	shared void showInitialState(String playerMessage = initalPlayerMessage) {
 		showCurrentPlayer(null);
+		redrawCheckers([], []);
 		resetState(black, playerMessage);
 		resetState(white, playerMessage);
 	}
@@ -278,8 +314,7 @@ shared final class GameGui(Document document) {
 	shared void showEmptyGame() {
 		showCurrentPlayer(null);
 		showDiceValues(black, null, null);
-		redrawCheckers(black, []);
 		showDiceValues(white, null, null);
-		redrawCheckers(white, []);
+		redrawCheckers([], []);
 	}
 }

@@ -26,7 +26,10 @@ import backgammon.common {
 	UndoMovesMessage,
 	EndTurnMessage,
 	EndGameMessage,
-	GameStateRequestMessage
+	GameStateRequestMessage,
+	InboundTableMessage,
+	LeaveTableMessage,
+	TableStateResponseMessage
 }
 
 import ceylon.interop.browser {
@@ -49,7 +52,6 @@ import ceylon.time {
 }
 
 GameGui gui = GameGui(window.document);
-EventBusClient eventBus = EventBusClient();
 variable TableClient? tableClient = null;
 
 shared Boolean onStartDrag(HTMLElement source) {
@@ -78,7 +80,8 @@ shared Boolean onDrop(HTMLElement target, HTMLElement source) {
 shared Boolean onButton(HTMLElement target) {
 	
 	if (target.id == gui.leaveButtonId) {
-		if (window.confirm("Do you really want to leave the table?")) {
+		if (exists currentTableClient = tableClient, window.confirm("Do you really want to leave the table?")) {
+			currentTableClient.handleLeaveEvent();
 			window.location.\iassign("/start");
 			return true;
 		} else {
@@ -123,6 +126,7 @@ void onServerMessage(String messageString) {
 	print(messageString);
 	if (is Object json = parse(messageString), exists typeName = json.keys.first) {
 		if (!handleServerMessage(typeName, json.getObject(typeName))) {
+			onServerError("Cannot handle message: ``messageString``");
 			window.location.reload();
 		}
 	} else {
@@ -135,18 +139,27 @@ void onServerError(String messageString) {
 }
 
 void registerMessageHandler(String address) {
-	eventBus.registerHandler(address, void (String? message, String? error) {
-		if (exists message) {
-			onServerMessage(message);
-		} else if (exists error) {
-			onServerError(error);
-		}
-	});
+	dynamic {
+		dynamic eventBus = EventBus("/eventbus/");
+		eventBus.onopen = void() {
+			eventBus.registerHandler(address, (dynamic error, dynamic message) {
+				if (exists error) {
+					onServerError(JSON.stringify(error));
+				} else {
+					onServerMessage(JSON.stringify(message.body));
+				}
+			});
+		};
+	}
 }
 
 Boolean handleRoomMessage(OutboundRoomMessage message) {
 	if (!message.success) {
 		return false;
+	}
+	
+	if (is TableStateResponseMessage message, exists currentMatch = message.match) {
+		registerMessageHandler("OutboundGameMessage-``currentMatch.id``");
 	}
 	
 	if (exists currentClient = tableClient) {
@@ -234,20 +247,27 @@ void requestTableState(TableId tableId) {
 	makeApiRequest("/api/room/``tableId.roomId``/table/``tableId.table``/state");
 }
 
-void gameCommander(InboundGameMessage|InboundMatchMessage message) {
+void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage message) {
 	// TODO implement other message
 	switch (message)
 	case (is AcceptMatchMessage) {
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");
 	}
-	case (is StartGameMessage) {}
+	case (is StartGameMessage) {
+		// ignore
+	}
 	case (is PlayerReadyMessage) {}
 	case (is CheckTimeoutMessage) {}
 	case (is MakeMoveMessage) {}
 	case (is UndoMovesMessage) {}
 	case (is EndTurnMessage) {}
 	case (is EndGameMessage) {}
-	case (is GameStateRequestMessage) {}
+	case (is GameStateRequestMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/state");
+	}
+	case (is LeaveTableMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/leave");
+	}
 }
 
 "Run the module `backgammon.vertx.client`."

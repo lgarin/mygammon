@@ -48,7 +48,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 				return false;
 			}
 		} else {
-			gui.showDiceValues(message.playerColor.oppositeColor, message.diceValue, null);
+			gui.showDiceValues(message.playerColor, message.diceValue, null);
 			return true;
 		}
 	}
@@ -65,6 +65,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	void showGameState(GameState state) {
+		print(state.toJson().pretty);
 		if (exists currentColor = state.currentColor, exists currentRoll = state.currentRoll) {
 			gui.showDiceValues(currentColor, currentRoll.firstValue, currentRoll.secondValue);
 			gui.showDiceValues(currentColor.oppositeColor, null, null);
@@ -75,8 +76,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			gui.showDiceValues(black, null, null);
 			gui.showDiceValues(white, null, null);
 		}
-		gui.redrawCheckers(black, state.blackCheckerCounts);
-		gui.redrawCheckers(white, state.whiteCheckerCounts);
+		gui.redrawCheckers(state.blackCheckerCounts, state.whiteCheckerCounts);
 		gui.showCurrentPlayer(state.currentColor);
 		if (exists currentColor = state.currentColor, exists remainingTime = state.remainingTime) {
 			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime), true);
@@ -114,7 +114,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	function showPlayedMove(PlayedMoveMessage message) {
 		if (game.moveChecker(message.playerColor, message.move.sourcePosition, message.move.targetPosition)) {
-			gui.redrawCheckers(message.playerColor, game.checkerCounts(message.playerColor));
+			gui.redrawCheckers(game.checkerCounts(black), game.checkerCounts(white));
 			return true;
 		} else {
 			return false;
@@ -123,7 +123,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	function showUndoneMoves(UndoneMovesMessage message) {
 		if (game.undoTurnMoves(message.playerColor)) {
-			gui.redrawCheckers(message.playerColor, game.checkerCounts(message.playerColor));
+			gui.redrawCheckers(game.checkerCounts(black), game.checkerCounts(white));
 			return true;
 		} else {
 			return false;

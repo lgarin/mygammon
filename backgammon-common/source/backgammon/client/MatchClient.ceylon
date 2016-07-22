@@ -86,6 +86,8 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			match.markReady(message.playerId);
 			if (exists color = match.playerColor(message.playerId)) {
 				gui.showPlayerMessage(color, "Ready", false);
+			}
+			if (message.playerId == playerId) {
 				gui.hideSubmitButton();
 			}
 			return true;

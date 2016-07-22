@@ -11,7 +11,10 @@ import backgammon.common {
 	OutboundGameMessage,
 	LeftTableMessage,
 	LeftMatchMessage,
-	InboundMatchMessage
+	InboundMatchMessage,
+	LeaveTableMessage,
+	InboundTableMessage,
+	PlayerId
 }
 import backgammon.game {
 	player2Color,
@@ -22,8 +25,9 @@ import ceylon.time {
 	Instant
 }
 
-shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui gui, Anything(InboundGameMessage|InboundMatchMessage) messageBroadcaster) {
+shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui gui, Anything(InboundGameMessage|InboundMatchMessage|InboundTableMessage) messageBroadcaster) {
 	
+	value playerId = PlayerId(playerInfo.id);
 	variable MatchClient? matchClient = null;
 	
 	shared void showState() {
@@ -128,5 +132,10 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		} else {
 			return false;
 		}
+	}
+	
+	shared Boolean handleLeaveEvent() {
+		messageBroadcaster(LeaveTableMessage(playerId, tableId));
+		return true;
 	}
 }

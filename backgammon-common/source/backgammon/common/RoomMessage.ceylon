@@ -66,6 +66,7 @@ shared TableStateRequestMessage parseTableStateRequestMessage(Object json) {
 	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getInteger("table"));
 }
 
+// TODO should be a table message
 shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer table, shared MatchState? match, shared actual Boolean success) satisfies OutboundRoomMessage {
 	toJson() => toExtendedJson({"table" -> table, "match" -> match?.toJson()});
 	shared Boolean gameStarted => match?.gameStarted else false;

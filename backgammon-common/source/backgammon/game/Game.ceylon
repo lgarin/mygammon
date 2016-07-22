@@ -53,6 +53,7 @@ shared class Game() {
 	
 	shared Boolean isCurrentColor(CheckerColor color) => currentColor?.equals(color) else false;
 	
+	// TODO same method as in GameState
 	shared Boolean mustRollDice(CheckerColor playerColor) {
 		if (currentColor exists || currentRoll is Null) {
 			return false;

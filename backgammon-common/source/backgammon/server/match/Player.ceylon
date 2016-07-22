@@ -63,7 +63,7 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 	
 	shared Boolean findMatchTable() {
 		if (exists currentMatch = match, currentMatch.isStarted && !currentMatch.isEnded) {
-			return false;
+			return true;
 		} else if (exists currentRoom = room) {
 			leaveTable();
 			return currentRoom.sitPlayer(this);
