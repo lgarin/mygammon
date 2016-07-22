@@ -1,19 +1,14 @@
-import ceylon.json {
-
-	Object
-}
-import ceylon.time {
-
-	Duration
-}
 import backgammon.game {
-
 	CheckerColor,
 	player2Color,
 	player1Color
 }
-shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shared PlayerInfo player2, shared Duration remainingJoinTime, shared Boolean player1Ready = false, shared Boolean player2Ready = false, shared PlayerId? winnerId = null) {
-	shared Object toJson() => Object({"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "remainingJoinTime" -> remainingJoinTime.milliseconds, "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson()});
+
+import ceylon.json {
+	Object
+}
+shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shared PlayerInfo player2, shared variable Boolean player1Ready = false, shared variable Boolean player2Ready = false, shared variable PlayerId? winnerId = null) {
+	shared Object toJson() => Object({"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson()});
 	shared Boolean gameStarted => player1Ready && player2Ready;
 	shared Boolean gameEnded => winnerId exists;
 	
@@ -21,9 +16,9 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 	shared PlayerId player2Id = PlayerId(player2.id);
 	
 	shared CheckerColor? winnerColor {
-		if (exists winnerId, winnerId == player1Id) {
+		if (exists currentWinnerId = winnerId, currentWinnerId == player1Id) {
 			return player1Color;
-		} else if (exists winnerId, winnerId == player2Id) {
+		} else if (exists currentWinnerId = winnerId, currentWinnerId == player2Id) {
 			return player2Color;
 		} else {
 			return null;
@@ -53,7 +48,7 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 shared MatchState? parseMatchState(Object? json) {
 	if (exists json) {
 		value winner = json.getStringOrNull("winner") exists then PlayerId(json.getString("winner")) else null;
-		return MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), Duration(json.getInteger("remainingJoinTime")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), winner);
+		return MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), winner);
 	} else {
 		return null;
 	}

@@ -10,7 +10,8 @@ import backgammon.game {
 }
 import ceylon.time {
 
-	Instant
+	Instant,
+	now
 }
 import backgammon.common {
 
@@ -230,8 +231,9 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		return result;
 	}
 	
-	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message, Instant currentTime) {
+	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
 		if (exists color = toPlayerColor(message.playerId)) {
+			Instant currentTime = now();
 			try (lock) {
 				return process(message, currentTime, color);
 			}

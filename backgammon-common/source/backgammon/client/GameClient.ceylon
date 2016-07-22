@@ -14,7 +14,10 @@ import backgammon.common {
 	GameActionResponseMessage,
 	PlayerId,
 	MatchId,
-	UndoMovesMessage
+	UndoMovesMessage,
+	PlayerReadyMessage,
+	EndTurnMessage,
+	CheckTimeoutMessage
 }
 import backgammon.game {
 	Game,
@@ -29,24 +32,25 @@ import backgammon.game {
 import ceylon.time {
 	Instant
 }
-shared class GameClient(PlayerId playerId, MatchId matchId, GameGui gui, Anything(InboundGameMessage) messageBroadcaster) {
+shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? playerColor, GameGui gui, Anything(InboundGameMessage) messageBroadcaster) {
 	
 	value game = Game();
 	
 	variable Integer? initialDiceValue = null;
-	variable CheckerColor? playerColor = null;
 	
 	function showInitialRoll(InitialRollMessage message) {
 		if (message.playerId == playerId) {
-			// TODO check return value
-			game.initialRoll(message.roll, message.maxDuration);
-			initialDiceValue = message.diceValue;
-			playerColor = message.playerColor;
-			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration), true);
+			if (game.initialRoll(message.roll, message.maxDuration)) {
+				initialDiceValue = message.diceValue;
+				gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration), true);
+				return true;
+			} else {
+				return false;
+			}
 		} else {
 			gui.showDiceValues(message.playerColor.oppositeColor, message.diceValue, null);
+			return true;
 		}
-		return true;
 	}
 	
 	function showTurnStart(StartTurnMessage message) {
@@ -186,11 +190,51 @@ shared class GameClient(PlayerId playerId, MatchId matchId, GameGui gui, Anythin
 	}
 	
 	shared Boolean handleTimerEvent(Instant time) {
-		// TODO implement
-		return true;
+		if (game.timedOut(time)) {
+			gui.hideSubmitButton();
+			gui.hideUndoButton();
+			if (exists currentColor = game.currentColor) {
+				gui.showPlayerMessage(currentColor, "Time out", false);
+			} else {
+				gui.showPlayerMessage(player1Color, "Time out", true);
+				gui.showPlayerMessage(player2Color, "Time out", true);
+			}
+			messageBroadcaster(CheckTimeoutMessage(matchId, playerId));
+			return true;
+		} else if (exists currentColor = game.currentColor) {
+			gui.showPlayerMessage(currentColor, gui.formatPeriod(game.remainingTime(time)), true);
+			return true;
+		} else if (game.mustRollDice(player1Color) || game.mustRollDice(player2Color)) {
+			if (game.mustRollDice(player1Color)) {
+				gui.showPlayerMessage(player1Color, gui.formatPeriod(game.remainingTime(time)), true);
+			}
+			if (game.mustRollDice(player2Color)) {
+				gui.showPlayerMessage(player2Color, gui.formatPeriod(game.remainingTime(time)), true);
+			}
+			return true;
+		} else {
+			return true;
+		}
 	}
 	
 	shared void showState() {
 		showGameState(game.state);
+	}
+	
+	shared Boolean handleSubmitEvent() {
+		if (exists color = playerColor, exists diceValue = initialDiceValue, game.mustRollDice(color)) {
+			gui.showDiceValues(color, diceValue, null);
+			gui.hideSubmitButton();
+			messageBroadcaster(PlayerReadyMessage(matchId, playerId));
+			return true;
+		} else if (exists color = playerColor, game.mustMakeMove(color)) {
+			gui.hidePossibleMoves();
+			gui.deselectAllCheckers();
+			gui.hideSubmitButton();
+			messageBroadcaster(EndTurnMessage(matchId, playerId));
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

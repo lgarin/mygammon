@@ -19,11 +19,10 @@ import ceylon.test {
 	test
 }
 import ceylon.time {
-	Duration,
 	Instant
 }
 
-final class Room(String roomId, shared Integer tableCount, Duration maxMatchJoinTime, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+final class Room(String roomId, shared Integer tableCount, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared RoomId id = RoomId(roomId);
 	
@@ -32,7 +31,7 @@ final class Room(String roomId, shared Integer tableCount, Duration maxMatchJoin
 	value tableList = ArrayList<Table>(tableCount);
 	
 	for (i in 0:tableCount) {
-		value table = Table(i, id, maxMatchJoinTime, messageBroadcaster);
+		value table = Table(i, id, messageBroadcaster);
 		tableList.add(table);
 	}
 	
@@ -78,7 +77,7 @@ final class Room(String roomId, shared Integer tableCount, Duration maxMatchJoin
 
 class RoomTest() {
 	value messageList = ArrayList<RoomMessage>();
-	value room = Room("test1", 10, Duration(1000), messageList.add);
+	value room = Room("test1", 10, messageList.add);
 	
 	function makePlayerInfo(String id) => PlayerInfo(id, id, null);
 	

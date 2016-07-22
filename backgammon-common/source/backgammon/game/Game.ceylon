@@ -52,6 +52,26 @@ shared class Game() {
 	}
 	
 	shared Boolean isCurrentColor(CheckerColor color) => currentColor?.equals(color) else false;
+	
+	shared Boolean mustRollDice(CheckerColor playerColor) {
+		if (currentColor exists || currentRoll is Null) {
+			return false;
+		} else if (!blackReady && playerColor == black) {
+			return true;
+		} else if (!whiteReady && playerColor == white) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean mustMakeMove(CheckerColor playerColor) {
+		if (exists color = currentColor) {
+			return color == playerColor; 
+		} else {
+			return false;
+		}
+	}
 
 	function isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
 		if (!board.isInRange(source) || !board.isInRange(target)) {
@@ -222,12 +242,25 @@ shared class Game() {
 		if (currentRoll exists) {
 			currentColor = null;
 			currentRoll = null;
+			nextTimeout = Instant(0);
 			return true;
 		}
 		return false;
 	}
 	
 	shared [Integer*] checkerCounts(CheckerColor color) => board.checkerCounts(color);
+	
+	shared Duration remainingTime(Instant time) {
+		if (nextTimeout.millisecondsOfEpoch == 0) {
+			return Duration(0);
+		}
+		Duration result = nextTimeout.durationFrom(time);
+		if (result.milliseconds < 0) {
+			return Duration(0);
+		} else {
+			return result;
+		}
+	}
 	
 	shared GameState state {
 		value result = GameState();
@@ -236,7 +269,7 @@ shared class Game() {
 		result.remainingUndo = remainingUndo;
 		result.blackReady = blackReady;
 		result.whiteReady = whiteReady;
-		result.remainingTime = now().durationTo(nextTimeout);
+		result.remainingTime = remainingTime(now());
 		result.blackCheckerCounts = board.checkerCounts(black);
 		result.whiteCheckerCounts = board.checkerCounts(white);
 		result.currentMoves = currentMoves.sequence();

@@ -18,8 +18,7 @@ import ceylon.test {
 }
 import ceylon.time {
 	Instant,
-	now,
-	Duration
+	now
 }
 
 final class Player(shared PlayerInfo info, variable Room? room = null) {
@@ -130,7 +129,15 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 		return true;
 	}
 	
-	shared Boolean isWaitingOpponent() => table exists && match is Null;
+	shared Boolean isWaitingOpponent() {
+		if (table exists, exists currentMatch = match) {
+			return !currentMatch.isStarted;
+		} else if (table exists) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 	
 	shared Boolean isInactiveSince(Instant timeoutTime) => lastActivity < timeoutTime;
 }
@@ -139,7 +146,7 @@ class PlayerTest() {
 	
 	value messageList = ArrayList<RoomMessage>();
 	
-	value room = Room("room", 1, Duration(1000), messageList.add);
+	value room = Room("room", 1, messageList.add);
 	
 	function makePlayer(String id) => Player(PlayerInfo(id, id, null), room);
 	
@@ -249,7 +256,7 @@ class PlayerTest() {
 	test
 	shared void joinMatch() {
 		value opponent = makePlayer("opponent");
-		value table = Table(0, room.id, Duration(1000), messageList.add);
+		value table = Table(0, room.id, messageList.add);
 		value match = Match(player, opponent, table);
 		value result = player.joinMatch(match);
 		assert (result);
@@ -258,7 +265,7 @@ class PlayerTest() {
 	test
 	shared void joinStartedMatch() {
 		value opponent = makePlayer("opponent");
-		value table = Table(0, room.id, Duration(1000), messageList.add);
+		value table = Table(0, room.id, messageList.add);
 		value match = Match(player, opponent, table);
 		match.acceptMatch(opponent);
 		match.acceptMatch(player);

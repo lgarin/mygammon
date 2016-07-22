@@ -1,7 +1,5 @@
 import backgammon.common {
-	InboundRoomMessage,
-	InboundGameMessage,
-	InboundMatchMessage
+	InboundGameMessage
 }
 import backgammon.server.common {
 	RoomConfiguration
@@ -28,7 +26,6 @@ import io.vertx.ceylon.web {
 	routerFactory=router
 }
 import io.vertx.ceylon.web.handler {
-	loggerHandler,
 	staticHandler
 }
 
@@ -39,7 +36,7 @@ shared final class HttpServerVerticle() extends Verticle() {
 	value port = 8080;
 	
 	// TODO read config from vertx.getOrCreateContext().config() 
-	value config = RoomConfiguration(roomId, 100, Duration(60000), Duration(30000));
+	value config = RoomConfiguration(roomId, 100, Duration(60000));
 
 	void startHttp() {
 		value authRouterFactory = GoogleAuthRouterFactory(vertx, hostname, port);
@@ -48,8 +45,8 @@ shared final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(config.sessionTimeout.milliseconds));
 		//router.route().handler(loggerHandler.create().handle);
 		
-		router.route("/static/*").handler(staticHandler.create("static").handle);
-		router.route("/modules/*").handler(staticHandler.create("modules").handle);
+		router.route("/static/*").handler(staticHandler.create("static").setCachingEnabled(false).handle);
+		router.route("/modules/*").handler(staticHandler.create("modules").setCachingEnabled(false).handle);
 		router.mountSubRouter("/eventbus", GameRoomEventBus(vertx).createEventBusRouter());
 		
 		router.mountSubRouter("/", authRouterFactory.createGoogleLoginRouter());
@@ -65,14 +62,16 @@ shared final class HttpServerVerticle() extends Verticle() {
 		value eventBus = GameRoomEventBus(vertx);
 		
 		void sendGameCommand(InboundGameMessage message) {
-			eventBus.sendInboundGameMessage(message, void (Anything response) {});
+			eventBus.sendInboundMessage(message, void (Anything response) {});
 		}
 		
 		value matchRoom = MatchRoom(config, eventBus.sendOutboundTableMessage, sendGameCommand);
-		eventBus.registerInboundRoomMessageConsumer(roomId, config.roomThreadCount, (InboundRoomMessage|InboundMatchMessage request) => matchRoom.processRoomMessage(request, now()));
+		eventBus.registerInboundRoomMessageConsumer(roomId, config.roomThreadCount, matchRoom.processRoomMessage);
+		eventBus.registerInboundTableMessageConsumer(roomId, config.roomThreadCount, matchRoom.processTableMessage);
+		eventBus.registerInboundMatchMessageConsumer(roomId, config.roomThreadCount, matchRoom.processMatchMessage);
 		
 		value gameRoom = GameRoom(config, eventBus.sendOutboundGameMessage);
-		eventBus.registerInboundGameMessageConsumer(roomId, config.gameThreadCount, (InboundGameMessage request) => gameRoom.processGameMessage(request, now()));
+		eventBus.registerInboundGameMessageConsumer(roomId, config.gameThreadCount, gameRoom.processGameMessage);
 		
 		vertx.setPeriodic(config.gameInactiveTimeout.milliseconds, void (Integer val) {
 			value currentTime = now();

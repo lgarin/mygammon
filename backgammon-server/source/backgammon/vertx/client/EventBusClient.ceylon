@@ -10,7 +10,7 @@ final class EventBusClient() {
 		if (initialized) {
 			dynamic {
 				eventBus.registerHandler(address, (dynamic error, dynamic message) {
-					process(JSON.stringify(message), JSON.stringify(error));
+					process(JSON.stringify(message.body), JSON.stringify(error));
 				});
 			}
 		} else {
@@ -18,7 +18,7 @@ final class EventBusClient() {
 				eventBus.onopen = void() {
 					initialized = true;
 					eventBus.registerHandler(address, (dynamic error, dynamic message) {
-						process(JSON.stringify(message), JSON.stringify(error));
+						process(JSON.stringify(message.body), JSON.stringify(error));
 					});
 				};
 			}

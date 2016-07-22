@@ -1,14 +1,10 @@
 import ceylon.json {
 	Object
 }
-import ceylon.time {
-
-	Duration
-}
 shared sealed interface TableMessage of OutboundTableMessage | InboundTableMessage | MatchMessage satisfies RoomMessage  {
 	shared formal TableId tableId;
 	shared actual RoomId roomId => RoomId(tableId.roomId);
-	shared default actual Object toJson() => Object({"playerId" -> playerId.toJson(), "tableId" -> tableId.toJson()});
+	shared default actual Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "tableId" -> tableId.toJson()});
 }
 
 shared sealed interface OutboundTableMessage of JoinedTableMessage | LeftTableMessage | WaitingOpponentMessage | CreatedMatchMessage satisfies TableMessage {}
@@ -31,12 +27,12 @@ shared WaitingOpponentMessage parseWaitingOpponentMessage(Object json) {
 	return WaitingOpponentMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
 }
 
-shared final class CreatedMatchMessage(shared actual PlayerId playerId, shared MatchId matchId, shared PlayerInfo player1, shared PlayerInfo player2, shared Duration remainingJoinTime) satisfies OutboundTableMessage {
+shared final class CreatedMatchMessage(shared actual PlayerId playerId, shared MatchId matchId, shared PlayerInfo player1, shared PlayerInfo player2) satisfies OutboundTableMessage {
 	tableId => matchId.tableId;
-	toJson() => toExtendedJson({"player1" -> player1.toJson(), "player2" -> player2.toJson(), "remainingJoinTime" -> remainingJoinTime.milliseconds});
+	toJson() => Object({"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson()});
 }
 shared CreatedMatchMessage parseCreatedMatchMessage(Object json) {
-	return CreatedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), Duration(json.getInteger("remainingJoinTime")));
+	return CreatedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")));
 }
 
 shared final class LeaveTableMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies InboundTableMessage {}

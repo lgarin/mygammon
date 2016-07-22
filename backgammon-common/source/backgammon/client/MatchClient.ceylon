@@ -8,7 +8,10 @@ import backgammon.common {
 	OutboundGameMessage,
 	LeftMatchMessage,
 	AcceptedMatchMessage,
-	CreatedGameMessage
+	CreatedGameMessage,
+	MatchId,
+	InboundMatchMessage,
+	AcceptMatchMessage
 }
 import backgammon.game {
 	player2Color,
@@ -17,16 +20,14 @@ import backgammon.game {
 }
 
 import ceylon.time {
-	Instant,
-	now
+	Instant
 }
-shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui, Anything(InboundGameMessage) messageBroadcaster) {
+shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui, Anything(InboundGameMessage|InboundMatchMessage) messageBroadcaster) {
+	
+	shared MatchId matchId = match.id;
 	
 	value playerId = PlayerId(player.id);
 	variable GameClient? gameClient = null;
-	value timeout = now().plus(match.remainingJoinTime);
-	variable Boolean player1Ready = match.player1Ready;
-	variable Boolean player2Ready = match.player2Ready; 
 	
 	void showWin(CheckerColor? color) {
 		if (exists currentColor = color) {
@@ -42,8 +43,8 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	}
 	
 	void showMatchBegin(MatchState match) {
-		gui.showPlayerMessage(player1Color, match.player1Ready then "Ready" else gui.formatPeriod(match.remainingJoinTime), !match.player1Ready);
-		gui.showPlayerMessage(player2Color, match.player2Ready then "Ready" else gui.formatPeriod(match.remainingJoinTime), !match.player2Ready);
+		gui.showPlayerMessage(player1Color, match.player1Ready then "Ready" else "Play?", !match.player1Ready);
+		gui.showPlayerMessage(player2Color, match.player2Ready then "Ready" else "Play?", !match.player2Ready);
 		if (match.mustStartMatch(playerId)) {
 			gui.showSubmitButton("Play");
 		} else {
@@ -66,7 +67,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 		gui.showPlayerInfo(player2Color, match.player2.name, match.player2.pictureUrl);
 		if (match.gameStarted) {
 			showResumingGame();
-			gameClient = GameClient(playerId, match.id, gui, messageBroadcaster);
+			gameClient = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
 			messageBroadcaster(GameStateRequestMessage(match.id, playerId));
 		} else if (match.gameEnded) {
 			showWin(match.winnerColor);
@@ -83,9 +84,9 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 		switch (message)
 		case (is AcceptedMatchMessage) {
 			if (message.playerId == match.player1Id) {
-				player1Ready = true;
+				match.player1Ready = true;
 			} else if (message.playerId == match.player2Id) {
-				player2Ready = true;
+				match.player2Ready = true;
 			}
 			if (exists color = match.playerColor(message.playerId)) {
 				gui.showPlayerMessage(color, "Ready", false);
@@ -105,7 +106,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			return true;
 		}
 		case (is CreatedGameMessage) {
-			gameClient = GameClient(playerId, match.id, gui, messageBroadcaster);
+			gameClient = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
 			gameClient?.showState();
 			return true;
 		}
@@ -128,14 +129,18 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 		if (exists currentGameClient = gameClient) {
 			return currentGameClient.handleTimerEvent(time);
 		} else {
-			value remainingTime = time.durationTo(timeout);
-			if (!player1Ready) {
-				gui.showPlayerMessage(player1Color, gui.formatPeriod(remainingTime), true);
-			}
-			if (!player2Ready) {
-				gui.showPlayerMessage(player2Color, gui.formatPeriod(remainingTime), true);
-			}
 			return true;
+		}
+	}
+	
+	shared Boolean handleSubmitEvent() {
+		if (exists currentGameClient = gameClient) {
+			return currentGameClient.handleSubmitEvent();
+		} else if (match.mustStartMatch(playerId)) {
+			messageBroadcaster(AcceptMatchMessage(playerId, matchId));
+			return true;
+		} else {
+			return false;
 		}
 	}
 }

@@ -20,7 +20,6 @@ import ceylon.test {
 	test
 }
 import ceylon.time {
-	Duration,
 	Instant,
 	now
 }
@@ -32,14 +31,14 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 	
 	shared MatchId id = MatchId(table.id, creationTime);
 	
-	shared Duration remainingJoinTime => Duration(table.maxMatchJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
+	//shared Duration remainingJoinTime => Duration(table.maxMatchJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
 
 	value noWinnerId = PlayerId("");
 	variable PlayerId? winnerId = null;
 	variable Boolean player1Ready = false;
 	variable Boolean player2Ready = false;
 	
-	shared MatchState state => MatchState(id, player1.info, player2.info, remainingJoinTime, player1Ready, player2Ready, winnerId);
+	shared MatchState state => MatchState(id, player1.info, player2.info, player1Ready, player2Ready, winnerId);
 	
 	shared Boolean isStarted => player1Ready && player2Ready;
 	shared Boolean isEnded => winnerId exists;
@@ -69,14 +68,6 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 	
 	function markReady(Player player) {
 		if (isStarted || winnerId exists) {
-			return false;
-		} else if (remainingJoinTime.milliseconds < 0) {
-			if (!player1Ready) {
-				player1.leaveMatch();
-			}
-			if (!player2Ready) {
-				player2.leaveMatch();
-			}
 			return false;
 		} else if (player == player1) {
 			player1Ready = true;
@@ -135,12 +126,7 @@ class MatchTest() {
 	
 	
 	value messageList = ArrayList<TableMessage>();
-	value match = Match(makePlayer("player1"), makePlayer("player2"), Table(0, RoomId("room"), Duration(1000), messageList.add));
-	
-	test
-	shared void newMatchHasRemainingJoinTime() {
-		assert (match.remainingJoinTime.milliseconds > 0);
-	}
+	value match = Match(makePlayer("player1"), makePlayer("player2"), Table(0, RoomId("room"), messageList.add));
 	
 	test
 	shared void newMatchIsNotStarted() {

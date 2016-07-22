@@ -16,7 +16,17 @@ import backgammon.common {
 	parseOutboundMatchMessage,
 	parseOutboundGameMessage,
 	OutboundTableMessage,
-	OutboundMatchMessage
+	OutboundMatchMessage,
+	InboundMatchMessage,
+	AcceptMatchMessage,
+	StartGameMessage,
+	PlayerReadyMessage,
+	CheckTimeoutMessage,
+	MakeMoveMessage,
+	UndoMovesMessage,
+	EndTurnMessage,
+	EndGameMessage,
+	GameStateRequestMessage
 }
 
 import ceylon.interop.browser {
@@ -67,11 +77,17 @@ shared Boolean onDrop(HTMLElement target, HTMLElement source) {
 
 shared Boolean onButton(HTMLElement target) {
 	
-	print("button:``target.id``");
 	if (target.id == gui.leaveButtonId) {
-		window.location.\iassign("/start");
+		if (window.confirm("Do you really want to leave the table?")) {
+			window.location.\iassign("/start");
+			return true;
+		} else {
+			return false;
+		}
+	} else if (target.id == gui.submitButtonId, exists currentTableClient = tableClient) {
+		return currentTableClient.handleSubmitEvent();
 	}
-	return true;
+	return false;
 }
 
 shared Boolean onChecker(HTMLElement target) {
@@ -209,7 +225,7 @@ void makeApiRequest(String url) {
 		if (request.status == 200) {
 			onServerMessage(request.responseText);
 		} else {
-			onServerError(request.responseText);
+			onServerError(request.statusText);
 		}
 	};
 }
@@ -218,8 +234,20 @@ void requestTableState(TableId tableId) {
 	makeApiRequest("/api/room/``tableId.roomId``/table/``tableId.table``/state");
 }
 
-void gameCommander(InboundGameMessage message) {
-	// TODO map message to api request
+void gameCommander(InboundGameMessage|InboundMatchMessage message) {
+	// TODO implement other message
+	switch (message)
+	case (is AcceptMatchMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");
+	}
+	case (is StartGameMessage) {}
+	case (is PlayerReadyMessage) {}
+	case (is CheckTimeoutMessage) {}
+	case (is MakeMoveMessage) {}
+	case (is UndoMovesMessage) {}
+	case (is EndTurnMessage) {}
+	case (is EndGameMessage) {}
+	case (is GameStateRequestMessage) {}
 }
 
 "Run the module `backgammon.vertx.client`."

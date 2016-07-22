@@ -8,7 +8,10 @@ import backgammon.common {
 	CreatedMatchMessage,
 	OutboundRoomMessage,
 	OutboundTableMessage,
-	OutboundGameMessage
+	OutboundGameMessage,
+	LeftTableMessage,
+	LeftMatchMessage,
+	InboundMatchMessage
 }
 import backgammon.game {
 	player2Color,
@@ -19,7 +22,7 @@ import ceylon.time {
 	Instant
 }
 
-shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui gui, Anything(InboundGameMessage) messageBroadcaster) {
+shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui gui, Anything(InboundGameMessage|InboundMatchMessage) messageBroadcaster) {
 	
 	variable MatchClient? matchClient = null;
 	
@@ -69,10 +72,17 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 
 		switch (message)
 		case (is CreatedMatchMessage) {
-			value match = MatchState(message.matchId, message.player1, message.player2, message.remainingJoinTime);
+			value match = MatchState(message.matchId, message.player1, message.player2);
 			matchClient = MatchClient(playerInfo, match, gui, messageBroadcaster);
 			matchClient?.showState();
 			return true;
+		}
+		case (is LeftTableMessage) {
+			if (exists currentMatchClient = matchClient) {
+				return currentMatchClient.handleMatchMessage(LeftMatchMessage(message.playerId, currentMatchClient.matchId));
+			} else {
+				return true;
+			}
 		}
 		else {
 			// ignore other messages
@@ -109,6 +119,14 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 			return currentMatchClient.handleTimerEvent(time);
 		} else {
 			return true;
+		}
+	}
+	
+	shared Boolean handleSubmitEvent() {
+		if (exists currentMatchClient = matchClient) {
+			return currentMatchClient.handleSubmitEvent();
+		} else {
+			return false;
 		}
 	}
 }

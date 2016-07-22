@@ -45,10 +45,9 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		}
 	}
 	
-	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message, Instant currentTime) {
-		// TODO implement flooding control
+	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
 		if (exists server = getGameServer(message)) {
-			return server.processGameMessage(message, currentTime);
+			return server.processGameMessage(message);
 		} else {
 			// TODO cannot determine color
 			return GameActionResponseMessage(message.matchId, message.playerId, black, false);

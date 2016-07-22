@@ -17,13 +17,10 @@ import ceylon.collection {
 import ceylon.test {
 	test
 }
-import ceylon.time {
-	Duration
-}
 
-final class Table(shared Integer index, shared RoomId roomId, shared Duration maxMatchJoinTime, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+final class Table(shared Integer index, shared RoomId roomId, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
-	shared TableId id = TableId(roomId.string, index + 1);
+	shared TableId id = TableId(roomId.string, index);
 	
 	variable Match? match = null;
 	
@@ -41,7 +38,7 @@ final class Table(shared Integer index, shared RoomId roomId, shared Duration ma
 		value currentMatch = Match(player1, player2, this);
 		if (player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch)) {
 			match = currentMatch;
-			publish(CreatedMatchMessage(player2.id, currentMatch.id, player1.info, player2.info, currentMatch.remainingJoinTime));
+			publish(CreatedMatchMessage(player2.id, currentMatch.id, player1.info, player2.info));
 			return true;
 		} else {
 			return false;
@@ -89,7 +86,7 @@ final class Table(shared Integer index, shared RoomId roomId, shared Duration ma
 class TableTest() {
 
 	value messageList = ArrayList<TableMessage>();
-	value table = Table(0, RoomId("room"), Duration(1000), messageList.add);
+	value table = Table(0, RoomId("room"), messageList.add);
 	
 	function makePlayer(String id) => Player(PlayerInfo(id, id, null), null);
 	

@@ -1,14 +1,15 @@
 import backgammon.common {
 	RoomId,
-	GameStateResponseMessage,
 	TableStateRequestMessage,
 	GameStateRequestMessage,
 	formatRoomMessage,
-	TableStateResponseMessage,
-	AcceptedMatchMessage,
 	AcceptMatchMessage,
 	LeaveTableMessage,
-	LeftTableMessage
+	InboundGameMessage,
+	InboundMatchMessage,
+	InboundRoomMessage,
+	InboundTableMessage,
+	RoomMessage
 }
 
 import io.vertx.ceylon.core {
@@ -24,16 +25,20 @@ final class GameRoomRestApi(Vertx vertx) {
 	
 	value eventBus = GameRoomEventBus(vertx);
 
+	void forwardResponse(GameRoomRoutingContext context, InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message) {
+		eventBus.sendInboundMessage(message, void (Throwable|RoomMessage result) {
+			if (is Throwable result) {
+				context.fail(result);
+			} else {
+				context.writeJsonResponse(formatRoomMessage(result));
+			}
+		});
+	}
+
 	void handleTableStateRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists tableId = context.getRequestTableId(), exists playerId = context.getCurrentPlayerId()) {
-			eventBus.sendInboundRoomMessage(TableStateRequestMessage(playerId, RoomId(tableId.roomId), tableId.table), void (Throwable|TableStateResponseMessage result) {
-				if (is Throwable result) {
-					context.fail(result);
-				} else {
-					context.writeJsonResponse(formatRoomMessage(result));
-				}
-			});
+			forwardResponse(context, TableStateRequestMessage(playerId, RoomId(tableId.roomId), tableId.table));
 		} else {
 			context.fail(Exception("Invalid request: ``rc.request().uri()``"));
 		}
@@ -42,13 +47,7 @@ final class GameRoomRestApi(Vertx vertx) {
 	void handleTableLeaveRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists tableId = context.getRequestTableId(), exists playerId = context.getCurrentPlayerId()) {
-			eventBus.sendInboundTableMessage(LeaveTableMessage(playerId, tableId), void (Throwable|LeftTableMessage result) {
-				if (is Throwable result) {
-					context.fail(result);
-				} else {
-					context.writeJsonResponse(formatRoomMessage(result));
-				}
-			});
+			forwardResponse(context, LeaveTableMessage(playerId, tableId));
 		} else {
 			context.fail(Exception("Invalid request: ``rc.request().uri()``"));
 		}
@@ -57,13 +56,7 @@ final class GameRoomRestApi(Vertx vertx) {
 	void handleGameStateRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
-			eventBus.sendInboundGameMessage(GameStateRequestMessage(matchId, playerId), void (Throwable|GameStateResponseMessage result) {
-				if (is Throwable result) {
-					context.fail(result);
-				} else {
-					context.writeJsonResponse(formatRoomMessage(result));
-				}
-			});
+			forwardResponse(context, GameStateRequestMessage(matchId, playerId));
 		} else {
 			context.fail(Exception("Invalid request: ``rc.request().uri()``"));
 		}
@@ -72,13 +65,7 @@ final class GameRoomRestApi(Vertx vertx) {
 	void handlMatchAcceptRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
-			eventBus.sendInboundMatchMessage(AcceptMatchMessage(playerId, matchId), void (Throwable|AcceptedMatchMessage result) {
-				if (is Throwable result) {
-					context.fail(result);
-				} else {
-					context.writeJsonResponse(formatRoomMessage(result));
-				}
-			});
+			forwardResponse(context, AcceptMatchMessage(playerId, matchId));
 		} else {
 			context.fail(Exception("Invalid request: ``rc.request().uri()``"));
 		}
