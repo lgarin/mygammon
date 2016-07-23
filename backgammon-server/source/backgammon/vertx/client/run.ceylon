@@ -32,14 +32,6 @@ import backgammon.common {
 	TableStateResponseMessage
 }
 
-import ceylon.interop.browser {
-	window,
-	newXMLHttpRequest
-}
-import ceylon.interop.browser.dom {
-	HTMLElement,
-	Event
-}
 import ceylon.json {
 	parse,
 	Object
@@ -49,6 +41,13 @@ import ceylon.regex {
 }
 import ceylon.time {
 	now
+}
+import backgammon.browser {
+
+	newXMLHttpRequest,
+	window,
+	HTMLElement,
+	Event
 }
 
 GameGui gui = GameGui(window.document);
@@ -82,6 +81,7 @@ shared Boolean onButton(HTMLElement target) {
 	if (target.id == gui.leaveButtonId) {
 		if (exists currentTableClient = tableClient, window.confirm("Do you really want to leave the table?")) {
 			currentTableClient.handleLeaveEvent();
+			// TODO magic value
 			window.location.\iassign("/start");
 			return true;
 		} else {
@@ -127,7 +127,8 @@ void onServerMessage(String messageString) {
 	if (is Object json = parse(messageString), exists typeName = json.keys.first) {
 		if (!handleServerMessage(typeName, json.getObject(typeName))) {
 			onServerError("Cannot handle message: ``messageString``");
-			window.location.reload();
+			// TODO reload may cause a loop
+			//window.location.reload();
 		}
 	} else {
 		onServerError("Cannot parse server response: ``messageString``");
@@ -282,8 +283,23 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 	}
 }
 
+shared String? confirmClose() {
+	if (exists currentTableClient = tableClient, currentTableClient.hasRunningGame) {
+		return "Do you really want to close the game?";
+	} else {
+		return null;
+	}
+}
+
+shared void onClose() {
+	if (exists currentTableClient = tableClient) {
+		currentTableClient.handleLeaveEvent();
+	}
+}
+
 "Run the module `backgammon.vertx.client`."
 shared void run() {
+	
 	gui.showInitialState();
 	
 	if (exists tableId = extractTableId(window.location.string), exists playerInfo = extractPlayerInfo(window.document.cookie)) {

@@ -11,7 +11,8 @@ import backgammon.common {
 	CreatedGameMessage,
 	MatchId,
 	InboundMatchMessage,
-	AcceptMatchMessage
+	AcceptMatchMessage,
+	InitialRollMessage
 }
 import backgammon.game {
 	player2Color,
@@ -45,6 +46,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	void showMatchBegin(MatchState match) {
 		gui.showPlayerMessage(player1Color, match.player1Ready then "Ready" else "Play?", !match.player1Ready);
 		gui.showPlayerMessage(player2Color, match.player2Ready then "Ready" else "Play?", !match.player2Ready);
+		gui.showCurrentPlayer(match.playerColor(playerId));
 		if (match.mustStartMatch(playerId)) {
 			gui.showSubmitButton("Play");
 		} else {
@@ -102,8 +104,10 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			return true;
 		}
 		case (is CreatedGameMessage) {
-			gameClient = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
-			gameClient?.showState();
+			if (gameClient is Null) {
+				gameClient = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
+				gameClient?.showState();
+			}
 			return true;
 		}
 	}
@@ -111,6 +115,12 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
 	 	if (match.id != message.matchId) {
 	 		return false;
+	 	}
+	 	
+	 	// TODO CreatedGameMessage may be received after InitialRollMessage 
+	 	if (message is InitialRollMessage && gameClient is Null) {
+	 		gameClient = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
+	 		gameClient?.showState();
 	 	}
 	 	
 	 	if (exists currentGameClient = gameClient) {
@@ -136,6 +146,14 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			gui.hideSubmitButton();
 			messageBroadcaster(AcceptMatchMessage(playerId, matchId));
 			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean hasRunningGame {
+		if (exists currentGameClient = gameClient) {
+			return currentGameClient.hasRunningGame;
 		} else {
 			return false;
 		}

@@ -95,14 +95,15 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
 		} else if (game.endTurn(playerColor)) {
-			if (exists nextColor = game.switchTurn(playerColor)) {
-				value roll = diceRoller.roll();
-				value turnDuration = game.hasAvailableMove(nextColor) then configuration.maxTurnDuration else configuration.maxEmptyTurnDuration;
-				assert (game.beginTurn(nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
-				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
-			} else if (game.hasWon(playerColor)) {
-				messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor), playerColor));
-			}
+			value nextColor = game.currentColor;
+			assert (exists nextColor);
+			value roll = diceRoller.roll();
+			value turnDuration = game.hasAvailableMove(nextColor) then configuration.maxTurnDuration else configuration.maxEmptyTurnDuration;
+			assert (game.beginTurn(nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
+			messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
+			return true;
+		} else if (game.hasWon(playerColor)) {
+			messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor), playerColor));
 			return true;
 		} else {
 			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
@@ -141,12 +142,19 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		if (game.begin(playerColor)) {
 			if (exists currentColor = game.currentColor) {
 				value roll = diceRoller.roll();
-				assert (game.beginTurn(currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn));
-				messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn));
+				if (game.beginTurn(currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn)) {
+					messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn));
+					return true;
+				} else {
+					return false;
+				}
+			} else if (game.started) {
+				// first roll was a tie
+				return sendInitialRoll();
 			} else {
-				sendInitialRoll();
+				// first player annouced ready
+				return true;
 			}
-			return true;
 		} else {
 			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
 			return false;

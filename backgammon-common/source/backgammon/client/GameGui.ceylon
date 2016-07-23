@@ -10,14 +10,14 @@ import backgammon.game {
 	blackHomePosition
 }
 
-import ceylon.interop.browser.dom {
-	Document,
-	Element
-}
 import ceylon.time {
 	Duration
 }
+import backgammon.browser {
 
+	Document,
+	Element
+}
 
 shared final class GameGui(Document document) {
 	shared String undoButtonId = "undo";

@@ -138,4 +138,12 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		messageBroadcaster(LeaveTableMessage(playerId, tableId));
 		return true;
 	}
+	
+	shared Boolean hasRunningGame {
+		if (exists currentMatchClient = matchClient) {
+			return currentMatchClient.hasRunningGame;
+		} else {
+			return false;
+		}
+	}
 }

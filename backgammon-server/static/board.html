@@ -3,7 +3,6 @@
   <head>
     <title>Backgammon</title>
 
-    <meta charset="utf-8">
     <meta name="viewport" content="width=1150">
 
     <link rel="stylesheet" href="/static/css/board.css">
@@ -31,6 +30,8 @@
 	            	$(".button").on("click", function(event) { app.onButton(event.currentTarget); });
 	            	$(".checker").on("click", function(event) { app.onChecker(event.currentTarget); });
 	            	window.setInterval(function() { app.onTimer(); }, 500);
+	            	window.addEventListener("onbeforeunload", function(event) { return app.confirmClose(); });
+	            	window.addEventListener("onunload", function(event) { app.onClose(); });
 	                app.run();
 	            }
 	    );
@@ -144,11 +145,11 @@
 
        <div id="whitePlayer" style="top: 5px" class="player">
          <div>
-         	<img class="player-busy" id="whitePlayerActivity" src="/static/images/hourglass.gif"></img>
+         	<img class="player-busy" id="whitePlayerActivity" src="/static/images/hourglass.gif"/>
          	<label style="position: absolute;" id="whitePlayerTimer">Loading...</label>
          </div>
          <div class="player-picture">
-         	<img id="whitePlayerImage" src="/static/images/unknown.png"></img>
+         	<img id="whitePlayerImage" src="/static/images/unknown.png"/>
          	<span class="white-small-checker"></span>
          </div>
          <div>
@@ -161,11 +162,11 @@
         	<label id="blackPlayerName"></label>
          </div>
          <div class="player-picture">
-         	<img id="blackPlayerImage" src="/static/images/unknown.png"></img>
+         	<img id="blackPlayerImage" src="/static/images/unknown.png"/>
          	<span class="black-small-checker"></span>
          </div>
          <div>
-         	<img class="player-busy" id="blackPlayerActivity" src="/static/images/hourglass.gif"></img>
+         	<img class="player-busy" id="blackPlayerActivity" src="/static/images/hourglass.gif"/>
          	<label style="position: absolute;" id="blackPlayerTimer">Loading...</label>
          </div>
        </div>

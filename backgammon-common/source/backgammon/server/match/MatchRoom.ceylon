@@ -84,7 +84,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 			switch (message)
 			case (is AcceptMatchMessage) {
 				if (exists player = room.players[message.playerId], player.acceptMatch()) {
-					if (exists matchId = player.matchId, exists opponentId = player.opponentId) {
+					if (exists matchId = player.matchId, exists opponentId = player.gameOpponentId) {
 						gameCommander(StartGameMessage(matchId, message.playerId, opponentId));
 					}
 					return AcceptedMatchMessage(message.playerId, message.matchId, true);

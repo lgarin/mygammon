@@ -62,7 +62,11 @@ shared final class HttpServerVerticle() extends Verticle() {
 		value eventBus = GameRoomEventBus(vertx);
 		
 		void sendGameCommand(InboundGameMessage message) {
-			eventBus.sendInboundMessage(message, void (Anything response) {});
+			// do not send the message immedialty
+			// TODO hack in order to avoid inital roll message coming to the client before the created game message
+			vertx.setTimer(config.serverAdditionalTimeout.milliseconds, void (Integer timerId) {
+				eventBus.sendInboundMessage(message, void (Anything response) {});
+			});
 		}
 		
 		value matchRoom = MatchRoom(config, eventBus.publishOutboundTableMessage, sendGameCommand);

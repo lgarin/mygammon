@@ -106,7 +106,15 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 	
 	shared MatchId? matchId => match?.id;
 	
-	shared PlayerId? opponentId => match?.opponentId(id);
+	shared PlayerId? matchOpponentId => match?.opponentId(id);
+	
+	shared PlayerId? gameOpponentId {
+		if (exists currentMatch = match, currentMatch.isStarted) {
+			return currentMatch.opponentId(id);
+		} else {
+			return null;
+		}
+	}
 	
 	shared Boolean leaveMatch() {
 		if (exists currentMatch = match) {

@@ -41,7 +41,6 @@ shared class Game() {
 	
 	shared Boolean initialRoll(DiceRoll roll, Duration maxDuration) {
 		if (currentColor exists) {
-			print("Game has started with ``currentColor?.name else ""``");
 			return false;
 		}
 		
@@ -213,23 +212,18 @@ shared class Game() {
 	
 	shared Boolean hasWon(CheckerColor color)=> board.countCheckers(board.homePosition(color), color) == checkerCount;
 	
-	shared CheckerColor? switchTurn(CheckerColor color) {
-		if (!isCurrentColor(color)) {
-			return null;
-		} else {
-			currentColor = color.oppositeColor;
-			return currentColor;
-		}
-	}
-	
 	shared Boolean endTurn(CheckerColor color) {
 		if (!isCurrentColor(color)) {
 			return false;
 		} else if (hasWon(color)) {
+			currentMoves.clear();
 			currentColor = null;
+			return false;
+		} else {
+			currentMoves.clear();
+			currentColor = color.oppositeColor;
+			return true;
 		}
-		currentMoves.clear();
-		return true;
 	}
 	
 	shared Boolean begin(CheckerColor color) {
@@ -257,6 +251,14 @@ shared class Game() {
 			return true;
 		}
 		return false;
+	}
+	
+	shared Boolean ended {
+		return whiteReady && blackReady && currentColor is Null;
+	}
+	
+	shared Boolean started {
+		return whiteReady && blackReady && currentColor exists;
 	}
 	
 	shared [Integer*] checkerCounts(CheckerColor color) => board.checkerCounts(color);
@@ -302,5 +304,14 @@ shared class Game() {
 		board.setCheckerCounts(white, state.whiteCheckerCounts);
 		currentMoves.clear();
 		currentMoves.addAll(state.currentMoves);
+	}
+	shared CheckerColor? winner {
+		if (hasWon(black)) {
+			return black;
+		} else if (hasWon(white)) {
+			return white;
+		} else {
+			return null;
+		}
 	}
 }
