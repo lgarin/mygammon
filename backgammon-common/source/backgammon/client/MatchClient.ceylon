@@ -96,8 +96,6 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			if (exists color = match.playerColor(message.playerId)) {
 				gui.showPlayerMessage(color, "Left", true);
 			}
-			// TODO show winner
-			//gameClient?.endGame();
 			gui.hideSubmitButton();
 			gui.hideUndoButton();
 			gui.showLeaveButton(null);

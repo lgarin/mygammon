@@ -11,14 +11,14 @@ import ceylon.collection {
 
 shared class Game() {
 
-	value board = GameBoard();
+	shared GameBoard board = GameBoard();
 	value currentMoves = ArrayList<GameMove>();
 	value initialPositionCounts = [ 1 -> 2, 12 -> 5, 17 -> 3, 19 -> 5 ];
 	value checkerCount = sum(initialPositionCounts.map((Integer->Integer element) => element.item)); 
 	
 	for (value element in initialPositionCounts) {
-		assert (board.putNewCheckers(element.key - board.whiteHomePosition, white, element.item));
-		assert (board.putNewCheckers(board.blackHomePosition - element.key, black, element.item));
+		assert (board.putNewCheckers(element.key - whiteHomePosition, white, element.item));
+		assert (board.putNewCheckers(blackHomePosition - element.key, black, element.item));
 	}
 
 	shared variable CheckerColor? currentColor = null;
@@ -41,6 +41,7 @@ shared class Game() {
 	
 	shared Boolean initialRoll(DiceRoll roll, Duration maxDuration) {
 		if (currentColor exists) {
+			print("Game has started with ``currentColor?.name else ""``");
 			return false;
 		}
 		
@@ -53,7 +54,6 @@ shared class Game() {
 	
 	shared Boolean isCurrentColor(CheckerColor color) => currentColor?.equals(color) else false;
 	
-	// TODO same method as in GameState
 	shared Boolean mustRollDice(CheckerColor playerColor) {
 		if (currentColor exists || currentRoll is Null) {
 			return false;
@@ -73,7 +73,15 @@ shared class Game() {
 			return false;
 		}
 	}
-
+	
+	shared Boolean canUndoMoves(CheckerColor playerColor) {
+		if (exists color = currentColor, color == playerColor) {
+			return !currentMoves.empty;
+		} else {
+			return false;
+		}
+	}
+	
 	function isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
 		if (!board.isInRange(source) || !board.isInRange(target)) {
 			return false;

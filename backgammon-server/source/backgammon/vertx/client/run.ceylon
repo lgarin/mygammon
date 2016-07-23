@@ -73,7 +73,7 @@ shared Boolean onDrop(HTMLElement target, HTMLElement source) {
 	print(gui.getPosition(target));
 	print("drop target:``target.id``");
 	print("drop source:``source.parentElement?.id else ""``");
-	
+	// TODO make move
 	return true;
 }
 
@@ -159,6 +159,7 @@ Boolean handleRoomMessage(OutboundRoomMessage message) {
 	}
 	
 	if (is TableStateResponseMessage message, exists currentMatch = message.match) {
+		// TODO some changes may occur on the state between the response and the registration
 		registerMessageHandler("OutboundGameMessage-``currentMatch.id``");
 	}
 	
@@ -248,7 +249,6 @@ void requestTableState(TableId tableId) {
 }
 
 void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage message) {
-	// TODO implement other message
 	switch (message)
 	case (is AcceptMatchMessage) {
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");
@@ -256,12 +256,24 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 	case (is StartGameMessage) {
 		// ignore
 	}
-	case (is PlayerReadyMessage) {}
-	case (is CheckTimeoutMessage) {}
-	case (is MakeMoveMessage) {}
-	case (is UndoMovesMessage) {}
-	case (is EndTurnMessage) {}
-	case (is EndGameMessage) {}
+	case (is PlayerReadyMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/ready");
+	}
+	case (is CheckTimeoutMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/timeout");
+	}
+	case (is MakeMoveMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/move/``message.sourcePosition``-``message.targetPosition``");
+	}
+	case (is UndoMovesMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/undomoves");
+	}
+	case (is EndTurnMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/endturn");
+	}
+	case (is EndGameMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/endgame");
+	}
 	case (is GameStateRequestMessage) {
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/state");
 	}

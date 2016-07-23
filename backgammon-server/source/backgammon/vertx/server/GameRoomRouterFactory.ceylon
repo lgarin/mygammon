@@ -51,7 +51,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 
 	void handlePlay(RoutingContext routingContext) {
 		value context = GameRoomRoutingContext(routingContext);
-		if (exists playerId = context.getCurrentPlayerId(), exists roomId = context.getRequestRoomId()) {
+		if (exists playerId = context.getCurrentPlayerId(false), exists roomId = context.getRequestRoomId(false)) {
 			eventBus.sendInboundMessage(FindMatchTableMessage(playerId, roomId), void (Throwable|FoundMatchTableMessage result) {
 				if (is Throwable result) {
 					routingContext.fail(result);

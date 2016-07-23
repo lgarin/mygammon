@@ -46,16 +46,16 @@ final class BoardPoint(shared Integer position) {
 	}
 }
 
+shared Integer boardPointCount = 26;
+
+shared Integer whiteGraveyardPosition = boardPointCount - 1;
+shared Integer whiteHomePosition = 0;
+
+shared Integer blackGraveyardPosition = 0;
+shared Integer blackHomePosition = boardPointCount - 1;
+
 shared final class GameBoard() {
 
-	shared Integer totalPointCount = 26;
-	
-	shared Integer whiteGraveyardPosition = totalPointCount - 1;
-	shared Integer whiteHomePosition = 0;
-	
-	shared Integer blackGraveyardPosition = 0;
-	shared Integer blackHomePosition = totalPointCount - 1;
-	
 	shared Integer graveyardPosition(CheckerColor color) {
 		switch (color)
 		case (white) { return whiteGraveyardPosition; }
@@ -88,11 +88,11 @@ shared final class GameBoard() {
 	}
 	
 	shared Boolean isInRange(Integer position) {
-		return 0 <= position < totalPointCount; 
+		return 0 <= position < boardPointCount; 
 	}
 
-	ArrayList<BoardPoint> points = ArrayList<BoardPoint>(totalPointCount);
-	for (i in 0:totalPointCount) {
+	ArrayList<BoardPoint> points = ArrayList<BoardPoint>(boardPointCount);
+	for (i in 0:boardPointCount) {
 		points.add(BoardPoint(i));
 	}
 
@@ -165,29 +165,6 @@ shared final class GameBoard() {
 			}
 		}
 	}
-	/*
-	function encodeState(CheckerColor color) {
-		return {for (p in points) p.countCheckers(color).byte};
-	}
-	
-	void decodeState(CheckerColor color, Iterator<Byte> data) {
-		for (p in points) {
-			if (is Byte count = data.next()) {
-				p.resetChecker(color, count.unsigned);
-			} else {
-				p.resetChecker(color, 0);
-			}
-		}
-	}
-	
-	shared String state => base64StringStandard.encode(encodeState(black).chain(encodeState(white)));
-	
-	assign state {
-		value data = base64StringStandard.decode(state, strict).iterator();
-		decodeState(black, data);
-		decodeState(white, data);
-	}
-	 */
 }
 
 class GameBoardTest() {
@@ -196,7 +173,7 @@ class GameBoardTest() {
 	
 	test
 	shared void emptyBoardHasNoChecker() {
-		for (i in 0:board.totalPointCount) {
+		for (i in 0:boardPointCount) {
 			assert (board.countCheckers(i, black) == 0);
 			assert (board.countCheckers(i, white) == 0);
 		}
@@ -216,14 +193,14 @@ class GameBoardTest() {
 	
 	test
 	shared void testGraveyardPosition() {
-		assert (board.graveyardPosition(black) == board.blackGraveyardPosition);
-		assert (board.graveyardPosition(white) == board.whiteGraveyardPosition);
+		assert (board.graveyardPosition(black) == blackGraveyardPosition);
+		assert (board.graveyardPosition(white) == whiteGraveyardPosition);
 	}
 	
 	test
 	shared void testHomePosition() {
-		assert (board.homePosition(black) == board.blackHomePosition);
-		assert (board.homePosition(white) == board.whiteHomePosition);
+		assert (board.homePosition(black) == blackHomePosition);
+		assert (board.homePosition(white) == whiteHomePosition);
 	}
 	
 	test

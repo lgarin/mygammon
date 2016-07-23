@@ -1,20 +1,4 @@
-import backgammon.game {
-	GameConfiguration,
-	Game,
-	GameMove,
-	black,
-	white,
-	CheckerColor,
-	player1Color,
-	player2Color
-}
-import ceylon.time {
-
-	Instant,
-	now
-}
 import backgammon.common {
-
 	MatchId,
 	PlayerId,
 	StartTurnMessage,
@@ -39,9 +23,22 @@ import backgammon.common {
 	GameStateRequestMessage,
 	GameActionResponseMessage
 }
+import backgammon.game {
+	GameConfiguration,
+	Game,
+	black,
+	white,
+	CheckerColor,
+	player1Color,
+	player2Color
+}
 import backgammon.server.common {
-
 	ObtainableLock
+}
+
+import ceylon.time {
+	Instant,
+	now
 }
 
 final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster) {
@@ -126,16 +123,16 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		}
 	}
 	
-	function makeMove(CheckerColor playerColor, GameMove move) {
+	function makeMove(CheckerColor playerColor, Integer sourcePosition, Integer targetPosition) {
 		if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
-		} else if (game.moveChecker(playerColor, move.sourcePosition, move.targetPosition)) {
-			messageBroadcaster(PlayedMoveMessage(matchId, toPlayerId(playerColor), playerColor, move));
+		} else if (game.moveChecker(playerColor, sourcePosition, targetPosition)) {
+			messageBroadcaster(PlayedMoveMessage(matchId, toPlayerId(playerColor), playerColor, sourcePosition, targetPosition));
 			return true;
 		} else {
 			increaseWarningCount(playerColor, configuration.invalidMoveWarningCount);
-			messageBroadcaster(InvalidMoveMessage(matchId, toPlayerId(playerColor), playerColor, move));
+			messageBroadcaster(InvalidMoveMessage(matchId, toPlayerId(playerColor), playerColor, sourcePosition, targetPosition));
 			return false;
 		}
 	}
@@ -183,7 +180,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, beginGame(playerColor));
 		}
 		case (is MakeMoveMessage) {
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, makeMove(playerColor, message.move));
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, makeMove(playerColor, message.sourcePosition, message.targetPosition));
 		}
 		case (is UndoMovesMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, undoMoves(playerColor));

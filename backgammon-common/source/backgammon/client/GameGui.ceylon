@@ -2,7 +2,12 @@ import backgammon.game {
 	CheckerColor,
 	black,
 	white,
-	GameBoard
+	GameBoard,
+	boardPointCount,
+	whiteGraveyardPosition,
+	whiteHomePosition,
+	blackGraveyardPosition,
+	blackHomePosition
 }
 
 import ceylon.interop.browser.dom {
@@ -21,7 +26,6 @@ shared final class GameGui(Document document) {
 	
 	value defaultPlayerName = "";
 	value initalPlayerMessage = "Waiting...";
-	value board = GameBoard();
 	
 	void setClass(String elementId, String* classNames) {
 		if (exists classList = document.getElementById(elementId)?.classList) {
@@ -119,7 +123,7 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
-	function getDomIdUsingPoint(CheckerColor color, Integer point) {
+	function getDomIdUsingPoint(GameBoard board, CheckerColor color, Integer point) {
 		if (point == board.graveyardPosition(color)) {
 			return "point-``color.name``-graveyard";
 		} else if (point == board.homePosition(color)) {
@@ -131,13 +135,13 @@ shared final class GameGui(Document document) {
 	
 	function getPointUsingDomId(String domId) {
 		if (domId == "point-white-graveyard") {
-			return board.whiteGraveyardPosition;
+			return whiteGraveyardPosition;
 		} else if (domId == "point-white-home") {
-			return board.whiteHomePosition;
+			return whiteHomePosition;
 		} else if (domId == "point-black-graveyard") {
-			return board.blackGraveyardPosition;
+			return blackGraveyardPosition;
 		} else if (domId == "point-black-home") {
-			return board.blackHomePosition;
+			return blackHomePosition;
 		} else if (domId.startsWith("point-")){
 			return parseInteger(String(domId.sublistFrom("point-".size)));
 		} else {
@@ -178,9 +182,9 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
-	void redrawNonEmptyPoints(CheckerColor color) {
-		for (position in 0:board.totalPointCount) {
-			value domId = getDomIdUsingPoint(color, position);
+	void redrawNonEmptyPoints(GameBoard board, CheckerColor color) {
+		for (position in 0:boardPointCount) {
+			value domId = getDomIdUsingPoint(board, color, position);
 			if (exists point = document.getElementById(domId)) {
 				value count = board.countCheckers(position, color);
 				if (position == board.homePosition(color)) {
@@ -191,26 +195,11 @@ shared final class GameGui(Document document) {
 			}
 		}
 	}
-	
-	void redrawEmptyPoints() {
-		for (position in board.positionRange(black)) {
-			value domId = getDomIdUsingPoint(black, position);
-			if (exists point = document.getElementById(domId)) {
-				value count = board.countCheckers(position, black) + board.countCheckers(position, white);
-				if (count == 0) {
-					resetCheckers(point, "checker-``black.name``", "checker-``black.oppositeColor.name``", count);
-				}
-			}
-		}
-	}
-	
-	// TODO this is ugly
-	shared void redrawCheckers({Integer*} blackCounts, {Integer*} whiteCounts) {
-		board.setCheckerCounts(black, blackCounts);
-		board.setCheckerCounts(white, whiteCounts);
-		redrawEmptyPoints();
-		redrawNonEmptyPoints(black);
-		redrawNonEmptyPoints(white);
+
+	shared void redrawCheckers(GameBoard board) {
+		hideAllCheckers();
+		redrawNonEmptyPoints(board, black);
+		redrawNonEmptyPoints(board, white);
 	}
 	
 	void addTempChecker(Element point, String checkerColorClass, String oppositeCheckerColorClass, Integer checkerCount) {
@@ -223,9 +212,9 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
-	shared void showPossibleMoves(CheckerColor color, {Integer*} positions) {
+	shared void showPossibleMoves(GameBoard board, CheckerColor color, {Integer*} positions) {
 		for (position in positions) {
-			value domId = getDomIdUsingPoint(color, position);
+			value domId = getDomIdUsingPoint(board, color, position);
 			if (exists point = document.getElementById(domId)) {
 				addTempChecker(point, "checker-``color.name``", "checker-``color.oppositeColor.name``", board.countCheckers(position, color));
 			}
@@ -306,7 +295,7 @@ shared final class GameGui(Document document) {
 	
 	shared void showInitialState(String playerMessage = initalPlayerMessage) {
 		showCurrentPlayer(null);
-		redrawCheckers([], []);
+		hideAllCheckers();
 		resetState(black, playerMessage);
 		resetState(white, playerMessage);
 	}
@@ -315,6 +304,6 @@ shared final class GameGui(Document document) {
 		showCurrentPlayer(null);
 		showDiceValues(black, null, null);
 		showDiceValues(white, null, null);
-		redrawCheckers([], []);
+		hideAllCheckers();
 	}
 }

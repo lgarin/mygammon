@@ -19,26 +19,6 @@ shared final class GameState() {
 	shared variable {Integer*} whiteCheckerCounts = {};
 	shared variable {GameMove*} currentMoves = {};
 	
-	shared Boolean canUndoMoves(CheckerColor playerColor) {
-		if (exists color = currentColor, color == playerColor) {
-			return !currentMoves.empty;
-		} else {
-			return false;
-		}
-	}
-
-	shared Boolean mustRollDice(CheckerColor playerColor) {
-		if (currentColor exists) {
-			return false;
-		} else if (!blackReady && playerColor == black) {
-			return true;
-		} else if (!whiteReady && playerColor == white) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
 	shared Object toJson() {
 		value result = Object();
 		result.put("currentColor", currentColor?.name else null);

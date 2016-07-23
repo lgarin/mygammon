@@ -36,7 +36,7 @@ shared final class HttpServerVerticle() extends Verticle() {
 	value port = 8080;
 	
 	// TODO read config from vertx.getOrCreateContext().config() 
-	value config = RoomConfiguration(roomId, 100, Duration(60000), false);
+	value config = RoomConfiguration(roomId, 100, Duration(60000));
 
 	void startHttp() {
 		value authRouterFactory = GoogleAuthRouterFactory(vertx, hostname, port);
@@ -45,8 +45,8 @@ shared final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(config.sessionTimeout.milliseconds));
 		//router.route().handler(loggerHandler.create().handle);
 		
-		router.route("/static/*").handler(staticHandler.create("static").setCachingEnabled(config.useCaching).handle);
-		router.route("/modules/*").handler(staticHandler.create("modules").setCachingEnabled(config.useCaching).handle);
+		router.route("/static/*").handler(staticHandler.create("static").handle);
+		router.route("/modules/*").handler(staticHandler.create("modules").handle);
 		router.mountSubRouter("/eventbus", GameRoomEventBus(vertx).createEventBusRouter());
 		
 		router.mountSubRouter("/", authRouterFactory.createGoogleLoginRouter());
