@@ -6,9 +6,9 @@ import ceylon.test {
 	test
 }
 
-shared final class DiceRoll(shared Integer firstValue, shared Integer secondValue) {
+shared final class DiceRoll(shared Integer firstValue, shared Integer secondValue) extends Object() {
 	
-	ArrayList<Integer> values = ArrayList<Integer>(4);
+	ArrayList<Integer> values = ArrayList<Integer>(2);
 	
 	shared Boolean isPair => firstValue == secondValue;
 	
@@ -25,26 +25,17 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 	values.add(firstValue);
 	values.add(secondValue);
 	
-	if (isPair) {
-		values.add(firstValue);
-		values.add(secondValue);
-	}
-	
 	shared List<Integer> remainingValues => values;
+	
+	shared Integer? minValueAtLeast(Integer pointValue) {
+		return min(values.select((Integer element) => element >= pointValue));
+	}
 
 	shared Integer? useValueAtLeast(Integer pointValue) {
-		if (values.removeFirst(pointValue)) {
-			return pointValue;
-		} else if (nonempty currentValues = values.sequence()) {
-			value maxValue = max(currentValues);
-			if (maxValue >= pointValue && values.removeFirst(maxValue)) {
-				return maxValue;
-			} else {
-				return null;
-			}
-		} else {
-			return null;
+		if (exists result = minValueAtLeast(pointValue), values.removeLast(result)) {
+			return result;
 		}
+		return null;
 	}
 	
 	shared Integer? maxValue => max(values);
@@ -58,6 +49,27 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 		copy.values.add(diceValue);
 		return copy;
 	}
+	
+	shared actual Boolean equals(Object that) {
+		if (is DiceRoll that) {
+			return firstValue==that.firstValue && 
+				secondValue==that.secondValue && 
+				values==that.values;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	shared actual Integer hash {
+		variable value hash = 1;
+		hash = 31*hash + firstValue;
+		hash = 31*hash + secondValue;
+		hash = 31*hash + values.hash;
+		return hash;
+	}
+	
+	string = "``firstValue````values.contains(firstValue) then "+" else "-"```:``secondValue````values.contains(secondValue) then "+" else "-"``";
 }
 
 class DiceRollTest() {
@@ -77,7 +89,7 @@ class DiceRollTest() {
 	test
 	shared void checkPairRoll() {
 		value roll = DiceRoll(3, 3);
-		assert (roll.remainingValues.size == 4);
+		assert (roll.remainingValues.size == 2);
 		assert (roll.isPair);
 		assert (roll.hasValue(3));
 		assert (roll.remainingValues.every((Integer element) => element == 3));
@@ -107,10 +119,10 @@ class DiceRollTest() {
 	}
 	
 	test
-	shared void useValueRemovesMaxValue() {
+	shared void useValueRemovesMinValue() {
 		value roll = DiceRoll(3, 4);
 		value result = roll.useValueAtLeast(2);
-		assert (exists result, result == 4);
-		assert (roll.hasValue(3));
+		assert (exists result, result == 3);
+		assert (roll.hasValue(4));
 	}
 }

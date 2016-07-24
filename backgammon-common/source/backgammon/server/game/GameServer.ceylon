@@ -98,7 +98,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			value nextColor = game.currentColor;
 			assert (exists nextColor);
 			value roll = diceRoller.roll();
-			value turnDuration = game.hasAvailableMove(nextColor) then configuration.maxTurnDuration else configuration.maxEmptyTurnDuration;
+			value turnDuration = game.hasAvailableMove(nextColor, roll) then configuration.maxTurnDuration else configuration.maxEmptyTurnDuration;
 			assert (game.beginTurn(nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
 			messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
 			return true;

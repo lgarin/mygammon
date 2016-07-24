@@ -4,7 +4,6 @@ import ceylon.collection {
 import ceylon.test {
 	test
 }
-
 final class BoardPoint(shared Integer position) {
 	variable Integer whiteCount = 0;
 	variable Integer blackCount = 0;
@@ -56,6 +55,12 @@ shared Integer blackHomePosition = boardPointCount - 1;
 
 shared final class GameBoard() {
 
+	value whitePlayRange = 24..7;
+	value blackPlayRange = 1..18;
+	
+	value whiteSourceRange = whiteGraveyardPosition..whiteHomePosition;
+	value blackSourceRange = blackGraveyardPosition..blackHomePosition;
+
 	shared Integer graveyardPosition(CheckerColor color) {
 		switch (color)
 		case (white) { return whiteGraveyardPosition; }
@@ -70,21 +75,49 @@ shared final class GameBoard() {
 	
 	shared Range<Integer> playRange(CheckerColor color) {
 		switch (color)
-		case (white) { return 7..23; }
-		case (black) { return 1..17; }
+		case (white) { return whitePlayRange; }
+		case (black) { return blackPlayRange; }
 	}
 	
-	shared Range<Integer> positionRange(CheckerColor color) {
+	shared Range<Integer> sourceRange(CheckerColor color) {
 		switch (color)
-		case (white) { return 1..25; }
-		case (black) { return 25..1; }
+		case (white) { return whiteSourceRange; }
+		case (black) { return blackSourceRange; }
 	}
 	
 	shared Integer directionSign(CheckerColor color) {
-		
 		switch (color)
-		case (white) { return 1; }
-		case (black) { return -1; }
+		case (white) { return -1; }
+		case (black) { return +1; }
+	}
+	
+	shared [Integer*] targetRange(CheckerColor color, Integer sourcePosition, Integer maxDistance) {
+		if (maxDistance < 1 || maxDistance >= boardPointCount) {
+			return [];
+		}
+		switch (color)
+		case (white) {
+			if (sourcePosition <= whiteHomePosition || sourcePosition > whiteGraveyardPosition) {
+				return [];
+			}
+			value endPosition = sourcePosition-maxDistance;
+			if (endPosition > whiteHomePosition) {  
+				return sourcePosition-1..endPosition; 
+			} else {
+				return sourcePosition-1..whiteHomePosition;
+			}
+		}
+		case (black) {
+			if (sourcePosition >= blackHomePosition || sourcePosition < blackGraveyardPosition) {
+				return [];
+			}
+			value endPosition = sourcePosition+maxDistance;
+			if (endPosition < boardPointCount) {  
+				return sourcePosition+1..endPosition; 
+			} else {
+				return sourcePosition+1..blackHomePosition;
+			}
+		}
 	}
 	
 	shared Boolean isInRange(Integer position) {
@@ -313,5 +346,37 @@ class GameBoardTest() {
 		board.setCheckerCounts(white, [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 		value result = board.countCheckers(1, white);
 		assert (result == 1);
+	}
+	
+	test
+	shared void checkSourceRange() {
+		assert (0..25 == board.sourceRange(black));
+		assert (25..0 == board.sourceRange(white));
+	}
+	
+	test
+	shared void targetRangeSpansWholeDistance() {
+		assert (1..2 == board.targetRange(black, 0, 2));
+		assert (24..23 == board.targetRange(white, 25, 2));
+		assert (22..25 == board.targetRange(black, 21, 4));
+		assert (3..0 == board.targetRange(white, 4, 4));
+	}
+	
+	test
+	shared void targetRangeIsLimitedByHome() {
+		assert (22..25 == board.targetRange(black, 21, 6));
+		assert (4..0 == board.targetRange(white, 5, 6));
+	}
+	
+	test
+	shared void noTargetPositionsForInvalidInput() {
+		assert (board.targetRange(black, -1, 4).empty);
+		assert (board.targetRange(black, 26, 4).empty);
+		assert (board.targetRange(white, -1, 4).empty);
+		assert (board.targetRange(white, 26, 4).empty);
+		assert (board.targetRange(black, 2, -1).empty);
+		assert (board.targetRange(black, 2, 26).empty);
+		assert (board.targetRange(white, 24, -1).empty);
+		assert (board.targetRange(white, 24, 26).empty);
 	}
 }

@@ -29,7 +29,8 @@ import backgammon.common {
 	GameStateRequestMessage,
 	InboundTableMessage,
 	LeaveTableMessage,
-	TableStateResponseMessage
+	TableStateResponseMessage,
+	formatRoomMessage
 }
 
 import ceylon.json {
@@ -54,17 +55,17 @@ GameGui gui = GameGui(window.document);
 variable TableClient? tableClient = null;
 
 shared Boolean onStartDrag(HTMLElement source) {
-	gui.deselectAllCheckers();
-	gui.showSelectedChecker(source);
-	print(gui.getPosition(source));
-	//TODO show possible moves?
-	return true;
+	if (exists gameClient = tableClient?.gameClient) {
+		return gameClient.handleStartDrag(source);
+	} else {
+		return false;
+	}
 }
 
 shared Boolean onEndDrag(HTMLElement source) {
 	gui.deselectAllCheckers();
 	gui.hidePossibleMoves();
-	return true;
+	return false;
 }
 
 shared Boolean onDrop(HTMLElement target, HTMLElement source) {
@@ -73,7 +74,7 @@ shared Boolean onDrop(HTMLElement target, HTMLElement source) {
 	print("drop target:``target.id``");
 	print("drop source:``source.parentElement?.id else ""``");
 	// TODO make move
-	return true;
+	return false;
 }
 
 shared Boolean onButton(HTMLElement target) {
@@ -90,13 +91,17 @@ shared Boolean onButton(HTMLElement target) {
 	} else if (target.id == gui.submitButtonId, exists currentTableClient = tableClient) {
 		return currentTableClient.handleSubmitEvent();
 	}
+	// TODO undo button
+	
 	return false;
 }
 
-shared Boolean onChecker(HTMLElement target) {
-	gui.deselectAllCheckers();
-	gui.showSelectedChecker(target);
-	return true;
+shared Boolean onChecker(HTMLElement checker) {
+	if (exists gameClient = tableClient?.gameClient) {
+		return gameClient.handleCheckerSelection(checker);
+	} else {
+		return false;
+	}
 }
 
 shared Boolean onTimer() {
@@ -203,10 +208,6 @@ Boolean handleMatchMessage(OutboundMatchMessage message) {
 
 Boolean handleGameMessage(OutboundGameMessage message) {
 	
-	if (is RoomResponseMessage message, !message.success) {
-		return false;
-	}
-	
 	if (exists currentClient = tableClient) {
 		return currentClient.handleGameMessage(message);
 	} else {
@@ -250,6 +251,7 @@ void requestTableState(TableId tableId) {
 }
 
 void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage message) {
+	print(formatRoomMessage(message));
 	switch (message)
 	case (is AcceptMatchMessage) {
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");
@@ -284,7 +286,7 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 }
 
 shared String? confirmClose() {
-	if (exists currentTableClient = tableClient, currentTableClient.hasRunningGame) {
+	if (exists gameClient = tableClient?.gameClient, gameClient.hasRunningGame) {
 		return "Do you really want to close the game?";
 	} else {
 		return null;

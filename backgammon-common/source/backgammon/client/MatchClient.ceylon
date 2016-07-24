@@ -28,7 +28,14 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	shared MatchId matchId = match.id;
 	
 	value playerId = PlayerId(player.id);
-	variable GameClient? gameClient = null;
+	shared variable GameClient? gameClientVar = null;
+	shared GameClient? gameClient => gameClientVar;
+	
+	GameClient initGameClient() {
+		value result = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
+		gameClientVar = result;
+		return result;
+	}
 	
 	void showWin(CheckerColor? color) {
 		if (exists currentColor = color) {
@@ -69,7 +76,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 		gui.showPlayerInfo(player2Color, match.player2.name, match.player2.pictureUrl);
 		if (match.gameStarted) {
 			showResumingGame();
-			gameClient = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
+			initGameClient();
 			messageBroadcaster(GameStateRequestMessage(match.id, playerId));
 		} else if (match.gameEnded) {
 			showWin(match.winnerColor);
@@ -105,8 +112,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 		}
 		case (is CreatedGameMessage) {
 			if (gameClient is Null) {
-				gameClient = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
-				gameClient?.showState();
+				initGameClient().showState();
 			}
 			return true;
 		}
@@ -119,8 +125,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	 	
 	 	// TODO CreatedGameMessage may be received after InitialRollMessage 
 	 	if (message is InitialRollMessage && gameClient is Null) {
-	 		gameClient = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
-	 		gameClient?.showState();
+	 		initGameClient().showState();
 	 	}
 	 	
 	 	if (exists currentGameClient = gameClient) {
@@ -146,14 +151,6 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			gui.hideSubmitButton();
 			messageBroadcaster(AcceptMatchMessage(playerId, matchId));
 			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	shared Boolean hasRunningGame {
-		if (exists currentGameClient = gameClient) {
-			return currentGameClient.hasRunningGame;
 		} else {
 			return false;
 		}

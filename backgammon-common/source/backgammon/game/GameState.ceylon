@@ -1,11 +1,11 @@
 import ceylon.json {
-	Object,
+	JsonObject = Object,
 	Array
 }
 import ceylon.time {
 	Duration
 }
-shared final class GameState() {
+shared final class GameState() extends Object() {
 	
 	shared variable CheckerColor? currentColor = null;
 	shared variable DiceRoll? currentRoll = null;
@@ -19,8 +19,8 @@ shared final class GameState() {
 	shared variable {Integer*} whiteCheckerCounts = {};
 	shared variable {GameMove*} currentMoves = {};
 	
-	shared Object toJson() {
-		value result = Object();
+	shared JsonObject toJson() {
+		value result = JsonObject();
 		result.put("currentColor", currentColor?.name else null);
 		result.put("diceValue1", currentRoll?.firstValue else null);
 		result.put("diceValue2", currentRoll?.secondValue else null);
@@ -33,9 +33,49 @@ shared final class GameState() {
 		result.put("currentMoves", Array(currentMoves.map((element) => element.toJson())));
 		return result;
 	}
+	
+	function equalsOrNull(Object? object1, Object? object2) {
+		if (exists o1 = object1, exists o2 = object2) {
+			return o1 == o2;
+		} else if (object1 is Null, object2 is Null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared actual Boolean equals(Object that) {
+		if (is GameState that) {
+			return equalsOrNull(currentColor, that.currentColor) &&
+				equalsOrNull(currentRoll, that.currentRoll) &&
+				remainingUndo==that.remainingUndo && 
+				blackReady==that.blackReady && 
+				whiteReady==that.whiteReady && 
+				equalsOrNull(remainingTime, that.remainingTime) &&
+				blackCheckerCounts==that.blackCheckerCounts && 
+				whiteCheckerCounts==that.whiteCheckerCounts && 
+				currentMoves==that.currentMoves;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	shared actual Integer hash {
+		variable value hash = 1;
+		hash = 31*hash + (currentColor?.hash else 0);
+		hash = 31*hash + (currentRoll?.hash else 0);
+		hash = 31*hash + blackReady.hash;
+		hash = 31*hash + whiteReady.hash;
+		hash = 31*hash + blackCheckerCounts.hash;
+		hash = 31*hash + whiteCheckerCounts.hash;
+		return hash;
+	}
+	
+	string => toJson().string;
 }
 
-shared GameState parseGameState(Object json) {
+shared GameState parseGameState(JsonObject json) {
 	value result = GameState();
 	if (exists colorName = json.getStringOrNull("currentColor")) {
 		result.currentColor = parseCheckerColor(colorName);
@@ -49,6 +89,6 @@ shared GameState parseGameState(Object json) {
 	result.remainingTime = json.getIntegerOrNull("remainingTime") exists then Duration(json.getInteger("remainingTime")) else null;
 	result.blackCheckerCounts = json.getArray("blackCheckerCounts").narrow<Integer>();
 	result.whiteCheckerCounts = json.getArray("whiteCheckerCounts").narrow<Integer>();
-	result.currentMoves = json.getArray("currentMoves").narrow<Object>().collect((element) => parseGameMove(element));
+	result.currentMoves = json.getArray("currentMoves").narrow<JsonObject>().collect((element) => parseGameMove(element));
 	return result;
 }

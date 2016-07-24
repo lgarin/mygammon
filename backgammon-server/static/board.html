@@ -21,17 +21,17 @@
 	            function(app) {
 	            	$(".checker").draggable({
 	            	    revert: "invalid",
-	            	    start: function(event) { app.onStartDrag(event.target); },
-	            	 	stop: function(event) { app.onEndDrag(event.target); }
+	            	    start: function(event) { return app.onStartDrag(event.target); },
+	            	 	stop: function(event) { return app.onEndDrag(event.target); }
 	            	});
 	            	$(".point").droppable({
-	            		drop: function(event, ui) { app.onDrop(event.target, ui.draggable[0]); }
+	            		drop: function(event, ui) { return app.onDrop(event.target, ui.draggable[0]); }
 	            	});
-	            	$(".button").on("click", function(event) { app.onButton(event.currentTarget); });
-	            	$(".checker").on("click", function(event) { app.onChecker(event.currentTarget); });
-	            	window.setInterval(function() { app.onTimer(); }, 500);
+	            	$(".button").on("click", function(event) { return app.onButton(event.currentTarget); });
+	            	$(".checker").on("click", function(event) { return app.onChecker(event.currentTarget); });
+	            	window.setInterval(function() { return app.onTimer(); }, 500);
 	            	window.addEventListener("onbeforeunload", function(event) { return app.confirmClose(); });
-	            	window.addEventListener("onunload", function(event) { app.onClose(); });
+	            	window.addEventListener("onunload", function(event) { return app.onClose(); });
 	                app.run();
 	            }
 	    );

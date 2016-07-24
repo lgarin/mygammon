@@ -258,6 +258,17 @@ class PlayerTest() {
 		opponent.findMatchTable();
 		player.findMatchTable();
 		value result = player.isWaitingOpponent();
+		assert (result);
+	}
+	
+	test
+	shared void waitingSeatWithGame() {
+		value opponent = makePlayer("opponent");
+		opponent.findMatchTable();
+		player.findMatchTable();
+		player.acceptMatch();
+		opponent.acceptMatch();
+		value result = player.isWaitingOpponent();
 		assert (!result);
 	}
 	

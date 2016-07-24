@@ -7,18 +7,24 @@ import ceylon.collection {
 
 	ArrayList
 }
+import ceylon.test {
+
+	test
+}
 
 
 shared class Game() {
 
 	shared GameBoard board = GameBoard();
 	value currentMoves = ArrayList<GameMove>();
+	
+	"http://www.backgammon-play.net/GameBasic.htm"
 	value initialPositionCounts = [ 1 -> 2, 12 -> 5, 17 -> 3, 19 -> 5 ];
 	value checkerCount = sum(initialPositionCounts.map((Integer->Integer element) => element.item)); 
 	
 	for (value element in initialPositionCounts) {
-		assert (board.putNewCheckers(element.key - whiteHomePosition, white, element.item));
-		assert (board.putNewCheckers(blackHomePosition - element.key, black, element.item));
+		assert (board.putNewCheckers(whiteGraveyardPosition - element.key, white, element.item));
+		assert (board.putNewCheckers(element.key + blackGraveyardPosition, black, element.item));
 	}
 
 	shared variable CheckerColor? currentColor = null;
@@ -84,7 +90,7 @@ shared class Game() {
 	function isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
 		if (!board.isInRange(source) || !board.isInRange(target)) {
 			return false;
-		} else if (board.directionSign(color) * target - source <= 0) {
+		} else if (board.directionSign(color) != (target - source).sign) {
 			return false;
 		} else if (board.hasCheckerInGraveyard(color) && board.homePosition(color) != source) {
 			return false;
@@ -115,19 +121,18 @@ shared class Game() {
 		return true;
 	}
 	
-	shared Boolean hasAvailableMove(CheckerColor color) {
-		return !computeAvailableMoves(color).empty;
+	shared Boolean hasAvailableMove(CheckerColor color, DiceRoll roll) {
+		return !computeAvailableMoves(color, roll).empty;
 	}
 	
-	shared {GameMove*} computeAvailableMoves(CheckerColor color) {
-		if (isCurrentColor(color), exists roll = currentRoll, exists maxValue = roll.maxValue) {
-			value targetRangeLength = maxValue * board.directionSign(color);
-			value sourcePositionRange = board.positionRange(color);
+	shared {GameMove*} computeAvailableMoves(CheckerColor color, DiceRoll roll, Integer? sourcePosition = null) {
+		if (exists maxValue = roll.maxValue) {
+			value sourceRange = if (exists pos = sourcePosition) then pos..pos else board.sourceRange(color);
 			return {
-				for (source in sourcePositionRange)
-					for (target in source:targetRangeLength) 
-						if (isLegalCheckerMove(color, roll, source, target))
-							GameMove(source, target, maxValue, board.countCheckers(target, color.oppositeColor) > 0) 
+				for (source in sourceRange)
+					for (target in board.targetRange(color, source, maxValue)) 
+						if (isLegalCheckerMove(color, roll, source, target), exists rollValue = roll.minValueAtLeast(board.distance(source, target)))
+							GameMove(source, target, rollValue, board.countCheckers(target, color.oppositeColor) > 0) 
 			};
 		} else {
 			return {}; 
@@ -221,7 +226,11 @@ shared class Game() {
 			return false;
 		} else {
 			currentMoves.clear();
-			currentColor = color.oppositeColor;
+			if (exists roll = currentRoll, roll.isPair) {
+				currentColor = color;
+			} else {
+				currentColor = color.oppositeColor;
+			}
 			return true;
 		}
 	}
@@ -313,5 +322,68 @@ shared class Game() {
 		} else {
 			return null;
 		}
+	}
+}
+
+class GameTest() {
+	
+	value game = Game();
+	
+	test
+	shared void checkInitialGame() {
+		assert (game.currentColor is Null);
+		assert (!game.isCurrentColor(black));
+		assert (!game.isCurrentColor(white));
+		assert (game.currentRoll is Null);
+		assert ([0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 0, 0] == game.board.checkerCounts(black));
+		assert ([0, 0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0] == game.board.checkerCounts(white));
+		assert (!game.started);
+		assert (!game.ended);
+		assert (game.winner is Null);
+		assert (!game.mustRollDice(black));
+		assert (!game.mustRollDice(white));
+		assert (!game.mustMakeMove(black));
+		assert (!game.canUndoMoves(white));
+		assert (!game.canUndoMoves(black));
+		assert (game.remainingTime(now()) is Null);
+		assert (!game.timedOut(now()));
+	}
+	
+	test
+	shared void checkInitialState() {
+		value state = game.state;
+		assert (state.currentColor is Null);
+		assert (state.currentRoll is Null);
+		assert (state.blackCheckerCounts == [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 0, 0]);
+		assert (state.whiteCheckerCounts == [0, 0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0]);
+		assert (!state.blackReady);
+		assert (!state.whiteReady);
+		assert (state.remainingUndo == 0);
+		assert (state.currentMoves.empty);
+		assert (state.remainingTime is Null);
+	}
+	
+	test
+	shared void computeInitalBlackMoves() {
+		value moves = game.computeAvailableMoves(black, DiceRoll(3, 1));
+		assert (moves.contains(GameMove(1, 2, 1, false)));
+		assert (moves.contains(GameMove(1, 4, 3, false)));
+		assert (moves.contains(GameMove(12, 15, 3, false)));
+		assert (moves.contains(GameMove(17, 18, 1, false)));
+		assert (moves.contains(GameMove(17, 20, 3, false)));
+		assert (moves.contains(GameMove(19, 20, 1, false)));
+		assert (moves.contains(GameMove(19, 22, 3, false)));
+		assert (moves.size == 7);
+	}
+	
+	test
+	shared void computeInitalWhiteMoves() {
+		value moves = game.computeAvailableMoves(white, DiceRoll(1, 5));
+		assert (moves.contains(GameMove(24, 23, 1, false)));
+		assert (moves.contains(GameMove(13, 8, 5, false)));
+		assert (moves.contains(GameMove(8, 7, 1, false)));
+		assert (moves.contains(GameMove(8, 3, 5, false)));
+		assert (moves.contains(GameMove(6, 5, 1, false)));
+		assert (moves.size == 5);
 	}
 }

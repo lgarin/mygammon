@@ -1,5 +1,5 @@
 import ceylon.json {
-	Object,
+	JsonObject = Object,
 	parse
 }
 import ceylon.buffer.base {
@@ -11,17 +11,34 @@ import ceylon.buffer.charset {
 	utf8
 }
 
-shared final class PlayerInfo(shared String id, shared String name, shared String? pictureUrl) {
-	shared Object toJson() => Object({"id" -> id, "name" -> name, "pictureUrl" -> pictureUrl});
+shared final class PlayerInfo(shared String id, shared String name, shared String? pictureUrl) extends Object() {
+	shared JsonObject toJson() => JsonObject({"id" -> id, "name" -> name, "pictureUrl" -> pictureUrl});
 	shared String toBase64() => base64StringStandard.encode(utf8.encode(toJson().string));
+	
+	shared actual Boolean equals(Object that) {
+		if (is PlayerInfo that) {
+			return id==that.id;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	shared actual Integer hash {
+		variable value hash = 1;
+		hash = 31*hash + id.hash;
+		return hash;
+	}
+
+	string => toJson().string;	
 }
 
-shared PlayerInfo parsePlayerInfo(Object json) {
+shared PlayerInfo parsePlayerInfo(JsonObject json) {
 	return PlayerInfo(json.getString("id"), json.getString("name"), json.getStringOrNull("pictureUrl"));
 }
 
 shared PlayerInfo? parseBase64PlayerInfo(String base64) {
-	if (is Object json = parse(utf8.decode(base64StringStandard.decode(base64)))) {
+	if (is JsonObject json = parse(utf8.decode(base64StringStandard.decode(base64)))) {
 		return parsePlayerInfo(json);
 	}
 	return null;

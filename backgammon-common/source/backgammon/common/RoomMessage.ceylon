@@ -18,6 +18,8 @@ shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage 
 		result.putAll(entries);
 		return result;
 	}
+	
+	string => toJson().string;
 }
 
 shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage | TableStateRequestMessage satisfies RoomMessage {}

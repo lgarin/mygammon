@@ -1,3 +1,6 @@
+import backgammon.browser {
+	HTMLElement
+}
 import backgammon.common {
 	InboundGameMessage,
 	OutboundGameMessage,
@@ -24,7 +27,8 @@ import backgammon.game {
 	black,
 	white,
 	player2Color,
-	player1Color
+	player1Color,
+	GameMove
 }
 
 import ceylon.time {
@@ -50,10 +54,21 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
 	
+	variable InboundGameMessage? lastGameMessage = null;
+	
+	void sendMessage(InboundGameMessage message) {
+		if (lastGameMessage is CheckTimeoutMessage && message is CheckTimeoutMessage) {
+			return;
+		}
+		lastGameMessage = message;
+		messageBroadcaster(message);
+	}
+	
 	function showInitialRoll(InitialRollMessage message) {
 		gui.showCurrentPlayer(null);
 		if (message.playerId == playerId) {
 			if (game.initialRoll(message.roll, message.maxDuration)) {
+				game.begin(message.playerColor.oppositeColor);
 				gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration), true);
 				gui.showCurrentPlayer(message.playerColor);
 				gui.showSubmitButton("Roll");
@@ -62,23 +77,25 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 				return false;
 			}
 		} else {
-			if (game.begin(message.playerColor)) {
-				gui.showDiceValues(message.playerColor, message.diceValue, null);
-				return true;
-			} else {
-				return false;
-			}
+			gui.showPlayerMessage(message.playerColor, "Starting...", false);
+			gui.showDiceValues(message.playerColor, message.diceValue, null);
+			return true;
 		}
 	}
 	
 	function showTurnStart(StartTurnMessage message) {
 		game.endTurn(message.playerColor.oppositeColor);
-		gui.showCurrentPlayer(message.playerColor);
 		if (game.beginTurn(message.playerColor, message.roll, message.maxDuration, message.maxUndo)) {
 			gui.showDiceValues(message.playerColor.oppositeColor, null, null);
 			gui.showDiceValues(message.playerColor, message.roll.firstValue, message.roll.secondValue);
 			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration), true);
 			gui.showPlayerMessage(message.playerColor.oppositeColor, "Waiting...", false);
+			gui.showCurrentPlayer(message.playerColor);
+			if (message.playerId == playerId) {
+				gui.showSubmitButton(null);
+			} else {
+				gui.hideSubmitButton();
+			}
 			return true;
 		} else {
 			return false;
@@ -118,19 +135,12 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			showWin(game.winner);
 		} else { 
 			
-			if (game.mustRollDice(black), exists remainingTime = game.remainingTime(currentTime)) {
-				gui.showPlayerMessage(black, gui.formatPeriod(remainingTime), true);
-			} else {
-				gui.showPlayerMessage(black, "Ready", false);
-			}
-			if (game.mustRollDice(white), exists remainingTime = game.remainingTime(currentTime)) {
-				gui.showPlayerMessage(white, gui.formatPeriod(remainingTime), true);
-			}  else {
-				gui.showPlayerMessage(white, "Ready", false);
-			}
+			gui.showPlayerMessage(black, "Starting...", false);
+			gui.showPlayerMessage(white, "Starting...", false);
 			
-			if (exists color = playerColor, game.mustRollDice(color)) {
+			if (exists color = playerColor, game.mustRollDice(color), exists remainingTime = game.remainingTime(currentTime)) {
 				gui.showSubmitButton("Roll");
+				gui.showPlayerMessage(color, gui.formatPeriod(remainingTime), true);
 			} else {
 				gui.hideSubmitButton();
 			}
@@ -228,12 +238,16 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 	}
 	
-	shared Boolean handleTimerEvent(Instant time) {
-		
+	void handleDelayedActions(Instant time) {
 		for (element in delayedMessage.select((DelayedGameMessage element) => element.mustSend(time))) {
-			messageBroadcaster(element.message);
+			sendMessage(element.message);
 		}
 		delayedMessage = delayedMessage.select((DelayedGameMessage element) => !element.mustSend(time));
+	}
+	
+	shared Boolean handleTimerEvent(Instant time) {
+		
+		handleDelayedActions(time);
 		
 		if (game.timedOut(time.minus(checkTimeoutDelay))) {
 			gui.hideSubmitButton();
@@ -244,18 +258,14 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 				gui.showPlayerMessage(player1Color, "Time out", true);
 				gui.showPlayerMessage(player2Color, "Time out", true);
 			}
-			messageBroadcaster(CheckTimeoutMessage(matchId, playerId));
+			// TODO avoid flooding
+			sendMessage(CheckTimeoutMessage(matchId, playerId));
 			return true;
 		} else if (exists currentColor = game.currentColor, exists remainingTime = game.remainingTime(time)) {
 			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime), true);
 			return true;
-		} else if (game.mustRollDice(player1Color) || game.mustRollDice(player2Color)) {
-			if (game.mustRollDice(player1Color), exists remainingTime = game.remainingTime(time)) {
-				gui.showPlayerMessage(player1Color, gui.formatPeriod(remainingTime), true);
-			}
-			if (game.mustRollDice(player2Color), exists remainingTime = game.remainingTime(time)) {
-				gui.showPlayerMessage(player2Color, gui.formatPeriod(remainingTime), true);
-			}
+		} else if (exists currentColor = playerColor, game.mustRollDice(currentColor), exists remainingTime = game.remainingTime(time)) {
+			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime), true);
 			return true;
 		} else {
 			return true;
@@ -275,20 +285,54 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 				delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(PlayerReadyMessage(matchId, playerId), initialRollDelay));
 				return true;
 			} else {
+				print("Cannot begin with ``color`` black:``game.mustRollDice(black)`` white:``game.mustRollDice(white)``");
 				return false;
 			}
 		} else if (exists color = playerColor, game.mustMakeMove(color)) {
-			gui.hidePossibleMoves();
-			gui.deselectAllCheckers();
-			gui.hideSubmitButton();
-			messageBroadcaster(EndTurnMessage(matchId, playerId));
-			return true;
+			if (game.endTurn(color)) {
+				gui.hidePossibleMoves();
+				gui.deselectAllCheckers();
+				gui.hideSubmitButton();
+				gui.showCurrentPlayer(null);
+				gui.showPlayerMessage(color, "Ready", false);
+				sendMessage(EndTurnMessage(matchId, playerId));
+				return true;
+			} else {
+				return false;
+			}
 		} else {
+			print("Strange state: ``game.state.toJson()``");
 			return false;
 		}
 	}
 	
 	shared Boolean hasRunningGame {
 		return game.ended;
+	}
+	
+	shared Boolean handleStartDrag(HTMLElement source) {
+		gui.deselectAllCheckers();
+		gui.hidePossibleMoves();
+		if (exists color = playerColor, game.mustMakeMove(color), exists roll = game.currentRoll, exists position = gui.getPosition(source)) {
+			value moves = game.computeAvailableMoves(color, roll, position);
+			if (!moves.empty) {
+				gui.showPossibleMoves(game.board, color, moves.map((GameMove element) => element.targetPosition));
+				return true;
+			} else {
+				return false;
+			}
+			
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean handleCheckerSelection(HTMLElement checker) {
+		if (handleStartDrag(checker)) {
+			gui.showSelectedChecker(checker);
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

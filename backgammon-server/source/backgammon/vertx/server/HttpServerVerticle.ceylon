@@ -42,7 +42,7 @@ shared final class HttpServerVerticle() extends Verticle() {
 		value authRouterFactory = GoogleAuthRouterFactory(vertx, hostname, port);
 		value router = routerFactory.router(vertx);
 
-		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(config.sessionTimeout.milliseconds));
+		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(config.playerInactiveTimeout.milliseconds));
 		//router.route().handler(loggerHandler.create().handle);
 		
 		router.route("/static/*").handler(staticHandler.create("static").handle);
@@ -77,7 +77,7 @@ shared final class HttpServerVerticle() extends Verticle() {
 		value gameRoom = GameRoom(config, eventBus.publishOutboundGameMessage);
 		eventBus.registerInboundGameMessageConsumer(roomId, config.gameThreadCount, gameRoom.processGameMessage);
 		
-		vertx.setPeriodic(config.gameInactiveTimeout.milliseconds, void (Integer val) {
+		vertx.setPeriodic(config.playerInactiveTimeout.milliseconds, void (Integer val) {
 			value currentTime = now();
 			matchRoom.removeInactivePlayers(currentTime);
 			gameRoom.removeInactiveGames(currentTime);

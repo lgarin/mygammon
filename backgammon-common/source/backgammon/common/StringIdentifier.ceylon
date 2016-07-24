@@ -6,7 +6,7 @@ import ceylon.json {
 	JsonObject = Object,
 	Value
 }
-shared abstract class StringIdentifier(String id) satisfies Identifiable {
+shared abstract class StringIdentifier(String id) extends Object() {
 	string = id;
 	
 	shared actual Boolean equals(Object that) {

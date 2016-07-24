@@ -110,7 +110,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		if (tableId != message.tableId) {
 			return false;
 		}
-		
+
 		if (exists currentMatchClient = matchClient) {
 			return currentMatchClient.handleGameMessage(message);
 		} else {
@@ -139,11 +139,5 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		return true;
 	}
 	
-	shared Boolean hasRunningGame {
-		if (exists currentMatchClient = matchClient) {
-			return currentMatchClient.hasRunningGame;
-		} else {
-			return false;
-		}
-	}
+	shared GameClient? gameClient => matchClient?.gameClient;
 }
