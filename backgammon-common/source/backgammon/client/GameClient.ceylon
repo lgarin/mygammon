@@ -177,7 +177,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	function showGameWon(GameWonMessage message) {
-		if (game.hasWon(message.playerColor)) {
+		if (game.end()) {
 			showWin(message.playerColor);
 			return true;
 		} else {
@@ -282,7 +282,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		} else if (exists color = playerColor, game.mustMakeMove(color)) {
 			if (game.endTurn(color)) {
 				gui.hidePossibleMoves();
-				gui.deselectAllCheckers();
+				gui.showSelectedChecker(null);
 				gui.hideSubmitButton();
 				gui.showCurrentPlayer(null);
 				gui.showPlayerMessage(color, "Ready", false);
@@ -303,7 +303,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	shared Boolean handleStartDrag(HTMLElement source) {
-		gui.deselectAllCheckers();
+		gui.showSelectedChecker(null);
 		gui.hidePossibleMoves();
 		if (exists color = playerColor, game.mustMakeMove(color), exists roll = game.currentRoll, exists position = gui.getPosition(source)) {
 			value moves = game.computeAvailableMoves(color, roll, position);
@@ -319,8 +319,22 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 	}
 	
+	function makeMove(Integer sourcePosition, Integer targetPosition) {
+		if (exists color = playerColor, game.isLegalMove(color, sourcePosition, targetPosition)) {
+			gui.showSelectedChecker(null);
+			gui.hidePossibleMoves();
+			messageBroadcaster(MakeMoveMessage(matchId, playerId, sourcePosition, targetPosition));
+			return false;
+		} else {
+			gui.redrawCheckers(game.board);
+			return false;
+		}
+	}
+	
 	shared Boolean handleCheckerSelection(HTMLElement checker) {
-		if (handleStartDrag(checker)) {
+		if (gui.isTempChecker(checker), exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker)) {
+			return makeMove(sourcePosition, targetPosition);
+		} else if (handleStartDrag(checker)) {
 			gui.showSelectedChecker(checker);
 			return true;
 		} else {
@@ -328,18 +342,10 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 	}
 	
+	
 	shared Boolean handleDrop(HTMLElement targetElement, HTMLElement sourceElement) {
-		if (exists color = playerColor, exists sourcePosition = gui.getPosition(sourceElement), exists targetPosition = gui.getPosition(targetElement)) {
-			if (game.isLegalMove(color, sourcePosition, targetPosition)) {
-				gui.deselectAllCheckers();
-				gui.hidePossibleMoves();
-				gui.redrawCheckers(game.board);
-				messageBroadcaster(MakeMoveMessage(matchId, playerId, sourcePosition, targetPosition));
-				return false;
-			} else {
-				gui.redrawCheckers(game.board);
-				return false;
-			}
+		if (exists sourcePosition = gui.getPosition(sourceElement), exists targetPosition = gui.getPosition(targetElement)) {
+			return makeMove(sourcePosition, targetPosition);
 		} else {
 			return false;
 		}

@@ -29,8 +29,8 @@ shared final class GameGui(Document document) {
 	
 	void setClass(String elementId, String* classNames) {
 		if (exists classList = document.getElementById(elementId)?.classList) {
-			for (i in 0:classList.length) {
-				if (exists item = classList.item(i)) {
+			while (classList.length > 0) {
+				if (exists item = classList.item(0)) {
 					classList.remove(item);
 				}
 			}
@@ -212,11 +212,25 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
+	shared Boolean isTempChecker(Element checker) {
+		return checker.classList.contains("temp");
+	}
+	
+	shared Integer? getSelectedCheckerPosition() {
+		value checkers = document.getElementsByClassName("checker");
+		for (i in 0:checkers.length) {
+			if (exists checker = checkers.item(i), checker.classList.contains("selected")) {
+				return getPosition(checker);
+			}
+		}
+		return null;
+	}
+	
 	shared void showPossibleMoves(GameBoard board, CheckerColor color, {Integer*} positions) {
 		for (position in positions) {
 			value domId = getDomIdUsingPoint(board, color, position);
 			if (exists point = document.getElementById(domId)) {
-				addTempChecker(point, "checker-``color.name``", "checker-``color.oppositeColor.name``", board.countCheckers(position, color));
+				addTempChecker(point, "checker-``color.name``", "checker-``color.oppositeColor.name``", board.countCheckers(position, color) + board.countCheckers(position, color.oppositeColor));
 			}
 		}
 	}
@@ -231,11 +245,12 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
-	shared void showSelectedChecker(Element checker) {
-		checker.classList.add("selected");
+	shared void showSelectedChecker(Element? checker) {
+		deselectAllCheckers();
+		checker?.classList?.add("selected");
 	}
 	
-	shared void deselectAllCheckers() {
+	void deselectAllCheckers() {
 		value checkers = document.getElementsByClassName("checker");
 		for (i in 0:checkers.length) {
 			if (exists checker = checkers.item(i)) {

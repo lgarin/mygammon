@@ -92,7 +92,7 @@ shared class Game() {
 			return false;
 		} else if (board.directionSign(color) != (target - source).sign) {
 			return false;
-		} else if (board.hasCheckerInGraveyard(color) && board.homePosition(color) != source) {
+		} else if (board.hasCheckerInGraveyard(color) && board.graveyardPosition(color) != source) {
 			return false;
 		} else if (board.countCheckers(source, color) == 0) {
 			return false;
@@ -167,7 +167,7 @@ shared class Game() {
 	
 	shared Boolean moveChecker(CheckerColor color, Integer source, Integer target) {
 	
-		if (isLegalMove(color, source, target)) {
+		if (!isLegalMove(color, source, target)) {
 			return false;
 		}
 		

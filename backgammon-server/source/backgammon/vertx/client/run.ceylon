@@ -1,3 +1,9 @@
+import backgammon.browser {
+	newXMLHttpRequest,
+	window,
+	HTMLElement,
+	Event
+}
 import backgammon.client {
 	GameGui,
 	TableClient
@@ -43,14 +49,6 @@ import ceylon.regex {
 import ceylon.time {
 	now
 }
-import backgammon.browser {
-
-	newXMLHttpRequest,
-	window,
-	HTMLElement,
-	Event,
-	XMLHttpRequest
-}
 
 GameGui gui = GameGui(window.document);
 variable TableClient? tableClient = null;
@@ -64,7 +62,9 @@ shared Boolean onStartDrag(HTMLElement source) {
 }
 
 shared Boolean onEndDrag(HTMLElement source) {
-	gui.deselectAllCheckers();
+	gui.showSelectedChecker(null);
+	gui.hidePossibleMoves();
+	// TODO redraw checkers
 	return false;
 }
 

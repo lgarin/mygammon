@@ -69,7 +69,7 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 		return hash;
 	}
 	
-	string = "``firstValue````values.contains(firstValue) then "+" else "-"```:``secondValue````values.contains(secondValue) then "+" else "-"``";
+	string = "``firstValue````values.contains(firstValue) then "+" else "-"``:``secondValue````values.contains(secondValue) then "+" else "-"``";
 }
 
 class DiceRollTest() {
