@@ -34,6 +34,7 @@ shared final class GameState() extends Object() {
 		return result;
 	}
 	
+	// TODO check if a standard function exists
 	function equalsOrNull(Object? object1, Object? object2) {
 		if (exists o1 = object1, exists o2 = object2) {
 			return o1 == o2;

@@ -48,7 +48,8 @@ import backgammon.browser {
 	newXMLHttpRequest,
 	window,
 	HTMLElement,
-	Event
+	Event,
+	XMLHttpRequest
 }
 
 GameGui gui = GameGui(window.document);
@@ -64,17 +65,15 @@ shared Boolean onStartDrag(HTMLElement source) {
 
 shared Boolean onEndDrag(HTMLElement source) {
 	gui.deselectAllCheckers();
-	gui.hidePossibleMoves();
 	return false;
 }
 
 shared Boolean onDrop(HTMLElement target, HTMLElement source) {
-	print(gui.getPosition(source));
-	print(gui.getPosition(target));
-	print("drop target:``target.id``");
-	print("drop source:``source.parentElement?.id else ""``");
-	// TODO make move
-	return false;
+	if (exists gameClient = tableClient?.gameClient) {
+		return gameClient.handleDrop(target, source);
+	} else {
+		return false;
+	}
 }
 
 shared Boolean onButton(HTMLElement target) {
@@ -233,8 +232,9 @@ PlayerInfo? extractPlayerInfo(String cookie) {
 	return null;
 }
 
+
 void makeApiRequest(String url) {
-	value request = newXMLHttpRequest();
+	value request = newXMLHttpRequest();	
 	request.open("GET", url, true);
 	request.send();
 	request.onload = void (Event event) {
@@ -266,7 +266,7 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/timeout");
 	}
 	case (is MakeMoveMessage) {
-		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/move/``message.sourcePosition``-``message.targetPosition``");
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/move/``message.sourcePosition``/``message.targetPosition``");
 	}
 	case (is UndoMovesMessage) {
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/undomoves");

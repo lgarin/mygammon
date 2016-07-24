@@ -19,7 +19,8 @@ import backgammon.common {
 	MatchId,
 	PlayerReadyMessage,
 	EndTurnMessage,
-	CheckTimeoutMessage
+	CheckTimeoutMessage,
+	MakeMoveMessage
 }
 import backgammon.game {
 	Game,
@@ -54,16 +55,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
 	
-	variable InboundGameMessage? lastGameMessage = null;
-	
-	void sendMessage(InboundGameMessage message) {
-		if (lastGameMessage is CheckTimeoutMessage && message is CheckTimeoutMessage) {
-			return;
-		}
-		lastGameMessage = message;
-		messageBroadcaster(message);
-	}
-	
 	function showInitialRoll(InitialRollMessage message) {
 		gui.showCurrentPlayer(null);
 		if (message.playerId == playerId) {
@@ -71,6 +62,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 				game.begin(message.playerColor.oppositeColor);
 				gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration), true);
 				gui.showCurrentPlayer(message.playerColor);
+				gui.showDiceValues(message.playerColor, null, null);
 				gui.showSubmitButton("Roll");
 				return true;
 			} else {
@@ -240,7 +232,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	void handleDelayedActions(Instant time) {
 		for (element in delayedMessage.select((DelayedGameMessage element) => element.mustSend(time))) {
-			sendMessage(element.message);
+			messageBroadcaster(element.message);
 		}
 		delayedMessage = delayedMessage.select((DelayedGameMessage element) => !element.mustSend(time));
 	}
@@ -258,8 +250,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 				gui.showPlayerMessage(player1Color, "Time out", true);
 				gui.showPlayerMessage(player2Color, "Time out", true);
 			}
-			// TODO avoid flooding
-			sendMessage(CheckTimeoutMessage(matchId, playerId));
+			messageBroadcaster(CheckTimeoutMessage(matchId, playerId));
 			return true;
 		} else if (exists currentColor = game.currentColor, exists remainingTime = game.remainingTime(time)) {
 			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime), true);
@@ -295,12 +286,13 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 				gui.hideSubmitButton();
 				gui.showCurrentPlayer(null);
 				gui.showPlayerMessage(color, "Ready", false);
-				sendMessage(EndTurnMessage(matchId, playerId));
+				messageBroadcaster(EndTurnMessage(matchId, playerId));
 				return true;
 			} else {
 				return false;
 			}
 		} else {
+			// TODO this error still occurs
 			print("Strange state: ``game.state.toJson()``");
 			return false;
 		}
@@ -334,5 +326,23 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		} else {
 			return false;
 		}
+	}
+	
+	shared Boolean handleDrop(HTMLElement targetElement, HTMLElement sourceElement) {
+		if (exists color = playerColor, exists sourcePosition = gui.getPosition(sourceElement), exists targetPosition = gui.getPosition(targetElement)) {
+			if (game.isLegalMove(color, sourcePosition, targetPosition)) {
+				gui.deselectAllCheckers();
+				gui.hidePossibleMoves();
+				gui.redrawCheckers(game.board);
+				messageBroadcaster(MakeMoveMessage(matchId, playerId, sourcePosition, targetPosition));
+				return false;
+			} else {
+				gui.redrawCheckers(game.board);
+				return false;
+			}
+		} else {
+			return false;
+		}
+		
 	}
 }

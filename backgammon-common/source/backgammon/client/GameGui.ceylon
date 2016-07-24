@@ -204,7 +204,7 @@ shared final class GameGui(Document document) {
 	
 	void addTempChecker(Element point, String checkerColorClass, String oppositeCheckerColorClass, Integer checkerCount) {
 		value checkers = point.getElementsByTagName("div");
-		if (exists checker = checkers.item(checkerCount + 1)) {
+		if (exists checker = checkers.item(checkerCount)) {
 			checker.classList.remove(oppositeCheckerColorClass);
 			checker.classList.add(checkerColorClass);
 			checker.classList.add("temp");

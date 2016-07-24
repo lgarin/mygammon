@@ -148,8 +148,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 				} else {
 					return false;
 				}
-			} else if (game.started) {
-				// first roll was a tie
+			} else if (exists roll = game.currentRoll, roll.isPair) {
 				return sendInitialRoll();
 			} else {
 				// first player annouced ready
@@ -197,7 +196,8 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, endTurn(playerColor));
 		}
 		case (is CheckTimeoutMessage) {
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, false);
+			// TODO always return success in order to avoid errors on client side
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, true);
 		}
 		case (is EndGameMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, surrenderGame(playerColor));

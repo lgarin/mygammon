@@ -118,7 +118,7 @@ final class GameRoomRestApi(Vertx vertx) {
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/accept").handler(handlMatchAcceptRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/ready").handler(handlPlayerReadyRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/move/:sourcePosition-:targetPosition").handler(handlMakeMoveRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/move/:sourcePosition/:targetPosition").handler(handlMakeMoveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/undomoves").handler(handlUndoMovesRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/timeout").handler(handlCheckTimeoutRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handlEndTurnRequest);

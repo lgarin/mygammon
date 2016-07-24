@@ -41,6 +41,7 @@ shared PlayerReadyMessage parsePlayerReadyMessage(Object json) {
 	return PlayerReadyMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")));
 }
 
+// TODO timeout should be handled differently
 shared final class CheckTimeoutMessage(shared actual MatchId matchId, shared actual PlayerId playerId) satisfies InboundGameMessage {}
 shared CheckTimeoutMessage parseCheckTimeoutMessage(Object json) {
 	return CheckTimeoutMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")));

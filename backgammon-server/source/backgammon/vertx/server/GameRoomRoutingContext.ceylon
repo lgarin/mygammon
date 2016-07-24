@@ -87,7 +87,7 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 	}
 	
 	function getRequestIntegerParameter(String name, Boolean withFailure) {
-		if (exists position = rc.request().getParam("name")) {
+		if (exists position = rc.request().getParam(name)) {
 			return parseInteger(position);
 		} else {
 			if (withFailure) {
