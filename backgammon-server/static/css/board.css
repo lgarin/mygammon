@@ -66,6 +66,7 @@ body {
     height: 50px;
     min-height: 50px;
     background-image: url("../images/checkers.png");
+    cursor: pointer;
 }
 
 .checker.selected {
@@ -174,10 +175,6 @@ body {
     background-position: 0px -17px;
 }
 
-.pointer {
-    cursor: pointer;
-}
-
 .button {
     position: absolute;
     width: 101px;
@@ -190,6 +187,7 @@ body {
     text-align: center;
     text-shadow: #000000 0px 0px 3px;
     line-height: 180px;
+    cursor: pointer;
 }
 .button:hover {
     opacity: 1;

@@ -2,7 +2,6 @@ import backgammon.common {
 	MatchId,
 	PlayerId,
 	StartTurnMessage,
-	CheckTimeoutMessage,
 	DesynchronizedMessage,
 	StartGameMessage,
 	PlayedMoveMessage,
@@ -21,7 +20,8 @@ import backgammon.common {
 	EndTurnMessage,
 	GameStateResponseMessage,
 	GameStateRequestMessage,
-	GameActionResponseMessage
+	GameActionResponseMessage,
+	TurnTimedOutMessage
 }
 import backgammon.game {
 	GameConfiguration,
@@ -90,8 +90,30 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		}
 	}
 	
+	function endGame() {
+		if (game.end()) {
+			messageBroadcaster(GameEndedMessage(matchId, player1Id, player1Color));
+			messageBroadcaster(GameEndedMessage(matchId, player2Id, player2Color));
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	function surrenderGame(CheckerColor playerColor) {
+		if (exists currentColor = game.currentColor) {
+			value opponentId = toPlayerId(playerColor.oppositeColor);
+			messageBroadcaster(GameWonMessage(matchId, opponentId, playerColor.oppositeColor));
+		}
+		return endGame();
+	}
+	
 	function endTurn(CheckerColor playerColor) {
-		if (!game.isCurrentColor(playerColor)) {
+		if (blackWarnings > configuration.maxWarningCount) {
+			return surrenderGame(black);
+		} else if (whiteWarnings > configuration.maxWarningCount) {
+			return surrenderGame(white);
+		} else if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
 		} else if (game.endTurn(playerColor)) {
@@ -160,24 +182,6 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		}
 	}
 	
-	function endGame() {
-		if (game.end()) {
-			messageBroadcaster(GameEndedMessage(matchId, player1Id, player1Color));
-			messageBroadcaster(GameEndedMessage(matchId, player2Id, player2Color));
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	function surrenderGame(CheckerColor playerColor) {
-		if (exists currentColor = game.currentColor) {
-			value opponentId = toPlayerId(playerColor.oppositeColor);
-			messageBroadcaster(GameWonMessage(matchId, opponentId, playerColor.oppositeColor));
-		}
-		return endGame();
-	}
-	
 	function handleMessage(InboundGameMessage message, CheckerColor playerColor) {
 		switch (message) 
 		case (is StartGameMessage) {
@@ -195,10 +199,6 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		case (is EndTurnMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, endTurn(playerColor));
 		}
-		case (is CheckTimeoutMessage) {
-			// TODO always return success in order to avoid errors on client side
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, true);
-		}
 		case (is EndGameMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, surrenderGame(playerColor));
 		}
@@ -207,32 +207,50 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		}
 	}
 	
-	function handleTimeout(InboundGameMessage message, CheckerColor playerColor) {
+	void doSoftTimeout() {
+		if (exists currentColor = game.currentColor) {
+			messageBroadcaster(TurnTimedOutMessage(matchId, toPlayerId(currentColor), currentColor));
+		} else {
+			if (game.mustRollDice(player1Color)) {
+				messageBroadcaster(TurnTimedOutMessage(matchId, player1Id, player1Color));
+			}
+			if (game.mustRollDice(player2Color)) {
+				messageBroadcaster(TurnTimedOutMessage(matchId, player2Id, player2Color));
+			}
+		}
+	}
+	
+	void doHardTimeout() {
 		if (exists currentColor = game.currentColor) {
 			increaseWarningCount(currentColor, configuration.timeoutActionWarningCount);
 			endTurn(currentColor);
 		} else {
 			endGame();
 		}
-		return GameActionResponseMessage(matchId, message.playerId, playerColor, message is CheckTimeoutMessage);
 	}
 	
-	shared Boolean isInactive(Instant currentTime) {
-		return game.timedOut(currentTime.minus(configuration.gameInactiveTimeout));
+	function handleHardTimeout(InboundGameMessage message, CheckerColor playerColor) {
+		doHardTimeout();
+		return GameActionResponseMessage(matchId, message.playerId, playerColor, false);
+	}
+	
+	shared void notifyTimeouts(Instant currentTime) {
+		if (game.timedOut(currentTime.minus(configuration.serverAdditionalTimeout))) {
+			doHardTimeout();
+		} else if (game.timedOut(currentTime)) {
+			// TODO notification should be done only once
+			doSoftTimeout();
+		}
 	}
 	
 	function process(InboundGameMessage message, Instant currentTime, CheckerColor color) {
 		variable GameActionResponseMessage|GameStateResponseMessage result;
 		if (game.timedOut(currentTime.minus(configuration.serverAdditionalTimeout))) {
-			result = handleTimeout(message, color);
+			result = handleHardTimeout(message, color);
 		} else {
 			result = handleMessage(message, color);
 		}
-		if (blackWarnings > configuration.maxWarningCount) {
-			surrenderGame(black);
-		} else if (whiteWarnings > configuration.maxWarningCount) {
-			surrenderGame(white);
-		}
+		
 		return result;
 	}
 	

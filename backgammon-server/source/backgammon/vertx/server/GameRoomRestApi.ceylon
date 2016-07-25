@@ -1,5 +1,4 @@
 import backgammon.common {
-	RoomId,
 	TableStateRequestMessage,
 	GameStateRequestMessage,
 	formatRoomMessage,
@@ -11,7 +10,6 @@ import backgammon.common {
 	InboundTableMessage,
 	RoomMessage,
 	PlayerReadyMessage,
-	CheckTimeoutMessage,
 	EndTurnMessage,
 	EndGameMessage,
 	UndoMovesMessage,
@@ -44,7 +42,7 @@ final class GameRoomRestApi(Vertx vertx) {
 	void handleTableStateRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists tableId = context.getRequestTableId(), exists playerId = context.getCurrentPlayerId()) {
-			forwardResponse(context, TableStateRequestMessage(playerId, RoomId(tableId.roomId), tableId.table));
+			forwardResponse(context, TableStateRequestMessage(playerId, tableId));
 		}
 	}
 	
@@ -89,14 +87,7 @@ final class GameRoomRestApi(Vertx vertx) {
 			forwardResponse(context, UndoMovesMessage(matchId, playerId));
 		}
 	}
-	
-	void handlCheckTimeoutRequest(RoutingContext rc) {
-		value context = GameRoomRoutingContext(rc);
-		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
-			forwardResponse(context, CheckTimeoutMessage(matchId, playerId));
-		}
-	}
-	
+
 	void handlEndTurnRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
@@ -120,7 +111,6 @@ final class GameRoomRestApi(Vertx vertx) {
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/ready").handler(handlPlayerReadyRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/move/:sourcePosition/:targetPosition").handler(handlMakeMoveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/undomoves").handler(handlUndoMovesRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/timeout").handler(handlCheckTimeoutRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handlEndTurnRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endgame").handler(handlEndGameRequest);
 		return restApi;

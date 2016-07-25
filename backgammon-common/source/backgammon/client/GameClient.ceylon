@@ -19,8 +19,8 @@ import backgammon.common {
 	MatchId,
 	PlayerReadyMessage,
 	EndTurnMessage,
-	CheckTimeoutMessage,
-	MakeMoveMessage
+	MakeMoveMessage,
+	TurnTimedOutMessage
 }
 import backgammon.game {
 	Game,
@@ -228,6 +228,15 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		case (is GameActionResponseMessage) {
 			return message.success;
 		}
+		case (is TurnTimedOutMessage) {
+			if (exists currentColor = game.currentColor) {
+				gui.showPlayerMessage(currentColor, "0:00", false);
+			} else {
+				gui.showPlayerMessage(player1Color, "0:00", true);
+				gui.showPlayerMessage(player2Color, "0:00", true);
+			}
+			return true;
+		}
 	}
 	
 	void handleDelayedActions(Instant time) {
@@ -242,15 +251,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		handleDelayedActions(time);
 		
 		if (game.timedOut(time.minus(checkTimeoutDelay))) {
-			gui.hideSubmitButton();
-			gui.hideUndoButton();
-			if (exists currentColor = game.currentColor) {
-				gui.showPlayerMessage(currentColor, "Time out", false);
-			} else {
-				gui.showPlayerMessage(player1Color, "Time out", true);
-				gui.showPlayerMessage(player2Color, "Time out", true);
-			}
-			messageBroadcaster(CheckTimeoutMessage(matchId, playerId));
 			return true;
 		} else if (exists currentColor = game.currentColor, exists remainingTime = game.remainingTime(time)) {
 			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime), true);
@@ -269,23 +269,20 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	shared Boolean handleSubmitEvent() {
 		if (exists color = playerColor, game.mustRollDice(color), exists currentRoll = game.currentRoll) {
-			if (game.begin(color)) {
+			if (game.begin(color)) { // TODO should not modify game state here
 				gui.showDiceValues(color, currentRoll.getValue(color), null);
 				gui.hideSubmitButton();
 				gui.showPlayerMessage(color, "Ready", false);
 				delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(PlayerReadyMessage(matchId, playerId), initialRollDelay));
 				return true;
 			} else {
-				print("Cannot begin with ``color`` black:``game.mustRollDice(black)`` white:``game.mustRollDice(white)``");
 				return false;
 			}
 		} else if (exists color = playerColor, game.mustMakeMove(color)) {
-			if (game.endTurn(color)) {
+			if (game.isCurrentColor(color)) {
 				gui.hidePossibleMoves();
 				gui.showSelectedChecker(null);
 				gui.hideSubmitButton();
-				gui.showCurrentPlayer(null);
-				gui.showPlayerMessage(color, "Ready", false);
 				messageBroadcaster(EndTurnMessage(matchId, playerId));
 				return true;
 			} else {

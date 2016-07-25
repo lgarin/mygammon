@@ -6,7 +6,6 @@ import backgammon.common {
 	TableId,
 	MatchState,
 	CreatedMatchMessage,
-	OutboundRoomMessage,
 	OutboundTableMessage,
 	OutboundGameMessage,
 	LeftTableMessage,
@@ -53,22 +52,6 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		}
 	}
 	
-	
-	shared Boolean handleRoomMessage(OutboundRoomMessage message) {
-		if (!message.success) {
-			return false;
-		}
-		switch (message)
-		case (is TableStateResponseMessage) {
-			handleTableStateResponseMessage(message);
-			return true;
-		}
-		else {
-			// ignore other messages
-			return true;
-		}
-	}
-	
 	shared Boolean handleTableMessage(OutboundTableMessage message) {
 		if (tableId != message.tableId) {
 			return false;
@@ -87,6 +70,10 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 			} else {
 				return true;
 			}
+		}
+		case (is TableStateResponseMessage) {
+			handleTableStateResponseMessage(message);
+			return true;
 		}
 		else {
 			// ignore other messages

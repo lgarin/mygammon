@@ -7,8 +7,8 @@ shared sealed interface TableMessage of OutboundTableMessage | InboundTableMessa
 	shared default actual Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "tableId" -> tableId.toJson()});
 }
 
-shared sealed interface OutboundTableMessage of JoinedTableMessage | LeftTableMessage | WaitingOpponentMessage | CreatedMatchMessage satisfies TableMessage {}
-shared sealed interface InboundTableMessage of LeaveTableMessage satisfies TableMessage {}
+shared sealed interface OutboundTableMessage of JoinedTableMessage | LeftTableMessage | WaitingOpponentMessage | CreatedMatchMessage | TableStateResponseMessage satisfies TableMessage {}
+shared sealed interface InboundTableMessage of LeaveTableMessage | TableStateRequestMessage satisfies TableMessage {}
 
 shared final class JoinedTableMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies OutboundTableMessage {}
 shared JoinedTableMessage parseJoinedTableMessage(Object json) {
@@ -40,6 +40,23 @@ shared LeaveTableMessage parseLeaveTableMessage(Object json) {
 	return LeaveTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
 }
 
+
+shared final class TableStateRequestMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies InboundTableMessage {}
+
+shared TableStateRequestMessage parseTableStateRequestMessage(Object json) {
+	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
+}
+
+shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared MatchState? match, shared actual Boolean success) satisfies OutboundTableMessage & RoomResponseMessage {
+	toJson() => toExtendedJson({"match" -> match?.toJson(), "success" -> success});
+	shared Boolean gameStarted => match?.gameStarted else false;
+	
+}
+shared TableStateResponseMessage parseTableStateResponseMessage(Object json) {
+	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), parseMatchState(json.getObjectOrNull("match")), json.getBoolean("success"));
+}
+
+
 shared OutboundTableMessage? parseOutboundTableMessage(String typeName, Object json) {
 	if (typeName == `class JoinedTableMessage`.name) {
 		return parseWaitingOpponentMessage(json);
@@ -49,6 +66,8 @@ shared OutboundTableMessage? parseOutboundTableMessage(String typeName, Object j
 		return parseWaitingOpponentMessage(json);
 	} else if (typeName == `class CreatedMatchMessage`.name) {
 		return parseCreatedMatchMessage(json);
+	} else if (typeName == `class TableStateResponseMessage`.name) {
+		return parseTableStateResponseMessage(json);
 	} else {
 		return null;
 	}
@@ -57,6 +76,8 @@ shared OutboundTableMessage? parseOutboundTableMessage(String typeName, Object j
 shared InboundTableMessage? parseInboundTableMessage(String typeName, Object json) {
 	if (typeName == `class LeaveTableMessage`.name) {
 		return parseLeaveTableMessage(json);
+	} else if (typeName == `class TableStateRequestMessage`.name) {
+		return parseTableStateRequestMessage(json);
 	} else {
 		return null;
 	}

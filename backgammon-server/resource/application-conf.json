@@ -1,0 +1,13 @@
+{
+	"roomId": "test",
+	"tableCount": 1,
+	"roomThreadCount": 2,
+	"gameThreadCount": 10,
+	"hostname": "localhost",
+	"port": 8080,
+	"maxTurnDuration": 60000,
+	"serverAdditionalTimeout": 1000,
+	"playerInactiveTimeout": 1200000,
+	"maxWarningCount": 3,
+	"maxUndoPerTurn": 1
+}

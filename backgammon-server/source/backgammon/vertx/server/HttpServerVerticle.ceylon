@@ -15,7 +15,6 @@ import ceylon.logging {
 	logger
 }
 import ceylon.time {
-	Duration,
 	now
 }
 
@@ -31,18 +30,12 @@ import io.vertx.ceylon.web.handler {
 
 shared final class HttpServerVerticle() extends Verticle() {
 	
-	value roomId = "test";
-	value hostname = "localhost";
-	value port = 8080;
-	
-	// TODO read config from vertx.getOrCreateContext().config() 
-	value config = RoomConfiguration(roomId, 100, Duration(60000));
-
-	void startHttp() {
-		value authRouterFactory = GoogleAuthRouterFactory(vertx, hostname, port);
+	void startHttp(RoomConfiguration roomConfig) {
+		
+		value authRouterFactory = GoogleAuthRouterFactory(vertx, roomConfig.hostname, roomConfig.port);
 		value router = routerFactory.router(vertx);
 
-		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(config.playerInactiveTimeout.milliseconds));
+		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(roomConfig.playerInactiveTimeout.milliseconds));
 		//router.route().handler(loggerHandler.create().handle);
 		
 		router.route("/static/*").handler(staticHandler.create("static").handle);
@@ -50,44 +43,45 @@ shared final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/eventbus", GameRoomEventBus(vertx).createEventBusRouter());
 		
 		router.mountSubRouter("/", authRouterFactory.createGoogleLoginRouter());
-		router.mountSubRouter("/", GameRoomRouterFactory(vertx, roomId).createRouter());
+		router.mountSubRouter("/", GameRoomRouterFactory(vertx, roomConfig.roomId).createRouter());
 		router.mountSubRouter("/api", GameRoomRestApi(vertx).createRouter());
 		
-		vertx.createHttpServer().requestHandler(router.accept).listen(port);
+		vertx.createHttpServer().requestHandler(router.accept).listen(roomConfig.port);
 		
-		logger(`package`).info("Started http://``hostname``:``port``");
+		logger(`package`).info("Started http://``roomConfig.hostname``:``roomConfig.port``");
 	}
 	
-	void startRoom() {
+	void startRoom(RoomConfiguration roomConfig) {
 		value eventBus = GameRoomEventBus(vertx);
 		
 		void sendGameCommand(InboundGameMessage message) {
 			// do not send the message immedialty
 			// TODO hack in order to avoid inital roll message coming to the client before the created game message
-			vertx.setTimer(config.serverAdditionalTimeout.milliseconds, void (Integer timerId) {
+			vertx.setTimer(roomConfig.serverAdditionalTimeout.milliseconds, void (Integer timerId) {
 				eventBus.sendInboundMessage(message, void (Anything response) {});
 			});
 		}
 		
-		value matchRoom = MatchRoom(config, eventBus.publishOutboundTableMessage, sendGameCommand);
-		eventBus.registerInboundRoomMessageConsumer(roomId, config.roomThreadCount, matchRoom.processRoomMessage);
-		eventBus.registerInboundTableMessageConsumer(roomId, config.roomThreadCount, matchRoom.processTableMessage);
-		eventBus.registerInboundMatchMessageConsumer(roomId, config.roomThreadCount, matchRoom.processMatchMessage);
+		value matchRoom = MatchRoom(roomConfig, eventBus.publishOutboundTableMessage, sendGameCommand);
+		eventBus.registerInboundRoomMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processRoomMessage);
+		eventBus.registerInboundTableMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processTableMessage);
+		eventBus.registerInboundMatchMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processMatchMessage);
 		
-		value gameRoom = GameRoom(config, eventBus.publishOutboundGameMessage);
-		eventBus.registerInboundGameMessageConsumer(roomId, config.gameThreadCount, gameRoom.processGameMessage);
+		value gameRoom = GameRoom(roomConfig, eventBus.publishOutboundGameMessage);
+		eventBus.registerInboundGameMessageConsumer(roomConfig.roomId, roomConfig.gameThreadCount, gameRoom.processGameMessage);
 		
-		vertx.setPeriodic(config.playerInactiveTimeout.milliseconds, void (Integer val) {
+		vertx.setPeriodic(roomConfig.serverAdditionalTimeout.milliseconds / 2, void (Integer val) {
 			value currentTime = now();
 			matchRoom.removeInactivePlayers(currentTime);
-			gameRoom.removeInactiveGames(currentTime);
+			gameRoom.notifySoftTimeouts(currentTime);
 		});
 		
-		logger(`package`).info("Started room ``roomId``");
+		logger(`package`).info("Started room ``roomConfig.roomId``");
 	}
 
 	shared actual void start() {
-		startHttp();
-		startRoom();
+		value roomConfig = RoomConfiguration(config);
+		startHttp(roomConfig);
+		startRoom(roomConfig);
 	}
 }

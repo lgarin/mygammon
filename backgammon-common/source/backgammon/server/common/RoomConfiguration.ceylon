@@ -1,12 +1,15 @@
-import ceylon.time {
-
-	Duration
-}
 import backgammon.game {
-
 	GameConfiguration
 }
-shared final class RoomConfiguration(shared String roomName, shared Integer tableCount, Duration maxTurnDuration) extends GameConfiguration(maxTurnDuration) {
-	shared Integer roomThreadCount = 2;
-	shared Integer gameThreadCount = 10;
+
+import ceylon.json {
+	Object
+}
+shared final class RoomConfiguration(Object? json) extends GameConfiguration(json) {
+	shared String roomId = json?.getStringOrNull("roomId") else "test";
+	shared Integer tableCount = json?.getIntegerOrNull("tableCount") else 1;
+	shared Integer roomThreadCount = json?.getIntegerOrNull("roomThreadCount") else 2;
+	shared Integer gameThreadCount = json?.getIntegerOrNull("gameThreadCount") else 10;
+	shared String hostname = json?.getStringOrNull("hostname") else "localhost";
+	shared Integer port = json?.getIntegerOrNull("port") else 8080;
 }

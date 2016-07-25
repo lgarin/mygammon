@@ -45,6 +45,12 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		}
 	}
 	
+	function getAllGamerServers() {
+		try (lock) {
+			return gameMap.items.clone();
+		}
+	}
+	
 	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
 		if (exists server = getGameServer(message)) {
 			return server.processGameMessage(message);
@@ -54,13 +60,9 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		}
 	}
 	
-	shared void removeInactiveGames(Instant currentTime) {
-		try (lock) {
-			for (entry in gameMap) {
-				if (entry.item.isInactive(currentTime)) {
-					gameMap.remove(entry.key);
-				}
-			}
+	shared void notifySoftTimeouts(Instant currentTime) {
+		for (game in getAllGamerServers()) {
+			game.notifyTimeouts(currentTime);
 		}
 	}
 }

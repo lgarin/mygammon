@@ -22,13 +22,13 @@ shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage 
 	string => toJson().string;
 }
 
-shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage | TableStateRequestMessage satisfies RoomMessage {}
+shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage satisfies RoomMessage {}
 
 shared sealed interface RoomResponseMessage {
 	shared formal Boolean success;
 }
 
-shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeftRoomMessage | FoundMatchTableMessage | TableStateResponseMessage satisfies RoomMessage & RoomResponseMessage {
+shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeftRoomMessage | FoundMatchTableMessage satisfies RoomMessage & RoomResponseMessage {
 	shared default actual Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success });
 }
 
@@ -61,23 +61,6 @@ shared FoundMatchTableMessage parseFoundMatchTableMessage(Object json) {
 	return FoundMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getIntegerOrNull("table"));
 }
 
-shared final class TableStateRequestMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer table) satisfies InboundRoomMessage {
-	toJson() => toExtendedJson({"table" -> table});
-}
-shared TableStateRequestMessage parseTableStateRequestMessage(Object json) {
-	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getInteger("table"));
-}
-
-// TODO should be a table message
-shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer table, shared MatchState? match, shared actual Boolean success) satisfies OutboundRoomMessage {
-	toJson() => toExtendedJson({"table" -> table, "match" -> match?.toJson()});
-	shared Boolean gameStarted => match?.gameStarted else false;
-	
-}
-shared TableStateResponseMessage parseTableStateResponseMessage(Object json) {
-	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getInteger("table"), parseMatchState(json.getObjectOrNull("match")), json.getBoolean("success"));
-}
-
 shared Object formatRoomMessage(RoomMessage message) {
 	return Object({type(message).declaration.name -> message.toJson()});
 }
@@ -87,8 +70,6 @@ shared InboundRoomMessage? parseInboundRoomMessage(String typeName, Object json)
 		return parseEnterRoomMessage(json);
 	} else if (typeName == `class FindMatchTableMessage`.name) {
 		return parseFindMatchTableMessage(json);
-	} else if (typeName == `class TableStateRequestMessage`.name) {
-		return parseTableStateRequestMessage(json);
 	} else {
 		return null;
 	}
@@ -99,8 +80,6 @@ shared OutboundRoomMessage? parseOutboundRoomMessage(String typeName, Object jso
 		return parseEnteredRoomMessage(json);
 	} else if (typeName == `class FoundMatchTableMessage`.name) {
 		return parseFoundMatchTableMessage(json);
-	} else if (typeName == `class TableStateResponseMessage`.name) {
-		return parseTableStateResponseMessage(json);
 	} else {
 		return null;
 	}

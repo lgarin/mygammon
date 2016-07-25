@@ -32,7 +32,7 @@ import ceylon.time {
 shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander) {
 	
 	value lock = ObtainableLock(); 
-	value room = Room(configuration.roomName, configuration.tableCount, messageBroadcaster);
+	value room = Room(configuration.roomId, configuration.tableCount, messageBroadcaster);
 	
 	shared OutboundRoomMessage processRoomMessage(InboundRoomMessage message) {
 		try (lock) {
@@ -56,13 +56,6 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 				}
 				return FoundMatchTableMessage(message.playerId, room.id, null);
 			}
-			case (is TableStateRequestMessage) {
-				if (exists table = room.tables[message.table]) {
-					return TableStateResponseMessage(message.playerId, message.roomId, message.table, table.matchInfo, true);
-				} else {
-					return TableStateResponseMessage(message.playerId, message.roomId, message.table, null, false);
-				}
-			}
 		}
 	}
 	
@@ -74,6 +67,13 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 					return LeftTableMessage(message.playerId, message.tableId, true);
 				} else {
 					return LeftTableMessage(message.playerId, message.tableId, false);
+				}
+			}
+			case (is TableStateRequestMessage) {
+				if (exists table = room.tables[message.tableId.table]) {
+					return TableStateResponseMessage(message.playerId, message.tableId, table.matchInfo, true);
+				} else {
+					return TableStateResponseMessage(message.playerId, message.tableId, null, false);
 				}
 			}
 		}

@@ -13,11 +13,9 @@ import backgammon.common {
 	PlayerInfo,
 	parseBase64PlayerInfo,
 	RoomResponseMessage,
-	parseOutboundRoomMessage,
 	InboundGameMessage,
 	CreatedMatchMessage,
 	OutboundGameMessage,
-	OutboundRoomMessage,
 	parseOutboundTableMessage,
 	parseOutboundMatchMessage,
 	parseOutboundGameMessage,
@@ -27,7 +25,6 @@ import backgammon.common {
 	AcceptMatchMessage,
 	StartGameMessage,
 	PlayerReadyMessage,
-	CheckTimeoutMessage,
 	MakeMoveMessage,
 	UndoMovesMessage,
 	EndTurnMessage,
@@ -36,7 +33,9 @@ import backgammon.common {
 	InboundTableMessage,
 	LeaveTableMessage,
 	TableStateResponseMessage,
-	formatRoomMessage
+	formatRoomMessage,
+	TableStateRequestMessage,
+	PlayerId
 }
 
 import ceylon.json {
@@ -112,9 +111,7 @@ shared Boolean onTimer() {
 }
 
 Boolean handleServerMessage(String typeName, Object json) {
-	if (exists message = parseOutboundRoomMessage(typeName, json)) {
-		return handleRoomMessage(message);
-	} else if (exists message = parseOutboundTableMessage(typeName, json)) {
+	if (exists message = parseOutboundTableMessage(typeName, json)) {
 		return handleTableMessage(message);
 	} else if (exists message = parseOutboundMatchMessage(typeName, json)) {
 		return handleMatchMessage(message);
@@ -158,30 +155,16 @@ void registerMessageHandler(String address) {
 	}
 }
 
-Boolean handleRoomMessage(OutboundRoomMessage message) {
-	if (!message.success) {
+Boolean handleTableMessage(OutboundTableMessage message) {
+
+	if (is RoomResponseMessage message, !message.success) {
 		return false;
 	}
 	
 	if (is TableStateResponseMessage message, exists currentMatch = message.match) {
 		// TODO some changes may occur on the state between the response and the registration
 		registerMessageHandler("OutboundGameMessage-``currentMatch.id``");
-	}
-	
-	if (exists currentClient = tableClient) {
-		return currentClient.handleRoomMessage(message);
-	} else {
-		return false;
-	}
-}
-
-Boolean handleTableMessage(OutboundTableMessage message) {
-
-	if (is RoomResponseMessage message, !message.success) {
-		return false;
-	}
-
-	if (is CreatedMatchMessage message) {
+	} else if (is CreatedMatchMessage message) {
 		registerMessageHandler("OutboundGameMessage-``message.matchId``");
 	}
 	
@@ -246,10 +229,6 @@ void makeApiRequest(String url) {
 	};
 }
 
-void requestTableState(TableId tableId) {
-	makeApiRequest("/api/room/``tableId.roomId``/table/``tableId.table``/state");
-}
-
 void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage message) {
 	print(formatRoomMessage(message));
 	switch (message)
@@ -261,9 +240,6 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 	}
 	case (is PlayerReadyMessage) {
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/ready");
-	}
-	case (is CheckTimeoutMessage) {
-		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/timeout");
 	}
 	case (is MakeMoveMessage) {
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/move/``message.sourcePosition``/``message.targetPosition``");
@@ -282,6 +258,9 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 	}
 	case (is LeaveTableMessage) {
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/leave");
+	}
+	case (is TableStateRequestMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/state");
 	}
 }
 
@@ -307,6 +286,6 @@ shared void run() {
 	if (exists tableId = extractTableId(window.location.string), exists playerInfo = extractPlayerInfo(window.document.cookie)) {
 		tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
 		registerMessageHandler("OutboundTableMessage-``tableId``");
-		requestTableState(tableId);
+		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
 	}
 }

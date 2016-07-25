@@ -27,16 +27,21 @@ shared final class GameGui(Document document) {
 	value defaultPlayerName = "";
 	value initalPlayerMessage = "Waiting...";
 	
+	void resetClass(Element element, String* classNames) {
+		value classList = element.classList;
+		while (classList.length > 0) {
+			if (exists item = classList.item(0)) {
+				classList.remove(item);
+			}
+		}
+		for (value className in classNames) {
+			classList.add(className);
+		}
+	}
+	
 	void setClass(String elementId, String* classNames) {
-		if (exists classList = document.getElementById(elementId)?.classList) {
-			while (classList.length > 0) {
-				if (exists item = classList.item(0)) {
-					classList.remove(item);
-				}
-			}
-			for (value className in classNames) {
-				classList.add(className);
-			}
+		if (exists element = document.getElementById(elementId)) {
+			resetClass(element, *classNames);
 		}
 	}
 	
@@ -165,16 +170,12 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
-	void resetCheckers(Element point, String checkerColorClass, String oppositeCheckerColorClass, Integer checkerCount) {
+	void resetCheckers(Element point, String checkerColorClass, Integer checkerCount) {
 		value checkers = point.getElementsByTagName("div");
 		for (i in 0:checkers.length) {
 			if (exists checker = checkers.item(i)) {
 				if (i < checkerCount) {
-					checker.classList.remove("temp");
-					checker.classList.remove("selected");
-					checker.classList.remove(oppositeCheckerColorClass);
-					checker.classList.add(checkerColorClass);
-					checker.classList.remove("hidden");
+					resetClass(checker, "checker", checkerColorClass);
 				} else {
 					checker.classList.add("hidden");
 				}
@@ -188,9 +189,9 @@ shared final class GameGui(Document document) {
 			if (exists point = document.getElementById(domId)) {
 				value count = board.countCheckers(position, color);
 				if (position == board.homePosition(color)) {
-					resetCheckers(point, "topdown-``color.name``", "topdown-``color.oppositeColor.name``", count);
+					resetCheckers(point, "topdown-``color.name``", count);
 				} else if (count > 0) {
-					resetCheckers(point, "checker-``color.name``", "checker-``color.oppositeColor.name``", count);
+					resetCheckers(point, "checker-``color.name``", count);
 				}
 			}
 		}
@@ -202,13 +203,10 @@ shared final class GameGui(Document document) {
 		redrawNonEmptyPoints(board, white);
 	}
 	
-	void addTempChecker(Element point, String checkerColorClass, String oppositeCheckerColorClass, Integer checkerCount) {
+	void addTempChecker(Element point, String checkerColorClass, Integer checkerCount) {
 		value checkers = point.getElementsByTagName("div");
 		if (exists checker = checkers.item(checkerCount)) {
-			checker.classList.remove(oppositeCheckerColorClass);
-			checker.classList.add(checkerColorClass);
-			checker.classList.add("temp");
-			checker.classList.remove("hidden");
+			resetClass(checker, "checker", checkerColorClass, "temp");
 		}
 	}
 	
@@ -230,7 +228,7 @@ shared final class GameGui(Document document) {
 		for (position in positions) {
 			value domId = getDomIdUsingPoint(board, color, position);
 			if (exists point = document.getElementById(domId)) {
-				addTempChecker(point, "checker-``color.name``", "checker-``color.oppositeColor.name``", board.countCheckers(position, color) + board.countCheckers(position, color.oppositeColor));
+				addTempChecker(point, "checker-``color.name``", board.countCheckers(position, color) + board.countCheckers(position, color.oppositeColor));
 			}
 		}
 	}

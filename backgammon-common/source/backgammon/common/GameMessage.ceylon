@@ -15,9 +15,9 @@ import ceylon.time {
 
 shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage satisfies MatchMessage {}
 
-shared interface InboundGameMessage of StartGameMessage | PlayerReadyMessage | CheckTimeoutMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {}
+shared interface InboundGameMessage of StartGameMessage | PlayerReadyMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {}
 
-shared interface OutboundGameMessage of InitialRollMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | DesynchronizedMessage | NotYourTurnMessage | GameWonMessage | GameEndedMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
+shared interface OutboundGameMessage of InitialRollMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameWonMessage | GameEndedMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
 	shared formal CheckerColor playerColor;
 	shared actual default Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "playerColor" -> playerColor.name });
 }
@@ -39,12 +39,6 @@ shared InitialRollMessage parseInitialRollMessage(Object json) {
 shared final class PlayerReadyMessage(shared actual MatchId matchId, shared actual PlayerId playerId) satisfies InboundGameMessage {}
 shared PlayerReadyMessage parsePlayerReadyMessage(Object json) {
 	return PlayerReadyMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")));
-}
-
-// TODO timeout should be handled differently
-shared final class CheckTimeoutMessage(shared actual MatchId matchId, shared actual PlayerId playerId) satisfies InboundGameMessage {}
-shared CheckTimeoutMessage parseCheckTimeoutMessage(Object json) {
-	return CheckTimeoutMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")));
 }
 
 shared final class StartTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared DiceRoll roll, shared Duration maxDuration, shared Integer maxUndo) satisfies OutboundGameMessage {
@@ -83,6 +77,11 @@ shared final class InvalidMoveMessage(shared actual MatchId matchId, shared actu
 }
 shared InvalidMoveMessage parseInvalidMoveMessage(Object json) {
 	return InvalidMoveMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getInteger("sourcePosition"), json.getInteger("targetPosition"));
+}
+
+shared final class TurnTimedOutMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor) satisfies OutboundGameMessage {}
+shared TurnTimedOutMessage parseTurnTimedOutMessage(Object json) {
+	return TurnTimedOutMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")));
 }
 
 shared final class DesynchronizedMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared GameState state) satisfies OutboundGameMessage {
@@ -148,6 +147,8 @@ shared OutboundGameMessage? parseOutboundGameMessage(String typeName, Object jso
 		return parseUndoneMovesMessage(json);
 	} else if (typeName == `class InvalidMoveMessage`.name) {
 		return parseInvalidMoveMessage(json);
+	} else if (typeName == `class TurnTimedOutMessage`.name) {
+		return parseTurnTimedOutMessage(json);
 	} else if (typeName == `class DesynchronizedMessage`.name) {
 		return parseDesynchronizedMessage(json);
 	} else if (typeName == `class NotYourTurnMessage`.name) {
@@ -170,8 +171,6 @@ shared InboundGameMessage? parseInboundGameMessage(String typeName, Object json)
 		return parseStartGameMessage(json);
 	} else if (typeName == `class PlayerReadyMessage`.name) {
 		return parsePlayerReadyMessage(json);
-	} else if (typeName == `class CheckTimeoutMessage`.name) {
-		return parseCheckTimeoutMessage(json);
 	} else if (typeName == `class MakeMoveMessage`.name) {
 		return parseMakeMoveMessage(json);
 	} else if (typeName == `class UndoMovesMessage`.name) {
