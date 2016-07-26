@@ -13,8 +13,8 @@ shared class GameConfiguration(Object? json) {
 	shared Duration maxEmptyTurnDuration = Duration(maxTurnDuration.milliseconds / 4);
 	shared Duration serverAdditionalTimeout = Duration(json?.getIntegerOrNull("serverAdditionalTimeout") else 1000);
 	shared Duration playerInactiveTimeout = Duration(json?.getIntegerOrNull("playerInactiveTimeout") else 1200000);
-	shared Integer maxWarningCount = json?.getIntegerOrNull("maxWarningCount") else 3;
-	shared Integer invalidMoveWarningCount = 2;
-	shared Integer timeoutActionWarningCount = 1;
+	shared Integer maxWarningCount = json?.getIntegerOrNull("maxWarningCount") else 2;
 	shared Integer maxUndoPerTurn = json?.getIntegerOrNull("maxUndoPerTurn") else 1;
+	shared Integer maxSkippedPlayerTurn = json?.getIntegerOrNull("maxSkippedPlayerTurn") else 3;
+	shared Integer maxSkippedGameTurn = 2 * maxSkippedPlayerTurn - 1;
 }

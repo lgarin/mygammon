@@ -45,8 +45,15 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	
 	value lock = ObtainableLock(); 
 	value diceRoller = DiceRoller();
-	variable Integer blackWarnings = 0;
-	variable Integer whiteWarnings = 0;
+	
+	// TODO should be in game state
+	variable Integer blackInvalidMoves = 0;
+	variable Integer whiteInvalidMoves = 0;
+	variable Integer blackSuccessiveTimeouts = 0;
+	variable Integer whiteSuccessiveTimeouts = 0;
+	
+	variable Boolean softTimeoutNotified = false;
+	
 	value game = Game();
 	
 	function toPlayerColor(PlayerId playerId) {
@@ -80,13 +87,33 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		}
 	}
 	
-	void increaseWarningCount(CheckerColor playerColor, Integer increment) {
+	void increaseInvalidMoveCount(CheckerColor playerColor) {
 		switch (playerColor)
 		case (black) {
-			blackWarnings += increment;
+			blackInvalidMoves++;
 		}
 		case (white) {
-			whiteWarnings += increment;
+			whiteInvalidMoves++;
+		}
+	}
+	
+	void increasePlayerTimeoutCount(CheckerColor color) {
+		switch (color)
+		case (black) { 
+			blackSuccessiveTimeouts++;
+		}
+		case (white) { 
+			whiteSuccessiveTimeouts++;
+		}
+	}
+	
+	void resetPlayerTimeoutCount(CheckerColor color) {
+		switch (color)
+		case (black) { 
+			blackSuccessiveTimeouts = 0;
+		}
+		case (white) { 
+			whiteSuccessiveTimeouts = 0;
 		}
 	}
 	
@@ -109,9 +136,17 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	}
 	
 	function endTurn(CheckerColor playerColor) {
-		if (blackWarnings > configuration.maxWarningCount) {
+		softTimeoutNotified = false;
+		
+		if (blackSuccessiveTimeouts + whiteSuccessiveTimeouts >= configuration.maxSkippedGameTurn) {
+			return endGame();
+		} else if (blackSuccessiveTimeouts >= configuration.maxSkippedPlayerTurn) {
 			return surrenderGame(black);
-		} else if (whiteWarnings > configuration.maxWarningCount) {
+		} else if (whiteSuccessiveTimeouts >= configuration.maxSkippedPlayerTurn) {
+			return surrenderGame(white);
+		} else if (blackInvalidMoves > configuration.maxWarningCount) {
+			return surrenderGame(black);
+		} else if (whiteInvalidMoves > configuration.maxWarningCount) {
 			return surrenderGame(white);
 		} else if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
@@ -154,7 +189,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			messageBroadcaster(PlayedMoveMessage(matchId, toPlayerId(playerColor), playerColor, sourcePosition, targetPosition));
 			return true;
 		} else {
-			increaseWarningCount(playerColor, configuration.invalidMoveWarningCount);
+			increaseInvalidMoveCount(playerColor);
 			messageBroadcaster(InvalidMoveMessage(matchId, toPlayerId(playerColor), playerColor, sourcePosition, targetPosition));
 			return false;
 		}
@@ -162,6 +197,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	
 	function beginGame(CheckerColor playerColor) {
 		if (game.begin(playerColor)) {
+			
 			if (exists currentColor = game.currentColor) {
 				value roll = diceRoller.roll();
 				if (game.beginTurn(currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn)) {
@@ -183,6 +219,8 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	}
 	
 	function handleMessage(InboundGameMessage message, CheckerColor playerColor) {
+		resetPlayerTimeoutCount(playerColor);
+		
 		switch (message) 
 		case (is StartGameMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, sendInitialRoll());
@@ -207,7 +245,9 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		}
 	}
 	
-	void doSoftTimeout() {
+	void doSoftTimeout(Instant currentTime) {
+		softTimeoutNotified = true;
+		
 		if (exists currentColor = game.currentColor) {
 			messageBroadcaster(TurnTimedOutMessage(matchId, toPlayerId(currentColor), currentColor));
 		} else {
@@ -222,7 +262,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	
 	void doHardTimeout() {
 		if (exists currentColor = game.currentColor) {
-			increaseWarningCount(currentColor, configuration.timeoutActionWarningCount);
+			increasePlayerTimeoutCount(currentColor);
 			endTurn(currentColor);
 		} else {
 			endGame();
@@ -234,12 +274,17 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		return GameActionResponseMessage(matchId, message.playerId, playerColor, false);
 	}
 	
-	shared void notifyTimeouts(Instant currentTime) {
+	void doTimeoutNotifications(Instant currentTime) {
 		if (game.timedOut(currentTime.minus(configuration.serverAdditionalTimeout))) {
 			doHardTimeout();
-		} else if (game.timedOut(currentTime)) {
-			// TODO notification should be done only once
-			doSoftTimeout();
+		} else if (!softTimeoutNotified && game.timedOut(currentTime)) {
+			doSoftTimeout(currentTime);
+		}
+	}
+	
+	shared void notifyTimeouts(Instant currentTime) {
+		try (lock) {
+			doTimeoutNotifications(currentTime);
 		}
 	}
 	

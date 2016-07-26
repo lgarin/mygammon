@@ -55,7 +55,10 @@ shared final class GameGui(Document document) {
 	
 	function formatSeconds(Integer seconds) => if (seconds < 10) then "0" + seconds.string else seconds.string;
 	
-	shared String formatPeriod(Duration duration) {
+	shared String formatPeriod(Duration duration, String timeoutMessage) {
+		if (duration.milliseconds < -999) {
+			return timeoutMessage;
+		}
 		value totalSeconds = (duration.milliseconds + 999) / 1000;
 		value minutes = totalSeconds / 60;
 		value seconds = totalSeconds - minutes * 60;

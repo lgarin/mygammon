@@ -41,7 +41,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	// TODO should be part of configuration
 	value initialRollDelay = Duration(2000);
-	value checkTimeoutDelay = Duration(2000);
 			
 	value game = Game();
 	
@@ -60,7 +59,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		if (message.playerId == playerId) {
 			if (game.initialRoll(message.roll, message.maxDuration)) {
 				game.begin(message.playerColor.oppositeColor);
-				gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration), true);
+				gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration, "Timeout"), true);
 				gui.showCurrentPlayer(message.playerColor);
 				gui.showDiceValues(message.playerColor, null, null);
 				gui.showSubmitButton("Roll");
@@ -80,7 +79,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		if (game.beginTurn(message.playerColor, message.roll, message.maxDuration, message.maxUndo)) {
 			gui.showDiceValues(message.playerColor.oppositeColor, null, null);
 			gui.showDiceValues(message.playerColor, message.roll.firstValue, message.roll.secondValue);
-			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration), true);
+			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration, "Timeout"), true);
 			gui.showPlayerMessage(message.playerColor.oppositeColor, "Waiting...", false);
 			gui.showCurrentPlayer(message.playerColor);
 			if (message.playerId == playerId) {
@@ -116,7 +115,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 		gui.redrawCheckers(game.board);
 		if (exists currentColor = game.currentColor, exists remainingTime = game.remainingTime(currentTime)) {
-			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime), true);
+			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, "Timeout"), true);
 			gui.showPlayerMessage(currentColor.oppositeColor, "Waiting...", true);
 			if (exists color = playerColor, currentColor == color) {
 				gui.showSubmitButton(null);
@@ -132,7 +131,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			
 			if (exists color = playerColor, game.mustRollDice(color), exists remainingTime = game.remainingTime(currentTime)) {
 				gui.showSubmitButton("Roll");
-				gui.showPlayerMessage(color, gui.formatPeriod(remainingTime), true);
+				gui.showPlayerMessage(color, gui.formatPeriod(remainingTime, "Timeout"), true);
 			} else {
 				gui.hideSubmitButton();
 			}
@@ -229,11 +228,12 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			return message.success;
 		}
 		case (is TurnTimedOutMessage) {
+			// TODO force timeout in game
 			if (exists currentColor = game.currentColor) {
-				gui.showPlayerMessage(currentColor, "0:00", false);
+				gui.showPlayerMessage(currentColor, "Timeout", false);
 			} else {
-				gui.showPlayerMessage(player1Color, "0:00", true);
-				gui.showPlayerMessage(player2Color, "0:00", true);
+				gui.showPlayerMessage(player1Color, "Timeout", true);
+				gui.showPlayerMessage(player2Color, "Timeout", true);
 			}
 			return true;
 		}
@@ -250,13 +250,13 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		
 		handleDelayedActions(time);
 		
-		if (game.timedOut(time.minus(checkTimeoutDelay))) {
+		if (game.timedOut(time)) {
 			return true;
 		} else if (exists currentColor = game.currentColor, exists remainingTime = game.remainingTime(time)) {
-			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime), true);
+			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, "Timeout"), true);
 			return true;
 		} else if (exists currentColor = playerColor, game.mustRollDice(currentColor), exists remainingTime = game.remainingTime(time)) {
-			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime), true);
+			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, "Timeout"), true);
 			return true;
 		} else {
 			return true;

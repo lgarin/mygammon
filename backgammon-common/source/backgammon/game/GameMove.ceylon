@@ -4,14 +4,7 @@ import ceylon.json {
 
 shared final class GameMove(shared Integer sourcePosition, shared Integer targetPosition, shared Integer rollValue, shared Boolean hitBlot) extends Object() {
 	
-	shared JsonObject toJson() {
-		value result = JsonObject();
-		result.put("sourcePosition", sourcePosition);
-		result.put("targetPosition", targetPosition);
-		result.put("rollValue", rollValue);
-		result.put("hitBlot", hitBlot);
-		return result;
-	}
+	shared JsonObject toJson() => JsonObject({"sourcePosition" -> sourcePosition, "targetPosition" -> targetPosition, "rollValue" -> rollValue, "hitBlot" -> hitBlot});
 	
 	shared actual Boolean equals(Object that) {
 		if (is GameMove that) {
@@ -38,5 +31,5 @@ shared final class GameMove(shared Integer sourcePosition, shared Integer target
 }
 
 shared GameMove parseGameMove(JsonObject json) {
-	return GameMove(json.getInteger("sourcePosition"), json.getInteger("targetPosition"), json.getInteger("rollValue"), json.getBoolean("hitBolt"));
+	return GameMove(json.getInteger("sourcePosition"), json.getInteger("targetPosition"), json.getInteger("rollValue"), json.getBoolean("hitBlot"));
 }

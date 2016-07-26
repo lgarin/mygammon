@@ -8,6 +8,7 @@
 	"maxTurnDuration": 60000,
 	"serverAdditionalTimeout": 1000,
 	"playerInactiveTimeout": 1200000,
-	"maxWarningCount": 3,
-	"maxUndoPerTurn": 1
+	"maxWarningCount": 2,
+	"maxUndoPerTurn": 1,
+	"maxSkippedPlayerTurn": 3
 }
