@@ -24,7 +24,7 @@ import backgammon.common {
 	InboundMatchMessage,
 	AcceptMatchMessage,
 	StartGameMessage,
-	PlayerReadyMessage,
+	PlayerBeginMessage,
 	MakeMoveMessage,
 	UndoMovesMessage,
 	EndTurnMessage,
@@ -52,7 +52,10 @@ import ceylon.time {
 GameGui gui = GameGui(window.document);
 variable TableClient? tableClient = null;
 
+variable String? draggedElementStyle = null;
+
 shared Boolean onStartDrag(HTMLElement source) {
+	draggedElementStyle = source.getAttribute("style");
 	if (exists gameClient = tableClient?.gameClient) {
 		return gameClient.handleStartDrag(source);
 	} else {
@@ -61,9 +64,12 @@ shared Boolean onStartDrag(HTMLElement source) {
 }
 
 shared Boolean onEndDrag(HTMLElement source) {
+	if (exists style = draggedElementStyle) {
+		// TODO only if drop failed
+		source.setAttribute("style", style);
+	}
 	gui.showSelectedChecker(null);
 	gui.hidePossibleMoves();
-	// TODO redraw checkers
 	return false;
 }
 
@@ -110,6 +116,20 @@ shared Boolean onTimer() {
 	}
 }
 
+shared String? confirmClose() {
+	if (exists gameClient = tableClient?.gameClient, gameClient.hasRunningGame) {
+		return "Do you really want to quit the game?";
+	} else {
+		return null;
+	}
+}
+
+shared void onClose() {
+	if (exists currentTableClient = tableClient) {
+		currentTableClient.handleLeaveEvent();
+	}
+}
+
 Boolean handleServerMessage(String typeName, Object json) {
 	if (exists message = parseOutboundTableMessage(typeName, json)) {
 		return handleTableMessage(message);
@@ -128,8 +148,6 @@ void onServerMessage(String messageString) {
 	if (is Object json = parse(messageString), exists typeName = json.keys.first) {
 		if (!handleServerMessage(typeName, json.getObject(typeName))) {
 			onServerError("Cannot handle message: ``messageString``");
-			// TODO reload may cause a loop
-			//window.location.reload();
 		}
 	} else {
 		onServerError("Cannot parse server response: ``messageString``");
@@ -137,7 +155,9 @@ void onServerMessage(String messageString) {
 }
 
 void onServerError(String messageString) {
-	window.alert(messageString);
+	print(messageString);
+	window.alert("An unexpected error occured.\nThe page will be reloaded.");
+	window.location.reload();
 }
 
 void registerMessageHandler(String address) {
@@ -238,8 +258,8 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 	case (is StartGameMessage) {
 		// ignore
 	}
-	case (is PlayerReadyMessage) {
-		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/ready");
+	case (is PlayerBeginMessage) {
+		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/begin");
 	}
 	case (is MakeMoveMessage) {
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/move/``message.sourcePosition``/``message.targetPosition``");
@@ -261,20 +281,6 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 	}
 	case (is TableStateRequestMessage) {
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/state");
-	}
-}
-
-shared String? confirmClose() {
-	if (exists gameClient = tableClient?.gameClient, gameClient.hasRunningGame) {
-		return "Do you really want to close the game?";
-	} else {
-		return null;
-	}
-}
-
-shared void onClose() {
-	if (exists currentTableClient = tableClient) {
-		currentTableClient.handleLeaveEvent();
 	}
 }
 

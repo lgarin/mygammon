@@ -9,7 +9,7 @@ import backgammon.common {
 	InboundRoomMessage,
 	InboundTableMessage,
 	RoomMessage,
-	PlayerReadyMessage,
+	PlayerBeginMessage,
 	EndTurnMessage,
 	EndGameMessage,
 	UndoMovesMessage,
@@ -67,10 +67,10 @@ final class GameRoomRestApi(Vertx vertx) {
 		}
 	}
 	
-	void handlPlayerReadyRequest(RoutingContext rc) {
+	void handlPlayerBeginRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
-			forwardResponse(context, PlayerReadyMessage(matchId, playerId));
+			forwardResponse(context, PlayerBeginMessage(matchId, playerId));
 		}
 	}
 	
@@ -108,7 +108,7 @@ final class GameRoomRestApi(Vertx vertx) {
 		restApi.get("/room/:roomId/table/:tableIndex/leave").handler(handleTableLeaveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/accept").handler(handlMatchAcceptRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/ready").handler(handlPlayerReadyRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/begin").handler(handlPlayerBeginRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/move/:sourcePosition/:targetPosition").handler(handlMakeMoveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/undomoves").handler(handlUndoMovesRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handlEndTurnRequest);

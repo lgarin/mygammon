@@ -30,8 +30,7 @@
 	            	$(".button").on("click", function(event) { return app.onButton(event.currentTarget); });
 	            	$(".checker").on("click", function(event) { return app.onChecker(event.currentTarget); });
 	            	window.setInterval(function() { return app.onTimer(); }, 500);
-	            	window.addEventListener("onbeforeunload", function(event) { return app.confirmClose(); });
-	            	window.addEventListener("onunload", function(event) { return app.onClose(); });
+	            	window.addEventListener("beforeunload", function(event) {  return app.onClose(); });
 	                app.run();
 	            }
 	    );

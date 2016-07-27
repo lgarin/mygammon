@@ -17,10 +17,11 @@ import backgammon.common {
 	GameActionResponseMessage,
 	PlayerId,
 	MatchId,
-	PlayerReadyMessage,
+	PlayerBeginMessage,
 	EndTurnMessage,
 	MakeMoveMessage,
-	TurnTimedOutMessage
+	TurnTimedOutMessage,
+	PlayerReadyMessage
 }
 import backgammon.game {
 	Game,
@@ -29,7 +30,8 @@ import backgammon.game {
 	white,
 	player2Color,
 	player1Color,
-	GameMove
+	GameMove,
+	DiceRoll
 }
 
 import ceylon.time {
@@ -54,34 +56,138 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
 	
+	void showInitialDices(DiceRoll roll) {
+		if (exists currentColor = playerColor, game.mustRollDice(currentColor)) {
+			gui.showDiceValues(currentColor, null, null);
+			gui.showDiceValues(currentColor.oppositeColor, roll.getValue(currentColor.oppositeColor), null);
+		} else {
+			gui.showDiceValues(black, roll.getValue(black), null);
+			gui.showDiceValues(white, roll.getValue(white), null);
+		}
+	}
+	
+	void showTurnDices(DiceRoll roll, CheckerColor color) {
+		gui.showDiceValues(color.oppositeColor, null, null);
+		gui.showDiceValues(color, roll.firstValue, roll.secondValue);
+	}
+	
+	void hideDices() {
+		gui.showDiceValues(black, null, null);
+		gui.showDiceValues(white, null, null);
+	}
+	
+	void showInitialRollMessages(Duration remainingTime) {
+		if (game.mustRollDice(black)) {
+			gui.showPlayerMessage(black, gui.formatPeriod(remainingTime, "Timeout"), true);
+		} else {
+			gui.showPlayerMessage(black, "Ready", false);
+		}
+		if (game.mustRollDice(white)) {
+			gui.showPlayerMessage(white, gui.formatPeriod(remainingTime, "Timeout"), true);
+		} else {
+			gui.showPlayerMessage(white, "Ready", false);
+		}
+		
+		if (exists color = playerColor, game.mustRollDice(color)) {
+			gui.showCurrentPlayer(playerColor);
+		} else {
+			gui.showCurrentPlayer(null);
+		}
+	}
+	
+	void showCurrentTurnMessages(CheckerColor currentColor, Duration remainingTime) {
+		gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, "Timeout"), true);
+		gui.showPlayerMessage(currentColor.oppositeColor, "Waiting...", true);
+		gui.showCurrentPlayer(currentColor);
+	}
+	
+	void showWinMessages(CheckerColor? color) {
+		if (exists currentColor = color) {
+			gui.showPlayerMessage(currentColor, "Winner", false);
+			gui.showPlayerMessage(currentColor.oppositeColor, "", false);
+		} else {
+			gui.showPlayerMessage(player1Color, "Tie", false);
+			gui.showPlayerMessage(player2Color, "Tie", false);
+		}
+		gui.showCurrentPlayer(color);
+	}
+	
+	void showLoadingMessages() {
+		gui.showPlayerMessage(black, "Loading...", true);
+		gui.showPlayerMessage(white, "Loading...", true);
+		gui.showCurrentPlayer(null);
+	}
+	
+	shared void showState() {
+		value currentTime = now();
+		
+		if (exists currentColor = game.currentColor, exists currentRoll = game.currentRoll) {
+			showTurnDices(currentRoll, currentColor);
+		} else if (exists currentRoll = game.currentRoll) {
+			showInitialDices(currentRoll);
+		} else {
+			hideDices();
+		}
+		
+		gui.redrawCheckers(game.board);
+		
+		if (exists currentColor = game.currentColor, exists remainingTime = game.remainingTime(currentTime)) {
+			showCurrentTurnMessages(currentColor, remainingTime);
+		} else if (exists remainingTime = game.remainingTime(currentTime)) {
+			showInitialRollMessages(remainingTime);
+		} else if (game.ended) {
+			showWinMessages(game.winner);
+		} else {
+			showLoadingMessages();
+		}
+		
+		if (exists color = playerColor, game.mustRollDice(color)) {
+			gui.showSubmitButton("Roll");
+		} else if (exists color = playerColor, game.mustMakeMove(color)) {
+			gui.showSubmitButton(null);
+		} else {
+			gui.hideSubmitButton();
+		}
+		
+		if (exists color = playerColor, game.canUndoMoves(color)) {
+			gui.showUndoButton(null);
+		} else {
+			gui.hideUndoButton();
+		}
+	}
+	
 	function showInitialRoll(InitialRollMessage message) {
 		gui.showCurrentPlayer(null);
 		if (message.playerId == playerId) {
 			if (game.initialRoll(message.roll, message.maxDuration)) {
-				game.begin(message.playerColor.oppositeColor);
 				gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration, "Timeout"), true);
-				gui.showCurrentPlayer(message.playerColor);
-				gui.showDiceValues(message.playerColor, null, null);
+				showInitialDices(message.roll);
 				gui.showSubmitButton("Roll");
 				return true;
 			} else {
 				return false;
 			}
 		} else {
-			gui.showPlayerMessage(message.playerColor, "Starting...", false);
-			gui.showDiceValues(message.playerColor, message.diceValue, null);
+			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration, "Timeout"), true);
+			showInitialDices(message.roll);
 			return true;
+		}
+	}
+	
+	function showPlayerReady(PlayerReadyMessage message) {
+		if (game.begin(message.playerColor)) {
+			gui.showPlayerMessage(message.playerColor, "Ready", false);
+			return true;
+		} else {
+			return false;
 		}
 	}
 	
 	function showTurnStart(StartTurnMessage message) {
 		game.endTurn(message.playerColor.oppositeColor);
 		if (game.beginTurn(message.playerColor, message.roll, message.maxDuration, message.maxUndo)) {
-			gui.showDiceValues(message.playerColor.oppositeColor, null, null);
-			gui.showDiceValues(message.playerColor, message.roll.firstValue, message.roll.secondValue);
-			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration, "Timeout"), true);
-			gui.showPlayerMessage(message.playerColor.oppositeColor, "Waiting...", false);
-			gui.showCurrentPlayer(message.playerColor);
+			showTurnDices(message.roll, message.playerColor);
+			showCurrentTurnMessages(message.playerColor, message.maxDuration);
 			if (message.playerId == playerId) {
 				gui.showSubmitButton(null);
 			} else {
@@ -90,56 +196,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			return true;
 		} else {
 			return false;
-		}
-	}
-	
-	// TODO refactor this method
-	void showGameState() {
-		value currentTime = now();
-		gui.showCurrentPlayer(game.currentColor);
-		if (exists currentColor = game.currentColor, exists currentRoll = game.currentRoll) {
-			gui.showDiceValues(currentColor, currentRoll.firstValue, currentRoll.secondValue);
-			gui.showDiceValues(currentColor.oppositeColor, null, null);
-		} else if (exists currentRoll = game.currentRoll) {
-			if (exists currentColor = playerColor) {
-				gui.showDiceValues(currentColor, null, null);
-				gui.showDiceValues(currentColor.oppositeColor, currentRoll.getValue(currentColor.oppositeColor), null);
-				gui.showCurrentPlayer(currentColor);
-			} else {
-				gui.showDiceValues(black, currentRoll.getValue(black), null);
-				gui.showDiceValues(white, currentRoll.getValue(white), null);
-			}
-		} else {
-			gui.showDiceValues(black, null, null);
-			gui.showDiceValues(white, null, null);
-		}
-		gui.redrawCheckers(game.board);
-		if (exists currentColor = game.currentColor, exists remainingTime = game.remainingTime(currentTime)) {
-			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, "Timeout"), true);
-			gui.showPlayerMessage(currentColor.oppositeColor, "Waiting...", true);
-			if (exists color = playerColor, currentColor == color) {
-				gui.showSubmitButton(null);
-			} else {
-				gui.hideSubmitButton();
-			}
-		} else if (game.ended) {
-			showWin(game.winner);
-		} else { 
-			
-			gui.showPlayerMessage(black, "Starting...", false);
-			gui.showPlayerMessage(white, "Starting...", false);
-			
-			if (exists color = playerColor, game.mustRollDice(color), exists remainingTime = game.remainingTime(currentTime)) {
-				gui.showSubmitButton("Roll");
-				gui.showPlayerMessage(color, gui.formatPeriod(remainingTime, "Timeout"), true);
-			} else {
-				gui.hideSubmitButton();
-			}
-		}
-		if (exists color = playerColor, game.canUndoMoves(color)) {
-			gui.showUndoButton(null);
-		} else {
-			gui.hideUndoButton();
 		}
 	}
 	
@@ -162,17 +218,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	void showWin(CheckerColor? color) {
-		gui.showCurrentPlayer(color);
-		if (exists currentColor = color) {
-			gui.showPlayerMessage(currentColor, "Winner", false);
-			gui.showPlayerMessage(currentColor.oppositeColor, "", false);
-		} else {
-			gui.showPlayerMessage(player1Color, "Tie", false);
-			gui.showPlayerMessage(player2Color, "Tie", false);
-		}
+		showWinMessages(color);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		gui.showLeaveButton(null);
 	}
 	
 	function showGameWon(GameWonMessage message) {
@@ -189,6 +237,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		case (is InitialRollMessage) {
 			return showInitialRoll(message);
 		}
+		case (is PlayerReadyMessage) {
+			return showPlayerReady(message);
+		}
 		case (is StartTurnMessage) {
 			return showTurnStart(message);
 		}
@@ -203,7 +254,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 		case (is DesynchronizedMessage) {
 			game.state = message.state;
-			showGameState();
+			showState();
 			return true;
 		}
 		case (is NotYourTurnMessage) {
@@ -215,13 +266,11 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		case (is GameEndedMessage) {
 			game.end();
 			showWin(game.winner);
-			gui.hideSubmitButton();
-			gui.hideUndoButton();
 			return true;
 		}
 		case (is GameStateResponseMessage) {
 			game.state = message.state;
-			showGameState();
+			showState();
 			return true;
 		}
 		case (is GameActionResponseMessage) {
@@ -253,41 +302,28 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		if (game.timedOut(time)) {
 			return true;
 		} else if (exists currentColor = game.currentColor, exists remainingTime = game.remainingTime(time)) {
-			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, "Timeout"), true);
+			showCurrentTurnMessages(currentColor, remainingTime);
 			return true;
-		} else if (exists currentColor = playerColor, game.mustRollDice(currentColor), exists remainingTime = game.remainingTime(time)) {
-			gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, "Timeout"), true);
+		} else if (game.currentRoll exists, exists remainingTime = game.remainingTime(time)) {
+			showInitialRollMessages(remainingTime);
 			return true;
 		} else {
 			return true;
 		}
 	}
 	
-	shared void showState() {
-		showGameState();
-	}
-	
 	shared Boolean handleSubmitEvent() {
-		if (exists color = playerColor, game.mustRollDice(color), exists currentRoll = game.currentRoll) {
-			if (game.begin(color)) { // TODO should not modify game state here
-				gui.showDiceValues(color, currentRoll.getValue(color), null);
-				gui.hideSubmitButton();
-				gui.showPlayerMessage(color, "Ready", false);
-				delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(PlayerReadyMessage(matchId, playerId), initialRollDelay));
-				return true;
-			} else {
-				return false;
-			}
+		if (exists color = playerColor, game.mustRollDice(color)) {
+			gui.showDiceValues(color, game.currentRoll?.getValue(color), null);
+			gui.hideSubmitButton();
+			delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(PlayerBeginMessage(matchId, playerId), initialRollDelay));
+			return true;
 		} else if (exists color = playerColor, game.mustMakeMove(color)) {
-			if (game.isCurrentColor(color)) {
-				gui.hidePossibleMoves();
-				gui.showSelectedChecker(null);
-				gui.hideSubmitButton();
-				messageBroadcaster(EndTurnMessage(matchId, playerId));
-				return true;
-			} else {
-				return false;
-			}
+			gui.hidePossibleMoves();
+			gui.showSelectedChecker(null);
+			gui.hideSubmitButton();
+			messageBroadcaster(EndTurnMessage(matchId, playerId));
+			return true;
 		} else {
 			// TODO this error still occurs
 			print("Strange state: ``game.state.toJson()``");
@@ -323,14 +359,17 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			messageBroadcaster(MakeMoveMessage(matchId, playerId, sourcePosition, targetPosition));
 			return false;
 		} else {
-			gui.redrawCheckers(game.board);
 			return false;
 		}
 	}
 	
 	shared Boolean handleCheckerSelection(HTMLElement checker) {
 		if (gui.isTempChecker(checker), exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker)) {
-			return makeMove(sourcePosition, targetPosition);
+			if (sourcePosition == targetPosition, exists color = playerColor) {
+				return makeMove(sourcePosition, game.board.homePosition(color));
+			} else {
+				return makeMove(sourcePosition, targetPosition);
+			}
 		} else if (handleStartDrag(checker)) {
 			gui.showSelectedChecker(checker);
 			return true;

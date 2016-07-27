@@ -15,9 +15,9 @@ import ceylon.time {
 
 shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage satisfies MatchMessage {}
 
-shared interface InboundGameMessage of StartGameMessage | PlayerReadyMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {}
+shared interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {}
 
-shared interface OutboundGameMessage of InitialRollMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameWonMessage | GameEndedMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
+shared interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameWonMessage | GameEndedMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
 	shared formal CheckerColor playerColor;
 	shared actual default Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "playerColor" -> playerColor.name });
 }
@@ -36,9 +36,14 @@ shared InitialRollMessage parseInitialRollMessage(Object json) {
 	return InitialRollMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getInteger("diceValue"), DiceRoll(json.getInteger("rollValue1"), json.getInteger("rollValue2")), Duration(json.getInteger("maxDuration")));
 }
 
-shared final class PlayerReadyMessage(shared actual MatchId matchId, shared actual PlayerId playerId) satisfies InboundGameMessage {}
+shared final class PlayerBeginMessage(shared actual MatchId matchId, shared actual PlayerId playerId) satisfies InboundGameMessage {}
+shared PlayerBeginMessage parsePlayerBeginMessage(Object json) {
+	return PlayerBeginMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")));
+}
+
+shared final class PlayerReadyMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor) satisfies OutboundGameMessage {}
 shared PlayerReadyMessage parsePlayerReadyMessage(Object json) {
-	return PlayerReadyMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")));
+	return PlayerReadyMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")));
 }
 
 shared final class StartTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared DiceRoll roll, shared Duration maxDuration, shared Integer maxUndo) satisfies OutboundGameMessage {
@@ -85,7 +90,7 @@ shared TurnTimedOutMessage parseTurnTimedOutMessage(Object json) {
 }
 
 shared final class DesynchronizedMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared GameState state) satisfies OutboundGameMessage {
-	toJson() => Object({"state" -> state.toJson() });
+	toJson() => toExtendedJson({"state" -> state.toJson() });
 }
 shared DesynchronizedMessage parseDesynchronizedMessage(Object json) {
 	return DesynchronizedMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), parseGameState(json.getObject("state")));
@@ -139,6 +144,8 @@ shared GameActionResponseMessage parseGameActionResponseMessage(Object json) {
 shared OutboundGameMessage? parseOutboundGameMessage(String typeName, Object json) {
 	if (typeName == `class InitialRollMessage`.name) {
 		return parseInitialRollMessage(json);
+	} else if (typeName == `class PlayerReadyMessage`.name) {
+		return parsePlayerReadyMessage(json);
 	} else if (typeName == `class StartTurnMessage`.name) {
 		return parseStartTurnMessage(json);
 	} else if (typeName == `class PlayedMoveMessage`.name) {
@@ -169,8 +176,8 @@ shared OutboundGameMessage? parseOutboundGameMessage(String typeName, Object jso
 shared InboundGameMessage? parseInboundGameMessage(String typeName, Object json) {
 	if (typeName == `class StartGameMessage`.name) {
 		return parseStartGameMessage(json);
-	} else if (typeName == `class PlayerReadyMessage`.name) {
-		return parsePlayerReadyMessage(json);
+	} else if (typeName == `class PlayerBeginMessage`.name) {
+		return parsePlayerBeginMessage(json);
 	} else if (typeName == `class MakeMoveMessage`.name) {
 		return parseMakeMoveMessage(json);
 	} else if (typeName == `class UndoMovesMessage`.name) {

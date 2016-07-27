@@ -8,7 +8,7 @@ import backgammon.common {
 	UndoneMovesMessage,
 	InboundGameMessage,
 	GameWonMessage,
-	PlayerReadyMessage,
+	PlayerBeginMessage,
 	GameEndedMessage,
 	NotYourTurnMessage,
 	EndGameMessage,
@@ -21,7 +21,8 @@ import backgammon.common {
 	GameStateResponseMessage,
 	GameStateRequestMessage,
 	GameActionResponseMessage,
-	TurnTimedOutMessage
+	TurnTimedOutMessage,
+	PlayerReadyMessage
 }
 import backgammon.game {
 	GameConfiguration,
@@ -197,7 +198,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	
 	function beginGame(CheckerColor playerColor) {
 		if (game.begin(playerColor)) {
-			
+			messageBroadcaster(PlayerReadyMessage(matchId, toPlayerId(playerColor), playerColor));
 			if (exists currentColor = game.currentColor) {
 				value roll = diceRoller.roll();
 				if (game.beginTurn(currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn)) {
@@ -225,7 +226,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		case (is StartGameMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, sendInitialRoll());
 		}
-		case (is PlayerReadyMessage) {
+		case (is PlayerBeginMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, beginGame(playerColor));
 		}
 		case (is MakeMoveMessage) {

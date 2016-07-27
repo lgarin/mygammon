@@ -11,8 +11,7 @@ import backgammon.common {
 	CreatedGameMessage,
 	MatchId,
 	InboundMatchMessage,
-	AcceptMatchMessage,
-	InitialRollMessage
+	AcceptMatchMessage
 }
 import backgammon.game {
 	player2Color,
@@ -121,11 +120,6 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
 	 	if (match.id != message.matchId) {
 	 		return false;
-	 	}
-	 	
-	 	// TODO CreatedGameMessage may be received after InitialRollMessage 
-	 	if (message is InitialRollMessage && gameClient is Null) {
-	 		initGameClient().showState();
 	 	}
 	 	
 	 	if (exists currentGameClient = gameClient) {

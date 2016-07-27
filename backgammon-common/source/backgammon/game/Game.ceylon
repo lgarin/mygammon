@@ -280,12 +280,7 @@ shared class Game() {
 		if (nextTimeout.millisecondsOfEpoch == 0) {
 			return null;
 		}
-		Duration result = nextTimeout.durationFrom(time);
-		if (result.milliseconds < 0) {
-			return Duration(0);
-		} else {
-			return result;
-		}
+		return nextTimeout.durationFrom(time);
 	}
 	
 	shared GameState state {

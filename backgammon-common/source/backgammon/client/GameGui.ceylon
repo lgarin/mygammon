@@ -178,6 +178,7 @@ shared final class GameGui(Document document) {
 		for (i in 0:checkers.length) {
 			if (exists checker = checkers.item(i)) {
 				if (i < checkerCount) {
+					// TODO check for home
 					resetClass(checker, "checker", checkerColorClass);
 				} else {
 					checker.classList.add("hidden");

@@ -1,6 +1,3 @@
-import backgammon.common {
-	InboundGameMessage
-}
 import backgammon.server.common {
 	RoomConfiguration
 }
@@ -53,16 +50,8 @@ shared final class HttpServerVerticle() extends Verticle() {
 	
 	void startRoom(RoomConfiguration roomConfig) {
 		value eventBus = GameRoomEventBus(vertx);
-		
-		void sendGameCommand(InboundGameMessage message) {
-			// do not send the message immedialty
-			// TODO hack in order to avoid inital roll message coming to the client before the created game message
-			vertx.setTimer(roomConfig.serverAdditionalTimeout.milliseconds, void (Integer timerId) {
-				eventBus.sendInboundMessage(message, void (Anything response) {});
-			});
-		}
-		
-		value matchRoom = MatchRoom(roomConfig, eventBus.publishOutboundTableMessage, sendGameCommand);
+
+		value matchRoom = MatchRoom(roomConfig, eventBus.publishOutboundTableMessage, eventBus.queueInboundMessage);
 		eventBus.registerInboundRoomMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processRoomMessage);
 		eventBus.registerInboundTableMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processTableMessage);
 		eventBus.registerInboundMatchMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processMatchMessage);
