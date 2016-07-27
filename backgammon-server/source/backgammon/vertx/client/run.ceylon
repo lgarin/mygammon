@@ -56,6 +56,7 @@ variable String? draggedElementStyle = null;
 
 shared Boolean onStartDrag(HTMLElement source) {
 	draggedElementStyle = source.getAttribute("style");
+	print("Start Drag: ``draggedElementStyle else "no"``");
 	if (exists gameClient = tableClient?.gameClient) {
 		return gameClient.handleStartDrag(source);
 	} else {
@@ -64,18 +65,23 @@ shared Boolean onStartDrag(HTMLElement source) {
 }
 
 shared Boolean onEndDrag(HTMLElement source) {
+	print("End drag: ``draggedElementStyle else "no"``");
 	if (exists style = draggedElementStyle) {
-		// TODO only if drop failed
+		// TODO doesn't work
 		source.setAttribute("style", style);
 	}
-	gui.showSelectedChecker(null);
-	gui.hidePossibleMoves();
-	return false;
+	return true;
 }
 
 shared Boolean onDrop(HTMLElement target, HTMLElement source) {
+	print("Drop: ``draggedElementStyle else "no"``");
 	if (exists gameClient = tableClient?.gameClient) {
-		return gameClient.handleDrop(target, source);
+		if (gameClient.handleDrop(target, source)) {
+			draggedElementStyle = null;
+			return true;
+		} else {
+			return false;
+		}
 	} else {
 		return false;
 	}
@@ -113,20 +119,6 @@ shared Boolean onTimer() {
 		return currentClient.handleTimerEvent(now());
 	} else {
 		return false;
-	}
-}
-
-shared String? confirmClose() {
-	if (exists gameClient = tableClient?.gameClient, gameClient.hasRunningGame) {
-		return "Do you really want to quit the game?";
-	} else {
-		return null;
-	}
-}
-
-shared void onClose() {
-	if (exists currentTableClient = tableClient) {
-		currentTableClient.handleLeaveEvent();
 	}
 }
 

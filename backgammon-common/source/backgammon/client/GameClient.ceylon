@@ -98,7 +98,12 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	void showCurrentTurnMessages(CheckerColor currentColor, Duration remainingTime) {
 		gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, "Timeout"), true);
 		gui.showPlayerMessage(currentColor.oppositeColor, "Waiting...", true);
-		gui.showCurrentPlayer(currentColor);
+		
+		if (exists color = playerColor, game.mustMakeMove(color)) {
+			gui.showCurrentPlayer(playerColor);
+		} else {
+			gui.showCurrentPlayer(null);
+		}
 	}
 	
 	void showWinMessages(CheckerColor? color) {

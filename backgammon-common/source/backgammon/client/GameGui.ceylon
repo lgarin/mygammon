@@ -118,24 +118,24 @@ shared final class GameGui(Document document) {
 	
 	shared void showDiceValues(CheckerColor color, Integer? value1, Integer? value2) {
 		if (exists value1) {
-			removeClass("``color.name``DiceNr1Container", "hidden");
-			setClass("``color.name``DiceNr1", "number", "``color.name``-``value1``");
+			removeClass("``color``DiceNr1Container", "hidden");
+			setClass("``color``DiceNr1", "number", "``color``-``value1``");
 		} else {
-			addClass("``color.name``DiceNr1Container", "hidden");
+			addClass("``color``DiceNr1Container", "hidden");
 		}
 		if (exists value2) {
-			removeClass("``color.name``DiceNr2Container", "hidden");
-			setClass("``color.name``DiceNr2", "number", "``color.name``-``value2``");
+			removeClass("``color``DiceNr2Container", "hidden");
+			setClass("``color``DiceNr2", "number", "``color``-``value2``");
 		} else {
-			addClass("``color.name``DiceNr2Container", "hidden");
+			addClass("``color``DiceNr2Container", "hidden");
 		}
 	}
 	
 	function getDomIdUsingPoint(GameBoard board, CheckerColor color, Integer point) {
 		if (point == board.graveyardPosition(color)) {
-			return "point-``color.name``-graveyard";
+			return "point-``color``-graveyard";
 		} else if (point == board.homePosition(color)) {
-			return "point-``color.name``-home";
+			return "point-``color``-home";
 		} else {
 			return "point-``point``";
 		}
@@ -173,13 +173,13 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
-	void resetCheckers(Element point, String checkerColorClass, Integer checkerCount) {
+	void resetCheckers(Element point, String baseCheckerClass, String checkerColorClass, Integer checkerCount) {
 		value checkers = point.getElementsByTagName("div");
 		for (i in 0:checkers.length) {
 			if (exists checker = checkers.item(i)) {
 				if (i < checkerCount) {
 					// TODO check for home
-					resetClass(checker, "checker", checkerColorClass);
+					resetClass(checker, baseCheckerClass, checkerColorClass);
 				} else {
 					checker.classList.add("hidden");
 				}
@@ -193,9 +193,9 @@ shared final class GameGui(Document document) {
 			if (exists point = document.getElementById(domId)) {
 				value count = board.countCheckers(position, color);
 				if (position == board.homePosition(color)) {
-					resetCheckers(point, "topdown-``color.name``", count);
+					resetCheckers(point, "topdown-checker", "topdown-``color``", count);
 				} else if (count > 0) {
-					resetCheckers(point, "checker-``color.name``", count);
+					resetCheckers(point, "checker", "checker-``color``", count);
 				}
 			}
 		}
@@ -232,7 +232,7 @@ shared final class GameGui(Document document) {
 		for (position in positions) {
 			value domId = getDomIdUsingPoint(board, color, position);
 			if (exists point = document.getElementById(domId)) {
-				addTempChecker(point, "checker-``color.name``", board.countCheckers(position, color) + board.countCheckers(position, color.oppositeColor));
+				addTempChecker(point, "checker-``color``", board.countCheckers(position, color) + board.countCheckers(position, color.oppositeColor));
 			}
 		}
 	}
@@ -272,10 +272,10 @@ shared final class GameGui(Document document) {
 	}
 	
 	shared void showPlayerInfo(CheckerColor color, String? name, String? pictureUrl) {
-		if (exists playerLabel = document.getElementById("``color.name``PlayerName")) {
+		if (exists playerLabel = document.getElementById("``color``PlayerName")) {
 			playerLabel.innerHTML = name else defaultPlayerName;
 		}
-		if (exists playerImage = document.getElementById("``color.name``PlayerImage")) {
+		if (exists playerImage = document.getElementById("``color``PlayerImage")) {
 			if (exists pictureUrl) {
 				playerImage.setAttribute("src", pictureUrl);
 				playerImage.classList.remove("player-unknown");
@@ -287,10 +287,10 @@ shared final class GameGui(Document document) {
 	}
 	
 	shared void showPlayerMessage(CheckerColor color, String message, Boolean busy) {
-		if (exists playerTimer = document.getElementById("``color.name``PlayerTimer")) {
+		if (exists playerTimer = document.getElementById("``color``PlayerTimer")) {
 			playerTimer.innerHTML = message;
 		}
-		if (exists playerActivity = document.getElementById("``color.name``PlayerActivity")) {
+		if (exists playerActivity = document.getElementById("``color``PlayerActivity")) {
 			if (busy) {
 				playerActivity.classList.add("player-busy");
 				playerActivity.classList.remove("player-ready");
