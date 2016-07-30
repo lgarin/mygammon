@@ -26,9 +26,6 @@ import java.lang {
 	System
 }
 
-import org.apache.log4j {
-	BasicConfigurator
-}
 import ceylon.json {
 
 	Object,
@@ -53,7 +50,7 @@ void logWriter(Priority p, Module|Package c, String m, Throwable? e) {
 }
 
 String? readWholeFile(String path) {
-	if (is File configFile = current.childPath("resource/application-conf.json").resource) {
+	if (is File configFile = current.childPath(path).resource) {
 		return lines(configFile).reduce((String partial, String element) => partial + element);
 	} else {
 		return null;
@@ -87,8 +84,8 @@ void runModuleVerticle(Module mod) {
 }
 
 shared void run() {
-	BasicConfigurator.configure();
+	System.setProperty("log4j.configurationFile", "resource/log4j2.properties");
+	System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.Log4j2LogDelegateFactory");
 	addLogWriter(logWriter);
-	System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.Log4jLogDelegateFactory"); 
 	runModuleVerticle(`module`);
 }

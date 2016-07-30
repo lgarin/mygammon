@@ -148,7 +148,7 @@ void onServerMessage(String messageString) {
 
 void onServerError(String messageString) {
 	print(messageString);
-	window.alert("An unexpected error occured.\nThe page will be reloaded.");
+	window.alert("An unexpected error occured.\nThe page will be reloaded.\n\nDetail:\n``messageString``");
 	window.location.reload();
 }
 
