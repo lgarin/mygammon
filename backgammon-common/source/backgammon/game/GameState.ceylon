@@ -34,25 +34,22 @@ shared final class GameState() extends Object() {
 		return result;
 	}
 	
-	// TODO check if a standard function exists
-	function equalsOrNull(Object? object1, Object? object2) {
-		if (exists o1 = object1, exists o2 = object2) {
-			return o1 == o2;
-		} else if (object1 is Null, object2 is Null) {
-			return true;
+	function equalsOrBothNull(Object? object1, Object? object2) {
+		if (exists object1, exists object2) {
+			return object1 == object2;
 		} else {
-			return false;
+			return object1 exists == object2 exists;
 		}
 	}
 	
 	shared actual Boolean equals(Object that) {
 		if (is GameState that) {
-			return equalsOrNull(currentColor, that.currentColor) &&
-				equalsOrNull(currentRoll, that.currentRoll) &&
+			return equalsOrBothNull(currentColor, that.currentColor) &&
+				equalsOrBothNull(currentRoll, that.currentRoll) &&
 				remainingUndo==that.remainingUndo && 
 				blackReady==that.blackReady && 
 				whiteReady==that.whiteReady && 
-				equalsOrNull(remainingTime, that.remainingTime) &&
+				equalsOrBothNull(remainingTime, that.remainingTime) &&
 				blackCheckerCounts==that.blackCheckerCounts && 
 				whiteCheckerCounts==that.whiteCheckerCounts && 
 				currentMoves==that.currentMoves;

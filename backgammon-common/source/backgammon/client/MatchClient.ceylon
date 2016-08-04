@@ -46,7 +46,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 		}
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		gui.showLeaveButton(null);
+		gui.showLeaveButton();
 	}
 	
 	void showMatchBegin(MatchState match) {
@@ -59,7 +59,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			gui.hideSubmitButton();
 		}
 		gui.hideUndoButton();
-		gui.showLeaveButton(null);
+		gui.showLeaveButton();
 	}
 	
 	void showResumingGame() {
@@ -67,7 +67,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 		gui.showPlayerMessage(player2Color, "Loading...", true);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		gui.showLeaveButton(null);	}
+		gui.showLeaveButton();	}
 	
 	shared void showState() {
 		gui.showEmptyGame();
@@ -106,7 +106,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			}
 			gui.hideSubmitButton();
 			gui.hideUndoButton();
-			gui.showLeaveButton(null);
+			gui.showLeaveButton();
 			return true;
 		}
 		case (is CreatedGameMessage) {

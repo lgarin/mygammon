@@ -100,4 +100,11 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 			room.removeInactivePlayers(currentTime.minus(configuration.playerInactiveTimeout));
 		}
 	}
+	
+	shared MatchRoomStatistic statistic {
+		try (lock) {
+			value freeTableCount = room.tables.count((Table element) => element.free);
+			return MatchRoomStatistic(room.players.size, freeTableCount, room.tableCount - freeTableCount);
+		}
+	}
 }

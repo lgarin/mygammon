@@ -51,12 +51,10 @@ import ceylon.time {
 
 GameGui gui = GameGui(window.document);
 variable TableClient? tableClient = null;
-
 variable String? draggedElementStyle = null;
 
 shared Boolean onStartDrag(HTMLElement source) {
 	draggedElementStyle = source.getAttribute("style");
-	print("Start Drag: ``draggedElementStyle else "no"``");
 	if (exists gameClient = tableClient?.gameClient) {
 		return gameClient.handleStartDrag(source);
 	} else {
@@ -65,16 +63,13 @@ shared Boolean onStartDrag(HTMLElement source) {
 }
 
 shared Boolean onEndDrag(HTMLElement source) {
-	print("End drag: ``draggedElementStyle else "no"``");
 	if (exists style = draggedElementStyle) {
-		// TODO doesn't work
 		source.setAttribute("style", style);
 	}
 	return true;
 }
 
 shared Boolean onDrop(HTMLElement target, HTMLElement source) {
-	print("Drop: ``draggedElementStyle else "no"``");
 	if (exists gameClient = tableClient?.gameClient) {
 		if (gameClient.handleDrop(target, source)) {
 			draggedElementStyle = null;
@@ -100,8 +95,10 @@ shared Boolean onButton(HTMLElement target) {
 		}
 	} else if (target.id == gui.submitButtonId, exists currentTableClient = tableClient) {
 		return currentTableClient.handleSubmitEvent();
+	} else if (target.id == gui.undoButtonId, exists gameClient = tableClient?.gameClient) {
+		return gameClient.handleUndoEvent();
 	}
-	// TODO undo button
+	
 	
 	return false;
 }
@@ -281,7 +278,7 @@ shared void run() {
 	
 	gui.showInitialState();
 	
-	if (exists tableId = extractTableId(window.location.string), exists playerInfo = extractPlayerInfo(window.document.cookie)) {
+	if (exists tableId = extractTableId(window.location.href), exists playerInfo = extractPlayerInfo(window.document.cookie)) {
 		tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
 		registerMessageHandler("OutboundTableMessage-``tableId``");
 		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));

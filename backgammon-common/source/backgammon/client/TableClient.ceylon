@@ -37,7 +37,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		gui.showPlayerMessage(player2Color, "Waiting...", true);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		gui.showLeaveButton(null);
+		gui.showLeaveButton();
 	}
 	
 	

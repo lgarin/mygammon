@@ -16,17 +16,17 @@ shared dynamic Window {
     shared formal BarProp statusbar;
     shared formal BarProp toolbar;
     shared formal variable String status;
-    shared formal void close();
-    shared formal Boolean? closed;
-    shared formal void stop();
-    shared formal void focus();
-    shared formal void blur();
+    //shared formal void close();
+    //shared formal Boolean? closed;
+    //shared formal void stop();
+    //shared formal void focus();
+    //shared formal void blur();
     //shared formal WindowProxy frames;
-    shared formal Integer length;
+    //shared formal Integer length;
     //shared formal WindowProxy top;
     //shared formal WindowProxy? opener;
     //shared formal WindowProxy parent;
-    shared formal Element? frameElement;
+    //shared formal Element? frameElement;
     //shared formal WindowProxy open(String url = "about:blank", String target = "_blank", String features = "", Boolean replace = false);
     
     //shared formal Navigator navigator;
@@ -48,6 +48,8 @@ shared dynamic Location {
 	
 	"Reloads the current page."
 	shared formal void reload();
+	
+	shared formal String href;
 }
 
 shared dynamic BarProp {

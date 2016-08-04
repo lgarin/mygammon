@@ -85,7 +85,7 @@ shared class Game() {
 	
 	shared Boolean canUndoMoves(CheckerColor playerColor) {
 		if (exists color = currentColor, color == playerColor) {
-			return !currentMoves.empty;
+			return !currentMoves.empty && remainingUndo > 0;
 		} else {
 			return false;
 		}

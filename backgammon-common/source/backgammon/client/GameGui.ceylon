@@ -69,11 +69,10 @@ shared final class GameGui(Document document) {
 		addClass(undoButtonId, "hidden");
 	}
 	
-	shared void showUndoButton(String? text) {
+	shared void showUndoButton(String text = "Undo") {
 		removeClass(undoButtonId, "hidden");
 		if (exists button = document.getElementById("``undoButtonId``Text")) {
-			button.innerHTML = text else "Undo";
-			button.classList.remove("hidden");
+			button.innerHTML = text;
 		}
 	}
 
@@ -81,10 +80,10 @@ shared final class GameGui(Document document) {
 		addClass(submitButtonId, "hidden");
 	}
 	
-	shared void showSubmitButton(String? text) {
+	shared void showSubmitButton(String text = "Submit") {
 		removeClass(submitButtonId, "hidden");
 		if (exists button = document.getElementById("``submitButtonId``Text")) {
-			button.innerHTML = text else "Submit";
+			button.innerHTML = text;
 		}
 	}
 
@@ -92,11 +91,10 @@ shared final class GameGui(Document document) {
 		addClass(leaveButtonId, "hidden");
 	}
 	
-	shared void showLeaveButton(String? text) {
+	shared void showLeaveButton(String text = "Leave") {
 		removeClass(leaveButtonId, "hidden");
 		if (exists button = document.getElementById("``leaveButtonId``Text")) {
-			button.innerHTML = text else "Leave";
-			button.classList.remove("hidden");
+			button.innerHTML = text;
 		}
 	}
 
@@ -178,7 +176,6 @@ shared final class GameGui(Document document) {
 		for (i in 0:checkers.length) {
 			if (exists checker = checkers.item(i)) {
 				if (i < checkerCount) {
-					// TODO check for home
 					resetClass(checker, baseCheckerClass, checkerColorClass);
 				} else {
 					checker.classList.add("hidden");
@@ -305,7 +302,7 @@ shared final class GameGui(Document document) {
 		showDiceValues(color, null, null);
 		showPlayerInfo(color, null, null);
 		showPlayerMessage(color, playerMessage, true);
-		hideLeaveButton();
+		showLeaveButton();
 		hideUndoButton();
 		hideSubmitButton();
 	}

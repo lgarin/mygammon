@@ -122,7 +122,7 @@ shared dynamic Document
     // Extensions provided by http://www.w3.org/TR/html5/dom.html#document
 
     // resource metadata management
-    shared formal Location? location;
+    //shared formal Location? location;
     shared formal variable String domain;
     shared formal String referrer;
     shared formal variable String cookie;

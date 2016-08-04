@@ -65,4 +65,10 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 			game.notifyTimeouts(currentTime);
 		}
 	}
+	
+	shared GameRoomStatistic statistic {
+		try (lock) {
+			return GameRoomStatistic(gameMap.size);
+		}
+	}
 }

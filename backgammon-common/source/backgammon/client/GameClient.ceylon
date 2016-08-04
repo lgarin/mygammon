@@ -21,7 +21,8 @@ import backgammon.common {
 	EndTurnMessage,
 	MakeMoveMessage,
 	TurnTimedOutMessage,
-	PlayerReadyMessage
+	PlayerReadyMessage,
+	UndoMovesMessage
 }
 import backgammon.game {
 	Game,
@@ -149,16 +150,18 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		if (exists color = playerColor, game.mustRollDice(color)) {
 			gui.showSubmitButton("Roll");
 		} else if (exists color = playerColor, game.mustMakeMove(color)) {
-			gui.showSubmitButton(null);
+			gui.showSubmitButton();
 		} else {
 			gui.hideSubmitButton();
 		}
 		
 		if (exists color = playerColor, game.canUndoMoves(color)) {
-			gui.showUndoButton(null);
+			gui.showUndoButton();
 		} else {
 			gui.hideUndoButton();
 		}
+		
+		gui.showLeaveButton();
 	}
 	
 	function showInitialRoll(InitialRollMessage message) {
@@ -194,7 +197,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			showTurnDices(message.roll, message.playerColor);
 			showCurrentTurnMessages(message.playerColor, message.maxDuration);
 			if (message.playerId == playerId) {
-				gui.showSubmitButton(null);
+				gui.showSubmitButton();
 			} else {
 				gui.hideSubmitButton();
 			}
@@ -207,6 +210,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	function showPlayedMove(PlayedMoveMessage message) {
 		if (game.moveChecker(message.playerColor, message.sourcePosition, message.targetPosition)) {
 			gui.redrawCheckers(game.board);
+			if (exists color = playerColor, game.canUndoMoves(color)) {
+				gui.showUndoButton();
+			}
 			return true;
 		} else {
 			return false;
@@ -226,6 +232,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		showWinMessages(color);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
+		gui.showLeaveButton();
 	}
 	
 	function showGameWon(GameWonMessage message) {
@@ -327,11 +334,24 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			gui.hidePossibleMoves();
 			gui.showSelectedChecker(null);
 			gui.hideSubmitButton();
+			gui.hideUndoButton();
 			messageBroadcaster(EndTurnMessage(matchId, playerId));
 			return true;
 		} else {
 			// TODO this error still occurs
 			print("Strange state: ``game.state.toJson()``");
+			return false;
+		}
+	}
+	
+	shared Boolean handleUndoEvent() {
+		if (exists color = playerColor, game.canUndoMoves(color)) {
+			gui.hidePossibleMoves();
+			gui.showSelectedChecker(null);
+			gui.hideUndoButton();
+			messageBroadcaster(UndoMovesMessage(matchId, playerId));
+			return true;
+		} else {
 			return false;
 		}
 	}
@@ -362,7 +382,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			gui.showSelectedChecker(null);
 			gui.hidePossibleMoves();
 			messageBroadcaster(MakeMoveMessage(matchId, playerId, sourcePosition, targetPosition));
-			return false;
+			return true;
 		} else {
 			return false;
 		}

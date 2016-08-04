@@ -28,6 +28,8 @@ final class Table(shared Integer index, shared RoomId roomId, Anything(OutboundT
 	
 	shared Boolean free => playerQueue.empty;
 	
+	shared Boolean busy => !free;
+	
 	shared Integer queueSize => playerQueue.size;
 	
 	shared void publish(OutboundTableMessage|OutboundMatchMessage message) {
