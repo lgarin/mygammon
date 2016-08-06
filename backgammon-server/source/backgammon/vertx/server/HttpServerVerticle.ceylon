@@ -25,7 +25,7 @@ import io.vertx.ceylon.web.handler {
 	staticHandler
 }
 
-shared final class HttpServerVerticle() extends Verticle() {
+final class HttpServerVerticle() extends Verticle() {
 	
 	void startHttp(RoomConfiguration roomConfig) {
 		

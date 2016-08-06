@@ -1,0 +1,15 @@
+
+[compiler]
+source=source
+resource=resource
+
+[repositories]
+other=aether:C:\\Dev\\maven\\settings.xml
+cache=C:\\Dev\\ceylon\\cache
+global=C:\\Dev\\ceylon\\cache
+
+[defaults]
+encoding=Cp1252
+
+[formattool]
+profile=default

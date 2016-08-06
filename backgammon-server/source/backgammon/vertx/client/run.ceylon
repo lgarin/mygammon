@@ -72,7 +72,7 @@ shared Boolean onEndDrag(HTMLElement source) {
 shared Boolean onDrop(HTMLElement target, HTMLElement source) {
 	if (exists gameClient = tableClient?.gameClient) {
 		if (gameClient.handleDrop(target, source)) {
-			draggedElementStyle = null;
+			source.classList.add("hidden");
 			return true;
 		} else {
 			return false;

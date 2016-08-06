@@ -229,6 +229,8 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	void showWin(CheckerColor? color) {
+		gui.hidePossibleMoves();
+		gui.showSelectedChecker(null);
 		showWinMessages(color);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
@@ -289,6 +291,8 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			return message.success;
 		}
 		case (is TurnTimedOutMessage) {
+			gui.hidePossibleMoves();
+			gui.showSelectedChecker(null);
 			// TODO force timeout in game
 			if (exists currentColor = game.currentColor) {
 				gui.showPlayerMessage(currentColor, "Timeout", false);
@@ -390,11 +394,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	shared Boolean handleCheckerSelection(HTMLElement checker) {
 		if (gui.isTempChecker(checker), exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker)) {
-			if (sourcePosition == targetPosition, exists color = playerColor) {
-				return makeMove(sourcePosition, game.board.homePosition(color));
-			} else {
-				return makeMove(sourcePosition, targetPosition);
-			}
+			return makeMove(sourcePosition, targetPosition);
+		} else if (exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker), sourcePosition == targetPosition, exists color = playerColor) {
+			return makeMove(sourcePosition, game.board.homePosition(color));
 		} else if (handleStartDrag(checker)) {
 			gui.showSelectedChecker(checker);
 			return true;

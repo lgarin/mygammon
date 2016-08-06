@@ -1,5 +1,5 @@
 /.exploded/
 /classes/
 /modules/
-/.settings/
-/.ceylon/
+/logs/
+/.vertx/
