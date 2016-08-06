@@ -244,9 +244,17 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
+	shared void hideChecker(Element checker) {
+		if (checker.classList.contains("checker")) {
+			checker.classList.add("hidden");
+		}
+	}
+	
 	shared void showSelectedChecker(Element? checker) {
 		deselectAllCheckers();
-		checker?.classList?.add("selected");
+		if (exists checker, checker.classList.contains("checker")) {
+			checker.classList.add("selected");
+		}
 	}
 	
 	void deselectAllCheckers() {

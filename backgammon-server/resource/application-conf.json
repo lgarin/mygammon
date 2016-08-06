@@ -1,8 +1,8 @@
 {
 	"roomId": "test",
-	"tableCount": 1,
+	"tableCount": 10,
 	"roomThreadCount": 2,
-	"gameThreadCount": 10,
+	"gameThreadCount": 4,
 	"hostname": "localhost",
 	"port": 8080,
 	"maxTurnDuration": 60000,

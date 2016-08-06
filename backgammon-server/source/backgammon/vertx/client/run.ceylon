@@ -63,6 +63,7 @@ shared Boolean onStartDrag(HTMLElement source) {
 }
 
 shared Boolean onEndDrag(HTMLElement source) {
+	// restore style
 	if (exists style = draggedElementStyle) {
 		source.setAttribute("style", style);
 	}
@@ -71,12 +72,7 @@ shared Boolean onEndDrag(HTMLElement source) {
 
 shared Boolean onDrop(HTMLElement target, HTMLElement source) {
 	if (exists gameClient = tableClient?.gameClient) {
-		if (gameClient.handleDrop(target, source)) {
-			source.classList.add("hidden");
-			return true;
-		} else {
-			return false;
-		}
+		return gameClient.handleDrop(target, source);
 	} else {
 		return false;
 	}

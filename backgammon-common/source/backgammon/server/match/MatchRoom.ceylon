@@ -33,6 +33,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 	
 	value lock = ObtainableLock(); 
 	value room = Room(configuration.roomId, configuration.tableCount, messageBroadcaster);
+	variable Integer createdPlayerCount = 0;
 	
 	shared OutboundRoomMessage processRoomMessage(InboundRoomMessage message) {
 		try (lock) {
@@ -42,6 +43,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 					return EnteredRoomMessage(player.id, room.id, false);
 				}
 				value player = room.createPlayer(message.playerInfo);
+				createdPlayerCount++;
 				return EnteredRoomMessage(player.id, room.id, true);
 			}
 			case (is LeaveRoomMessage) {
@@ -104,7 +106,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 	shared MatchRoomStatistic statistic {
 		try (lock) {
 			value freeTableCount = room.tables.count((Table element) => element.free);
-			return MatchRoomStatistic(room.players.size, freeTableCount, room.tableCount - freeTableCount);
+			return MatchRoomStatistic(room.id, room.players.size, createdPlayerCount, freeTableCount, room.tableCount - freeTableCount);
 		}
 	}
 }

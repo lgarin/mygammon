@@ -381,10 +381,11 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 	}
 	
-	function makeMove(Integer sourcePosition, Integer targetPosition) {
+	function makeMove(Integer sourcePosition, Integer targetPosition, HTMLElement checker) {
 		if (exists color = playerColor, game.isLegalMove(color, sourcePosition, targetPosition)) {
 			gui.showSelectedChecker(null);
 			gui.hidePossibleMoves();
+			gui.hideChecker(checker);
 			messageBroadcaster(MakeMoveMessage(matchId, playerId, sourcePosition, targetPosition));
 			return true;
 		} else {
@@ -394,9 +395,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	shared Boolean handleCheckerSelection(HTMLElement checker) {
 		if (gui.isTempChecker(checker), exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker)) {
-			return makeMove(sourcePosition, targetPosition);
+			return makeMove(sourcePosition, targetPosition, checker);
 		} else if (exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker), sourcePosition == targetPosition, exists color = playerColor) {
-			return makeMove(sourcePosition, game.board.homePosition(color));
+			return makeMove(sourcePosition, game.board.homePosition(color), checker);
 		} else if (handleStartDrag(checker)) {
 			gui.showSelectedChecker(checker);
 			return true;
@@ -408,7 +409,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	shared Boolean handleDrop(HTMLElement targetElement, HTMLElement sourceElement) {
 		if (exists sourcePosition = gui.getPosition(sourceElement), exists targetPosition = gui.getPosition(targetElement)) {
-			return makeMove(sourcePosition, targetPosition);
+			return makeMove(sourcePosition, targetPosition, sourceElement);
 		} else {
 			return false;
 		}

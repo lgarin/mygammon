@@ -5,7 +5,8 @@ import backgammon.common {
 	StartGameMessage,
 	EndGameMessage,
 	GameActionResponseMessage,
-	GameStateResponseMessage
+	GameStateResponseMessage,
+	RoomId
 }
 import backgammon.server.common {
 	RoomConfiguration,
@@ -25,8 +26,10 @@ import backgammon.game {
 
 shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster) {
 	
+	value roomId = RoomId(configuration.roomId);
 	value lock = ObtainableLock(); 
 	value gameMap = HashMap<MatchId, GameServer>();
+	variable Integer gameCount = 0;
 	
 	function getGameServer(InboundGameMessage message) {
 		try (lock) {
@@ -38,6 +41,7 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 			} else if (is StartGameMessage message) {
 				value server = GameServer(message.playerId, message.opponentId, message.matchId, configuration, messageBroadcaster);
 				gameMap.put(message.matchId, server);
+				gameCount++;
 				return server;
 			} else {
 				return null;
@@ -68,7 +72,7 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	
 	shared GameRoomStatistic statistic {
 		try (lock) {
-			return GameRoomStatistic(gameMap.size);
+			return GameRoomStatistic(roomId, gameMap.size, gameCount);
 		}
 	}
 }
