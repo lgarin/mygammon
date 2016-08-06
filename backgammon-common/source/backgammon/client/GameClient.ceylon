@@ -344,6 +344,8 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		} else {
 			// TODO this error still occurs
 			print("Strange state: ``game.state.toJson()``");
+			gui.hideSubmitButton();
+			messageBroadcaster(PlayerBeginMessage(matchId, playerId));
 			return false;
 		}
 	}

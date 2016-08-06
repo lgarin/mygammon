@@ -132,7 +132,7 @@ void onServerMessage(String messageString) {
 	print(messageString);
 	if (is Object json = parse(messageString), exists typeName = json.keys.first) {
 		if (!handleServerMessage(typeName, json.getObject(typeName))) {
-			onServerError("Cannot handle message: ``messageString``");
+			onServerError("Cannot handle message: ``json.pretty``");
 		}
 	} else {
 		onServerError("Cannot parse server response: ``messageString``");
@@ -141,7 +141,7 @@ void onServerMessage(String messageString) {
 
 void onServerError(String messageString) {
 	print(messageString);
-	window.alert("An unexpected error occured.\nThe page will be reloaded.\n\nDetail:\n``messageString``");
+	window.alert("An unexpected error occured.\r\nThe page will be reloaded.\r\n\r\nDetail:\r\n``messageString``");
 	window.location.reload();
 }
 
@@ -151,7 +151,7 @@ void registerMessageHandler(String address) {
 		eventBus.onopen = void() {
 			eventBus.registerHandler(address, (dynamic error, dynamic message) {
 				if (exists error) {
-					onServerError(JSON.stringify(error));
+					onServerError("Event bus failure: " + JSON.stringify(error));
 				} else {
 					onServerMessage(JSON.stringify(message.body));
 				}
