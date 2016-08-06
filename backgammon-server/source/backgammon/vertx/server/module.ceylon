@@ -1,5 +1,5 @@
 native("jvm")
-module backgammon.vertx.server "1.0.0" {
+module backgammon.vertx.server "1.0.1" {
 	shared import java.base "8";
 	import "org.apache.logging.log4j:log4j-api" "2.6.2";
 	import "org.apache.logging.log4j:log4j-core" "2.6.2";
@@ -8,6 +8,6 @@ module backgammon.vertx.server "1.0.0" {
 	import ceylon.json "1.2.2";
 	import ceylon.file "1.2.2";
 	import ceylon.logging "1.2.2";
-	import backgammon.server.match "1.0.0";
-	import backgammon.server.game "1.0.0";
+	import backgammon.server.match "1.0.1";
+	import backgammon.server.game "1.0.1";
 }
