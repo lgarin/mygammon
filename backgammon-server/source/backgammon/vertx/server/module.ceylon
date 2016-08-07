@@ -1,7 +1,7 @@
 native("jvm")
 module backgammon.vertx.server "1.0.1" {
 	shared import java.base "8";
-	import "org.apache.logging.log4j:log4j-api" "2.6.2";
+	shared import "org.apache.logging.log4j:log4j-api" "2.6.2";
 	import "org.apache.logging.log4j:log4j-core" "2.6.2";
 	import io.vertx.ceylon.web "3.3.2";
 	import io.vertx.ceylon.auth.oauth2 "3.3.2";

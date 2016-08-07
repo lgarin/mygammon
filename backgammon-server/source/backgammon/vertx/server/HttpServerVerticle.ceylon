@@ -27,6 +27,8 @@ import io.vertx.ceylon.web.handler {
 
 final class HttpServerVerticle() extends Verticle() {
 	
+	value log = logger(`package`);
+	
 	void startHttp(RoomConfiguration roomConfig) {
 		
 		value authRouterFactory = GoogleAuthRouterFactory(vertx, roomConfig.hostname, roomConfig.port);
@@ -45,7 +47,7 @@ final class HttpServerVerticle() extends Verticle() {
 		
 		vertx.createHttpServer().requestHandler(router.accept).listen(roomConfig.port);
 		
-		logger(`package`).info("Started http://``roomConfig.hostname``:``roomConfig.port``");
+		log.info("Started http://``roomConfig.hostname``:``roomConfig.port``");
 	}
 	
 	void startRoom(RoomConfiguration roomConfig) {
@@ -68,16 +70,21 @@ final class HttpServerVerticle() extends Verticle() {
 			value statistic = "``matchRoom.statistic`` ``gameRoom.statistic``";
 			if (statistic != lastStatistic) {
 				lastStatistic = statistic;
-				logger(`package`).info(statistic);
+				log.info(statistic);
 			}
 		});
 		
-		logger(`package`).info("Started room ``roomConfig.roomId``");
+		log.info("Started room ``roomConfig.roomId``");
 	}
 
 	shared actual void start() {
 		value roomConfig = RoomConfiguration(config);
 		startHttp(roomConfig);
 		startRoom(roomConfig);
+	}
+	
+	shared actual void stop() {
+		value roomConfig = RoomConfiguration(config);
+		log.info("Stopped room ``roomConfig.roomId``");
 	}
 }
