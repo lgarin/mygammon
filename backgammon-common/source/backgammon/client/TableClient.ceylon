@@ -122,6 +122,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	}
 	
 	shared Boolean handleLeaveEvent() {
+		// TODO propagate to matchClient and gameClient
 		messageBroadcaster(LeaveTableMessage(playerId, tableId));
 		return true;
 	}
