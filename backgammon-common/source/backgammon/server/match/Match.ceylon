@@ -31,8 +31,6 @@ class Match(shared Player player1, shared Player player2, shared Table table) {
 	
 	shared MatchId id = MatchId(table.id, creationTime);
 	
-	//shared Duration remainingJoinTime => Duration(table.maxMatchJoinTime.milliseconds - creationTime.durationTo(now()).milliseconds);
-
 	value noWinnerId = PlayerId("");
 	variable PlayerId? winnerId = null;
 	variable Boolean player1Ready = false;

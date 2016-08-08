@@ -275,6 +275,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			return false;
 		}
 		case (is GameWonMessage) {
+			// TODO force win in game
 			return showGameWon(message);
 		}
 		case (is GameEndedMessage) {
@@ -396,7 +397,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	shared Boolean handleCheckerSelection(HTMLElement checker) {
-		// TODO does not work for sending checker to home
 		if (gui.isTempChecker(checker), exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker)) {
 			return makeMove(sourcePosition, targetPosition, checker);
 		} else if (exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker), sourcePosition == targetPosition, exists color = playerColor) {

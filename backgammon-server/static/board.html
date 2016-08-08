@@ -29,6 +29,7 @@
 	            	});
 	            	$(".button").on("click", function(event) { return app.onButton(event.currentTarget); });
 	            	$(".checker").on("click", function(event) { return app.onChecker(event.currentTarget); });
+	            	$(".topdown-checker").on("click", function(event) { return app.onChecker(event.currentTarget); });
 	            	window.setInterval(function() { return app.onTimer(); }, 500);
 	                app.run();
 	            }

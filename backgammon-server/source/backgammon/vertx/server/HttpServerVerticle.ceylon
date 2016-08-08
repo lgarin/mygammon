@@ -37,6 +37,7 @@ final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(roomConfig.playerInactiveTimeout.milliseconds));
 		//router.route().handler(loggerHandler.create().handle);		
 		
+		router.route("/logs/*").handler(staticHandler.create("logs").setCachingEnabled(false).setDirectoryListing(true).handle);
 		router.route("/static/*").handler(staticHandler.create("static").handle);
 		router.route("/modules/*").handler(staticHandler.create("modules").handle);
 		router.mountSubRouter("/eventbus", GameRoomEventBus(vertx).createEventBusRouter());

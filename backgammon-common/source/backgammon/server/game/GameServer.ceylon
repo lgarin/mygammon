@@ -119,6 +119,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 	}
 	
 	function endGame() {
+		// TODO try to combine GameEndedMessage with GameWonMessage
 		if (game.end()) {
 			messageBroadcaster(GameEndedMessage(matchId, player1Id, player1Color));
 			messageBroadcaster(GameEndedMessage(matchId, player2Id, player2Color));
@@ -162,7 +163,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			return true;
 		} else if (game.hasWon(playerColor)) {
 			messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor), playerColor));
-			return true;
+			return endGame();
 		} else {
 			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
 			return false;
