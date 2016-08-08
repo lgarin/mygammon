@@ -1,2 +1,2 @@
 native("js")
-module backgammon.browser "1.0.2" {}
+module backgammon.browser "1.0.3" {}
