@@ -45,6 +45,8 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	// TODO should be part of configuration
 	value initialRollDelay = Duration(2000);
 			
+			
+	variable CheckerColor? winner = null;
 	value game = Game();
 	
 	final class DelayedGameMessage(shared InboundGameMessage message, Duration delay) {
@@ -142,7 +144,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		} else if (exists remainingTime = game.remainingTime(currentTime)) {
 			showInitialRollMessages(remainingTime);
 		} else if (game.ended) {
-			showWinMessages(game.winner);
+			showWinMessages(winner);
 		} else {
 			showLoadingMessages();
 		}
@@ -234,7 +236,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		showWinMessages(color);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		gui.showLeaveButton();
+		gui.hideLeaveButton();
 	}
 	
 	function showGameWon(GameWonMessage message) {
@@ -247,6 +249,10 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
+		if (message.matchId != matchId) {
+			return true;
+		}
+		
 		switch (message) 
 		case (is InitialRollMessage) {
 			return showInitialRoll(message);
@@ -275,12 +281,12 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			return false;
 		}
 		case (is GameWonMessage) {
-			// TODO force win in game
+			winner = message.playerColor;
 			return showGameWon(message);
 		}
 		case (is GameEndedMessage) {
 			game.end();
-			showWin(game.winner);
+			showWin(winner);
 			return true;
 		}
 		case (is GameStateResponseMessage) {
@@ -292,9 +298,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			return message.success;
 		}
 		case (is TurnTimedOutMessage) {
+			game.forceTimeout();
 			gui.hidePossibleMoves();
 			gui.showSelectedChecker(null);
-			// TODO force timeout in game
 			if (exists currentColor = game.currentColor) {
 				gui.showPlayerMessage(currentColor, "Timeout", false);
 			} else {

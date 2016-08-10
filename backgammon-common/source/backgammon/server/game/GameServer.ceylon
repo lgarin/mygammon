@@ -157,9 +157,11 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			value nextColor = game.currentColor;
 			assert (exists nextColor);
 			value roll = diceRoller.roll();
-			value turnDuration = game.hasAvailableMove(nextColor, roll) then configuration.maxTurnDuration else configuration.maxEmptyTurnDuration;
-			assert (game.beginTurn(nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
-			messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, configuration.maxUndoPerTurn));
+			value factor = roll.isPair then 2 else 1;
+			value turnDuration = game.hasAvailableMove(nextColor, roll) then configuration.maxTurnDuration.scale(factor) else configuration.maxEmptyTurnDuration;
+			value maxUndo = configuration.maxUndoPerTurn * factor;
+			assert (game.beginTurn(nextColor, roll, turnDuration, maxUndo));
+			messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, maxUndo));
 			return true;
 		} else if (game.hasWon(playerColor)) {
 			messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor), playerColor));
@@ -202,8 +204,11 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			messageBroadcaster(PlayerReadyMessage(matchId, toPlayerId(playerColor), playerColor));
 			if (exists currentColor = game.currentColor) {
 				value roll = diceRoller.roll();
-				if (game.beginTurn(currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn)) {
-					messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), currentColor, roll, configuration.maxTurnDuration, configuration.maxUndoPerTurn));
+				value factor = roll.isPair then 2 else 1;
+				value turnDuration = configuration.maxTurnDuration.scale(factor);
+				value maxUndo = configuration.maxUndoPerTurn * factor;
+				if (game.beginTurn(currentColor, roll, turnDuration, maxUndo)) {
+					messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), currentColor, roll, turnDuration, maxUndo));
 					return true;
 				} else {
 					return false;

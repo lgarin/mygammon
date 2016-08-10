@@ -27,8 +27,10 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	shared MatchId matchId = match.id;
 	
 	value playerId = PlayerId(player.id);
-	shared variable GameClient? gameClientVar = null;
+	variable GameClient? gameClientVar = null;
 	shared GameClient? gameClient => gameClientVar;
+	
+	shared Boolean isMatchPlayer(PlayerId playerId) => match.playerColor(playerId) exists;
 	
 	GameClient initGameClient() {
 		value result = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
@@ -86,7 +88,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	
 	shared Boolean handleMatchMessage(OutboundMatchMessage message) {
 		if (message.matchId != match.id) {
-			return false;
+			return true;
 		}
 		
 		switch (message)
@@ -106,7 +108,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			}
 			gui.hideSubmitButton();
 			gui.hideUndoButton();
-			gui.showLeaveButton();
+			gui.hideLeaveButton();
 			return true;
 		}
 		case (is CreatedGameMessage) {
@@ -119,7 +121,7 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	 
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
 	 	if (match.id != message.matchId) {
-	 		return false;
+	 		return true;
 	 	}
 	 	
 	 	if (exists currentGameClient = gameClient) {

@@ -310,9 +310,6 @@ shared final class GameGui(Document document) {
 		showDiceValues(color, null, null);
 		showPlayerInfo(color, null, null);
 		showPlayerMessage(color, playerMessage, true);
-		showLeaveButton();
-		hideUndoButton();
-		hideSubmitButton();
 	}
 	
 	shared void showInitialState(String playerMessage = initalPlayerMessage) {
@@ -320,6 +317,9 @@ shared final class GameGui(Document document) {
 		hideAllCheckers();
 		resetState(black, playerMessage);
 		resetState(white, playerMessage);
+		hideLeaveButton();
+		hideUndoButton();
+		hideSubmitButton();
 	}
 	
 	shared void showEmptyGame() {

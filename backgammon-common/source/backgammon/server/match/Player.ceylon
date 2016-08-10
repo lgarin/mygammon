@@ -27,11 +27,14 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 	
 	variable Table? table = null;
 	variable Match? match = null;
-	variable Instant lastActivity = now(); // TODO is it really necessary?
+	variable Instant lastActivity = now();
 	
 	shared RoomId? roomId => room?.id;
 	shared Integer? tableIndex => table?.index;
 	shared TableId? tableId => table?.id;
+	shared MatchId? matchId => match?.id;
+	
+	shared variable MatchId? previousMatchId = null;
 	
 	shared Boolean isInRoom(RoomId roomId) {
 		return room?.id?.equals(roomId) else false;
@@ -104,8 +107,6 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 		}
 	}
 	
-	shared MatchId? matchId => match?.id;
-	
 	shared PlayerId? matchOpponentId => match?.opponentId(id);
 	
 	shared PlayerId? gameOpponentId {
@@ -119,6 +120,7 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 	shared Boolean leaveMatch() {
 		if (exists currentMatch = match) {
 			currentMatch.end(this);
+			previousMatchId = currentMatch.id;
 			match = null;
 			return true;
 		}
@@ -137,16 +139,14 @@ final class Player(shared PlayerInfo info, variable Room? room = null) {
 		return true;
 	}
 	
-	shared Boolean isWaitingOpponent() {
-		if (table exists, exists currentMatch = match) {
-			return !currentMatch.isStarted;
-		} else if (table exists) {
-			return true;
+	shared Boolean isPlaying() {
+		if (exists currentMatch = match) {
+			return currentMatch.isStarted && !currentMatch.isEnded; 
 		} else {
 			return false;
 		}
 	}
-	
+
 	shared Boolean isInactiveSince(Instant timeoutTime) => lastActivity < timeoutTime;
 }
 
@@ -240,38 +240,38 @@ class PlayerTest() {
 	}
 	
 	test
-	shared void waitingSeatWithoutTable() {
-		value result = player.isWaitingOpponent();
+	shared void notPlayingWithoutTable() {
+		value result = player.isPlaying();
 		assert (!result);
 	}
 	
 	test
-	shared void waitingSeatWithoutMatch() {
+	shared void notPlayingWithoutMatch() {
 		player.joinTable(0);
-		value result = player.isWaitingOpponent();
-		assert (result);
+		value result = player.isPlaying();
+		assert (!result);
 	}
 	
 	test
-	shared void waitingSeatWithMatch() {
+	shared void notPlayingWithMatch() {
 		value opponent = makePlayer("opponent");
 		opponent.findMatchTable();
 		player.findMatchTable();
-		value result = player.isWaitingOpponent();
-		assert (result);
+		value result = player.isPlaying();
+		assert (!result);
 	}
 	
 	test
-	shared void waitingSeatWithGame() {
+	shared void playingWithGame() {
 		value opponent = makePlayer("opponent");
 		opponent.findMatchTable();
 		player.findMatchTable();
 		player.acceptMatch();
 		opponent.acceptMatch();
-		value result = player.isWaitingOpponent();
-		assert (!result);
+		value result = player.isPlaying();
+		assert (result);
 	}
-	
+
 	test
 	shared void joinMatch() {
 		value opponent = makePlayer("opponent");

@@ -33,7 +33,7 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 			return PlayerId(playerInfo.id);
 		} else {
 			if (withFailure) {
-				failWithBadRequest();
+				failWithUnauthorized();
 			}
 			return null;
 		}

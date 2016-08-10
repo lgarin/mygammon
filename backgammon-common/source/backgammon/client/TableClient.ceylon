@@ -9,7 +9,6 @@ import backgammon.common {
 	OutboundTableMessage,
 	OutboundGameMessage,
 	LeftTableMessage,
-	LeftMatchMessage,
 	InboundMatchMessage,
 	LeaveTableMessage,
 	InboundTableMessage,
@@ -42,8 +41,6 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	
 	
 	void handleTableStateResponseMessage(TableStateResponseMessage message) {
-		gui.showEmptyGame();
-		
 		if (exists match = message.match) {
 			matchClient = MatchClient(playerInfo, match, gui, messageBroadcaster);
 			matchClient?.showState();
@@ -54,7 +51,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	
 	shared Boolean handleTableMessage(OutboundTableMessage message) {
 		if (tableId != message.tableId) {
-			return false;
+			return true;
 		}
 
 		switch (message)
@@ -65,8 +62,9 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 			return true;
 		}
 		case (is LeftTableMessage) {
-			if (exists currentMatchClient = matchClient) {
-				return currentMatchClient.handleMatchMessage(LeftMatchMessage(message.playerId, currentMatchClient.matchId));
+			if (exists currentMatchClient = matchClient, currentMatchClient.isMatchPlayer(message.playerId)) {
+				gui.showInitialState();
+				return true;
 			} else {
 				return true;
 			}
@@ -83,7 +81,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	
 	shared Boolean handleMatchMessage(OutboundMatchMessage message) {
 		if (tableId != message.tableId) {
-			return false;
+			return true;
 		}
 		
 		if (exists currentMatchClient = matchClient) {
@@ -95,7 +93,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
 		if (tableId != message.tableId) {
-			return false;
+			return true;
 		}
 
 		if (exists currentMatchClient = matchClient) {
@@ -122,7 +120,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	}
 	
 	shared Boolean handleLeaveEvent() {
-		// TODO propagate to matchClient and gameClient
+		gui.hideLeaveButton();
 		messageBroadcaster(LeaveTableMessage(playerId, tableId));
 		return true;
 	}

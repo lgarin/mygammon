@@ -65,8 +65,8 @@ final class Room(String roomId, shared Integer tableCount, Anything(OutboundTabl
 	
 	shared Integer removeInactivePlayers(Instant timeoutTime) {
 		variable value result = 0;
-		for (player in playerMap.items) {
-			if (!player.isWaitingOpponent() && player.isInactiveSince(timeoutTime)) {
+		for (player in playerMap.items.sequence()) {
+			if (!player.isPlaying() && player.isInactiveSince(timeoutTime)) {
 				player.leaveRoom();
 				result++;
 			}

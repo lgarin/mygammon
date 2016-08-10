@@ -196,7 +196,7 @@ shared class Game() {
 			return false;
 		} else if (exists roll = currentRoll, !currentMoves.empty) {
 			while (exists move = currentMoves.pop()) {
-				currentRollVar = roll.add(move.rollValue);
+				roll.add(move.rollValue);
 				assert (board.moveChecker(color, move.targetPosition, move.sourcePosition));
 				if (move.hitBlot) {
 					assert (board.moveChecker(color.oppositeColor, board.graveyardPosition(color.oppositeColor), move.targetPosition));
@@ -218,6 +218,10 @@ shared class Game() {
 			return false;
 		}
 	}
+	
+	shared void forceTimeout() {
+		nextTimeout = now().minus(Duration(1));
+	}
 
 	shared Boolean hasWon(CheckerColor color)=> board.countCheckers(board.homePosition(color), color) == checkerCount;
 	
@@ -230,11 +234,7 @@ shared class Game() {
 			return false;
 		} else {
 			currentMoves.clear();
-			if (exists roll = currentRoll, roll.isPair) {
-				currentColorVar = color;
-			} else {
-				currentColorVar = color.oppositeColor;
-			}
+			currentColorVar = color.oppositeColor;
 			return true;
 		}
 	}
@@ -313,15 +313,6 @@ shared class Game() {
 		currentMoves.clear();
 		currentMoves.addAll(state.currentMoves);
 	}
-	shared CheckerColor? winner {
-		if (hasWon(black)) {
-			return black;
-		} else if (hasWon(white)) {
-			return white;
-		} else {
-			return null;
-		}
-	}
 }
 
 class GameTest() {
@@ -338,7 +329,6 @@ class GameTest() {
 		assert ([0, 0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0] == game.board.checkerCounts(white));
 		assert (!game.started);
 		assert (!game.ended);
-		assert (game.winner is Null);
 		assert (!game.mustRollDice(black));
 		assert (!game.mustRollDice(white));
 		assert (!game.mustMakeMove(black));

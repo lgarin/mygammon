@@ -7,7 +7,7 @@
 	"port": 8080,
 	"maxTurnDuration": 60000,
 	"serverAdditionalTimeout": 1000,
-	"playerInactiveTimeout": 1200000,
+	"playerInactiveTimeout": 600000,
 	"maxWarningCount": 2,
 	"maxUndoPerTurn": 1,
 	"maxSkippedPlayerTurn": 3

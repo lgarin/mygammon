@@ -18,7 +18,8 @@ import backgammon.common {
 	LeaveTableMessage,
 	LeftTableMessage,
 	InboundGameMessage,
-	StartGameMessage
+	StartGameMessage,
+	EndGameMessage
 }
 import backgammon.server.common {
 	RoomConfiguration,
@@ -48,6 +49,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 			}
 			case (is LeaveRoomMessage) {
 				if (exists player = room.players[message.playerId], player.leaveRoom()) {
+					if (exists matchId = player.previousMatchId) {
+						gameCommander(EndGameMessage(matchId, player.id));
+					}
 					return LeftRoomMessage(player.id, room.id, true);
 				}
 				return LeftRoomMessage(message.playerId, room.id, false);
@@ -66,12 +70,16 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 			switch (message)
 			case (is LeaveTableMessage) {
 				if (exists player = room.players[message.playerId], player.leaveTable()) {
+					if (exists matchId = player.previousMatchId) {
+						gameCommander(EndGameMessage(matchId, player.id));
+					}
 					return LeftTableMessage(message.playerId, message.tableId, true);
 				} else {
 					return LeftTableMessage(message.playerId, message.tableId, false);
 				}
 			}
 			case (is TableStateRequestMessage) {
+				// TODO player may not be on this table
 				if (exists table = room.tables[message.tableId.table]) {
 					return TableStateResponseMessage(message.playerId, message.tableId, table.matchInfo, true);
 				} else {

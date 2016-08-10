@@ -35,7 +35,8 @@ import backgammon.common {
 	TableStateResponseMessage,
 	formatRoomMessage,
 	TableStateRequestMessage,
-	PlayerId
+	PlayerId,
+	LeftTableMessage
 }
 
 import ceylon.json {
@@ -83,8 +84,6 @@ shared Boolean onButton(HTMLElement target) {
 	if (target.id == gui.leaveButtonId) {
 		if (exists currentTableClient = tableClient, window.confirm("Do you really want to leave the table?")) {
 			currentTableClient.handleLeaveEvent();
-			// TODO magic value
-			window.location.\iassign("/start");
 			return true;
 		} else {
 			return false;
@@ -163,6 +162,11 @@ void registerMessageHandler(String address) {
 Boolean handleTableMessage(OutboundTableMessage message) {
 
 	if (is RoomResponseMessage message, !message.success) {
+		// TODO temporary workaround
+		if (is LeftTableMessage message) {
+			gui.hideLeaveButton();
+			return true;
+		}
 		return false;
 	}
 	
@@ -215,6 +219,7 @@ TableId? extractTableId(String pageUrl) {
 PlayerInfo? extractPlayerInfo(String cookie) {
 	value match = regex("playerInfo=([^\\;\\s]+)").find(cookie);
 	if (exists match, exists infoString = match.groups[0]) {
+		print(infoString);
 		return parseBase64PlayerInfo(infoString);
 	}
 	return null;
@@ -228,6 +233,9 @@ void makeApiRequest(String url) {
 	request.onload = void (Event event) {
 		if (request.status == 200) {
 			onServerMessage(request.responseText);
+		} else if (request.status == 401) {
+			// TODO magic value
+			window.location.\iassign("/start");
 		} else {
 			onServerError(request.statusText);
 		}
@@ -272,11 +280,12 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 "Run the module `backgammon.vertx.client`."
 shared void run() {
 	
-	gui.showInitialState();
-	
 	if (exists tableId = extractTableId(window.location.href), exists playerInfo = extractPlayerInfo(window.document.cookie)) {
 		tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
+		tableClient?.showState();
 		registerMessageHandler("OutboundTableMessage-``tableId``");
 		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
+	} else {
+		gui.showInitialState();
 	}
 }
