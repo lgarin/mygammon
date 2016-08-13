@@ -1,1 +1,6 @@
-/target/
+/.exploded/
+/.vertx/
+/classes/
+/modules/
+/logs/
+/client/

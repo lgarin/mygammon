@@ -1,0 +1,15 @@
+[compiler]
+source=source
+resource=resource
+
+[defaults]
+flatclasspath=true
+encoding=Cp1252
+offline=true
+
+[repositories]
+other=aether:C:\\Dev\\maven\\settings.xml
+cache=C:\\Dev\\ceylon\\cache
+
+[formattool]
+profile=default

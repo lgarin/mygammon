@@ -11,13 +11,21 @@
 			</arguments>
 		</buildCommand>
 		<buildCommand>
-			<name>org.eclipse.m2e.core.maven2Builder</name>
+			<name>com.redhat.ceylon.eclipse.ui.ceylonBuilder</name>
 			<arguments>
+				<dictionary>
+					<key>compileJs</key>
+					<value>true</value>
+				</dictionary>
+				<dictionary>
+					<key>systemRepo</key>
+					<value></value>
+				</dictionary>
 			</arguments>
 		</buildCommand>
 	</buildSpec>
 	<natures>
+		<nature>com.redhat.ceylon.eclipse.ui.ceylonNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
-		<nature>org.eclipse.m2e.core.maven2Nature</nature>
 	</natures>
 </projectDescription>
