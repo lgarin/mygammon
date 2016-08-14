@@ -4,7 +4,6 @@ import backgammon.server.room {
 	Match
 }
 import backgammon.shared {
-	CreatedGameMessage,
 	AcceptedMatchMessage,
 	RoomId,
 	PlayerInfo,
@@ -45,7 +44,6 @@ class MatchTest() {
 		value result2 = match.acceptMatch(match.player2);
 		assert (result2);
 		assert (messageList.count((TableMessage element) => element is AcceptedMatchMessage) == 2);
-		assert (messageList.count((TableMessage element) => element is CreatedGameMessage) == 1);
 	}
 	
 	test

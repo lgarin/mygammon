@@ -3,11 +3,7 @@ import backgammon.shared {
 	MatchId,
 	MatchState,
 	AcceptedMatchMessage,
-	LeftMatchMessage,
-	CreatedGameMessage,
-	GameWonMessage,
-	GameMessage,
-	GameEndedMessage
+	LeftMatchMessage
 }
 
 import ceylon.time {
@@ -20,8 +16,8 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 	Instant creationTime = now();
 	
 	shared MatchId id = MatchId(table.id, creationTime);
-	
-	value noWinnerId = PlayerId("");
+
+	// TODO use MatchState instead
 	variable PlayerId? winnerId = null;
 	variable Boolean player1Ready = false;
 	variable Boolean player2Ready = false;
@@ -32,18 +28,11 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 	shared Boolean isEnded => winnerId exists;
 
 	shared Boolean end(Player player) {
-		if (winnerId exists) {
+		if (isEnded) {
 			return false;
 		} else if (player == player1 || player == player2) {
-			if (isStarted) {
-				player1Ready = false;
-				player2Ready = false;
-			}
-			
 			if (table.removeMatch(this)) {
-				if (winnerId is Null) {
-					winnerId = noWinnerId;
-				}
+				winnerId = PlayerId("");
 				table.publish(LeftMatchMessage(player.id, id));
 				return true;
 			} else {
@@ -55,7 +44,7 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 	}
 	
 	function markReady(Player player) {
-		if (isStarted || winnerId exists) {
+		if (isStarted || isEnded) {
 			return false;
 		} else if (player == player1) {
 			player1Ready = true;
@@ -67,30 +56,10 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 			return false;
 		}
 	}
-	
-	shared Boolean processGameMessage(GameMessage message) {
-		if (id == message.matchId) {
-			if (is GameWonMessage message) {
-				winnerId = message.playerId;
-			} else if (is GameEndedMessage message) {
-				if (winnerId is Null) {
-					winnerId = noWinnerId;
-				}
-				table.removeMatch(this);
-			}
-			return true;
-		} else {
-			return false;
-		}
-		
-	}
 
 	shared Boolean acceptMatch(Player player) {
 		if (markReady(player)) {
 			table.publish(AcceptedMatchMessage(player.id, id));
-			if (isStarted) {
-				table.publish(CreatedGameMessage(player.id, id));
-			}
 			return true;
 		} else {
 			return false;

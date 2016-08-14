@@ -5,19 +5,20 @@ import backgammon.shared {
 	OutboundMatchMessage,
 	LeftMatchMessage,
 	AcceptedMatchMessage,
-	CreatedGameMessage,
 	MatchId,
 	InboundMatchMessage,
 	AcceptMatchMessage,
 	OutboundGameMessage,
 	GameStateRequestMessage,
-	InboundGameMessage
+	InboundGameMessage,
+	MatchEndedMessage
 }
 import backgammon.shared.game {
 	player2Color,
 	player1Color,
 	CheckerColor
 }
+
 import ceylon.time {
 	Instant
 }
@@ -111,10 +112,14 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			gui.hideLeaveButton();
 			return true;
 		}
-		case (is CreatedGameMessage) {
-			if (gameClient is Null) {
-				initGameClient().showState();
+		case (is MatchEndedMessage) {
+			// TODO close event bus
+			if (exists winnerId = message.winnerId, exists color = match.playerColor(winnerId)) {
+				gui.showPlayerMessage(color, "Winner", true);
 			}
+			gui.hideSubmitButton();
+			gui.hideUndoButton();
+			gui.hideLeaveButton();
 			return true;
 		}
 	}
@@ -122,6 +127,10 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
 	 	if (match.id != message.matchId) {
 	 		return true;
+	 	}
+	 	
+	 	if (gameClient is Null) {
+	 		initGameClient().showState();
 	 	}
 	 	
 	 	if (exists currentGameClient = gameClient) {

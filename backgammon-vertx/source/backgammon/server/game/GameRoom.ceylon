@@ -1,34 +1,33 @@
 
 
+import backgammon.server.room {
+	RoomConfiguration
+}
+import backgammon.server.util {
+	ObtainableLock
+}
 import backgammon.shared {
 	MatchId,
 	RoomId,
-	EndGameMessage,
 	OutboundGameMessage,
 	StartGameMessage,
 	GameActionResponseMessage,
 	InboundGameMessage,
-	GameStateResponseMessage
+	GameStateResponseMessage,
+	InboundMatchMessage
 }
 import backgammon.shared.game {
 	black
 }
+
 import ceylon.collection {
 	HashMap
 }
 import ceylon.time {
 	Instant
 }
-import backgammon.server.util {
 
-	ObtainableLock
-}
-import backgammon.server.room {
-
-	RoomConfiguration
-}
-
-shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster) {
+shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
 	
 	value roomId = RoomId(configuration.roomId);
 	value lock = ObtainableLock(); 
@@ -38,12 +37,9 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	function getGameServer(InboundGameMessage message) {
 		try (lock) {
 			if (exists currentServer = gameMap[message.matchId]) {
-				if (is EndGameMessage message) {
-					gameMap.remove(message.matchId);
-				}
 				return currentServer;
 			} else if (is StartGameMessage message) {
-				value server = GameServer(message.playerId, message.opponentId, message.matchId, configuration, messageBroadcaster);
+				value server = GameServer(message.playerId, message.opponentId, message.matchId, configuration, messageBroadcaster, matchCommander);
 				gameMap.put(message.matchId, server);
 				gameCount++;
 				return server;
@@ -59,6 +55,12 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		}
 	}
 	
+	void removeGameServer(GameServer game) {
+		try (lock) {
+			gameMap.remove(game.matchId);
+		}
+	}
+	
 	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
 		if (exists server = getGameServer(message)) {
 			return server.processGameMessage(message);
@@ -68,9 +70,13 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		}
 	}
 	
-	shared void notifySoftTimeouts(Instant currentTime) {
+	shared void periodicCleanup(Instant currentTime) {
 		for (game in getAllGamerServers()) {
-			game.notifyTimeouts(currentTime);
+			if (game.ended) {
+				removeGameServer(game);
+			} else {
+				game.notifyTimeouts(currentTime);
+			}
 		}
 	}
 	

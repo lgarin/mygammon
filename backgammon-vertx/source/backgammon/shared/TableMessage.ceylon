@@ -5,6 +5,7 @@ import ceylon.json {
 shared sealed interface TableMessage of OutboundTableMessage | InboundTableMessage | MatchMessage satisfies RoomMessage  {
 	shared formal TableId tableId;
 	shared actual RoomId roomId => RoomId(tableId.roomId);
+	shared default Integer table => tableId.table;
 	shared default actual Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "tableId" -> tableId.toJson()});
 }
 

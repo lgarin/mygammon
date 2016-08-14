@@ -1,4 +1,10 @@
 
+import backgammon.server.room {
+	DiceRoller
+}
+import backgammon.server.util {
+	ObtainableLock
+}
 import backgammon.shared {
 	MatchId,
 	PlayerId,
@@ -19,11 +25,12 @@ import backgammon.shared {
 	StartGameMessage,
 	OutboundGameMessage,
 	DesynchronizedMessage,
-	GameEndedMessage,
 	PlayedMoveMessage,
 	PlayerBeginMessage,
 	NotYourTurnMessage,
-	InboundGameMessage
+	InboundGameMessage,
+	InboundMatchMessage,
+	EndMatchMessage
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -34,20 +41,13 @@ import backgammon.shared.game {
 	player1Color,
 	player2Color
 }
+
 import ceylon.time {
 	Instant,
 	now
 }
-import backgammon.server.util {
 
-	ObtainableLock
-}
-import backgammon.server.room {
-
-	DiceRoller
-}
-
-final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster) {
+final class GameServer(PlayerId player1Id, PlayerId player2Id, shared MatchId matchId, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
 	
 	value lock = ObtainableLock(); 
 	value diceRoller = DiceRoller();
@@ -123,11 +123,9 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		}
 	}
 	
-	function endGame() {
-		// TODO try to combine GameEndedMessage with GameWonMessage
+	function endGame(PlayerId? winner = null) {
 		if (game.end()) {
-			messageBroadcaster(GameEndedMessage(matchId, player1Id, player1Color));
-			messageBroadcaster(GameEndedMessage(matchId, player2Id, player2Color));
+			matchCommander(EndMatchMessage(matchId, winner));
 			return true;
 		} else {
 			return false;
@@ -138,8 +136,10 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 		if (exists currentColor = game.currentColor) {
 			value opponentId = toPlayerId(playerColor.oppositeColor);
 			messageBroadcaster(GameWonMessage(matchId, opponentId, playerColor.oppositeColor));
+			return endGame(opponentId);
+		} else {
+			return endGame();
 		}
-		return endGame();
 	}
 	
 	function endTurn(CheckerColor playerColor) {
@@ -170,7 +170,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			return true;
 		} else if (game.hasWon(playerColor)) {
 			messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor), playerColor));
-			return endGame();
+			return endGame(toPlayerId(playerColor));
 		} else {
 			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
 			return false;
@@ -322,4 +322,6 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, MatchId matchId, 
 			return GameActionResponseMessage(matchId, message.playerId, player1Color, false);
 		}
 	}
+	
+	shared Boolean ended => game.ended;
 }

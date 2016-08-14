@@ -4,7 +4,9 @@ import backgammon.shared {
 	OutboundTableMessage,
 	MatchState,
 	CreatedMatchMessage,
-	OutboundMatchMessage
+	OutboundMatchMessage,
+	MatchId,
+	PlayerId
 }
 
 import ceylon.collection {
@@ -75,6 +77,18 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 			return currentMatch.state;
 		} else {
 			return null;
+		}
+	}
+	shared Boolean endMatch(MatchId matchId, PlayerId? winnerId) {
+		if (exists currentMatch = match, currentMatch.id == matchId) {
+			//currentMatch.end(winnerId);
+			// TODO announce winner
+			removePlayer(currentMatch.player1);
+			removePlayer(currentMatch.player2);
+			match = null;
+			return true;
+		} else {
+			return false;
 		}
 	}
 }

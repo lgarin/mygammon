@@ -17,7 +17,7 @@ shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage 
 
 shared interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {}
 
-shared interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameWonMessage | GameEndedMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
+shared interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameWonMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
 	shared formal CheckerColor playerColor;
 	shared actual default Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "playerColor" -> playerColor.name });
 }
@@ -116,11 +116,6 @@ shared EndGameMessage parseEndGameMessage(Object json) {
 	return EndGameMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")));
 }
 
-shared final class GameEndedMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor) satisfies OutboundGameMessage {}
-shared GameEndedMessage parseGameEndedMessage(Object json) {
-	return GameEndedMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")));
-}
-
 shared final class GameStateRequestMessage(shared actual MatchId matchId, shared actual PlayerId playerId) satisfies InboundGameMessage {}
 shared GameStateRequestMessage parseGameStateRequestMessage(Object json) {
 	return GameStateRequestMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")));
@@ -162,8 +157,6 @@ shared OutboundGameMessage? parseOutboundGameMessage(String typeName, Object jso
 		return parseNotYourTurnMessage(json);
 	} else if (typeName == `class GameWonMessage`.name) {
 		return parseGameWonMessage(json);
-	} else if (typeName == `class GameEndedMessage`.name) {
-		return parseGameEndedMessage(json);
 	} else if (typeName == `class GameStateResponseMessage`.name) {
 		return parseGameStateResponseMessage(json);
 	} else if (typeName == `class GameActionResponseMessage`.name) {

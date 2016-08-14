@@ -57,15 +57,15 @@ final class HttpServerVerticle() extends Verticle() {
 		eventBus.registerInboundTableMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processTableMessage);
 		eventBus.registerInboundMatchMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processMatchMessage);
 		
-		value gameRoom = GameRoom(roomConfig, eventBus.publishOutboundGameMessage);
+		value gameRoom = GameRoom(roomConfig, eventBus.publishOutboundGameMessage, eventBus.queueInboundMessage);
 		eventBus.registerInboundGameMessageConsumer(roomConfig.roomId, roomConfig.gameThreadCount, gameRoom.processGameMessage);
 		
 		variable String lastStatistic = "";
 		
 		vertx.setPeriodic(roomConfig.serverAdditionalTimeout.milliseconds / 2, void (Integer val) {
 			value currentTime = now();
-			matchRoom.removeInactivePlayers(currentTime);
-			gameRoom.notifySoftTimeouts(currentTime);
+			matchRoom.periodicCleanup(currentTime);
+			gameRoom.periodicCleanup(currentTime);
 			value statistic = "``matchRoom.statistic`` ``gameRoom.statistic``";
 			if (statistic != lastStatistic) {
 				lastStatistic = statistic;

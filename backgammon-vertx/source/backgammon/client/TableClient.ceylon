@@ -38,7 +38,6 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		gui.showLeaveButton();
 	}
 	
-	
 	void handleTableStateResponseMessage(TableStateResponseMessage message) {
 		if (exists match = message.match) {
 			matchClient = MatchClient(playerInfo, match, gui, messageBroadcaster);

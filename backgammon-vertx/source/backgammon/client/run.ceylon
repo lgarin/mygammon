@@ -32,7 +32,8 @@ import backgammon.shared {
 	formatRoomMessage,
 	TableStateRequestMessage,
 	PlayerId,
-	LeftTableMessage
+	LeftTableMessage,
+	EndMatchMessage
 }
 import ceylon.json {
 	parse,
@@ -214,7 +215,6 @@ TableId? extractTableId(String pageUrl) {
 PlayerInfo? extractPlayerInfo(String cookie) {
 	value match = regex("playerInfo=([^\\;\\s]+)").find(cookie);
 	if (exists match, exists infoString = match.groups[0]) {
-		print(infoString);
 		return parseBase64PlayerInfo(infoString);
 	}
 	return null;
@@ -244,6 +244,9 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 		makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");
 	}
 	case (is StartGameMessage) {
+		// ignore
+	}
+	case (is EndMatchMessage) {
 		// ignore
 	}
 	case (is PlayerBeginMessage) {
@@ -276,6 +279,7 @@ void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage me
 shared void run() {
 	
 	if (exists tableId = extractTableId(window.location.href), exists playerInfo = extractPlayerInfo(window.document.cookie)) {
+		print(playerInfo.toJson());
 		tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
 		tableClient?.showState();
 		registerMessageHandler("OutboundTableMessage-``tableId``");

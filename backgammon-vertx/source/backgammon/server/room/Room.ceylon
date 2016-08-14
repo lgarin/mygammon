@@ -58,7 +58,7 @@ final shared class Room(String roomId, shared Integer tableCount, Anything(Outbo
 	
 	shared Integer removeInactivePlayers(Instant timeoutTime) {
 		variable value result = 0;
-		for (player in playerMap.items.sequence()) {
+		for (player in playerMap.items.clone()) {
 			if (!player.isPlaying() && player.isInactiveSince(timeoutTime)) {
 				player.leaveRoom();
 				result++;

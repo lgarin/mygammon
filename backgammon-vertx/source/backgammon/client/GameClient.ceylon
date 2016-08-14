@@ -18,7 +18,6 @@ import backgammon.shared {
 	GameWonMessage,
 	OutboundGameMessage,
 	DesynchronizedMessage,
-	GameEndedMessage,
 	PlayedMoveMessage,
 	NotYourTurnMessage,
 	PlayerBeginMessage,
@@ -34,6 +33,7 @@ import backgammon.shared.game {
 	GameMove,
 	DiceRoll
 }
+
 import ceylon.time {
 	Instant,
 	now,
@@ -228,19 +228,15 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			return false;
 		}
 	}
-	
-	void showWin(CheckerColor? color) {
-		gui.hidePossibleMoves();
-		gui.showSelectedChecker(null);
-		showWinMessages(color);
-		gui.hideSubmitButton();
-		gui.hideUndoButton();
-		gui.hideLeaveButton();
-	}
-	
+
 	function showGameWon(GameWonMessage message) {
 		if (game.end()) {
-			showWin(message.playerColor);
+			gui.hidePossibleMoves();
+			gui.showSelectedChecker(null);
+			showWinMessages(message.playerColor);
+			gui.hideSubmitButton();
+			gui.hideUndoButton();
+			gui.hideLeaveButton();
 			return true;
 		} else {
 			return false;
@@ -269,24 +265,29 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			return showUndoneMoves(message);
 		}
 		case (is InvalidMoveMessage) {
-			return false;
+			if (message.playerId == playerId) { 
+				return false;
+			} else {
+				return true;
+			}
 		}
 		case (is DesynchronizedMessage) {
-			game.state = message.state;
-			showState();
+			if (message.playerId == playerId) {
+				game.state = message.state;
+				showState();
+			}
 			return true;
 		}
 		case (is NotYourTurnMessage) {
-			return false;
+			if (message.playerId == playerId) { 
+				return false;
+			} else {
+				return true;
+			}
 		}
 		case (is GameWonMessage) {
 			winner = message.playerColor;
 			return showGameWon(message);
-		}
-		case (is GameEndedMessage) {
-			game.end();
-			showWin(winner);
-			return true;
 		}
 		case (is GameStateResponseMessage) {
 			game.state = message.state;

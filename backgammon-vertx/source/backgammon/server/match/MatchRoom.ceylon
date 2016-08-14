@@ -1,3 +1,11 @@
+import backgammon.server.room {
+	RoomConfiguration,
+	Room,
+	Table
+}
+import backgammon.server.util {
+	ObtainableLock
+}
 import backgammon.shared {
 	InboundRoomMessage,
 	EnterRoomMessage,
@@ -19,20 +27,13 @@ import backgammon.shared {
 	LeftTableMessage,
 	EndGameMessage,
 	StartGameMessage,
-	InboundGameMessage
+	InboundGameMessage,
+	EndMatchMessage,
+	MatchEndedMessage
 }
+
 import ceylon.time {
 	Instant
-}
-import backgammon.server.util {
-
-	ObtainableLock
-}
-import backgammon.server.room {
-
-	RoomConfiguration,
-	Room,
-	Table
 }
 
 shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander) {
@@ -107,10 +108,21 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 					return AcceptedMatchMessage(message.playerId, message.matchId, false);
 				}
 			}
+			case (is EndMatchMessage) {
+				if (exists table = room.tables[message.table]) {
+					if (table.endMatch(message.matchId, message.winnerId)) {
+						return MatchEndedMessage(message.matchId, message.winnerId, true);
+					} else {
+						return MatchEndedMessage(message.matchId, message.winnerId, false);
+					}
+				} else {
+					return MatchEndedMessage(message.matchId, message.winnerId, false);
+				}
+			}
 		}
 	}
 
-	shared void removeInactivePlayers(Instant currentTime) {
+	shared void periodicCleanup(Instant currentTime) {
 		try (lock) {
 			room.removeInactivePlayers(currentTime.minus(configuration.playerInactiveTimeout));
 		}
