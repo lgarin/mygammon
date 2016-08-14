@@ -3,7 +3,6 @@ import backgammon.shared {
 	PlayerInfo,
 	PlayerId,
 	OutboundMatchMessage,
-	LeftMatchMessage,
 	AcceptedMatchMessage,
 	MatchId,
 	InboundMatchMessage,
@@ -81,9 +80,30 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			initGameClient();
 			messageBroadcaster(GameStateRequestMessage(match.id, playerId));
 		} else if (match.gameEnded) {
+			// TODO add lastPayerId to state in order to show the same messages as showMatchEndMessage
 			showWin(match.winnerColor);
 		} else {
 			showMatchBegin(match);
+		}
+	}
+	
+	shared void showLeft(PlayerId playerId) {
+		if (exists color = match.playerColor(playerId)) {
+			gui.showPlayerMessage(color, "Left", false);
+			gui.showPlayerMessage(color.oppositeColor, "", false);
+		}
+	}
+	
+	shared void showMatchEndMessage(MatchEndedMessage message, CheckerColor color) {
+		value playerId = color == player1Color then match.player1Id else match.player2Id;
+		if (message.isWinner(playerId)) {
+			gui.showPlayerMessage(color, "Winner", false);
+		} else if (message.isLeaver(playerId)) {
+			gui.showPlayerMessage(color, "Left", false);
+		} else if (message.isTimeout(playerId)) {
+			gui.showPlayerMessage(color, "Timeout", false);
+		} else {
+			gui.showPlayerMessage(color, "Tie", false);
 		}
 	}
 	
@@ -103,20 +123,9 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			}
 			return true;
 		}
-		case (is LeftMatchMessage) {
-			if (exists color = match.playerColor(message.playerId)) {
-				gui.showPlayerMessage(color, "Left", true);
-			}
-			gui.hideSubmitButton();
-			gui.hideUndoButton();
-			gui.hideLeaveButton();
-			return true;
-		}
 		case (is MatchEndedMessage) {
-			// TODO close event bus
-			if (exists winnerId = message.winnerId, exists color = match.playerColor(winnerId)) {
-				gui.showPlayerMessage(color, "Winner", true);
-			}
+			showMatchEndMessage(message, player1Color);
+			showMatchEndMessage(message, player2Color);
 			gui.hideSubmitButton();
 			gui.hideUndoButton();
 			gui.hideLeaveButton();

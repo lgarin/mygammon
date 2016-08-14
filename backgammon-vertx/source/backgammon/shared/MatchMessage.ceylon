@@ -9,14 +9,9 @@ shared sealed interface MatchMessage of OutboundMatchMessage | InboundMatchMessa
 	shared actual default Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson()});
 }
 
-shared sealed interface OutboundMatchMessage of AcceptedMatchMessage | LeftMatchMessage | MatchEndedMessage satisfies MatchMessage {}
+shared sealed interface OutboundMatchMessage of AcceptedMatchMessage | MatchEndedMessage satisfies MatchMessage {}
 
 shared sealed interface InboundMatchMessage of AcceptMatchMessage | EndMatchMessage satisfies MatchMessage {}
-
-shared final class LeftMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId) satisfies OutboundMatchMessage {}
-shared LeftMatchMessage parseLeftMatchMessage(Object json) {
-	return LeftMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")));
-}
 
 shared final class AcceptedMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
 	toJson() => toExtendedJson({"success" -> success});
@@ -26,12 +21,15 @@ shared AcceptedMatchMessage parseAcceptedMatchMessage(Object json) {
 	return AcceptedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), json.getBoolean("success"));
 }
 
-shared final class MatchEndedMessage(shared actual MatchId matchId, shared PlayerId? winnerId, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
-	playerId => PlayerId("");
-	toJson() => toExtendedJson({"winnerId" -> winnerId?.toJson()});
+shared final class MatchEndedMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId? winnerId, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
+	toJson() => toExtendedJson({"winnerId" -> winnerId?.toJson(), "success" -> success});
+	
+	shared Boolean isWinner(PlayerId id) => (winnerId else systemPlayerId) == id;
+	shared Boolean isLeaver(PlayerId id) => playerId == id;
+	shared Boolean isTimeout(PlayerId id) => playerId == systemPlayerId;
 }
 shared MatchEndedMessage parseMatchEndedMessage(Object json) {
-	return MatchEndedMessage(parseMatchId(json.getObject("matchId")), json.defines("winnerId") then parsePlayerId(json.getString("winnerId")) else null, json.getBoolean("success"));
+	return MatchEndedMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), json.defines("winnerId") then parsePlayerId(json.getString("winnerId")) else null, json.getBoolean("success"));
 }
 
 shared final class AcceptMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId) satisfies InboundMatchMessage {}
@@ -39,18 +37,15 @@ shared AcceptMatchMessage parseAcceptMatchMessage(Object json) {
 	return AcceptMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")));
 }
 
-shared final class EndMatchMessage(shared actual MatchId matchId, shared PlayerId? winnerId) satisfies InboundMatchMessage {
-	playerId => PlayerId("");
+shared final class EndMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId? winnerId) satisfies InboundMatchMessage {
 	toJson() => toExtendedJson({"winnerId" -> winnerId?.toJson()});
 }
 shared EndMatchMessage parseEndMatchMessage(Object json) {
-	return EndMatchMessage(parseMatchId(json.getObject("matchId")), json.defines("winnerId") then parsePlayerId(json.getString("winnerId")) else null);
+	return EndMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), json.defines("winnerId") then parsePlayerId(json.getString("winnerId")) else null);
 }
 
 shared OutboundMatchMessage? parseOutboundMatchMessage(String typeName, Object json) {
-	if (typeName == `class LeftMatchMessage`.name) {
-		return parseLeftMatchMessage(json);
-	} else if (typeName == `class AcceptedMatchMessage`.name) {
+	if (typeName == `class AcceptedMatchMessage`.name) {
 		return parseAcceptedMatchMessage(json);
 	} else if (typeName == `class MatchEndedMessage`.name) {
 		return parseMatchEndedMessage(json);

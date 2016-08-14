@@ -1,10 +1,9 @@
-import ceylon.time {
-
-	Instant
-}
 import ceylon.json {
-	JsonObject = Object,
+	JsonObject=Object,
 	Value
+}
+import ceylon.time {
+	Instant
 }
 shared abstract class StringIdentifier(String id) extends Object() {
 	string = id;
@@ -30,6 +29,8 @@ shared final class MatchId(shared TableId tableId, shared Instant timestamp) ext
 shared final class PlayerId(shared String id) extends StringIdentifier(id) {
 	toJson() => id;
 }
+
+shared PlayerId systemPlayerId = PlayerId("");
 
 shared RoomId parseRoomId(String json) {
 	return RoomId(json);

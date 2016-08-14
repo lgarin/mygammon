@@ -287,7 +287,7 @@ shared class Game() {
 		result.remainingTime = remainingTime(now());
 		result.blackCheckerCounts = board.checkerCounts(black);
 		result.whiteCheckerCounts = board.checkerCounts(white);
-		result.currentMoves = currentMoves.sequence();
+		result.currentMoves = currentMoves.clone();
 		return result;
 	}
 	

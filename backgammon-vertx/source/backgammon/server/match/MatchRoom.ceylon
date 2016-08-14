@@ -25,11 +25,14 @@ import backgammon.shared {
 	InboundTableMessage,
 	LeaveTableMessage,
 	LeftTableMessage,
-	EndGameMessage,
 	StartGameMessage,
 	InboundGameMessage,
 	EndMatchMessage,
-	MatchEndedMessage
+	MatchEndedMessage,
+	RoomId,
+	TableId,
+	PlayerId,
+	EndGameMessage
 }
 
 import ceylon.time {
@@ -42,31 +45,35 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 	value room = Room(configuration.roomId, configuration.tableCount, messageBroadcaster);
 	variable Integer createdPlayerCount = 0;
 	
+	function findRoom(RoomId roomId) => room.id == roomId then room else null;
+	function findTable(TableId tableId) => room.findTable(tableId);
+	function findPlayer(PlayerId playerId) => room.players[playerId];
+	
 	shared OutboundRoomMessage processRoomMessage(InboundRoomMessage message) {
 		try (lock) {
 			switch (message)
 			case (is EnterRoomMessage) {
-				if (exists player = room.players[message.playerId]) {
-					return EnteredRoomMessage(player.id, room.id, false);
+				if (exists room = findRoom(message.roomId), exists player = room.addPlayer(message.playerInfo)) {
+					createdPlayerCount++;
+					return EnteredRoomMessage(message.playerId, message.roomId, true);
+				} else {
+					return EnteredRoomMessage(message.playerId, message.roomId, false);
 				}
-				value player = room.createPlayer(message.playerInfo);
-				createdPlayerCount++;
-				return EnteredRoomMessage(player.id, room.id, true);
 			}
 			case (is LeaveRoomMessage) {
-				if (exists player = room.players[message.playerId], player.leaveRoom()) {
-					if (exists matchId = player.previousMatchId) {
-						gameCommander(EndGameMessage(matchId, player.id));
-					}
-					return LeftRoomMessage(player.id, room.id, true);
+				// TODO not used
+				if (exists room = findRoom(message.roomId), exists player = room.removePlayer(message.playerId)) {
+					return LeftRoomMessage(message.playerId, message.roomId, true);
+				} else {
+					return LeftRoomMessage(message.playerId, message.roomId, false);
 				}
-				return LeftRoomMessage(message.playerId, room.id, false);
 			}
 			case (is FindMatchTableMessage) {
-				if (exists player = room.players[message.playerId], player.findMatchTable()) {
-					return FoundMatchTableMessage(player.id, room.id, player.tableIndex);
+				if (exists room = findRoom(message.roomId), exists table = room.findMatchTable(message.playerId)) {
+					return FoundMatchTableMessage(message.playerId, message.roomId, table.index);
+				} else {
+					return FoundMatchTableMessage(message.playerId, message.roomId, null);
 				}
-				return FoundMatchTableMessage(message.playerId, room.id, null);
 			}
 		}
 	}
@@ -75,19 +82,19 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 		try (lock) {
 			switch (message)
 			case (is LeaveTableMessage) {
-				if (exists player = room.players[message.playerId], player.leaveTable()) {
-					if (exists matchId = player.previousMatchId) {
-						gameCommander(EndGameMessage(matchId, player.id));
-					}
+				if (exists player = findPlayer(message.playerId), exists matchId = player.gameMatchId) {
+					gameCommander(EndGameMessage(matchId, player.id));
+				}
+				
+				if (exists table = findTable(message.tableId), exists player = table.removePlayer(message.playerId)) {
 					return LeftTableMessage(message.playerId, message.tableId, true);
 				} else {
 					return LeftTableMessage(message.playerId, message.tableId, false);
 				}
 			}
 			case (is TableStateRequestMessage) {
-				// TODO player may not be on this table
-				if (exists table = room.tables[message.tableId.table]) {
-					return TableStateResponseMessage(message.playerId, message.tableId, table.matchInfo, true);
+				if (exists table = findTable(message.tableId)) {
+					return TableStateResponseMessage(message.playerId, message.tableId, table.getTableMatch(message.playerId), true);
 				} else {
 					return TableStateResponseMessage(message.playerId, message.tableId, null, false);
 				}
@@ -99,9 +106,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 		try (lock) {
 			switch (message)
 			case (is AcceptMatchMessage) {
-				if (exists player = room.players[message.playerId], player.acceptMatch()) {
-					if (exists matchId = player.matchId, exists opponentId = player.gameOpponentId) {
-						gameCommander(StartGameMessage(matchId, message.playerId, opponentId));
+				if (exists table = findTable(message.tableId), exists match = table.acceptMatch(message.matchId, message.playerId)) {
+					if (match.gameStarted) {
+						gameCommander(StartGameMessage(match.id, match.player1Id, match.player2Id));
 					}
 					return AcceptedMatchMessage(message.playerId, message.matchId, true);
 				} else {
@@ -109,14 +116,11 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 				}
 			}
 			case (is EndMatchMessage) {
-				if (exists table = room.tables[message.table]) {
-					if (table.endMatch(message.matchId, message.winnerId)) {
-						return MatchEndedMessage(message.matchId, message.winnerId, true);
-					} else {
-						return MatchEndedMessage(message.matchId, message.winnerId, false);
-					}
+				if (exists table = findTable(message.tableId), exists match = table.endMatch(message.matchId, message.winnerId)) {
+					messageBroadcaster(MatchEndedMessage(message.playerId, message.matchId, message.winnerId, true));
+					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, true);
 				} else {
-					return MatchEndedMessage(message.matchId, message.winnerId, false);
+					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, false);
 				}
 			}
 		}

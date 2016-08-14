@@ -10,17 +10,22 @@ import backgammon.shared {
 }
 
 import ceylon.collection {
-	HashSet,
-	linked
+	linked,
+	HashMap
+}
+import ceylon.time {
+	now
 }
 
 final shared class Table(shared Integer index, shared RoomId roomId, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared TableId id = TableId(roomId.string, index);
 	
-	variable Match? match = null;
+	variable MatchState? match = null;
 	
-	value playerQueue = HashSet<Player>(linked);
+	shared MatchId? matchId => match?.id;
+	
+	value playerQueue = HashMap<PlayerId, Player>(linked);
 	
 	shared Boolean free => playerQueue.empty;
 	
@@ -33,7 +38,8 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	}
 
 	function createMatch(Player player1, Player player2) {
-		value currentMatch = Match(player1, player2, this);
+		value matchId = MatchId(id, now());
+		value currentMatch = MatchState(matchId, player1.info, player2.info);
 		if (player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch)) {
 			match = currentMatch;
 			publish(CreatedMatchMessage(player2.id, currentMatch.id, player1.info, player2.info));
@@ -44,51 +50,77 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	}
 	
 	shared Boolean sitPlayer(Player player) {
-		if (playerQueue.contains(player)) {
+		if (playerQueue.defines(player.id)) {
 			return false;
-		} else if (match exists){
-			playerQueue.add(player);
-			return false;
-		} else if (exists opponent = playerQueue.first) {
-			return playerQueue.add(player) && createMatch(opponent, player);
-		} else if (playerQueue.empty) {
-			return playerQueue.add(player);
-		} else {
-			playerQueue.add(player);
-			return false;
-		}
-	}
-	
-	shared Boolean removePlayer(Player player) {
-		return playerQueue.remove(player);
-	}
-	
-	shared Boolean removeMatch(Match currentMatch) {
-		if (exists matchImpl = match, matchImpl === currentMatch) {
-			match = null;
-			return true;
+		} else if (player.joinTable(this)) {
+			if (match exists){
+				playerQueue.put(player.id, player);
+				return false;
+			} else if (exists opponent = playerQueue.first) {
+				playerQueue.put(player.id, player);
+				return createMatch(opponent.item, player);
+			} else if (playerQueue.empty) {
+				playerQueue.put(player.id, player);
+				return true;
+			} else {
+				playerQueue.put(player.id, player);
+				return false;
+			}
 		} else {
 			return false;
 		}
 	}
 	
-	shared MatchState? matchInfo {
-		if (exists currentMatch = match) {
-			return currentMatch.state;
+	shared Player? removePlayer(PlayerId playerId) {
+		if (exists player = playerQueue[playerId]) {
+			// TODO ugly
+			if (exists currentMatch = match, exists opponentId = currentMatch.opponentId(playerId), exists opponent = playerQueue[opponentId]) {
+				if (!opponent.leaveTable()) {
+					return null;
+				} else {
+					playerQueue.remove(opponentId);
+				}
+			}
+			if (player.leaveTable()) {
+				playerQueue.remove(playerId);
+				return player;
+			} else {
+				return null;
+			}
 		} else {
 			return null;
 		}
 	}
-	shared Boolean endMatch(MatchId matchId, PlayerId? winnerId) {
-		if (exists currentMatch = match, currentMatch.id == matchId) {
-			//currentMatch.end(winnerId);
-			// TODO announce winner
-			removePlayer(currentMatch.player1);
-			removePlayer(currentMatch.player2);
-			match = null;
-			return true;
+
+	shared MatchState? getTableMatch(PlayerId playerId) {
+		if (exists player = playerQueue[playerId]) {
+			return match;
 		} else {
-			return false;
+			return null;
+		}
+	}
+	
+	shared MatchState? endMatch(MatchId matchId, PlayerId? winnerId) {
+		if (exists currentMatch = match, currentMatch.id == matchId) {
+			currentMatch.winnerId = winnerId;
+			removePlayer(currentMatch.player1Id);
+			removePlayer(currentMatch.player2Id);
+			match = null;
+			return currentMatch;
+		} else {
+			return null;
+		}
+	}
+	
+	shared MatchState? acceptMatch(MatchId matchId, PlayerId playerId) {
+		if (exists currentMatch = match, currentMatch.id == matchId, exists player = playerQueue[playerId]) {
+			if (player.acceptMatch(matchId)) {
+				return currentMatch;
+			} else {
+				return null;
+			}
+		} else {
+			return null;
 		}
 	}
 }

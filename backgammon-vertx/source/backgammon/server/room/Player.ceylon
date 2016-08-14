@@ -1,12 +1,13 @@
 import backgammon.shared {
-	WaitingOpponentMessage,
 	JoinedTableMessage,
 	PlayerId,
 	RoomId,
 	TableId,
 	LeftTableMessage,
 	MatchId,
-	PlayerInfo
+	PlayerInfo,
+	AcceptedMatchMessage,
+	MatchState
 }
 
 import ceylon.time {
@@ -16,27 +17,38 @@ import ceylon.time {
 
 final shared class Player(shared PlayerInfo info, variable Room? room = null) {
 	
-	shared PlayerId id = PlayerId(info.id);
-	
 	variable Table? table = null;
-	variable Match? match = null;
+	variable MatchState? match = null;
 	variable Instant lastActivity = now();
-	
+
+	shared PlayerId id = PlayerId(info.id);	
 	shared RoomId? roomId => room?.id;
 	shared Integer? tableIndex => table?.index;
 	shared TableId? tableId => table?.id;
 	shared MatchId? matchId => match?.id;
 	
-	shared variable MatchId? previousMatchId = null;
+	shared MatchId? gameMatchId => if (isPlaying()) then match?.id else null;
 	
 	shared Boolean isInRoom(RoomId roomId) {
 		return room?.id?.equals(roomId) else false;
 	}
 	
+	shared Boolean isAtTable(TableId tableId) {
+		return table?.id?.equals(tableId) else false;
+	}
+	
+	shared Boolean isInMatch(MatchId matchId) {
+		return match?.id?.equals(matchId) else false;
+	}
+	
 	shared Boolean leaveRoom() {
-		leaveTable();
+		lastActivity = now();
+		
+		if (table exists) {
+			return false;
+		}
+		
 		if (exists currentRoom = room) {
-			currentRoom.removePlayer(this);
 			room = null;
 			return true;
 		} else {
@@ -45,96 +57,68 @@ final shared class Player(shared PlayerInfo info, variable Room? room = null) {
 	}
 	
 	shared Boolean leaveTable() {
-		leaveMatch();
+		lastActivity = now();
 		
 		if (exists currentTable = table) {
-			currentTable.removePlayer(this);
 			table = null;
+			match = null;
 			currentTable.publish(LeftTableMessage(id, currentTable.id));
 			return true;
 		} else {
 			return false;
 		}
 	}
-	
-	shared Boolean findMatchTable() {
-		if (exists currentMatch = match, currentMatch.isStarted && !currentMatch.isEnded) {
-			return true;
-		} else if (exists currentRoom = room) {
-			leaveTable();
-			return currentRoom.sitPlayer(this);
-		} else {
+
+	shared Boolean joinTable(Table currentTable) {
+		lastActivity = now();
+		
+		if (exists existingTable = table) {
+			if (existingTable.id == currentTable.id) {
+				return true;
+			} if (!leaveTable()) {
+				return false;
+			}
+		} else if (!isInRoom(currentTable.roomId)) {
 			return false;
 		}
-	}
-	
-	Boolean doJoinTable(Table currentTable) {
-		leaveTable();
 		
 		table = currentTable;
-		lastActivity = now();
 		currentTable.publish(JoinedTableMessage(id, currentTable.id));
-		value seated = currentTable.sitPlayer(this);
-		if (seated && match is Null) {
-			currentTable.publish(WaitingOpponentMessage(id, currentTable.id));
-		}
 		return true;
 	}
 	
-	shared Boolean joinTable(Integer tableIndex) {
-		if (exists currentRoom = room) {
-			value table = currentRoom.tables[tableIndex];
-			if (exists currentTable = table) {
-				return doJoinTable(currentTable);
-			}
-		}
-		return false;
-	}
-	
-	shared Boolean acceptMatch() {
-		lastActivity = now();
-		if (exists currentMatch = match) {
-			return currentMatch.acceptMatch(this);
-		} else {
+	shared Boolean joinMatch(MatchState currentMatch) {
+		if (match exists) {
+			return false;
+		} else if (currentMatch.gameStarted) {
+			return false;
+		} else if (!isAtTable(currentMatch.id.tableId)) {
 			return false;
 		}
-	}
-	
-	shared PlayerId? matchOpponentId => match?.opponentId(id);
-	
-	shared PlayerId? gameOpponentId {
-		if (exists currentMatch = match, currentMatch.isStarted) {
-			return currentMatch.opponentId(id);
-		} else {
-			return null;
-		}
-	}
-	
-	shared Boolean leaveMatch() {
-		if (exists currentMatch = match) {
-			currentMatch.end(this);
-			previousMatchId = currentMatch.id;
-			match = null;
-			return true;
-		}
-		return false;
-	}
-	
-	shared Boolean joinMatch(Match currentMatch) {
-		if (currentMatch.isStarted) {
-			return false;
-		}
-		
-		leaveMatch();
 		
 		match = currentMatch;
 		lastActivity = now();
 		return true;
 	}
 	
+	shared Boolean acceptMatch(MatchId matchId) {
+		lastActivity = now();
+		
+		if (exists currentMatch = match, currentMatch.id == matchId, exists currentTable = table) {
+			if (currentMatch.markReady(id)) {
+				currentTable.publish(AcceptedMatchMessage(id, currentMatch.id));
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
 	shared Boolean isPlaying() {
 		if (exists currentMatch = match) {
-			return currentMatch.isStarted && !currentMatch.isEnded; 
+			return currentMatch.gameStarted && !currentMatch.gameEnded; 
 		} else {
 			return false;
 		}

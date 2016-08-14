@@ -1,4 +1,3 @@
-
 import backgammon.server.room {
 	DiceRoller
 }
@@ -20,7 +19,6 @@ import backgammon.shared {
 	EndTurnMessage,
 	InvalidMoveMessage,
 	GameStateResponseMessage,
-	GameWonMessage,
 	EndGameMessage,
 	StartGameMessage,
 	OutboundGameMessage,
@@ -30,7 +28,8 @@ import backgammon.shared {
 	NotYourTurnMessage,
 	InboundGameMessage,
 	InboundMatchMessage,
-	EndMatchMessage
+	EndMatchMessage,
+	systemPlayerId
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -47,7 +46,11 @@ import ceylon.time {
 	now
 }
 
-final class GameServer(PlayerId player1Id, PlayerId player2Id, shared MatchId matchId, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
+final class GameServer(StartGameMessage startGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
+	
+	shared MatchId matchId = startGameMessage.matchId;
+	value player1Id = startGameMessage.playerId;
+	value player2Id = startGameMessage.opponentId;
 	
 	value lock = ObtainableLock(); 
 	value diceRoller = DiceRoller();
@@ -123,22 +126,21 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, shared MatchId ma
 		}
 	}
 	
-	function endGame(PlayerId? winner = null) {
+	function endGame(PlayerId playerId, PlayerId? winnerId = null) {
 		if (game.end()) {
-			matchCommander(EndMatchMessage(matchId, winner));
+			matchCommander(EndMatchMessage(playerId, matchId, winnerId));
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
-	function surrenderGame(CheckerColor playerColor) {
+	function surrenderGame(PlayerId playerId, CheckerColor playerColor) {
 		if (exists currentColor = game.currentColor) {
 			value opponentId = toPlayerId(playerColor.oppositeColor);
-			messageBroadcaster(GameWonMessage(matchId, opponentId, playerColor.oppositeColor));
-			return endGame(opponentId);
+			return endGame(playerId, opponentId);
 		} else {
-			return endGame();
+			return endGame(playerId);
 		}
 	}
 	
@@ -146,15 +148,15 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, shared MatchId ma
 		softTimeoutNotified = false;
 		
 		if (blackSuccessiveTimeouts + whiteSuccessiveTimeouts >= configuration.maxSkippedGameTurn) {
-			return endGame();
+			return endGame(systemPlayerId);
 		} else if (blackSuccessiveTimeouts >= configuration.maxSkippedPlayerTurn) {
-			return surrenderGame(black);
+			return surrenderGame(systemPlayerId, black);
 		} else if (whiteSuccessiveTimeouts >= configuration.maxSkippedPlayerTurn) {
-			return surrenderGame(white);
+			return surrenderGame(systemPlayerId, white);
 		} else if (blackInvalidMoves > configuration.maxWarningCount) {
-			return surrenderGame(black);
+			return surrenderGame(toPlayerId(black), black);
 		} else if (whiteInvalidMoves > configuration.maxWarningCount) {
-			return surrenderGame(white);
+			return surrenderGame(toPlayerId(white), white);
 		} else if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
@@ -169,7 +171,6 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, shared MatchId ma
 			messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, maxUndo));
 			return true;
 		} else if (game.hasWon(playerColor)) {
-			messageBroadcaster(GameWonMessage(matchId, toPlayerId(playerColor), playerColor));
 			return endGame(toPlayerId(playerColor));
 		} else {
 			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
@@ -250,7 +251,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, shared MatchId ma
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, endTurn(playerColor));
 		}
 		case (is EndGameMessage) {
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, surrenderGame(playerColor));
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, surrenderGame(toPlayerId(playerColor), playerColor));
 		}
 		case (is GameStateRequestMessage) {
 			return GameStateResponseMessage(matchId, message.playerId, playerColor, game.state);
@@ -277,7 +278,7 @@ final class GameServer(PlayerId player1Id, PlayerId player2Id, shared MatchId ma
 			increasePlayerTimeoutCount(currentColor);
 			endTurn(currentColor);
 		} else {
-			endGame();
+			endGame(systemPlayerId);
 		}
 	}
 	

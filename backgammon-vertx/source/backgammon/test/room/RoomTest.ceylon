@@ -5,10 +5,9 @@ import backgammon.server.room {
 import backgammon.shared {
 	JoinedTableMessage,
 	CreatedMatchMessage,
-	RoomId,
 	RoomMessage,
 	PlayerInfo,
-	WaitingOpponentMessage
+	PlayerId
 }
 
 import ceylon.collection {
@@ -40,57 +39,56 @@ class RoomTest() {
 	}
 	
 	test
-	shared void createPlayerAddsPlayer() {
-		value player = room.createPlayer(makePlayerInfo("player1"));
+	shared void addNewPlayer() {
+		value result = room.addPlayer(makePlayerInfo("player1"));
+		assert (result exists);
 		assert (room.players.size == 1);
-		assert (exists roomId = player.roomId);
-		assert (roomId == room.id);
 	}
 	
 	test
-	shared void createPlayerTwiceReplaceExisting() {
-		value oldPlayer = room.createPlayer(makePlayerInfo("player1"));
-		value newPlayer = room.createPlayer(makePlayerInfo("player1"));
+	shared void cannotAddSamePlayerIdTwice() {
+		room.addPlayer(makePlayerInfo("player1"));
+		value result = room.addPlayer(makePlayerInfo("player1"));
+		assert (!result exists);
 		assert (room.players.size == 1);
-		assert (oldPlayer.roomId is Null);
-		assert (newPlayer.roomId is RoomId);
 	}
 	
 	test
 	shared void removeExistingPlayer() {
-		value player = room.createPlayer(makePlayerInfo("player1"));
-		value result = room.removePlayer(player);
-		assert (result);
+		value player = makePlayerInfo("player1");
+		room.addPlayer(player);
+		value result = room.removePlayer(PlayerId(player.id));
+		assert (result exists);
 	}
 	
 	test
 	shared void removeNonExistingPlayer() {
-		value player = room.createPlayer(makePlayerInfo("player1"));
-		room.removePlayer(player);
-		value result = room.removePlayer(player);
-		assert (!result);
+		value player = makePlayerInfo("player1");
+		value result = room.removePlayer(PlayerId(player.id));
+		assert (!result exists);
 	}
 	
 	test
 	shared void sitPlayerWithoutOpponent() {
-		value player = room.createPlayer(makePlayerInfo("player1"));
-		value result = room.sitPlayer(player);
-		assert (result);
+		value player = room.addPlayer(makePlayerInfo("player1"));
+		assert (exists player);
+		value result = room.findMatchTable(player.id);
+		assert (result exists);
 		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 1);
-		assert (messageList.count((RoomMessage element) => element is WaitingOpponentMessage) == 1);
 		assert (room.tables.count((Table element) => !element.free) == 1);
 	}
 	
 	test
 	shared void sitPlayerWithOpponent() {
-		value player1 = room.createPlayer(makePlayerInfo("player1"));
-		value player2 = room.createPlayer(makePlayerInfo("player2"));
-		value result1 = room.sitPlayer(player1);
-		assert (result1);
-		value result2 = room.sitPlayer(player2);
-		assert (result2);
+		value player1 = room.addPlayer(makePlayerInfo("player1"));
+		assert (exists player1);
+		value player2 = room.addPlayer(makePlayerInfo("player2"));
+		assert (exists player2);
+		value result1 = room.findMatchTable(player1.id);
+		assert (result1 exists);
+		value result2 = room.findMatchTable(player2.id);
+		assert (result2 exists);
 		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 2);
-		assert (messageList.count((RoomMessage element) => element is WaitingOpponentMessage) == 1);
 		assert (messageList.count((RoomMessage element) => element is CreatedMatchMessage) == 1);
 		assert (room.tables.count((Table element) => !element.free) == 1);
 	}

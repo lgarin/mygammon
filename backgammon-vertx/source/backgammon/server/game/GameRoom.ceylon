@@ -39,7 +39,7 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 			if (exists currentServer = gameMap[message.matchId]) {
 				return currentServer;
 			} else if (is StartGameMessage message) {
-				value server = GameServer(message.playerId, message.opponentId, message.matchId, configuration, messageBroadcaster, matchCommander);
+				value server = GameServer(message, configuration, messageBroadcaster, matchCommander);
 				gameMap.put(message.matchId, server);
 				gameCount++;
 				return server;

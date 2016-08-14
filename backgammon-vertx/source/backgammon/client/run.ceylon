@@ -32,9 +32,9 @@ import backgammon.shared {
 	formatRoomMessage,
 	TableStateRequestMessage,
 	PlayerId,
-	LeftTableMessage,
 	EndMatchMessage
 }
+
 import ceylon.json {
 	parse,
 	Object
@@ -158,11 +158,6 @@ void registerMessageHandler(String address) {
 Boolean handleTableMessage(OutboundTableMessage message) {
 
 	if (is RoomResponseMessage message, !message.success) {
-		// TODO temporary workaround
-		if (is LeftTableMessage message) {
-			gui.hideLeaveButton();
-			return true;
-		}
 		return false;
 	}
 	

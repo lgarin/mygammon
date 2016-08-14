@@ -45,13 +45,31 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 		}
 	}
 	
-	shared void markReady(PlayerId playerId) {
-		if (playerId == player1Id) {
+	shared Boolean markReady(PlayerId playerId) {
+		if (gameStarted || gameEnded) {
+			return false;
+		} else if (playerId == player1Id) {
 			player1Ready = true;
+			return true;
 		} else if (playerId == player2Id) {
 			player2Ready = true;
+			return true;
+		} else {
+			return false;
 		}
 	}
+	
+	shared PlayerId? opponentId(PlayerId playerId) {
+		if (playerId == player1.id) {
+			return player2Id;
+		} else if (playerId == player2.id) {
+			return player1Id;
+		} else {
+			return null;
+		}
+	}
+	
+	shared MatchState copy() => MatchState(id, player1, player2, player1Ready, player2Ready, winnerId);
 }
 
 shared MatchState? parseMatchState(Object? json) {

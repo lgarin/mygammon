@@ -19,5 +19,6 @@ git tag -f -a -m "Released version $CURRENT_VERSION" $CURRENT_VERSION
 echo "Preparing next version $NEW_VERSION"
 ./ceylonb version --set $NEW_VERSION --confirm=none backgammon.shared backgammon.server backgammon.client backgammon.test
 sed -i -r "s/(backgammon.client.)$VERSION_PATTERN/\1$NEW_VERSION/g" static/board.html
+sed -i -r "s/(backgammon.server.)$VERSION_PATTERN/\1$NEW_VERSION/g" Backgammon\ Verticle.launch
 git add .
 git commit -m "Version bump to $VERSION"

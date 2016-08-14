@@ -60,6 +60,13 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 			return true;
 		}
 		case (is LeftTableMessage) {
+			if (exists currentMatchClient = matchClient) {
+				// TODO ugly
+				currentMatchClient.showLeft(message.playerId);
+			} else if (playerId == message.playerId) {
+				gui.showPlayerMessage(player1Color, "Left", false);
+				gui.showPlayerMessage(player2Color, "", true);
+			}
 			gui.hideSubmitButton();
 			gui.hideUndoButton();
 			gui.hideLeaveButton();

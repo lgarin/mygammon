@@ -6,7 +6,9 @@ import backgammon.shared {
 	CreatedMatchMessage,
 	RoomId,
 	PlayerInfo,
-	TableMessage
+	TableMessage,
+	LeftTableMessage,
+	JoinedTableMessage
 }
 
 import ceylon.collection {
@@ -32,7 +34,7 @@ class TableTest() {
 	shared void sitSinglePlayer() {
 		value result = table.sitPlayer(makePlayer("player1"));
 		assert (result);
-		assert (messageList.empty);
+		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 1);
 	}
 	
 	test
@@ -41,7 +43,7 @@ class TableTest() {
 		table.sitPlayer(player);
 		value result = table.sitPlayer(player);
 		assert (!result);
-		assert (messageList.empty);
+		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 1);
 	}
 	
 	test
@@ -65,8 +67,8 @@ class TableTest() {
 	
 	test
 	shared void removeUnknownPlayer() {
-		value result = table.removePlayer(makePlayer("player1"));
-		assert (!result);
+		value result = table.removePlayer(makePlayer("player1").id);
+		assert (!result exists);
 		assert (messageList.empty);
 	}
 	
@@ -74,8 +76,8 @@ class TableTest() {
 	shared void removeKnownPlayer() {
 		value player = makePlayer("player1");
 		table.sitPlayer(player);
-		value result = table.removePlayer(player);
-		assert (result);
-		assert (messageList.empty);
+		value result = table.removePlayer(player.id);
+		assert (result exists);
+		assert (messageList.count((TableMessage element) => element is LeftTableMessage) == 1);
 	}
 }

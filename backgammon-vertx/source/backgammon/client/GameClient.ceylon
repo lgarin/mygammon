@@ -15,7 +15,6 @@ import backgammon.shared {
 	EndTurnMessage,
 	InvalidMoveMessage,
 	GameStateResponseMessage,
-	GameWonMessage,
 	OutboundGameMessage,
 	DesynchronizedMessage,
 	PlayedMoveMessage,
@@ -44,8 +43,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	// TODO should be part of configuration
 	value initialRollDelay = Duration(2000);
 			
-			
-	variable CheckerColor? winner = null;
 	value game = Game();
 	
 	final class DelayedGameMessage(shared InboundGameMessage message, Duration delay) {
@@ -108,17 +105,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 	}
 	
-	void showWinMessages(CheckerColor? color) {
-		if (exists currentColor = color) {
-			gui.showPlayerMessage(currentColor, "Winner", false);
-			gui.showPlayerMessage(currentColor.oppositeColor, "", false);
-		} else {
-			gui.showPlayerMessage(player1Color, "Tie", false);
-			gui.showPlayerMessage(player2Color, "Tie", false);
-		}
-		gui.showCurrentPlayer(color);
-	}
-	
 	void showLoadingMessages() {
 		gui.showPlayerMessage(black, "Loading...", true);
 		gui.showPlayerMessage(white, "Loading...", true);
@@ -142,8 +128,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			showCurrentTurnMessages(currentColor, remainingTime);
 		} else if (exists remainingTime = game.remainingTime(currentTime)) {
 			showInitialRollMessages(remainingTime);
-		} else if (game.ended) {
-			showWinMessages(winner);
 		} else {
 			showLoadingMessages();
 		}
@@ -229,20 +213,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 	}
 
-	function showGameWon(GameWonMessage message) {
-		if (game.end()) {
-			gui.hidePossibleMoves();
-			gui.showSelectedChecker(null);
-			showWinMessages(message.playerColor);
-			gui.hideSubmitButton();
-			gui.hideUndoButton();
-			gui.hideLeaveButton();
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
 		if (message.matchId != matchId) {
 			return true;
@@ -284,10 +254,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			} else {
 				return true;
 			}
-		}
-		case (is GameWonMessage) {
-			winner = message.playerColor;
-			return showGameWon(message);
 		}
 		case (is GameStateResponseMessage) {
 			game.state = message.state;
@@ -349,10 +315,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			messageBroadcaster(EndTurnMessage(matchId, playerId));
 			return true;
 		} else {
-			// TODO this error still occurs
-			print("Strange state: ``game.state.toJson()``");
-			gui.hideSubmitButton();
-			messageBroadcaster(PlayerBeginMessage(matchId, playerId));
 			return false;
 		}
 	}
