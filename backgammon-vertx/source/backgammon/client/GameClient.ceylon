@@ -215,7 +215,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
 		if (message.matchId != matchId) {
-			return true;
+			return false;
 		}
 		
 		switch (message) 
@@ -330,11 +330,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			return false;
 		}
 	}
-	
-	shared Boolean hasRunningGame {
-		return game.ended;
-	}
-	
+
 	shared Boolean handleStartDrag(HTMLElement source) {
 		gui.showSelectedChecker(null);
 		gui.hidePossibleMoves();

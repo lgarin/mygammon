@@ -21,11 +21,11 @@ shared class Game() {
 		assert (board.putNewCheckers(element.key + blackGraveyardPosition, black, element.item));
 	}
 
-	variable CheckerColor? currentColorVar = null;
-	variable DiceRoll? currentRollVar = null;
+	variable CheckerColor? _currentColor = null;
+	variable DiceRoll? _currentRoll = null;
 
-	shared CheckerColor? currentColor => currentColorVar;
-	shared DiceRoll? currentRoll => currentRollVar;
+	shared CheckerColor? currentColor => _currentColor;
+	shared DiceRoll? currentRoll => _currentRoll;
 	
 	variable Integer remainingUndo = 0;
 	variable Boolean blackReady = false;
@@ -50,7 +50,7 @@ shared class Game() {
 		
 		blackReady = false;
 		whiteReady = false;
-		currentRollVar = roll;
+		_currentRoll = roll;
 		nextTimeout = now().plus(maxDuration);
 		return true;
 	}
@@ -58,7 +58,7 @@ shared class Game() {
 	shared Boolean isCurrentColor(CheckerColor color) => currentColor?.equals(color) else false;
 	
 	shared Boolean mustRollDice(CheckerColor playerColor) {
-		if (currentColor exists || currentRoll is Null) {
+		if (currentColor exists || !currentRoll exists) {
 			return false;
 		} else if (!blackReady && playerColor == black) {
 			return true;
@@ -114,7 +114,7 @@ shared class Game() {
 			return false;
 		}
 		remainingUndo = maxUndo;
-		currentRollVar = roll;
+		_currentRoll = roll;
 		nextTimeout = now().plus(maxDuration);
 		return true;
 	}
@@ -204,7 +204,7 @@ shared class Game() {
 	}
 	
 	shared Boolean timedOut(Instant now) {
-		if (nextTimeout.millisecondsOfEpoch == 0) {
+		if (ended) {
 			return false;
 		} else if (now > nextTimeout) {
 			return true;
@@ -224,11 +224,11 @@ shared class Game() {
 			return false;
 		} else if (hasWon(color)) {
 			currentMoves.clear();
-			currentColorVar = null;
+			_currentColor = null;
 			return false;
 		} else {
 			currentMoves.clear();
-			currentColorVar = color.oppositeColor;
+			_currentColor = color.oppositeColor;
 			return true;
 		}
 	}
@@ -245,28 +245,22 @@ shared class Game() {
 		}
 		
 		if (blackReady && whiteReady, exists roll = currentRoll) {
-			currentColorVar = initialColor(roll);
+			_currentColor = initialColor(roll);
 		}
 		return true;
 	}
 	
 	shared Boolean end() {
 		if (currentRoll exists) {
-			currentColorVar = null;
-			currentRollVar = null;
+			_currentColor = null;
+			_currentRoll = null;
 			nextTimeout = Instant(0);
 			return true;
 		}
 		return false;
 	}
 	
-	shared Boolean ended {
-		return whiteReady && blackReady && currentColor is Null;
-	}
-	
-	shared Boolean started {
-		return whiteReady && blackReady && currentColor exists;
-	}
+	shared Boolean ended => nextTimeout.millisecondsOfEpoch == 0;
 	
 	shared [Integer*] checkerCounts(CheckerColor color) => board.checkerCounts(color);
 	
@@ -292,8 +286,8 @@ shared class Game() {
 	}
 	
 	assign state {
-		currentColorVar = state.currentColor;
-		currentRollVar = state.currentRoll;
+		_currentColor = state.currentColor;
+		_currentRoll = state.currentRoll;
 		remainingUndo = state.remainingUndo;
 		blackReady = state.blackReady;
 		whiteReady = state.whiteReady;

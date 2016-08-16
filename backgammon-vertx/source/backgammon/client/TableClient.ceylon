@@ -43,13 +43,14 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 			matchClient = MatchClient(playerInfo, match, gui, messageBroadcaster);
 			matchClient?.showState();
 		} else {
+			// TODO player may not be on table
 			showState();
 		}
 	}
 	
 	shared Boolean handleTableMessage(OutboundTableMessage message) {
 		if (tableId != message.tableId) {
-			return true;
+			return false;
 		}
 
 		switch (message)
@@ -86,7 +87,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	
 	shared Boolean handleMatchMessage(OutboundMatchMessage message) {
 		if (tableId != message.tableId) {
-			return true;
+			return false;
 		}
 		
 		if (exists currentMatchClient = matchClient) {
@@ -98,7 +99,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
 		if (tableId != message.tableId) {
-			return true;
+			return false;
 		}
 
 		if (exists currentMatchClient = matchClient) {

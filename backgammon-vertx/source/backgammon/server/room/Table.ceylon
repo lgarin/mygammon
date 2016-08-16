@@ -20,8 +20,8 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	
 	shared TableId id = TableId(roomId.string, index);
 	
-	// TODO should not be mutable from outside
-	shared variable Match? match = null;
+	variable Match? _match = null;
+	shared Match? match => _match;
 	
 	value playerQueue = HashMap<PlayerId, Player>(linked);
 	
@@ -30,7 +30,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	function createMatch(Player player1, Player player2) {
 		value currentMatch = Match(player1, player2, this, messageBroadcaster);
 		if (player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch)) {
-			match = currentMatch;
+			_match = currentMatch;
 			messageBroadcaster(CreatedMatchMessage(player2.id, currentMatch.id, player1.info, player2.info));
 			return true;
 		} else {
@@ -62,13 +62,13 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	}
 	
 	shared Player? removePlayer(PlayerId playerId) {
-		if (exists player = playerQueue[playerId]) {
+		if (exists player = findPlayer(playerId)) {
 			if (exists currentMatch = match) {
-				match = null;
+				_match = null;
 				if (currentMatch.end(playerId, null)) {
 					return player;
 				} else {
-					match = currentMatch;
+					_match = currentMatch;
 					return null;
 				}
 			} else if (player.leaveTable(id)) {
@@ -84,7 +84,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	}
 
 	shared MatchState? getMatchState(PlayerId playerId) {
-		if (exists player = playerQueue[playerId]) {
+		if (exists player = findPlayer(playerId)) {
 			return match?.state;
 		} else {
 			return null;
@@ -98,4 +98,14 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 			return null;
 		}
 	}
+	
+	shared Player? findPlayer(PlayerId playerId) {
+		if (exists player = playerQueue[playerId], player.isAtTable(id)) {
+			return player;
+		} else {
+			return null;
+		}
+	}
+	
+	shared Boolean isInRoom(RoomId roomId) => id.roomId == roomId.roomId;
 }

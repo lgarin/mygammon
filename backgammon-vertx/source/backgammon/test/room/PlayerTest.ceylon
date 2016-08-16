@@ -4,7 +4,8 @@ import backgammon.server.room {
 }
 import backgammon.shared {
 	RoomMessage,
-	PlayerInfo
+	PlayerInfo,
+	TableId
 }
 
 import ceylon.collection {
@@ -19,7 +20,7 @@ class PlayerTest() {
 	value messageList = ArrayList<RoomMessage>();
 	
 	value room = Room("room", 1, messageList.add);
-	value table = room.tables.first;
+	value table = room.findTable(TableId(room.roomId, 0));
 	assert (exists table);
 	
 	function makePlayer(String id) => Player(PlayerInfo(id, id, null), room);
@@ -115,8 +116,6 @@ class PlayerTest() {
 
 	test
 	shared void acceptMatch() {
-		value table = room.tables.first;
-		assert (exists table);
 		table.sitPlayer(player);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
@@ -128,8 +127,6 @@ class PlayerTest() {
 	
 	test
 	shared void joinStartedMatch() {
-		value table = room.tables.first;
-		assert (exists table);
 		value other = makePlayer("other");
 		table.sitPlayer(other);
 		value opponent = makePlayer("opponent");

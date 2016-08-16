@@ -8,13 +8,19 @@ import ceylon.json {
 	Object
 }
 
-shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shared PlayerInfo player2, shared variable Boolean player1Ready = false, shared variable Boolean player2Ready = false, shared variable PlayerId? winnerId = null) {
-	shared Object toJson() => Object({"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson()});
-	shared Boolean gameStarted => player1Ready && player2Ready;
-	shared Boolean gameEnded => winnerId exists;
+shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shared PlayerInfo player2, variable Boolean _player1Ready = false, variable Boolean _player2Ready = false, variable PlayerId? _winnerId = null, variable PlayerId? _leaverId = null) {
 	
 	shared PlayerId player1Id = PlayerId(player1.id);
 	shared PlayerId player2Id = PlayerId(player2.id);
+	
+	shared Boolean player1Ready => _player1Ready;
+	shared Boolean player2Ready => _player2Ready;
+	
+	shared PlayerId? leaverId => _leaverId;
+	shared PlayerId? winnerId => _winnerId;
+	
+	shared Boolean gameStarted => player1Ready && player2Ready;
+	shared Boolean gameEnded => winnerId exists && leaverId exists; 
 	
 	shared CheckerColor? winnerColor {
 		if (exists currentWinnerId = winnerId, currentWinnerId == player1Id) {
@@ -49,10 +55,10 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 		if (gameStarted || gameEnded) {
 			return false;
 		} else if (playerId == player1Id) {
-			player1Ready = true;
+			_player1Ready = true;
 			return true;
 		} else if (playerId == player2Id) {
-			player2Ready = true;
+			_player2Ready = true;
 			return true;
 		} else {
 			return false;
@@ -69,13 +75,19 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 		}
 	}
 	
-	shared MatchState copy() => MatchState(id, player1, player2, player1Ready, player2Ready, winnerId);
+	shared void end(PlayerId leaverId, PlayerId winnerId) {
+		_leaverId = leaverId;
+		_winnerId = winnerId;
+	}
+	
+	shared Object toJson() => Object({"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson(), "leaverId" -> leaverId?.toJson()});
 }
 
 shared MatchState? parseMatchState(Object? json) {
 	if (exists json) {
-		value winner = json.getStringOrNull("winner") exists then PlayerId(json.getString("winner")) else null;
-		return MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), winner);
+		value winnerId = json.getStringOrNull("winnerId") exists then PlayerId(json.getString("winnerId")) else null;
+		value leaverId = json.getStringOrNull("leaverId") exists then PlayerId(json.getString("leaverId")) else null;
+		return MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), winnerId, leaverId);
 	} else {
 		return null;
 	}

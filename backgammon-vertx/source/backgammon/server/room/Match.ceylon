@@ -17,12 +17,11 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 	value creationTime = now();
 	shared MatchId id = MatchId(table.id, creationTime);
 
-	value internalState = MatchState(id, player1.info, player2.info);
-	shared MatchState state => internalState.copy();
+	shared MatchState state = MatchState(id, player1.info, player2.info);
 
-	shared Boolean gameStarted => internalState.gameStarted;
-	shared Boolean gameEnded => internalState.gameEnded;
-	shared Boolean hasGame => gameStarted && !gameEnded;
+	shared Boolean gameStarted => state.gameStarted;
+	shared Boolean gameEnded => state.gameEnded;
+	shared Boolean hasGame => state.gameStarted && !state.gameEnded;
 	
 	shared Player? findPlayer(PlayerId playerId) {
 		if (player1.id == playerId) {
@@ -46,7 +45,7 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 
 	shared Boolean markReady(PlayerId playerId) {
 		if (exists player = findPlayer(playerId)) {
-			if (player.acceptMatch(id) && internalState.markReady(playerId)) {
+			if (player.acceptMatch(id) && state.markReady(playerId)) {
 				messageBroadcaster(AcceptedMatchMessage(playerId, id));
 				return true;
 			} else {
@@ -58,7 +57,7 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 	}
 	
 	function endGame(PlayerId playerId, PlayerId winnerId) {
-		internalState.winnerId = winnerId;
+		state.end(playerId, winnerId);
 		
 		if (!player1.leaveMatch(id)) {
 			return false;

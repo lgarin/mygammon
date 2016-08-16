@@ -24,7 +24,6 @@ class GameTest() {
 		assert (game.currentRoll is Null);
 		assert ([0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 0, 0] == game.board.checkerCounts(black));
 		assert ([0, 0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0] == game.board.checkerCounts(white));
-		assert (!game.started);
 		assert (!game.ended);
 		assert (!game.mustRollDice(black));
 		assert (!game.mustRollDice(white));

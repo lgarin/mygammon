@@ -50,6 +50,8 @@ import ceylon.time {
 GameGui gui = GameGui(window.document);
 variable TableClient? tableClient = null;
 variable String? draggedElementStyle = null;
+variable EventBusClient? tableEventClient = null;
+variable EventBusClient? gameEventClient = null;
 
 shared Boolean onStartDrag(HTMLElement source) {
 	draggedElementStyle = source.getAttribute("style");
@@ -141,21 +143,6 @@ void onServerError(String messageString) {
 	window.location.reload();
 }
 
-void registerMessageHandler(String address) {
-	dynamic {
-		dynamic eventBus = EventBus("/eventbus/");
-		eventBus.onopen = void() {
-			eventBus.registerHandler(address, (dynamic error, dynamic message) {
-				if (exists error) {
-					onServerError("Event bus failure: " + JSON.stringify(error));
-				} else {
-					onServerMessage(JSON.stringify(message.body));
-				}
-			});
-		};
-	}
-}
-
 Boolean handleTableMessage(OutboundTableMessage message) {
 
 	if (is RoomResponseMessage message, !message.success) {
@@ -164,9 +151,9 @@ Boolean handleTableMessage(OutboundTableMessage message) {
 	
 	if (is TableStateResponseMessage message, exists currentMatch = message.match) {
 		// TODO some changes may occur on the state between the response and the registration
-		registerMessageHandler("OutboundGameMessage-``currentMatch.id``");
+		gameEventClient = EventBusClient("OutboundGameMessage-``currentMatch.id``", onServerMessage, onServerError);
 	} else if (is CreatedMatchMessage message) {
-		registerMessageHandler("OutboundGameMessage-``message.matchId``");
+		gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
 	}
 	
 	if (exists currentClient = tableClient) {
@@ -182,8 +169,8 @@ Boolean handleMatchMessage(OutboundMatchMessage message) {
 		return false;
 	}
 	
-	if (is MatchEndedMessage message) {
-		// TODO unregister OutboundGameMessage
+	if (is MatchEndedMessage message, exists eventBus = gameEventClient) {
+		eventBus.close();
 	}
 	
 	if (exists currentClient = tableClient) {
@@ -229,7 +216,6 @@ void makeApiRequest(String url) {
 		if (request.status == 200) {
 			onServerMessage(request.responseText);
 		} else if (request.status == 401) {
-			// TODO magic value
 			window.location.\iassign("/start");
 		} else {
 			onServerError(request.statusText);
@@ -282,7 +268,7 @@ shared void run() {
 		print(playerInfo.toJson());
 		tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
 		tableClient?.showState();
-		registerMessageHandler("OutboundTableMessage-``tableId``");
+		tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
 		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
 	} else {
 		gui.showInitialState();

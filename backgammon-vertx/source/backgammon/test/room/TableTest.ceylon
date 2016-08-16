@@ -7,7 +7,8 @@ import backgammon.shared {
 	PlayerInfo,
 	TableMessage,
 	LeftTableMessage,
-	JoinedTableMessage
+	JoinedTableMessage,
+	TableId
 }
 
 import ceylon.collection {
@@ -21,7 +22,7 @@ class TableTest() {
 
 	value messageList = ArrayList<TableMessage>();
 	value room = Room("test", 1, messageList.add);
-	value table = room.tables.first;
+	value table = room.findTable(TableId(room.roomId, 0));
 	assert (exists table);
 	
 	function makePlayer(String id) => Player(PlayerInfo(id, id, null), room);

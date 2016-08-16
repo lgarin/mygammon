@@ -12,13 +12,15 @@ import ceylon.time {
 	now
 }
 
-final shared class Player(shared PlayerInfo info, shared variable Room? room = null) {
+final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	
-	// TODO should not be mutable from outside
-	shared variable Table? table = null;
-	shared variable Match? match = null;
+	variable Table? _table = null;
+	variable Match? _match = null;
 	variable Instant lastActivity = now();
 
+	shared Room? room => _room;
+	shared Table? table => _table;
+	shared Match? match => _match;
 	shared PlayerId id = PlayerId(info.id);	
 	
 	shared Boolean isInRoom(RoomId roomId) {
@@ -41,7 +43,7 @@ final shared class Player(shared PlayerInfo info, shared variable Room? room = n
 		} else if (table exists) {
 			return false;
 		} else {
-			room = null;
+			_room = null;
 			return true;
 		}
 	}
@@ -52,7 +54,7 @@ final shared class Player(shared PlayerInfo info, shared variable Room? room = n
 		if (!isAtTable(tableId)) {
 			return false;
 		} else {
-			table = null;
+			_table = null;
 			return true;
 		}
 	}
@@ -72,7 +74,7 @@ final shared class Player(shared PlayerInfo info, shared variable Room? room = n
 			}
 		}
 		
-		table = newTable;
+		_table = newTable;
 		return true;
 	}
 	
@@ -85,7 +87,7 @@ final shared class Player(shared PlayerInfo info, shared variable Room? room = n
 			return false;
 		}
 		
-		match = currentMatch;
+		_match = currentMatch;
 		lastActivity = now();
 		return true;
 	}
@@ -104,7 +106,7 @@ final shared class Player(shared PlayerInfo info, shared variable Room? room = n
 		lastActivity = now();
 		
 		if (isInMatch(matchId)) {
-			match = null;
+			_match = null;
 			return true;
 		} else {
 			return false;
@@ -127,11 +129,11 @@ final shared class Player(shared PlayerInfo info, shared variable Room? room = n
 		}
 	}
 	
-	shared Match? findMatch(MatchId matchId) {
+	shared Boolean terminateMatch(MatchId matchId, PlayerId winnerId) {
 		if (exists currentMatch = match, currentMatch.id == matchId) {
-			return currentMatch;
+			return currentMatch.end(id, winnerId);
 		} else {
-			return null;
+			return false;
 		}
 	}
 	

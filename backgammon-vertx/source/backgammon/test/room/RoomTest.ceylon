@@ -1,5 +1,4 @@
 import backgammon.server.room {
-	Table,
 	Room
 }
 import backgammon.shared {
@@ -25,24 +24,24 @@ class RoomTest() {
 	
 	test
 	shared void newRoomHasNoPlayer() {
-		assert (room.players.size == 0);
+		assert (room.playerCount == 0);
 	}
 	
 	test
 	shared void newRoomHasTenTables() {
-		assert (room.tables.size == 10);
+		assert (room.tableCount == 10);
 	}
 	
 	test
 	shared void newRoomHasOnlyFreeTables() {
-		assert (room.tables.every((Table element) => element.queueSize == 0));
+		assert (room.freeTableCount == 10);
 	}
 	
 	test
 	shared void addNewPlayer() {
 		value result = room.addPlayer(makePlayerInfo("player1"));
 		assert (result exists);
-		assert (room.players.size == 1);
+		assert (room.playerCount == 1);
 	}
 	
 	test
@@ -50,7 +49,7 @@ class RoomTest() {
 		room.addPlayer(makePlayerInfo("player1"));
 		value result = room.addPlayer(makePlayerInfo("player1"));
 		assert (!result exists);
-		assert (room.players.size == 1);
+		assert (room.playerCount == 1);
 	}
 	
 	test
@@ -75,7 +74,6 @@ class RoomTest() {
 		value result = room.findMatchTable(player.id);
 		assert (result exists);
 		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 1);
-		assert (room.tables.count((Table element) => element.queueSize == 1) == 1);
 	}
 	
 	test
@@ -90,6 +88,5 @@ class RoomTest() {
 		assert (result2 exists);
 		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 2);
 		assert (messageList.count((RoomMessage element) => element is CreatedMatchMessage) == 1);
-		assert (room.tables.count((Table element) => element.queueSize == 2) == 1);
 	}
 }

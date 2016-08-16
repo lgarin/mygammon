@@ -1,7 +1,6 @@
 import backgammon.server.room {
 	RoomConfiguration,
-	Room,
-	Table
+	Room
 }
 import backgammon.server.util {
 	ObtainableLock
@@ -97,11 +96,13 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 				}
 			}
 			case (is TableStateRequestMessage) {
-				if (exists table = findTable(message.tableId)) {
-					return TableStateResponseMessage(message.playerId, message.tableId, table.getMatchState(message.playerId), true);
-				} else if (exists player = findPlayer(message.playerId), exists match = player.getMatchState(message.tableId)) {
+				if (exists player = findPlayer(message.playerId), exists match = player.getMatchState(message.tableId)) {
+					// TODO this does not work ater match termination
 					// previous match
 					return TableStateResponseMessage(message.playerId, message.tableId, match, true);
+				} else if (exists table = findTable(message.tableId)) {
+					// TODO player may not be at table
+					return TableStateResponseMessage(message.playerId, message.tableId, table.getMatchState(message.playerId), true);
 				} else {
 					return TableStateResponseMessage(message.playerId, message.tableId, null, false);
 				}
@@ -123,9 +124,10 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 				}
 			}
 			case (is EndMatchMessage) {
-				if (exists match = findMatch(message.matchId), match.end(message.playerId, message.winnerId)) {
+				if (exists player = findPlayer(message.playerId), player.terminateMatch(message.matchId, message.winnerId)) {
+					// previous match
 					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, true);
-				} else if (exists player = findPlayer(message.playerId), exists match = player.findMatch(message.matchId), match.end(message.playerId, message.winnerId)) {
+				} else if (exists match = findMatch(message.matchId), match.end(message.playerId, message.winnerId)) {
 					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, true);
 				} else {
 					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, false);
@@ -142,8 +144,8 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 	
 	shared MatchRoomStatistic statistic {
 		try (lock) {
-			value freeTableCount = room.tables.count((Table element) => element.queueSize == 0);
-			return MatchRoomStatistic(room.id, room.players.size, createdPlayerCount, freeTableCount, room.tableCount - freeTableCount);
+			value freeTableCount = room.freeTableCount;
+			return MatchRoomStatistic(room.id, room.playerCount, createdPlayerCount, freeTableCount, room.tableCount - freeTableCount);
 		}
 	}
 }

@@ -17,7 +17,7 @@ import ceylon.time {
 	Instant
 }
 
-final shared class Room(String roomId, shared Integer tableCount, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+final shared class Room(shared String roomId, shared Integer tableCount, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared RoomId id = RoomId(roomId);
 	
@@ -31,9 +31,8 @@ final shared class Room(String roomId, shared Integer tableCount, Anything(Outbo
 		tableList.add(table);
 	}
 	
-	shared List<Table> tables => tableList;
-	
-	shared Map<PlayerId, Player> players => playerMap;
+	shared Integer playerCount => playerMap.size;
+	shared Integer freeTableCount => tableList.count((Table element) => element.queueSize == 0);
 	
 	function findReadyTable() => tableList.find((Table element) => element.queueSize == 1);
 	function findEmptyTable() => tableList.find((Table element) => element.queueSize == 0);
@@ -48,11 +47,23 @@ final shared class Room(String roomId, shared Integer tableCount, Anything(Outbo
 		}
 	}
 	
+	function doRemovePlayer(Player player) {
+		if (exists table = player.table, player.leaveTable(table.id)) {
+			table.removePlayer(player.id);
+		}
+		if (player.leaveRoom(id)) {
+			playerMap.remove(player.id);
+			return player;
+		} else {
+			return null;
+		}
+	}
+	
 	shared Integer removeInactivePlayers(Instant timeoutTime) {
 		variable value result = 0;
 		for (player in playerMap.items.clone()) {
 			if (!player.isPlaying() && player.isInactiveSince(timeoutTime)) {
-				removePlayer(player.id);
+				doRemovePlayer(player);
 				result++;
 			}
 		}
@@ -60,7 +71,7 @@ final shared class Room(String roomId, shared Integer tableCount, Anything(Outbo
 	}
 	
 	shared Player? addPlayer(PlayerInfo info) {
-		if (exists player = playerMap[PlayerId(info.id)]) {
+		if (playerMap.defines(PlayerId(info.id))) {
 			return null;
 		} else {
 			value player = Player(info, this);
@@ -70,28 +81,23 @@ final shared class Room(String roomId, shared Integer tableCount, Anything(Outbo
 	}
 	
 	shared Player? removePlayer(PlayerId playerId) {
-		if (exists player = playerMap[playerId]) {
-			if (exists table = player.table, player.leaveTable(table.id)) {
-				table.removePlayer(playerId);
-			}
-			if (player.leaveRoom(id)) {
-				playerMap.remove(player.id);
-				return player;
-			} else {
-				return null;
-			}
+		if (exists player = findPlayer(playerId)) {
+		 	return doRemovePlayer(player);
 		} else {
 			return null;
 		}
 	}
 	shared Table? findMatchTable(PlayerId playerId) {
-		if (exists player = playerMap[playerId]) {
-			// TODO ugly
-			if (player.isPlaying()) {
-				return player.table;
+		if (exists player = findPlayer(playerId)) {
+			if (exists table = player.table, table.isInRoom(id)) {
+				if (player.isPlaying()) {
+					return table;
+				} else if (table.removePlayer(playerId) exists) {
+					return sitPlayer(player);
+				} else {
+					return null;
+				}
 			} else if (!player.table exists) {
-				return sitPlayer(player);
-			} else if (player.table?.removePlayer(playerId) exists) {
 				return sitPlayer(player);
 			} else {
 				return null;
@@ -114,7 +120,7 @@ final shared class Room(String roomId, shared Integer tableCount, Anything(Outbo
 	}
 	
 	shared Player? findPlayer(PlayerId playerId) {
-		if (exists player = players[playerId], player.isInRoom(id)) {
+		if (exists player = playerMap[playerId], player.isInRoom(id)) {
 			return player;
 		} else {
 			return null;

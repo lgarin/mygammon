@@ -24,11 +24,7 @@ shared final class PlayerInfo(shared String id, shared String name, shared Strin
 		}
 	}
 	
-	shared actual Integer hash {
-		variable value hash = 1;
-		hash = 31*hash + id.hash;
-		return hash;
-	}
+	shared actual Integer hash => id.hash;
 
 	string => toJson().string;	
 }
