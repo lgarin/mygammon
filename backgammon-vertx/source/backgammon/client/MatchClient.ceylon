@@ -10,7 +10,8 @@ import backgammon.shared {
 	OutboundGameMessage,
 	GameStateRequestMessage,
 	InboundGameMessage,
-	MatchEndedMessage
+	MatchEndedMessage,
+	systemPlayerId
 }
 import backgammon.shared.game {
 	player2Color,
@@ -22,7 +23,7 @@ import ceylon.time {
 	Instant
 }
 
-shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui, Anything(InboundGameMessage|InboundMatchMessage) messageBroadcaster) {
+shared final class MatchClient(PlayerInfo player, shared MatchState match, GameGui gui, Anything(InboundGameMessage|InboundMatchMessage) messageBroadcaster) {
 	
 	shared MatchId matchId = match.id;
 	
@@ -41,10 +42,12 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 	void showWin(CheckerColor? color) {
 		if (exists currentColor = color) {
 			gui.showPlayerMessage(currentColor, "Winner", false);
+			gui.showCurrentPlayer(currentColor);
 			gui.showPlayerMessage(currentColor.oppositeColor, "", false);
 		} else {
 			gui.showPlayerMessage(player1Color, "Tie", false);
 			gui.showPlayerMessage(player2Color, "Tie", false);
+			gui.showCurrentPlayer(null);
 		}
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
@@ -86,24 +89,20 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 			showMatchBegin(match);
 		}
 	}
-	
-	shared void showLeft(PlayerId playerId) {
-		if (exists color = match.playerColor(playerId)) {
-			gui.showPlayerMessage(color, "Left", false);
-			gui.showPlayerMessage(color.oppositeColor, "", false);
-		}
-	}
-	
-	shared void showMatchEndMessage(MatchEndedMessage message, CheckerColor color) {
+
+	shared void showMatchEndMessage(PlayerId leaverId, PlayerId winnerId, CheckerColor color) {
 		value playerId = color == player1Color then match.player1Id else match.player2Id;
-		if (message.isWinner(playerId)) {
+		if (playerId == winnerId) {
 			gui.showPlayerMessage(color, "Winner", false);
-		} else if (message.isLeaver(playerId)) {
+			gui.showCurrentPlayer(color);
+		} else if (playerId == leaverId) {
 			gui.showPlayerMessage(color, "Left", false);
-		} else if (message.isTimeout(playerId)) {
+		} else if (leaverId == systemPlayerId) {
 			gui.showPlayerMessage(color, "Timeout", false);
-		} else {
+		} else if (winnerId == systemPlayerId) {
 			gui.showPlayerMessage(color, "Tie", false);
+		} else {
+			gui.showPlayerMessage(color, "", false);
 		}
 	}
 	
@@ -119,13 +118,14 @@ shared final class MatchClient(PlayerInfo player, MatchState match, GameGui gui,
 				gui.showPlayerMessage(color, "Ready", false);
 			}
 			if (message.playerId == playerId) {
+				gui.showCurrentPlayer(null);
 				gui.hideSubmitButton();
 			}
 			return true;
 		}
 		case (is MatchEndedMessage) {
-			showMatchEndMessage(message, player1Color);
-			showMatchEndMessage(message, player2Color);
+			showMatchEndMessage(message.playerId, message.winnerId, player1Color);
+			showMatchEndMessage(message.playerId, message.winnerId, player2Color);
 			gui.hideSubmitButton();
 			gui.hideUndoButton();
 			gui.hideLeaveButton();

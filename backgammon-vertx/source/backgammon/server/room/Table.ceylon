@@ -6,43 +6,32 @@ import backgammon.shared {
 	CreatedMatchMessage,
 	OutboundMatchMessage,
 	MatchId,
-	PlayerId
+	PlayerId,
+	LeftTableMessage,
+	JoinedTableMessage
 }
 
 import ceylon.collection {
 	linked,
 	HashMap
 }
-import ceylon.time {
-	now
-}
 
 final shared class Table(shared Integer index, shared RoomId roomId, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared TableId id = TableId(roomId.string, index);
 	
-	variable MatchState? match = null;
-	
-	shared MatchId? matchId => match?.id;
+	// TODO should not be mutable from outside
+	shared variable Match? match = null;
 	
 	value playerQueue = HashMap<PlayerId, Player>(linked);
 	
-	shared Boolean free => playerQueue.empty;
-	
-	shared Boolean busy => !free;
-	
 	shared Integer queueSize => playerQueue.size;
 	
-	shared void publish(OutboundTableMessage|OutboundMatchMessage message) {
-		messageBroadcaster(message);
-	}
-
 	function createMatch(Player player1, Player player2) {
-		value matchId = MatchId(id, now());
-		value currentMatch = MatchState(matchId, player1.info, player2.info);
+		value currentMatch = Match(player1, player2, this, messageBroadcaster);
 		if (player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch)) {
 			match = currentMatch;
-			publish(CreatedMatchMessage(player2.id, currentMatch.id, player1.info, player2.info));
+			messageBroadcaster(CreatedMatchMessage(player2.id, currentMatch.id, player1.info, player2.info));
 			return true;
 		} else {
 			return false;
@@ -53,9 +42,10 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 		if (playerQueue.defines(player.id)) {
 			return false;
 		} else if (player.joinTable(this)) {
+			messageBroadcaster(JoinedTableMessage(player.id, id));
 			if (match exists){
 				playerQueue.put(player.id, player);
-				return false;
+				return true;
 			} else if (exists opponent = playerQueue.first) {
 				playerQueue.put(player.id, player);
 				return createMatch(opponent.item, player);
@@ -64,7 +54,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 				return true;
 			} else {
 				playerQueue.put(player.id, player);
-				return false;
+				return true;
 			}
 		} else {
 			return false;
@@ -73,16 +63,17 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	
 	shared Player? removePlayer(PlayerId playerId) {
 		if (exists player = playerQueue[playerId]) {
-			// TODO ugly
-			if (exists currentMatch = match, exists opponentId = currentMatch.opponentId(playerId), exists opponent = playerQueue[opponentId]) {
-				if (!opponent.leaveTable()) {
-					return null;
+			if (exists currentMatch = match) {
+				match = null;
+				if (currentMatch.end(playerId, null)) {
+					return player;
 				} else {
-					playerQueue.remove(opponentId);
+					match = currentMatch;
+					return null;
 				}
-			}
-			if (player.leaveTable()) {
+			} else if (player.leaveTable(id)) {
 				playerQueue.remove(playerId);
+				messageBroadcaster(LeftTableMessage(player.id, id));
 				return player;
 			} else {
 				return null;
@@ -92,33 +83,17 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 		}
 	}
 
-	shared MatchState? getTableMatch(PlayerId playerId) {
+	shared MatchState? getMatchState(PlayerId playerId) {
 		if (exists player = playerQueue[playerId]) {
-			return match;
+			return match?.state;
 		} else {
 			return null;
 		}
 	}
-	
-	shared MatchState? endMatch(MatchId matchId, PlayerId? winnerId) {
+
+	shared Match? findMatch(MatchId matchId) {
 		if (exists currentMatch = match, currentMatch.id == matchId) {
-			currentMatch.winnerId = winnerId;
-			removePlayer(currentMatch.player1Id);
-			removePlayer(currentMatch.player2Id);
-			match = null;
-			return currentMatch;
-		} else {
-			return null;
-		}
-	}
-	
-	shared MatchState? acceptMatch(MatchId matchId, PlayerId playerId) {
-		if (exists currentMatch = match, currentMatch.id == matchId, exists player = playerQueue[playerId]) {
-			if (player.acceptMatch(matchId)) {
-				return currentMatch;
-			} else {
-				return null;
-			}
+			return match;
 		} else {
 			return null;
 		}

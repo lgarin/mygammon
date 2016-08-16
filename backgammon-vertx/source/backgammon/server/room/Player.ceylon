@@ -1,12 +1,9 @@
 import backgammon.shared {
-	JoinedTableMessage,
 	PlayerId,
 	RoomId,
 	TableId,
-	LeftTableMessage,
 	MatchId,
 	PlayerInfo,
-	AcceptedMatchMessage,
 	MatchState
 }
 
@@ -15,19 +12,14 @@ import ceylon.time {
 	now
 }
 
-final shared class Player(shared PlayerInfo info, variable Room? room = null) {
+final shared class Player(shared PlayerInfo info, shared variable Room? room = null) {
 	
-	variable Table? table = null;
-	variable MatchState? match = null;
+	// TODO should not be mutable from outside
+	shared variable Table? table = null;
+	shared variable Match? match = null;
 	variable Instant lastActivity = now();
 
 	shared PlayerId id = PlayerId(info.id);	
-	shared RoomId? roomId => room?.id;
-	shared Integer? tableIndex => table?.index;
-	shared TableId? tableId => table?.id;
-	shared MatchId? matchId => match?.id;
-	
-	shared MatchId? gameMatchId => if (isPlaying()) then match?.id else null;
 	
 	shared Boolean isInRoom(RoomId roomId) {
 		return room?.id?.equals(roomId) else false;
@@ -41,53 +33,50 @@ final shared class Player(shared PlayerInfo info, variable Room? room = null) {
 		return match?.id?.equals(matchId) else false;
 	}
 	
-	shared Boolean leaveRoom() {
+	shared Boolean leaveRoom(RoomId roomId) {
 		lastActivity = now();
 		
-		if (table exists) {
+		if (!isInRoom(roomId)) {
 			return false;
-		}
-		
-		if (exists currentRoom = room) {
+		} else if (table exists) {
+			return false;
+		} else {
 			room = null;
 			return true;
-		} else {
-			return false;
 		}
 	}
 	
-	shared Boolean leaveTable() {
+	shared Boolean leaveTable(TableId tableId) {
 		lastActivity = now();
 		
-		if (exists currentTable = table) {
-			table = null;
-			match = null;
-			currentTable.publish(LeftTableMessage(id, currentTable.id));
-			return true;
-		} else {
+		if (!isAtTable(tableId)) {
 			return false;
+		} else {
+			table = null;
+			return true;
 		}
 	}
 
-	shared Boolean joinTable(Table currentTable) {
+	shared Boolean joinTable(Table newTable) {
 		lastActivity = now();
 		
-		if (exists existingTable = table) {
-			if (existingTable.id == currentTable.id) {
+		if (!isInRoom(newTable.roomId)) {
+			return false;
+		} else if (match exists) {
+			return false;
+		} else if (exists currentTable = table) {
+			if (currentTable.id == newTable.id) {
 				return true;
-			} if (!leaveTable()) {
+			} if (!leaveTable(currentTable.id)) {
 				return false;
 			}
-		} else if (!isInRoom(currentTable.roomId)) {
-			return false;
 		}
 		
-		table = currentTable;
-		currentTable.publish(JoinedTableMessage(id, currentTable.id));
+		table = newTable;
 		return true;
 	}
 	
-	shared Boolean joinMatch(MatchState currentMatch) {
+	shared Boolean joinMatch(Match currentMatch) {
 		if (match exists) {
 			return false;
 		} else if (currentMatch.gameStarted) {
@@ -104,13 +93,19 @@ final shared class Player(shared PlayerInfo info, variable Room? room = null) {
 	shared Boolean acceptMatch(MatchId matchId) {
 		lastActivity = now();
 		
-		if (exists currentMatch = match, currentMatch.id == matchId, exists currentTable = table) {
-			if (currentMatch.markReady(id)) {
-				currentTable.publish(AcceptedMatchMessage(id, currentMatch.id));
-				return true;
-			} else {
-				return false;
-			}
+		if (isInMatch(matchId) && isAtTable(matchId.tableId)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean leaveMatch(MatchId matchId) {
+		lastActivity = now();
+		
+		if (isInMatch(matchId)) {
+			match = null;
+			return true;
 		} else {
 			return false;
 		}
@@ -118,11 +113,28 @@ final shared class Player(shared PlayerInfo info, variable Room? room = null) {
 	
 	shared Boolean isPlaying() {
 		if (exists currentMatch = match) {
-			return currentMatch.gameStarted && !currentMatch.gameEnded; 
+			return currentMatch.hasGame; 
 		} else {
 			return false;
 		}
 	}
-
+	
+	shared MatchState? getMatchState(TableId tableId) {
+		if (exists currentMatch = match, currentMatch.table.id == tableId) {
+			return currentMatch.state;
+		} else {
+			return null;
+		}
+	}
+	
+	shared Match? findMatch(MatchId matchId) {
+		if (exists currentMatch = match, currentMatch.id == matchId) {
+			return currentMatch;
+		} else {
+			return null;
+		}
+	}
+	
 	shared Boolean isInactiveSince(Instant timeoutTime) => lastActivity < timeoutTime;
+	
 }

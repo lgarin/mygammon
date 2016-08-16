@@ -35,7 +35,7 @@ class RoomTest() {
 	
 	test
 	shared void newRoomHasOnlyFreeTables() {
-		assert (room.tables.every((Table element) => element.free));
+		assert (room.tables.every((Table element) => element.queueSize == 0));
 	}
 	
 	test
@@ -75,7 +75,7 @@ class RoomTest() {
 		value result = room.findMatchTable(player.id);
 		assert (result exists);
 		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 1);
-		assert (room.tables.count((Table element) => !element.free) == 1);
+		assert (room.tables.count((Table element) => element.queueSize == 1) == 1);
 	}
 	
 	test
@@ -90,6 +90,6 @@ class RoomTest() {
 		assert (result2 exists);
 		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 2);
 		assert (messageList.count((RoomMessage element) => element is CreatedMatchMessage) == 1);
-		assert (room.tables.count((Table element) => !element.free) == 1);
+		assert (room.tables.count((Table element) => element.queueSize == 2) == 1);
 	}
 }

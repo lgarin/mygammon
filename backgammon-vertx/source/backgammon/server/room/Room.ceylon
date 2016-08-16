@@ -4,7 +4,8 @@ import backgammon.shared {
 	OutboundTableMessage,
 	PlayerInfo,
 	OutboundMatchMessage,
-	TableId
+	TableId,
+	MatchId
 }
 
 import ceylon.collection {
@@ -70,11 +71,10 @@ final shared class Room(String roomId, shared Integer tableCount, Anything(Outbo
 	
 	shared Player? removePlayer(PlayerId playerId) {
 		if (exists player = playerMap[playerId]) {
-			// TODO ugly
-			if (exists index = player.tableIndex) {
-				tableList[index]?.removePlayer(playerId);
+			if (exists table = player.table, player.leaveTable(table.id)) {
+				table.removePlayer(playerId);
 			}
-			if (player.leaveRoom()) {
+			if (player.leaveRoom(id)) {
 				playerMap.remove(player.id);
 				return player;
 			} else {
@@ -87,11 +87,11 @@ final shared class Room(String roomId, shared Integer tableCount, Anything(Outbo
 	shared Table? findMatchTable(PlayerId playerId) {
 		if (exists player = playerMap[playerId]) {
 			// TODO ugly
-			if (player.isPlaying(), exists index = player.tableIndex) {
-				return tableList[index];
-			} else if (!player.tableIndex exists) {
+			if (player.isPlaying()) {
+				return player.table;
+			} else if (!player.table exists) {
 				return sitPlayer(player);
-			} else if (exists index = player.tableIndex, exists table = tableList[index], table.removePlayer(playerId) exists) {
+			} else if (player.table?.removePlayer(playerId) exists) {
 				return sitPlayer(player);
 			} else {
 				return null;
@@ -104,6 +104,18 @@ final shared class Room(String roomId, shared Integer tableCount, Anything(Outbo
 	shared Table? findTable(TableId tableId) {
 		if (tableId.roomId == roomId) {
 			return tableList[tableId.table];
+		} else {
+			return null;
+		}
+	}
+	
+	shared Match? findMatch(MatchId matchId) {
+		return findTable(matchId.tableId)?.findMatch(matchId);
+	}
+	
+	shared Player? findPlayer(PlayerId playerId) {
+		if (exists player = players[playerId], player.isInRoom(id)) {
+			return player;
 		} else {
 			return null;
 		}

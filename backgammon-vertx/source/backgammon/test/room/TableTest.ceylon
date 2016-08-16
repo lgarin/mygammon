@@ -1,10 +1,9 @@
 import backgammon.server.room {
-	Table,
-	Player
+	Player,
+	Room
 }
 import backgammon.shared {
 	CreatedMatchMessage,
-	RoomId,
 	PlayerInfo,
 	TableMessage,
 	LeftTableMessage,
@@ -21,13 +20,15 @@ import ceylon.test {
 class TableTest() {
 
 	value messageList = ArrayList<TableMessage>();
-	value table = Table(0, RoomId("room"), messageList.add);
+	value room = Room("test", 1, messageList.add);
+	value table = room.tables.first;
+	assert (exists table);
 	
-	function makePlayer(String id) => Player(PlayerInfo(id, id, null), null);
+	function makePlayer(String id) => Player(PlayerInfo(id, id, null), room);
 	
 	test
 	shared void newTableIsFree() {
-		assert (table.free);
+		assert (table.queueSize == 0);
 	}
 	
 	test
@@ -52,6 +53,7 @@ class TableTest() {
 		assert (result1);
 		value result2 = table.sitPlayer(makePlayer("player2"));
 		assert (result2);
+		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 2);
 		assert (messageList.count((TableMessage element) => element is CreatedMatchMessage) == 1);
 	}
 	
@@ -61,8 +63,10 @@ class TableTest() {
 		table.sitPlayer(makePlayer("player2"));
 		
 		value result = table.sitPlayer(makePlayer("player3"));
-		assert (!result);
+		assert (result);
 		assert (table.queueSize == 3);
+		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 3);
+		assert (messageList.count((TableMessage element) => element is CreatedMatchMessage) == 1);
 	}
 	
 	test
@@ -70,6 +74,7 @@ class TableTest() {
 		value result = table.removePlayer(makePlayer("player1").id);
 		assert (!result exists);
 		assert (messageList.empty);
+		assert (messageList.count((TableMessage element) => element is LeftTableMessage) == 0);
 	}
 	
 	test

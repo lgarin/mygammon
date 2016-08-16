@@ -3,7 +3,6 @@ import backgammon.server.room {
 	Player
 }
 import backgammon.shared {
-	JoinedTableMessage,
 	RoomMessage,
 	PlayerInfo
 }
@@ -20,6 +19,8 @@ class PlayerTest() {
 	value messageList = ArrayList<RoomMessage>();
 	
 	value room = Room("room", 1, messageList.add);
+	value table = room.tables.first;
+	assert (exists table);
 	
 	function makePlayer(String id) => Player(PlayerInfo(id, id, null), room);
 	
@@ -33,58 +34,48 @@ class PlayerTest() {
 	
 	test
 	shared void leaveRoom() {
-		value result = player.leaveRoom();
+		value result = player.leaveRoom(room.id);
 		assert (result);
 	}
 	
 	test
 	shared void isNotInRoomAfterLeaving() {
-		player.leaveRoom();
+		player.leaveRoom(room.id);
 		value result = player.isInRoom(room.id);
 		assert (!result);
 	}
 	
 	test
 	shared void newPlayerHasNoTable() {
-		value result = player.leaveTable();
-		assert (!result);
+		assert (!player.table exists);
 	}
 	
 	test
 	shared void newPlayerHasNoMatch() {
-		value id = player.matchId;
-		assert (!exists id);
+		assert (!player.match exists);
 	}
 	
 	test
 	shared void joinChoosenTable() {
-		value table = room.tables.first;
-		assert (exists table);
 		value result = player.joinTable(table);
 		assert (result);
-		assert (exists tableIndex = player.tableIndex);
-		assert (tableIndex == 0);
-		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 1);
+		assert (player.isAtTable(table.id));
 	}
 	
 	test
 	shared void leaveTableWithoutMatch() {
-		value table = room.tables.first;
-		assert (exists table);
 		player.joinTable(table);
-		value result = player.leaveTable();
+		value result = player.leaveTable(table.id);
 		assert (result);
 	}
 	
 	test
 	shared void leaveTableWithMatch() {
-		value table = room.tables.first;
-		assert (exists table);
 		table.sitPlayer(player);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
-		value result = player.leaveTable();
-		assert (!result);
+		value result = player.leaveTable(table.id);
+		assert (result);
 	}
 	
 	test
@@ -95,17 +86,13 @@ class PlayerTest() {
 	
 	test
 	shared void notPlayingWithoutMatch() {
-		value table = room.tables.first;
-		assert (exists table);
 		table.sitPlayer(player);
 		value result = player.isPlaying();
 		assert (!result);
 	}
 	
 	test
-	shared void notPlayingWithMatch() {
-		value table = room.tables.first;
-		assert (exists table);
+	shared void notPlayingWithUnstartedMatch() {
 		table.sitPlayer(player);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
@@ -115,15 +102,13 @@ class PlayerTest() {
 	
 	test
 	shared void playingWithGame() {
-		value table = room.tables.first;
-		assert (exists table);
 		table.sitPlayer(player);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
-		value matchId = table.matchId;
-		assert (exists matchId);
-		player.acceptMatch(matchId);
-		opponent.acceptMatch(matchId);
+		value match = table.match;
+		assert (exists match);
+		match.markReady(player.id);
+		match.markReady(opponent.id);
 		value result = player.isPlaying();
 		assert (result);
 	}
@@ -135,9 +120,9 @@ class PlayerTest() {
 		table.sitPlayer(player);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
-		value matchId = table.matchId;
-		assert (exists matchId);
-		value result = player.acceptMatch(matchId);
+		value match = table.match;
+		assert (exists match);
+		value result = player.acceptMatch(match.id);
 		assert (result);
 	}
 	
@@ -149,11 +134,11 @@ class PlayerTest() {
 		table.sitPlayer(other);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
-		value matchId = table.matchId;
-		assert (exists matchId);
-		other.acceptMatch(matchId);
-		opponent.acceptMatch(matchId);
-		value result = player.acceptMatch(matchId);
+		value match = table.match;
+		assert (exists match);
+		match.markReady(other.id);
+		match.markReady(opponent.id);
+		value result = player.acceptMatch(match.id);
 		assert (!result);
 	}
 }

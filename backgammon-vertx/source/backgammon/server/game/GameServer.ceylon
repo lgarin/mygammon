@@ -126,7 +126,7 @@ final class GameServer(StartGameMessage startGameMessage, GameConfiguration conf
 		}
 	}
 	
-	function endGame(PlayerId playerId, PlayerId? winnerId = null) {
+	function endGame(PlayerId playerId, PlayerId winnerId = systemPlayerId) {
 		if (game.end()) {
 			matchCommander(EndMatchMessage(playerId, matchId, winnerId));
 			return true;
@@ -150,9 +150,9 @@ final class GameServer(StartGameMessage startGameMessage, GameConfiguration conf
 		if (blackSuccessiveTimeouts + whiteSuccessiveTimeouts >= configuration.maxSkippedGameTurn) {
 			return endGame(systemPlayerId);
 		} else if (blackSuccessiveTimeouts >= configuration.maxSkippedPlayerTurn) {
-			return surrenderGame(systemPlayerId, black);
+			return surrenderGame(toPlayerId(black), black);
 		} else if (whiteSuccessiveTimeouts >= configuration.maxSkippedPlayerTurn) {
-			return surrenderGame(systemPlayerId, white);
+			return surrenderGame(toPlayerId(white), white);
 		} else if (blackInvalidMoves > configuration.maxWarningCount) {
 			return surrenderGame(toPlayerId(black), black);
 		} else if (whiteInvalidMoves > configuration.maxWarningCount) {
@@ -171,7 +171,7 @@ final class GameServer(StartGameMessage startGameMessage, GameConfiguration conf
 			messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, maxUndo));
 			return true;
 		} else if (game.hasWon(playerColor)) {
-			return endGame(toPlayerId(playerColor));
+			return endGame(toPlayerId(playerColor), toPlayerId(playerColor));
 		} else {
 			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
 			return false;

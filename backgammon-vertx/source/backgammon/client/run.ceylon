@@ -32,7 +32,8 @@ import backgammon.shared {
 	formatRoomMessage,
 	TableStateRequestMessage,
 	PlayerId,
-	EndMatchMessage
+	EndMatchMessage,
+	MatchEndedMessage
 }
 
 import ceylon.json {
@@ -179,6 +180,10 @@ Boolean handleMatchMessage(OutboundMatchMessage message) {
 	
 	if (is RoomResponseMessage message, !message.success) {
 		return false;
+	}
+	
+	if (is MatchEndedMessage message) {
+		// TODO unregister OutboundGameMessage
 	}
 	
 	if (exists currentClient = tableClient) {
