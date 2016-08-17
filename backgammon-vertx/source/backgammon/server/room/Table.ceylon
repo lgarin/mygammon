@@ -2,10 +2,8 @@ import backgammon.shared {
 	TableId,
 	RoomId,
 	OutboundTableMessage,
-	MatchState,
 	CreatedMatchMessage,
 	OutboundMatchMessage,
-	MatchId,
 	PlayerId,
 	LeftTableMessage,
 	JoinedTableMessage
@@ -49,9 +47,6 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 			} else if (exists opponent = playerQueue.first) {
 				playerQueue.put(player.id, player);
 				return createMatch(opponent.item, player);
-			} else if (playerQueue.empty) {
-				playerQueue.put(player.id, player);
-				return true;
 			} else {
 				playerQueue.put(player.id, player);
 				return true;
@@ -61,18 +56,31 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 		}
 	}
 	
+	function removeMatchPlayer(Match currentMatch, Player player) {
+		_match = null;
+		if (currentMatch.gameEnded) {
+			// TODO this is duplicated
+			if (player.leaveTable(id)) {
+				playerQueue.remove(player.id);
+				messageBroadcaster(LeftTableMessage(player.id, id));
+				return player;
+			} else {
+				return null;
+			}
+		} else if (currentMatch.end(player.id, null)) {
+			return player;
+		} else {
+			_match = currentMatch;
+			return null;
+		}
+	}
+	
 	shared Player? removePlayer(PlayerId playerId) {
 		if (exists player = findPlayer(playerId)) {
 			if (exists currentMatch = match) {
-				_match = null;
-				if (currentMatch.end(playerId, null)) {
-					return player;
-				} else {
-					_match = currentMatch;
-					return null;
-				}
+				return removeMatchPlayer(currentMatch, player);
 			} else if (player.leaveTable(id)) {
-				playerQueue.remove(playerId);
+				playerQueue.remove(player.id);
 				messageBroadcaster(LeftTableMessage(player.id, id));
 				return player;
 			} else {
@@ -83,22 +91,6 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 		}
 	}
 
-	shared MatchState? getMatchState(PlayerId playerId) {
-		if (exists player = findPlayer(playerId)) {
-			return match?.state;
-		} else {
-			return null;
-		}
-	}
-
-	shared Match? findMatch(MatchId matchId) {
-		if (exists currentMatch = match, currentMatch.id == matchId) {
-			return match;
-		} else {
-			return null;
-		}
-	}
-	
 	shared Player? findPlayer(PlayerId playerId) {
 		if (exists player = playerQueue[playerId], player.isAtTable(id)) {
 			return player;

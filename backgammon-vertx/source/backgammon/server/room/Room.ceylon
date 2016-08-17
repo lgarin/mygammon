@@ -5,7 +5,8 @@ import backgammon.shared {
 	PlayerInfo,
 	OutboundMatchMessage,
 	TableId,
-	MatchId
+	MatchId,
+	MatchState
 }
 
 import ceylon.collection {
@@ -21,16 +22,20 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 	
 	shared RoomId id = RoomId(roomId);
 	
+	variable Integer _createdPlayerCount = 0;
 	value playerMap = HashMap<PlayerId, Player>(unlinked);
 	
-	// TODO use table map
 	value tableList = ArrayList<Table>(tableCount);
-	
 	for (i in 0:tableCount) {
-		value table = Table(i, id, messageBroadcaster);
-		tableList.add(table);
+		tableList.add(Table(i, id, messageBroadcaster));
 	}
 	
+	variable Integer _createdMatchCount = 0;
+	value matchMap = HashMap<MatchId, Match>(unlinked);
+	
+	shared Integer createdMatchCount => _createdMatchCount;
+	shared Integer matchCount => matchMap.size;
+	shared Integer createdPlayerCount => _createdPlayerCount;
 	shared Integer playerCount => playerMap.size;
 	shared Integer freeTableCount => tableList.count((Table element) => element.queueSize == 0);
 	
@@ -40,11 +45,11 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 	function sitPlayer(Player player) {
 		if (exists table = findReadyTable(), table.sitPlayer(player)) {
 			return table;
-		} else if (exists table = findEmptyTable(), table.sitPlayer(player)) {
-			return table;
-		} else {
-			return null;
 		}
+		if (exists table = findEmptyTable(), table.sitPlayer(player)) {
+			return table;
+		}
+		return null;
 	}
 	
 	function doRemovePlayer(Player player) {
@@ -70,12 +75,13 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 		return result;
 	}
 	
-	shared Player? addPlayer(PlayerInfo info) {
-		if (playerMap.defines(PlayerId(info.id))) {
-			return null;
+	shared Player? definePlayer(PlayerInfo info) {
+		if (exists player = findPlayer(PlayerId(info.id))) {
+			return player;
 		} else {
 			value player = Player(info, this);
 			playerMap.put(player.id, player);
+			_createdPlayerCount++;
 			return player;
 		}
 	}
@@ -115,8 +121,30 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 		}
 	}
 	
+	shared Boolean addMatch(Match match) {
+		if (matchMap.defines(match.id)) {
+			return false;
+		} else {
+			_createdMatchCount++;
+			matchMap.put(match.id, match);
+			return true;
+		}
+	}
+	
+	shared Boolean removeMatch(MatchId matchId) {
+		return matchMap.remove(matchId) exists;
+	}
+	
 	shared Match? findMatch(MatchId matchId) {
-		return findTable(matchId.tableId)?.findMatch(matchId);
+		return matchMap[matchId];
+	}
+	
+	shared MatchState? findMatchState(TableId tableId, PlayerId playerId) {
+		if (exists player = findPlayer(playerId), exists match = player.findRecentMatch(tableId)) {
+			return match.state;
+		} else {
+			return null;
+		}
 	}
 	
 	shared Player? findPlayer(PlayerId playerId) {

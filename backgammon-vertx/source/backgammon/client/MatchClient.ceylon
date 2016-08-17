@@ -31,12 +31,26 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 	variable GameClient? _gameClient = null;
 	shared GameClient? gameClient => _gameClient;
 	
-	shared Boolean isMatchPlayer(PlayerId playerId) => match.playerColor(playerId) exists;
-	
-	GameClient initGameClient() {
+	function initGameClient() {
 		value result = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
 		_gameClient = result;
 		return result;
+	}
+	
+	void showMatchEndMessage(PlayerId leaverId, PlayerId winnerId, CheckerColor color) {
+		value playerId = if (color == player1Color) then match.player1Id else match.player2Id;
+		if (playerId == winnerId) {
+			gui.showPlayerMessage(color, "Winner", false);
+			gui.showCurrentPlayer(color);
+		} else if (playerId == leaverId) {
+			gui.showPlayerMessage(color, "Left", false);
+		} else if (leaverId == systemPlayerId) {
+			gui.showPlayerMessage(color, "Timeout", false);
+		} else if (winnerId == systemPlayerId) {
+			gui.showPlayerMessage(color, "Tie", false);
+		} else {
+			gui.showPlayerMessage(color, "", false);
+		}
 	}
 	
 	void showMatchEnd(PlayerId leaverId, PlayerId winnerId) {
@@ -69,38 +83,6 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 		gui.hideUndoButton();
 		gui.showLeaveButton();	}
 	
-	shared void showState() {
-		_gameClient = null;
-		gui.showEmptyGame();
-		gui.showPlayerInfo(player1Color, match.player1.name, match.player1.pictureUrl);
-		gui.showPlayerInfo(player2Color, match.player2.name, match.player2.pictureUrl);
-		if (exists leaverId = match.leaverId, exists winnerId = match.winnerId) { // TODO equivalent to gameEnded
-			showMatchEnd(leaverId, winnerId);
-		} else if (match.gameStarted) {
-			showResumingGame();
-			initGameClient();
-			messageBroadcaster(GameStateRequestMessage(match.id, playerId));
-		} else {
-			showMatchBegin(match);
-		}
-	}
-
-	shared void showMatchEndMessage(PlayerId leaverId, PlayerId winnerId, CheckerColor color) {
-		value playerId = if (color == player1Color) then match.player1Id else match.player2Id;
-		if (playerId == winnerId) {
-			gui.showPlayerMessage(color, "Winner", false);
-			gui.showCurrentPlayer(color);
-		} else if (playerId == leaverId) {
-			gui.showPlayerMessage(color, "Left", false);
-		} else if (leaverId == systemPlayerId) {
-			gui.showPlayerMessage(color, "Timeout", false);
-		} else if (winnerId == systemPlayerId) {
-			gui.showPlayerMessage(color, "Tie", false);
-		} else {
-			gui.showPlayerMessage(color, "", false);
-		}
-	}
-	
 	void showAccept(AcceptedMatchMessage message) {
 		match.markReady(message.playerId);
 		if (exists color = match.playerColor(message.playerId)) {
@@ -111,6 +93,24 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 				gui.hideSubmitButton();
 			}
 	}
+	
+	void showState() {
+		gui.showEmptyGame();
+		gui.showPlayerInfo(player1Color, match.player1.name, match.player1.pictureUrl);
+		gui.showPlayerInfo(player2Color, match.player2.name, match.player2.pictureUrl);
+		if (match.gameEnded, exists leaverId = match.leaverId, exists winnerId = match.winnerId) {
+			showMatchEnd(leaverId, winnerId);
+		} else if (match.gameStarted) {
+			showResumingGame();
+			initGameClient();
+			messageBroadcaster(GameStateRequestMessage(match.id, playerId));
+		} else {
+			showMatchBegin(match);
+		}
+	}
+	
+	// constructor
+	showState();
 	
 	shared Boolean handleMatchMessage(OutboundMatchMessage message) {
 		if (message.matchId != match.id) {

@@ -56,30 +56,23 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 		}
 	}
 	
-	function endGame(PlayerId playerId, PlayerId winnerId) {
-		state.end(playerId, winnerId);
-		
-		if (!player1.leaveMatch(id)) {
-			return false;
-		}
-		if (!player2.leaveMatch(id)) {
-			return false;
-		}
-		
+	void endGame(PlayerId playerId, PlayerId winnerId) {
+		state.end(playerId, winnerId);		
 		messageBroadcaster(MatchEndedMessage(playerId, id, winnerId));
 		table.removePlayer(player1.id);
 		table.removePlayer(player2.id);
-		return true;
 	}
 
 	shared Boolean end(PlayerId playerId, PlayerId? winnerId) {
 		if (gameEnded) {
 			return false;
 		} else if (!gameStarted) {
-			return endGame(playerId, systemPlayerId);
+			endGame(playerId, systemPlayerId);
+			return true;
 		} else if (exists winnerId) {
 			// call from game server
-			return endGame(playerId, winnerId);
+			endGame(playerId, winnerId);
+			return true;
 		} else {
 			// call from leave table
 			// will trigger a EndGameMessage in match room

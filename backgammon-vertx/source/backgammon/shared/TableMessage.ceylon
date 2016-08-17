@@ -43,13 +43,13 @@ shared TableStateRequestMessage parseTableStateRequestMessage(Object json) {
 	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
 }
 
-shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared MatchState? match, shared actual Boolean success) satisfies OutboundTableMessage & RoomResponseMessage {
-	toJson() => toExtendedJson({"match" -> match?.toJson(), "success" -> success});
+shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared Boolean joined, shared MatchState? match, shared actual Boolean success) satisfies OutboundTableMessage & RoomResponseMessage {
+	toJson() => toExtendedJson({"joined" -> joined, "match" -> match?.toJson(), "success" -> success});
 	shared Boolean gameStarted => match?.gameStarted else false;
 	
 }
 shared TableStateResponseMessage parseTableStateResponseMessage(Object json) {
-	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), parseMatchState(json.getObjectOrNull("match")), json.getBoolean("success"));
+	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), json.getBoolean("joined"), parseMatchState(json.getObjectOrNull("match")), json.getBoolean("success"));
 }
 
 

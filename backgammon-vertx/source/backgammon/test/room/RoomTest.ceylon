@@ -39,23 +39,23 @@ class RoomTest() {
 	
 	test
 	shared void addNewPlayer() {
-		value result = room.addPlayer(makePlayerInfo("player1"));
+		value result = room.definePlayer(makePlayerInfo("player1"));
 		assert (result exists);
 		assert (room.playerCount == 1);
 	}
 	
 	test
-	shared void cannotAddSamePlayerIdTwice() {
-		room.addPlayer(makePlayerInfo("player1"));
-		value result = room.addPlayer(makePlayerInfo("player1"));
-		assert (!result exists);
+	shared void addSamePlayerIdTwice() {
+		room.definePlayer(makePlayerInfo("player1"));
+		value result = room.definePlayer(makePlayerInfo("player1"));
+		assert (result exists);
 		assert (room.playerCount == 1);
 	}
 	
 	test
 	shared void removeExistingPlayer() {
 		value player = makePlayerInfo("player1");
-		room.addPlayer(player);
+		room.definePlayer(player);
 		value result = room.removePlayer(PlayerId(player.id));
 		assert (result exists);
 	}
@@ -69,7 +69,7 @@ class RoomTest() {
 	
 	test
 	shared void sitPlayerWithoutOpponent() {
-		value player = room.addPlayer(makePlayerInfo("player1"));
+		value player = room.definePlayer(makePlayerInfo("player1"));
 		assert (exists player);
 		value result = room.findMatchTable(player.id);
 		assert (result exists);
@@ -78,9 +78,9 @@ class RoomTest() {
 	
 	test
 	shared void sitPlayerWithOpponent() {
-		value player1 = room.addPlayer(makePlayerInfo("player1"));
+		value player1 = room.definePlayer(makePlayerInfo("player1"));
 		assert (exists player1);
-		value player2 = room.addPlayer(makePlayerInfo("player2"));
+		value player2 = room.definePlayer(makePlayerInfo("player2"));
 		assert (exists player2);
 		value result1 = room.findMatchTable(player1.id);
 		assert (result1 exists);

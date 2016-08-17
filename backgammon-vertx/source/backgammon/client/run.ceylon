@@ -267,7 +267,6 @@ shared void run() {
 	if (exists tableId = extractTableId(window.location.href), exists playerInfo = extractPlayerInfo(window.document.cookie)) {
 		print(playerInfo.toJson());
 		tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
-		tableClient?.showState();
 		tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
 		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
 	} else {

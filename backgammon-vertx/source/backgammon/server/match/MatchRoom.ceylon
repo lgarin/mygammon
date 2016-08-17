@@ -31,8 +31,7 @@ import backgammon.shared {
 	RoomId,
 	TableId,
 	EndGameMessage,
-	MatchId,
-	PlayerId
+	MatchId
 }
 
 import ceylon.time {
@@ -43,19 +42,16 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 	
 	value lock = ObtainableLock(); 
 	value room = Room(configuration.roomId, configuration.tableCount, messageBroadcaster);
-	variable Integer createdPlayerCount = 0;
 	
 	function findRoom(RoomId roomId) => room.id == roomId then room else null;
 	function findTable(TableId tableId) => room.findTable(tableId);
 	function findMatch(MatchId matchId) => room.findMatch(matchId);
-	function findPlayer(PlayerId playerId) => room.findPlayer(playerId);
 	
 	shared OutboundRoomMessage processRoomMessage(InboundRoomMessage message) {
 		try (lock) {
 			switch (message)
 			case (is EnterRoomMessage) {
-				if (exists room = findRoom(message.roomId), exists player = room.addPlayer(message.playerInfo)) {
-					createdPlayerCount++;
+				if (exists room = findRoom(message.roomId), exists player = room.definePlayer(message.playerInfo)) {
 					return EnteredRoomMessage(message.playerId, message.roomId, true);
 				} else {
 					return EnteredRoomMessage(message.playerId, message.roomId, false);
@@ -96,15 +92,10 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 				}
 			}
 			case (is TableStateRequestMessage) {
-				if (exists player = findPlayer(message.playerId), exists match = player.getMatchState(message.tableId)) {
-					// TODO this does not work ater match termination
-					// previous match
-					return TableStateResponseMessage(message.playerId, message.tableId, match, true);
-				} else if (exists table = findTable(message.tableId)) {
-					// TODO player may not be at table
-					return TableStateResponseMessage(message.playerId, message.tableId, table.getMatchState(message.playerId), true);
+				if (exists table = findTable(message.tableId), exists room = findRoom(message.roomId)) {
+					return TableStateResponseMessage(message.playerId, message.tableId, table.findPlayer(message.playerId) exists, room.findMatchState(message.tableId, message.playerId), true);
 				} else {
-					return TableStateResponseMessage(message.playerId, message.tableId, null, false);
+					return TableStateResponseMessage(message.playerId, message.tableId, false, null, false);
 				}
 			}
 		}
@@ -124,10 +115,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 				}
 			}
 			case (is EndMatchMessage) {
-				if (exists player = findPlayer(message.playerId), player.terminateMatch(message.matchId, message.winnerId)) {
-					// previous match
-					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, true);
-				} else if (exists match = findMatch(message.matchId), match.end(message.playerId, message.winnerId)) {
+				if (exists match = findMatch(message.matchId), match.end(message.playerId, message.winnerId)) {
 					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, true);
 				} else {
 					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, false);
@@ -145,7 +133,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 	shared MatchRoomStatistic statistic {
 		try (lock) {
 			value freeTableCount = room.freeTableCount;
-			return MatchRoomStatistic(room.id, room.playerCount, createdPlayerCount, freeTableCount, room.tableCount - freeTableCount);
+			return MatchRoomStatistic(room.id, room.playerCount, room.createdPlayerCount, freeTableCount, room.tableCount - freeTableCount, room.matchCount, room.createdMatchCount);
 		}
 	}
 }

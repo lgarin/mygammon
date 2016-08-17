@@ -27,7 +27,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	value playerId = PlayerId(playerInfo.id);
 	variable MatchClient? matchClient = null;
 	
-	shared void showState() {
+	void showJoinedState() {
 		gui.showEmptyGame();
 		gui.showPlayerInfo(player1Color, playerInfo.name, playerInfo.pictureUrl);
 		gui.showPlayerMessage(player1Color, "Joined", false);
@@ -41,10 +41,10 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	void handleTableStateResponseMessage(TableStateResponseMessage message) {
 		if (exists match = message.match) {
 			matchClient = MatchClient(playerInfo, match, gui, messageBroadcaster);
-			matchClient?.showState();
+		} else if (message.joined) {
+			showJoinedState();
 		} else {
-			// TODO player may not be on table
-			showState();
+			gui.showInitialState();
 		}
 	}
 	
@@ -57,22 +57,17 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		case (is CreatedMatchMessage) {
 			value match = MatchState(message.matchId, message.player1, message.player2);
 			matchClient = MatchClient(playerInfo, match, gui, messageBroadcaster);
-			matchClient?.showState();
 			return true;
 		}
 		case (is LeftTableMessage) {
-			if (exists match = matchClient?.match, exists color = match.playerColor(playerId), !match.gameStarted) {
-				gui.showPlayerMessage(color, "Left", false);
-				gui.showCurrentPlayer(color);
-				gui.showPlayerMessage(color.oppositeColor, "", true);
-			} else if (playerId == message.playerId) {
+			if (!matchClient exists, playerId == message.playerId) {
 				gui.showPlayerMessage(player1Color, "Left", false);
 				gui.showCurrentPlayer(player1Color);
 				gui.showPlayerMessage(player2Color, "", true);
+				gui.hideSubmitButton();
+				gui.hideUndoButton();
+				gui.hideLeaveButton();
 			}
-			gui.hideSubmitButton();
-			gui.hideUndoButton();
-			gui.hideLeaveButton();
 			return true;
 		}
 		case (is TableStateResponseMessage) {

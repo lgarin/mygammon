@@ -3,8 +3,7 @@ import backgammon.shared {
 	RoomId,
 	TableId,
 	MatchId,
-	PlayerInfo,
-	MatchState
+	PlayerInfo
 }
 
 import ceylon.time {
@@ -15,6 +14,7 @@ import ceylon.time {
 final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	
 	variable Table? _table = null;
+	variable Match? _previousMatch = null;
 	variable Match? _match = null;
 	variable Instant lastActivity = now();
 
@@ -58,13 +58,23 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 			return true;
 		}
 	}
+	
+	void unregisterOldMatch(Match currentMatch) {
+		if (exists currentTable = table, currentTable.id == currentMatch.table.id) {
+			_previousMatch = null;
+		} else {
+			_previousMatch = currentMatch;
+		}
+		_match = null;
+		room?.removeMatch(currentMatch.id);
+	}
 
 	shared Boolean joinTable(Table newTable) {
 		lastActivity = now();
 		
 		if (!isInRoom(newTable.roomId)) {
 			return false;
-		} else if (match exists) {
+		} else if (isPlaying()) {
 			return false;
 		} else if (exists currentTable = table) {
 			if (currentTable.id == newTable.id) {
@@ -75,21 +85,30 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 		}
 		
 		_table = newTable;
+		if (exists currentMatch = _match) {
+			unregisterOldMatch(currentMatch);
+		}
 		return true;
 	}
 	
+	void registerNewMatch(Match currentMatch) {
+		_match = currentMatch;
+		room?.addMatch(currentMatch);
+	}
+	
 	shared Boolean joinMatch(Match currentMatch) {
+		lastActivity = now();
+		
 		if (match exists) {
 			return false;
 		} else if (currentMatch.gameStarted) {
 			return false;
 		} else if (!isAtTable(currentMatch.id.tableId)) {
 			return false;
+		} else {
+			registerNewMatch(currentMatch);
+			return true;
 		}
-		
-		_match = currentMatch;
-		lastActivity = now();
-		return true;
 	}
 	
 	shared Boolean acceptMatch(MatchId matchId) {
@@ -101,18 +120,7 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 			return false;
 		}
 	}
-	
-	shared Boolean leaveMatch(MatchId matchId) {
-		lastActivity = now();
-		
-		if (isInMatch(matchId)) {
-			_match = null;
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
+
 	shared Boolean isPlaying() {
 		if (exists currentMatch = match) {
 			return currentMatch.hasGame; 
@@ -120,23 +128,17 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 			return false;
 		}
 	}
+
+	shared Boolean isInactiveSince(Instant timeoutTime) => lastActivity < timeoutTime;
 	
-	shared MatchState? getMatchState(TableId tableId) {
+	shared Match? findRecentMatch(TableId tableId) {
 		if (exists currentMatch = match, currentMatch.table.id == tableId) {
-			return currentMatch.state;
+			return currentMatch;
+		} else if (exists previousMatch = _previousMatch, previousMatch.table.id == tableId) {
+			return previousMatch;
 		} else {
 			return null;
 		}
 	}
-	
-	shared Boolean terminateMatch(MatchId matchId, PlayerId winnerId) {
-		if (exists currentMatch = match, currentMatch.id == matchId) {
-			return currentMatch.end(id, winnerId);
-		} else {
-			return false;
-		}
-	}
-	
-	shared Boolean isInactiveSince(Instant timeoutTime) => lastActivity < timeoutTime;
 	
 }

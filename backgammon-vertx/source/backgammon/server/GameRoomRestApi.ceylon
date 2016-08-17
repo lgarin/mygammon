@@ -94,6 +94,7 @@ final class GameRoomRestApi(Vertx vertx) {
 		}
 	}
 	
+	// TODO not used
 	void handlEndGameRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
