@@ -43,6 +43,9 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 		} else if (table exists) {
 			return false;
 		} else {
+			if (exists currentMatch = _match) {
+				unregisterOldMatch(currentMatch);
+			}
 			_room = null;
 			return true;
 		}

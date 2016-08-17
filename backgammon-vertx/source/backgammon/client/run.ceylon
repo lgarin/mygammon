@@ -67,6 +67,7 @@ shared Boolean onEndDrag(HTMLElement source) {
 	if (exists style = draggedElementStyle) {
 		source.setAttribute("style", style);
 	}
+	gui.hidePossibleMoves();
 	return true;
 }
 
