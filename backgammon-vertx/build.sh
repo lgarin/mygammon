@@ -21,4 +21,4 @@ echo "Preparing next version $NEW_VERSION"
 sed -i -r "s/(backgammon.client.)$VERSION_PATTERN/\1$NEW_VERSION/g" static/board.html
 sed -i -r "s/(backgammon.server.)$VERSION_PATTERN/\1$NEW_VERSION/g" Backgammon\ Verticle.launch
 git add .
-git commit -m "Version bump to $VERSION"
+git commit -m "Version bump to $NEW_VERSION"
