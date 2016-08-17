@@ -1,5 +1,5 @@
 #!/bin/bash -e
-JAVA_HOME=/c/Dev/jdk8
+export JAVA_HOME=/c/Dev/jdk8
 DIST_DIR=//gd04b/dev/backgammon
 VERSION_PATTERN="[0-9]+\.[0-9]+\.[0-9]+"
 
