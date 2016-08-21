@@ -56,18 +56,21 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 		}
 	}
 	
+	function removeFreePlayer(Player player) {
+		if (player.leaveTable(id)) {
+			playerQueue.remove(player.id);
+			messageBroadcaster(LeftTableMessage(player.id, id));
+			return player;
+		} else {
+			return null;
+		}
+	}
+	
 	function removeMatchPlayer(Match currentMatch, Player player) {
 		_match = null;
 		if (currentMatch.gameEnded) {
-			// TODO this is duplicated
-			if (player.leaveTable(id)) {
-				playerQueue.remove(player.id);
-				messageBroadcaster(LeftTableMessage(player.id, id));
-				return player;
-			} else {
-				return null;
-			}
-		} else if (currentMatch.end(player.id, null)) {
+			return removeFreePlayer(player);
+		} else if (currentMatch.end(player.id, null)) { // this method calls removePlayer
 			return player;
 		} else {
 			_match = currentMatch;
@@ -77,14 +80,10 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	
 	shared Player? removePlayer(PlayerId playerId) {
 		if (exists player = findPlayer(playerId)) {
-			if (exists currentMatch = match) {
+			if (exists currentMatch = match, currentMatch.findPlayer(playerId) exists) {
 				return removeMatchPlayer(currentMatch, player);
-			} else if (player.leaveTable(id)) {
-				playerQueue.remove(player.id);
-				messageBroadcaster(LeftTableMessage(player.id, id));
-				return player;
 			} else {
-				return null;
+				return removeFreePlayer(player);
 			}
 		} else {
 			return null;
