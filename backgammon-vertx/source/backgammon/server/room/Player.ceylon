@@ -36,8 +36,6 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	}
 	
 	shared Boolean leaveRoom(RoomId roomId) {
-		lastActivity = now();
-		
 		if (!isInRoom(roomId)) {
 			return false;
 		} else if (table exists) {
@@ -52,8 +50,6 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	}
 	
 	shared Boolean leaveTable(TableId tableId) {
-		lastActivity = now();
-		
 		if (!isAtTable(tableId)) {
 			return false;
 		} else {

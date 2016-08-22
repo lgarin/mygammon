@@ -53,7 +53,7 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 	}
 	
 	function doRemovePlayer(Player player) {
-		if (exists table = player.table, player.leaveTable(table.id)) {
+		if (exists table = player.table) {
 			table.removePlayer(player.id);
 		}
 		if (player.leaveRoom(id)) {
