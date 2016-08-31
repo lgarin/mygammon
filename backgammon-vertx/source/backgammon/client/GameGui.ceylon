@@ -326,4 +326,10 @@ shared final class GameGui(Document document) {
 		showDiceValues(white, null, null);
 		hideAllCheckers();
 	}
+	
+	shared void showDialog(String dialogName) {
+		dynamic {
+			jQuery("#``dialogName``").dialog("open");
+		}
+	}
 }

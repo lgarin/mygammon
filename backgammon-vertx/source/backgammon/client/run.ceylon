@@ -79,15 +79,13 @@ shared Boolean onDrop(HTMLElement target, HTMLElement source) {
 	}
 }
 
+
+
 shared Boolean onButton(HTMLElement target) {
 	
 	if (target.id == gui.leaveButtonId) {
-		if (exists currentTableClient = tableClient, window.confirm("Do you really want to leave the table?")) {
-			currentTableClient.handleLeaveEvent();
-			return true;
-		} else {
-			return false;
-		}
+		gui.showDialog("dialog-leave");
+		return true;
 	} else if (target.id == gui.submitButtonId, exists currentTableClient = tableClient) {
 		return currentTableClient.handleSubmitEvent();
 	} else if (target.id == gui.undoButtonId, exists gameClient = tableClient?.gameClient) {
@@ -112,6 +110,20 @@ shared Boolean onTimer() {
 	} else {
 		return false;
 	}
+}
+
+shared Boolean onLeaveConfirmed() {
+	if (exists currentTableClient = tableClient) {
+		currentTableClient.handleLeaveEvent();
+		return true;
+	} else {
+		return false;
+	}
+}
+
+shared Boolean onPlayAgain() {
+	window.location.\iassign("/start");
+	return true;
 }
 
 Boolean handleServerMessage(String typeName, Object json) {

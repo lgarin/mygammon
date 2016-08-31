@@ -268,7 +268,7 @@ body {
 .player-busy {
 	margin-right: 10px;
 	padding: 50px 50px 0px 0px;
-	background-image: url("../images/hourglass.gif");
+	background-image: url("../images/hourglass.png");
 	background-size:auto;
 	width:0px;
 	height: 0px;

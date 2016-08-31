@@ -31,6 +31,28 @@
 	            	$(".checker").on("click", function(event) { return app.onChecker(event.currentTarget); });
 	            	$(".topdown-checker").on("click", function(event) { return app.onChecker(event.currentTarget); });
 	            	window.setInterval(function() { return app.onTimer(); }, 500);
+	                $("#dialog-won").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: {
+	                      "Play again": function() { $(this).dialog("close"); return app.onPlayAgain(); }
+	                    }
+	                });
+	                $("#dialog-lost").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: {
+	                      "Play again": function() { $(this).dialog("close"); return app.onPlayAgain(); }
+	                    }
+	                });
+	                $("#dialog-leave").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: {
+	                      "Yes": function() { $(this).dialog("close"); return app.onLeaveConfirmed(); },
+	                	  "No" : function() { $(this).dialog("close"); return true; }
+	                    }
+	                });
 	                app.run();
 	            }
 	    );
@@ -56,7 +78,7 @@
         </div>
 
         <div id="point-black-graveyard" class="point" style="top:331px;left:395px;">
-        	<div class="checker hidden" style="top:180px"></div><div class="checker hidden" style="top:140px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:-20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:120px"></div><div class="checker hidden" style="top:160px"></div><div class="checker hidden" style="top:140px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:20px"></div>
+        	<div class="checker hidden" style="top:-20px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:140px"></div><div class="checker hidden" style="top:180px"></div><div class="checker hidden" style="top:160px"></div><div class="checker hidden" style="top:120px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:140px"></div>
         </div>
         <div id="point-white-home" class="point" style="top:377px;left:789px;">
         	<div class="topdown-checker hidden" style="top:0px"></div><div class="topdown-checker hidden" style="top:12px"></div><div class="topdown-checker hidden" style="top:24px"></div><div class="topdown-checker hidden" style="top:36px"></div><div class="topdown-checker hidden" style="top:48px"></div><div class="topdown-checker hidden" style="top:60px"></div><div class="topdown-checker hidden" style="top:72px"></div><div class="topdown-checker hidden" style="top:84px"></div><div class="topdown-checker hidden" style="top:96px"></div><div class="topdown-checker hidden" style="top:108px"></div><div class="topdown-checker hidden" style="top:120px"></div><div class="topdown-checker hidden" style="top:132px"></div><div class="topdown-checker hidden" style="top:144px"></div><div class="topdown-checker hidden" style="top:156px"></div><div class="topdown-checker hidden" style="top:168px"></div>
@@ -137,14 +159,14 @@
         	<div class="topdown-checker hidden" style="top:0px"></div><div class="topdown-checker hidden" style="top:12px"></div><div class="topdown-checker hidden" style="top:24px"></div><div class="topdown-checker hidden" style="top:36px"></div><div class="topdown-checker hidden" style="top:48px"></div><div class="topdown-checker hidden" style="top:60px"></div><div class="topdown-checker hidden" style="top:72px"></div><div class="topdown-checker hidden" style="top:84px"></div><div class="topdown-checker hidden" style="top:96px"></div><div class="topdown-checker hidden" style="top:108px"></div><div class="topdown-checker hidden" style="top:120px"></div><div class="topdown-checker hidden" style="top:132px"></div><div class="topdown-checker hidden" style="top:144px"></div><div class="topdown-checker hidden" style="top:156px"></div><div class="topdown-checker hidden" style="top:168px"></div>
         </div>
         <div id="point-white-graveyard" class="point" style="top:39px;left:395px;">
-			<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:120px"></div><div class="checker hidden" style="top:160px"></div><div class="checker hidden" style="top:200px"></div><div class="checker hidden" style="top:180px"></div><div class="checker hidden" style="top:140px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:120px"></div><div class="checker hidden" style="top:160px"></div>
+			<div class="checker hidden" style="top:200px"></div><div class="checker hidden" style="top:160px"></div><div class="checker hidden" style="top:120px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:140px"></div><div class="checker hidden" style="top:180px"></div><div class="checker hidden" style="top:160px"></div><div class="checker hidden" style="top:120px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:40px"></div>
         </div>
         
       </div><!-- end of game board -->
 
        <div id="whitePlayer" style="top: 5px" class="player">
          <div>
-         	<img class="player-busy" id="whitePlayerActivity" src="/static/images/hourglass.gif"/>
+         	<img class="player-busy" id="whitePlayerActivity" src="/static/images/hourglass.png"/>
          	<label style="position: absolute;" id="whitePlayerTimer">Loading...</label>
          </div>
          <div class="player-picture">
@@ -165,7 +187,7 @@
          	<span class="black-small-checker"></span>
          </div>
          <div>
-         	<img class="player-busy" id="blackPlayerActivity" src="/static/images/hourglass.gif"/>
+         	<img class="player-busy" id="blackPlayerActivity" src="/static/images/hourglass.png"/>
          	<label style="position: absolute;" id="blackPlayerTimer">Loading...</label>
          </div>
        </div>
@@ -180,5 +202,21 @@
         <div id="leaveText" class="leave">Leave</div>
       </div>
     </div><!-- end of gui -->
+    
+    <div id="dialog-won" title="Game won">
+	  <p>
+	    <b>Congratulation. You've won the game.</b>
+	  </p>
+	</div>
+	<div id="dialog-lost" title="Game lost">
+	  <p>
+	    <b>Sorry. You've lost the game.</b>
+	  </p>
+	</div>
+	<div id="dialog-leave" title="Leave the game?">
+	  <p>
+	    <b>Do you really want to leave the table?</b>
+	  </p>
+	</div>
   </body>
 </html>
