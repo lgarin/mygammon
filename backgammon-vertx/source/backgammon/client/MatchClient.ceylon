@@ -61,9 +61,9 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 		gui.hideUndoButton();
 		gui.hideLeaveButton();
 		if (playerId == winnerId) {
-			gui.showDialog("game-won");
+			gui.showDialog("dialog-won");
 		} else if (exists looserId = match.opponentId(winnerId), playerId == looserId) {
-			gui.showDialog("game-lost");
+			gui.showDialog("dialog-lost");
 		}
 	}
 	

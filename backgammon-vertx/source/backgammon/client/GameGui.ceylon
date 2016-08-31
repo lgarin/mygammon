@@ -255,6 +255,25 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
+	function getLastChecker(GameBoard board, CheckerColor color, Integer position) {
+		value domId = getDomIdUsingPoint(board, color, position);
+		if (exists point = document.getElementById(domId)) {
+			value count = board.countCheckers(position, color);
+			value checkers = point.getElementsByTagName("div");
+			return checkers.item(count - 1);
+		} else {
+			return null;
+		}
+	}
+	
+	shared void showSelectedPosition(GameBoard board, CheckerColor color, Integer? position) {
+		if (exists position, exists checker = getLastChecker(board, color, position)) {
+			showSelectedChecker(checker);
+		} else {
+			showSelectedChecker(null);
+		}
+	}
+	
 	void deselectAllCheckers() {
 		value checkers = document.getElementsByClassName("checker");
 		for (i in 0:checkers.length) {
