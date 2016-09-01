@@ -29,8 +29,8 @@ import backgammon.shared.game {
 	white,
 	player2Color,
 	player1Color,
-	GameMove,
-	DiceRoll
+	DiceRoll,
+	GameMoveInfo
 }
 
 import ceylon.time {
@@ -54,6 +54,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
+	variable [GameMoveInfo*] nextMoves = [];
 	
 	void showInitialDices(DiceRoll roll) {
 		if (exists currentColor = playerColor, game.mustRollDice(currentColor)) {
@@ -181,6 +182,10 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		if (game.beginTurn(message.playerColor, message.roll, message.maxDuration, message.maxUndo)) {
 			showTurnDices(message.roll, message.playerColor);
 			showCurrentTurnMessages(message.playerColor, message.maxDuration);
+			if (message.playerId == playerId, nonempty forcedMoves = game.computeForcedMoves(message.playerColor, message.roll)) {
+				gui.showPossibleMoves(game.board, message.playerColor, forcedMoves.map((element) => element.targetPosition));
+				gui.showSelectedPosition(game.board, message.playerColor, forcedMoves.first.sourcePosition);
+			}
 			if (message.playerId == playerId) {
 				gui.showSubmitButton();
 			} else {
@@ -197,6 +202,12 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			gui.redrawCheckers(game.board);
 			if (exists color = playerColor, game.canUndoMoves(color)) {
 				gui.showUndoButton();
+			}
+			if (exists color = playerColor, exists nextMove = nextMoves.first, game.isLegalMove(color, nextMove.sourcePosition, nextMove.targetPosition)) {
+				nextMoves = nextMoves.rest;
+				messageBroadcaster(MakeMoveMessage(matchId, playerId, nextMove.sourcePosition, nextMove.targetPosition));
+			} else {
+				nextMoves = [];
 			}
 			return true;
 		} else {
@@ -335,9 +346,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		gui.showSelectedChecker(null);
 		gui.hidePossibleMoves();
 		if (exists color = playerColor, game.mustMakeMove(color), exists roll = game.currentRoll, exists position = gui.getPosition(source)) {
-			value moves = game.computeAvailableMoves(color, roll, position);
+			value moves = game.computeNextMoves(color, roll, position);
 			if (!moves.empty) {
-				gui.showPossibleMoves(game.board, color, moves.map((GameMove element) => element.targetPosition));
+				gui.showPossibleMoves(game.board, color, moves.map((element) => element.targetPosition));
 				return true;
 			} else {
 				return false;
@@ -349,11 +360,12 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	function makeMove(Integer sourcePosition, Integer targetPosition, HTMLElement checker) {
-		if (exists color = playerColor, game.isLegalMove(color, sourcePosition, targetPosition)) {
+		if (exists color = playerColor, exists roll = game.currentRoll, nonempty moves = game.computeBestMoveSequence(color, roll, sourcePosition, targetPosition)) {
 			gui.showSelectedChecker(null);
 			gui.hidePossibleMoves();
 			gui.hideChecker(checker);
-			messageBroadcaster(MakeMoveMessage(matchId, playerId, sourcePosition, targetPosition));
+			messageBroadcaster(MakeMoveMessage(matchId, playerId, moves.first.sourcePosition, moves.first.targetPosition));
+			nextMoves = moves.rest;
 			return true;
 		} else {
 			return false;

@@ -2,7 +2,7 @@ import ceylon.test {
 	test
 }
 import backgammon.shared.game {
-	GameMove,
+	GameMoveInfo,
 	DiceRoll,
 	Game,
 	white,
@@ -49,25 +49,25 @@ class GameTest() {
 	
 	test
 	shared void computeInitalBlackMoves() {
-		value moves = game.computeAvailableMoves(black, DiceRoll(3, 1));
-		assert (moves.contains(GameMove(1, 2, 1, false)));
-		assert (moves.contains(GameMove(1, 4, 3, false)));
-		assert (moves.contains(GameMove(12, 15, 3, false)));
-		assert (moves.contains(GameMove(17, 18, 1, false)));
-		assert (moves.contains(GameMove(17, 20, 3, false)));
-		assert (moves.contains(GameMove(19, 20, 1, false)));
-		assert (moves.contains(GameMove(19, 22, 3, false)));
+		value moves = game.computeNextMoves(black, DiceRoll(3, 1));
+		assert (moves.contains(GameMoveInfo(1, 2, 1, false)));
+		assert (moves.contains(GameMoveInfo(1, 4, 3, false)));
+		assert (moves.contains(GameMoveInfo(12, 15, 3, false)));
+		assert (moves.contains(GameMoveInfo(17, 18, 1, false)));
+		assert (moves.contains(GameMoveInfo(17, 20, 3, false)));
+		assert (moves.contains(GameMoveInfo(19, 20, 1, false)));
+		assert (moves.contains(GameMoveInfo(19, 22, 3, false)));
 		assert (moves.size == 7);
 	}
 	
 	test
 	shared void computeInitalWhiteMoves() {
-		value moves = game.computeAvailableMoves(white, DiceRoll(1, 5));
-		assert (moves.contains(GameMove(24, 23, 1, false)));
-		assert (moves.contains(GameMove(13, 8, 5, false)));
-		assert (moves.contains(GameMove(8, 7, 1, false)));
-		assert (moves.contains(GameMove(8, 3, 5, false)));
-		assert (moves.contains(GameMove(6, 5, 1, false)));
+		value moves = game.computeNextMoves(white, DiceRoll(1, 5));
+		assert (moves.contains(GameMoveInfo(24, 23, 1, false)));
+		assert (moves.contains(GameMoveInfo(13, 8, 5, false)));
+		assert (moves.contains(GameMoveInfo(8, 7, 1, false)));
+		assert (moves.contains(GameMoveInfo(8, 3, 5, false)));
+		assert (moves.contains(GameMoveInfo(6, 5, 1, false)));
 		assert (moves.size == 5);
 	}
 }

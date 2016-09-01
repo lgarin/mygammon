@@ -11,12 +11,12 @@ class DiceRollTest() {
 	shared void checkNormalRoll() {
 		value roll = DiceRoll(3, 4);
 		assert (roll.remainingValues.size == 2);
-		assert (!roll.hasValue(1));
-		assert (!roll.hasValue(2));
-		assert (roll.hasValue(3));
-		assert (roll.hasValue(4));
-		assert (!roll.hasValue(5));
-		assert (!roll.hasValue(6));
+		assert (!roll.hasRemainingValue(1));
+		assert (!roll.hasRemainingValue(2));
+		assert (roll.hasRemainingValue(3));
+		assert (roll.hasRemainingValue(4));
+		assert (!roll.hasRemainingValue(5));
+		assert (!roll.hasRemainingValue(6));
 	}
 	
 	test
@@ -24,8 +24,8 @@ class DiceRollTest() {
 		value roll = DiceRoll(3, 3);
 		assert (roll.remainingValues.size == 4);
 		assert (roll.isPair);
-		assert (roll.hasValue(3));
-		assert (roll.remainingValues.every((Integer element) => element == 3));
+		assert (roll.hasRemainingValue(3));
+		assert (roll.remainingValues.every((element) => element == 3));
 	}
 	
 	test
@@ -33,7 +33,7 @@ class DiceRollTest() {
 		value roll = DiceRoll(3, 4);
 		value result = roll.useValueAtLeast(3);
 		assert (exists result, result == 3);
-		assert (!roll.hasValue(3));
+		assert (!roll.hasRemainingValue(3));
 	}
 	
 	test
@@ -41,7 +41,7 @@ class DiceRollTest() {
 		value roll = DiceRoll(3, 3);
 		value result = roll.useValueAtLeast(3);
 		assert (exists result, result == 3);
-		assert (roll.hasValue(3));
+		assert (roll.hasRemainingValue(3));
 	}
 	
 	test
@@ -56,6 +56,6 @@ class DiceRollTest() {
 		value roll = DiceRoll(3, 4);
 		value result = roll.useValueAtLeast(2);
 		assert (exists result, result == 3);
-		assert (roll.hasValue(4));
+		assert (roll.hasRemainingValue(4));
 	}
 }

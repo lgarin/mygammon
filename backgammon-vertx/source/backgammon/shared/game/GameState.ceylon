@@ -18,7 +18,7 @@ shared final class GameState() extends Object() {
 	
 	shared variable {Integer*} blackCheckerCounts = {};
 	shared variable {Integer*} whiteCheckerCounts = {};
-	shared variable {GameMove*} currentMoves = {};
+	shared variable {GameMoveInfo*} currentMoves = {};
 	
 	shared JsonObject toJson() {
 		value result = JsonObject();

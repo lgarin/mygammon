@@ -1,5 +1,6 @@
 import ceylon.collection {
-	ArrayList
+	ArrayList,
+	HashMap
 }
 import ceylon.time {
 	Instant,
@@ -10,10 +11,10 @@ import ceylon.time {
 shared class Game() {
 
 	shared GameBoard board = GameBoard();
-	value currentMoves = ArrayList<GameMove>();
+	value currentMoves = ArrayList<GameMoveInfo>();
 	
 	"http://www.backgammon-play.net/GameBasic.htm"
-	value initialPositionCounts = [ 1 -> 2, 12 -> 5, 17 -> 3, 19 -> 5 ];
+	value initialPositionCounts = { 1 -> 2, 12 -> 5, 17 -> 3, 19 -> 5 };
 	value checkerCount = sum(initialPositionCounts.map((Integer->Integer element) => element.item)); 
 	
 	for (value element in initialPositionCounts) {
@@ -100,9 +101,9 @@ shared class Game() {
 			if (board.homePosition(color) == target) {
 				return false;
 			} else {
-				return roll.hasValue(board.distance(source, target));
+				return roll.hasRemainingValue(board.distance(source, target));
 			}
-		} else if (exists maxValue = roll.maxValue) {
+		} else if (exists maxValue = roll.maxRemainingValue) {
 			return maxValue >= board.distance(source, target);
 		} else {
 			return false;
@@ -119,30 +120,26 @@ shared class Game() {
 		return true;
 	}
 	
-	shared Boolean hasAvailableMove(CheckerColor color, DiceRoll roll) {
-		return !computeAvailableMoves(color, roll).empty;
-	}
-	
-	shared {GameMove*} computeAvailableMoves(CheckerColor color, DiceRoll roll, Integer? sourcePosition = null) {
-		if (exists maxValue = roll.maxValue) {
+	shared {GameMove*} computeNextMoves(CheckerColor color, DiceRoll roll, Integer? sourcePosition = null) {
+		if (exists maxValue = roll.maxRemainingValue) {
 			value sourceRange = if (exists pos = sourcePosition) then pos..pos else board.sourceRange(color);
 			return {
 				for (source in sourceRange)
 					for (target in board.targetRange(color, source, maxValue)) 
-						if (isLegalCheckerMove(color, roll, source, target), exists rollValue = roll.minValueAtLeast(board.distance(source, target)))
-							GameMove(source, target, rollValue, board.countCheckers(target, color.oppositeColor) > 0) 
+						if (isLegalCheckerMove(color, roll, source, target))
+							GameMove(source, target) 
 			};
 		} else {
 			return {}; 
 		}
 	}
 	
+	shared Boolean hasAvailableMove(CheckerColor color, DiceRoll roll) {
+		return !computeNextMoves(color, roll).empty;
+	}
+	
 	shared Boolean isLegalMove(CheckerColor color, Integer source, Integer target) {
-		if (!isCurrentColor(color)) {
-			return false;
-		}
-		
-		if (exists roll = currentRoll) {
+		if (isCurrentColor(color), exists roll = currentRoll) {
 			return isLegalCheckerMove(color, roll, source, target);
 		} else {
 			return false;
@@ -163,26 +160,32 @@ shared class Game() {
 		return null;
 	}
 	
-	shared Boolean moveChecker(CheckerColor color, Integer source, Integer target) {
-	
-		if (!isLegalMove(color, source, target)) {
-			return false;
-		}
-		
+	function makeLegalMove(CheckerColor color, Integer source, Integer target) {
 		value rollValue = useRollValue(color, source, target);
-		if (!exists rollValue) {
-			return false;
-		}
-		
+		assert (exists rollValue);
 		value bolt = hitChecker(color, source, target);
 		if (exists bolt) {
 			assert (board.moveChecker(color.oppositeColor, target, board.graveyardPosition(bolt)));
 		}
 		assert (board.moveChecker(color, source, target));
+		return GameMoveInfo(source, target, rollValue, bolt exists);
+	}
+	
+	shared Boolean moveChecker(CheckerColor color, Integer source, Integer target) {
+		if (!isLegalMove(color, source, target)) {
+			return false;
+		}
 		
-		value move = GameMove(source, target, rollValue, bolt exists);
-		currentMoves.push(move);
+		currentMoves.push(makeLegalMove(color, source, target));
 		return true;
+	}
+	
+	void undoMove(GameMoveInfo move, DiceRoll roll, CheckerColor color) {
+		roll.addRemainingValue(move.rollValue);
+		assert (board.moveChecker(color, move.targetPosition, move.sourcePosition));
+		if (move.hitBlot) {
+			assert (board.moveChecker(color.oppositeColor, board.graveyardPosition(color.oppositeColor), move.targetPosition));
+		}
 	}
 	
 	shared Boolean undoTurnMoves(CheckerColor color) {
@@ -190,11 +193,7 @@ shared class Game() {
 			return false;
 		} else if (exists roll = currentRoll, !currentMoves.empty) {
 			while (exists move = currentMoves.pop()) {
-				roll.add(move.rollValue);
-				assert (board.moveChecker(color, move.targetPosition, move.sourcePosition));
-				if (move.hitBlot) {
-					assert (board.moveChecker(color.oppositeColor, board.graveyardPosition(color.oppositeColor), move.targetPosition));
-				}
+				undoMove(move, roll, color);
 			}
 			remainingUndo--;
 			return true;
@@ -203,6 +202,67 @@ shared class Game() {
 		}
 	}
 	
+	function compareMoveSequence({GameMoveInfo*} seq1, {GameMoveInfo*} seq2) {
+		value hit1 = seq1.count((element) => element.hitBlot);
+		value hit2 = seq2.count((element) => element.hitBlot);
+		value hitCompare = hit1 <=> hit2;
+		if (hitCompare != equal) {
+			return hitCompare;
+		}
+		value roll1 = seq1.fold(0)((partial, element) => partial + element.rollValue);
+		value roll2 = seq2.fold(0)((partial, element) => partial + element.rollValue);
+		value rollCompare = roll1 <=> roll2;
+		return rollCompare.reversed;
+	}
+	
+	void appendNextMoves(HashMap<GameMove, {GameMoveInfo*}> allMoves, CheckerColor color, DiceRoll roll, GameMoveSequence? previousMove) {
+		for (nextMove in computeNextMoves(color, roll, previousMove?.targetPosition)) {
+			value moveInfo = makeLegalMove(color, nextMove.sourcePosition, nextMove.targetPosition);
+			value moveKey = GameMove(previousMove?.sourcePosition else nextMove.sourcePosition, nextMove.targetPosition);
+			value newMoves = if (exists previousMove) then {moveInfo, *previousMove.moves} else {moveInfo};
+			if (exists otherMoves = allMoves[moveKey]) {
+				if (compareMoveSequence(otherMoves, newMoves) == smaller) {
+					allMoves.put(moveKey, newMoves);
+				}
+			} else {
+				allMoves.put(moveKey, newMoves);
+			}
+			if (roll.maxRemainingValue exists) {
+				appendNextMoves(allMoves, color, roll, GameMoveSequence(moveKey.sourcePosition, moveKey.targetPosition, newMoves));
+			}
+			undoMove(moveInfo, roll, color);
+		}
+	}
+	
+	function computeAllMoves(CheckerColor color, DiceRoll roll, Integer? sourcePosition = null) {
+		value allMoves = HashMap<GameMove, {GameMoveInfo*}>();
+		appendNextMoves(allMoves, color, roll, null);
+		return allMoves;
+	}
+	
+	shared [GameMove*] computeForcedMoves(CheckerColor color, DiceRoll roll) {
+		value moves = computeAllMoves(color, roll);
+		if (exists first = moves.first) {
+			if (moves.any((element) => element.key.sourcePosition != first.key.sourcePosition)) {
+				return [];
+			} else {
+				return moves.keys.sequence();
+			}
+		} else {
+			return [];
+		}
+	}
+	
+	shared [GameMoveInfo*] computeBestMoveSequence(CheckerColor color, DiceRoll roll, Integer sourcePosition, Integer targetPosition) {
+		value key = GameMove(sourcePosition, targetPosition);
+		value allMoves = computeAllMoves(color, roll, sourcePosition);
+		if (exists moves = allMoves[key]) {
+			return moves.sequence();
+		} else {
+			return [];
+		}
+	}
+
 	shared Boolean timedOut(Instant now) {
 		if (ended) {
 			return false;
