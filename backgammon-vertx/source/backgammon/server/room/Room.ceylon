@@ -23,21 +23,45 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 	shared RoomId id = RoomId(roomId);
 	
 	variable Integer _createdPlayerCount = 0;
+	variable Integer _maxPlayerCount = 0;
 	value playerMap = HashMap<PlayerId, Player>(unlinked);
 	
+	variable Integer _maxTableCount = 0;
 	value tableList = ArrayList<Table>(tableCount);
 	for (i in 0:tableCount) {
 		tableList.add(Table(i, id, messageBroadcaster));
 	}
 	
 	variable Integer _createdMatchCount = 0;
+	variable Integer _maxMatchCount = 0;
 	value matchMap = HashMap<MatchId, Match>(unlinked);
 	
 	shared Integer createdMatchCount => _createdMatchCount;
 	shared Integer matchCount => matchMap.size;
+	shared Integer maxMatchCount {
+		if (_maxMatchCount < matchCount) {
+			_maxMatchCount = matchCount;
+		}
+		return _maxMatchCount;
+	}
+	
 	shared Integer createdPlayerCount => _createdPlayerCount;
 	shared Integer playerCount => playerMap.size;
+	shared Integer maxPlayerCount {
+		if (_maxPlayerCount < playerCount) {
+			_maxPlayerCount = playerCount;
+		}
+		return _maxPlayerCount;
+	}
+	
 	shared Integer freeTableCount => tableList.count((Table element) => element.queueSize == 0);
+	shared Integer maxTableCount {
+		value busyTableCount = tableCount - freeTableCount;
+		if (_maxTableCount < busyTableCount) {
+			_maxTableCount = busyTableCount;
+		}
+		return _maxTableCount;
+	}
 	
 	function findReadyTable() => tableList.find((Table element) => element.queueSize == 1);
 	function findEmptyTable() => tableList.find((Table element) => element.queueSize == 0);

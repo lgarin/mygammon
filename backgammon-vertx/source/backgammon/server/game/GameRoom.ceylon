@@ -32,7 +32,17 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	value roomId = RoomId(configuration.roomId);
 	value lock = ObtainableLock(); 
 	value gameMap = HashMap<MatchId, GameServer>();
-	variable Integer gameCount = 0;
+	variable Integer _gameCount = 0;
+	variable Integer _maxGameCount = 0;
+	
+	value totalGameCount => _gameCount;
+	value activeGameCount => gameMap.size;
+	value maxGameCount {
+		if (_maxGameCount < activeGameCount) {
+			_maxGameCount = activeGameCount;
+		}
+		return _maxGameCount;
+	}
 	
 	function getGameServer(InboundGameMessage message) {
 		try (lock) {
@@ -41,7 +51,7 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 			} else if (is StartGameMessage message) {
 				value server = GameServer(message, configuration, messageBroadcaster, matchCommander);
 				gameMap.put(message.matchId, server);
-				gameCount++;
+				_gameCount++;
 				return server;
 			} else {
 				return null;
@@ -82,7 +92,12 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	
 	shared GameRoomStatistic statistic {
 		try (lock) {
-			return GameRoomStatistic(roomId, gameMap.size, gameCount);
+			return GameRoomStatistic {
+				roomId = roomId;
+				activeGameCount = activeGameCount;
+				maxGameCount = maxGameCount;
+				totalGameCount = totalGameCount; 
+			};
 		}
 	}
 }
