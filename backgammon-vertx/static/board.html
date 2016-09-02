@@ -30,28 +30,33 @@
 	            	$(".button").on("click", function(event) { return app.onButton(event.currentTarget); });
 	            	$(".checker").on("click", function(event) { return app.onChecker(event.currentTarget); });
 	            	$(".topdown-checker").on("click", function(event) { return app.onChecker(event.currentTarget); });
-	            	window.setInterval(function() { return app.onTimer(); }, 500);
+	            	window.setInterval(function() { return app.onTimer(); }, 100);
 	                $("#dialog-won").dialog({
 	                	autoOpen: false,
 	                    modal: true,
-	                    buttons: {
-	                      "Play again": function() { $(this).dialog("close"); return app.onPlayAgain(); }
-	                    }
+	                    buttons: [{
+                    		text:  $("#dialog-won").attr("data-buttonText"),
+                    		click: function() { $(this).dialog("close"); return app.onPlayAgain(); }
+                    	}]
 	                });
 	                $("#dialog-lost").dialog({
 	                	autoOpen: false,
 	                    modal: true,
-	                    buttons: {
-	                      "Play again": function() { $(this).dialog("close"); return app.onPlayAgain(); }
-	                    }
+	                    buttons: [{
+	                    		text: $("#dialog-lost").attr("data-buttonText"),
+	                    		click: function() { $(this).dialog("close"); return app.onPlayAgain(); }
+	                    }]
 	                });
 	                $("#dialog-leave").dialog({
 	                	autoOpen: false,
 	                    modal: true,
-	                    buttons: {
-	                      "Yes": function() { $(this).dialog("close"); return app.onLeaveConfirmed(); },
-	                	  "No" : function() { $(this).dialog("close"); return true; }
-	                    }
+	                    buttons: [{
+	                    	text: $("#dialog-leave").attr("data-okButtonText"),
+	                    	click: function() { $(this).dialog("close"); return app.onLeaveConfirmed(); }
+	                    }, {
+	                      	text: $("#dialog-leave").attr("data-cancelButtonText"),
+	                	  	click: function() { $(this).dialog("close"); return true; }
+	                    }]
 	                });
 	                app.run();
 	            }
@@ -203,17 +208,17 @@
       </div>
     </div><!-- end of gui -->
     
-    <div id="dialog-won" title="Game won">
+    <div id="dialog-won" title="Game won" data-buttonText="Play again">
 	  <p>
 	    <b>Congratulation. You've won the game.</b>
 	  </p>
 	</div>
-	<div id="dialog-lost" title="Game lost">
+	<div id="dialog-lost" title="Game lost" data-buttonText="Play again">
 	  <p>
 	    <b>Sorry. You've lost the game.</b>
 	  </p>
 	</div>
-	<div id="dialog-leave" title="Leave the game?">
+	<div id="dialog-leave" title="Leave the game?" data-okButtonText="Leave" data-cancelButtonText="Cancel">
 	  <p>
 	    <b>Do you really want to leave the table?</b>
 	  </p>

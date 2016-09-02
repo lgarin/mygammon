@@ -42,6 +42,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	// TODO should be part of configuration
 	value initialRollDelay = Duration(2000);
+	value moveSequenceDelay = Duration(300);
 			
 	value game = Game();
 	
@@ -55,6 +56,10 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
 	variable [GameMoveInfo*] nextMoves = [];
+	
+	void addDelayedGameMessage(InboundGameMessage message, Duration delay) {
+		delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(message, delay));
+	}
 	
 	void showInitialDices(DiceRoll roll) {
 		if (exists currentColor = playerColor, game.mustRollDice(currentColor)) {
@@ -205,7 +210,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			}
 			if (exists color = playerColor, exists nextMove = nextMoves.first, game.isLegalMove(color, nextMove.sourcePosition, nextMove.targetPosition)) {
 				nextMoves = nextMoves.rest;
-				messageBroadcaster(MakeMoveMessage(matchId, playerId, nextMove.sourcePosition, nextMove.targetPosition));
+				addDelayedGameMessage(MakeMoveMessage(matchId, playerId, nextMove.sourcePosition, nextMove.targetPosition), moveSequenceDelay);
 			} else {
 				nextMoves = [];
 			}
@@ -316,7 +321,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		if (exists color = playerColor, game.mustRollDice(color)) {
 			gui.showDiceValues(color, game.currentRoll?.getValue(color), null);
 			gui.hideSubmitButton();
-			delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(PlayerBeginMessage(matchId, playerId), initialRollDelay));
+			addDelayedGameMessage(PlayerBeginMessage(matchId, playerId), initialRollDelay);
 			return true;
 		} else if (exists color = playerColor, game.mustMakeMove(color)) {
 			gui.hidePossibleMoves();
@@ -346,7 +351,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		gui.showSelectedChecker(null);
 		gui.hidePossibleMoves();
 		if (exists color = playerColor, game.mustMakeMove(color), exists roll = game.currentRoll, exists position = gui.getPosition(source)) {
-			value moves = game.computeNextMoves(color, roll, position);
+			value moves = game.computeAllMoves(color, roll, position).keys;
 			if (!moves.empty) {
 				gui.showPossibleMoves(game.board, color, moves.map((element) => element.targetPosition));
 				return true;

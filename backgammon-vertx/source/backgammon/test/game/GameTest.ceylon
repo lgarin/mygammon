@@ -6,7 +6,8 @@ import backgammon.shared.game {
 	DiceRoll,
 	Game,
 	white,
-	black
+	black,
+	GameMove
 }
 import ceylon.time {
 	now
@@ -69,5 +70,25 @@ class GameTest() {
 		assert (moves.contains(GameMoveInfo(8, 3, 5, false)));
 		assert (moves.contains(GameMoveInfo(6, 5, 1, false)));
 		assert (moves.size == 5);
+	}
+	
+	test
+	shared void computeAllMoves() {
+		value moves = game.computeAllMoves(white, DiceRoll(1, 5), 24).keys;
+		assert (moves.contains(GameMove(24, 23)));
+		assert (moves.contains(GameMove(24, 18)));
+		assert (moves.size == 2);
+	}
+	
+	test
+	shared void computeBestMoveSequence() {
+		value sequence = game.computeBestMoveSequence(white, DiceRoll(1, 5), 24, 18);
+		assert (sequence == [GameMoveInfo(24, 23, 1, false), GameMoveInfo(23, 18, 5, false)]);
+	}
+	
+	test
+	shared void computeImpossibleMoveSequence() {
+		value sequence = game.computeBestMoveSequence(white, DiceRoll(1, 5), 24, 19);
+		assert (sequence == []);
 	}
 }

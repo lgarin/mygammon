@@ -53,8 +53,8 @@ shared Integer blackHomePosition = boardPointCount - 1;
 
 shared final class GameBoard() {
 
-	value whitePlayRange = 24..7;
-	value blackPlayRange = 1..18;
+	value whitePlayRange = whiteGraveyardPosition..7;
+	value blackPlayRange = blackGraveyardPosition..18;
 	
 	value whiteSourceRange = whiteGraveyardPosition..whiteHomePosition;
 	value blackSourceRange = blackGraveyardPosition..blackHomePosition;

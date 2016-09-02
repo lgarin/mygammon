@@ -146,11 +146,8 @@ shared class Game() {
 		}
 	}
 	
-	function useRollValue(CheckerColor color, Integer source, Integer target) {
-		if (exists roll = currentRoll) {
-			return roll.useValueAtLeast(board.distance(source, target));
-		}
-		return null;
+	function useRollValue(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
+		return roll.useValueAtLeast(board.distance(source, target));
 	}
 	
 	function hitChecker(CheckerColor color, Integer source, Integer target) {
@@ -160,8 +157,8 @@ shared class Game() {
 		return null;
 	}
 	
-	function makeLegalMove(CheckerColor color, Integer source, Integer target) {
-		value rollValue = useRollValue(color, source, target);
+	function makeLegalMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
+		value rollValue = useRollValue(color, roll, source, target);
 		assert (exists rollValue);
 		value bolt = hitChecker(color, source, target);
 		if (exists bolt) {
@@ -172,12 +169,12 @@ shared class Game() {
 	}
 	
 	shared Boolean moveChecker(CheckerColor color, Integer source, Integer target) {
-		if (!isLegalMove(color, source, target)) {
+		if (isLegalMove(color, source, target), exists roll = currentRoll) {
+			currentMoves.push(makeLegalMove(color, roll, source, target));
+			return true;
+		} else {
 			return false;
 		}
-		
-		currentMoves.push(makeLegalMove(color, source, target));
-		return true;
 	}
 	
 	void undoMove(GameMoveInfo move, DiceRoll roll, CheckerColor color) {
@@ -217,7 +214,7 @@ shared class Game() {
 	
 	void appendNextMoves(HashMap<GameMove, {GameMoveInfo*}> allMoves, CheckerColor color, DiceRoll roll, GameMoveSequence? previousMove) {
 		for (nextMove in computeNextMoves(color, roll, previousMove?.targetPosition)) {
-			value moveInfo = makeLegalMove(color, nextMove.sourcePosition, nextMove.targetPosition);
+			value moveInfo = makeLegalMove(color, roll, nextMove.sourcePosition, nextMove.targetPosition);
 			value moveKey = GameMove(previousMove?.sourcePosition else nextMove.sourcePosition, nextMove.targetPosition);
 			value newMoves = if (exists previousMove) then {moveInfo, *previousMove.moves} else {moveInfo};
 			if (exists otherMoves = allMoves[moveKey]) {
@@ -234,9 +231,13 @@ shared class Game() {
 		}
 	}
 	
-	function computeAllMoves(CheckerColor color, DiceRoll roll, Integer? sourcePosition = null) {
+	shared Map<GameMove, {GameMoveInfo*}> computeAllMoves(CheckerColor color, DiceRoll roll, Integer? sourcePosition = null) {
 		value allMoves = HashMap<GameMove, {GameMoveInfo*}>();
-		appendNextMoves(allMoves, color, roll, null);
+		if (exists sourcePosition) {
+			appendNextMoves(allMoves, color, roll, GameMoveSequence(sourcePosition, sourcePosition, {}));
+		} else {
+			appendNextMoves(allMoves, color, roll, null);
+		}
 		return allMoves;
 	}
 	
@@ -257,7 +258,7 @@ shared class Game() {
 		value key = GameMove(sourcePosition, targetPosition);
 		value allMoves = computeAllMoves(color, roll, sourcePosition);
 		if (exists moves = allMoves[key]) {
-			return moves.sequence();
+			return moves.sequence().reversed;
 		} else {
 			return [];
 		}
