@@ -7,7 +7,8 @@ import backgammon.shared.game {
 	Game,
 	white,
 	black,
-	GameMove
+	GameMove,
+	GameState
 }
 import ceylon.time {
 	now
@@ -90,5 +91,16 @@ class GameTest() {
 	shared void computeImpossibleMoveSequence() {
 		value sequence = game.computeBestMoveSequence(white, DiceRoll(1, 5), 24, 19);
 		assert (sequence == []);
+	}
+	
+	test
+	shared void computeBestMoveSequenceFromGraveyard() {
+		value state = GameState();
+		state.blackCheckerCounts = {1, 0};
+		state.whiteCheckerCounts = {0, 1};
+		game.state = state;
+		
+		value sequence = game.computeBestMoveSequence(black, DiceRoll(3, 1), 0, 4);
+		assert (sequence == [GameMoveInfo(0, 1, 1, true), GameMoveInfo(1, 4, 3, false)]);
 	}
 }
