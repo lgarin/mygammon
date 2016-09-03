@@ -22,8 +22,21 @@ shared final class GameGui(Document document) {
 	shared String leaveButtonId = "leave";
 	shared String submitButtonId = "submit";
 	
-	value defaultPlayerName = "";
-	value initalPlayerMessage = "Waiting...";
+	shared String defaultPlayerName = "";
+	shared String leaveTextKey = "_leave";
+	shared String undoTextKey = "_undo";
+	shared String submitTextKey = "_submit";
+	shared String waitingTextKey = "_waiting";
+	shared String loadingTextKey = "_loading";
+	shared String readyTextKey = "_ready";
+	shared String rollTextKey = "_roll";
+	shared String leftTextKey = "_left";
+	shared String winnerTextKey = "_winner";
+	shared String tieTextKey = "_tie";
+	shared String timeoutTextKey = "_timeout";
+	shared String beginTexKey = "_begin";
+	shared String playTextKey = "_play";
+	shared String joinedTextKey = "_joined";
 	
 	void resetClass(Element element, String* classNames) {
 		value classList = element.classList;
@@ -67,10 +80,10 @@ shared final class GameGui(Document document) {
 		addClass(undoButtonId, "hidden");
 	}
 	
-	shared void showUndoButton(String text = "Undo") {
+	shared void showUndoButton(String text = undoTextKey) {
 		removeClass(undoButtonId, "hidden");
 		if (exists button = document.getElementById("``undoButtonId``Text")) {
-			button.innerHTML = text;
+			button.innerHTML = translate(text);
 		}
 	}
 
@@ -78,10 +91,10 @@ shared final class GameGui(Document document) {
 		addClass(submitButtonId, "hidden");
 	}
 	
-	shared void showSubmitButton(String text = "Submit") {
+	shared void showSubmitButton(String text = submitTextKey) {
 		removeClass(submitButtonId, "hidden");
 		if (exists button = document.getElementById("``submitButtonId``Text")) {
-			button.innerHTML = text;
+			button.innerHTML = translate(text);
 		}
 	}
 
@@ -89,10 +102,10 @@ shared final class GameGui(Document document) {
 		addClass(leaveButtonId, "hidden");
 	}
 	
-	shared void showLeaveButton(String text = "Leave") {
+	shared void showLeaveButton(String text = leaveTextKey) {
 		removeClass(leaveButtonId, "hidden");
 		if (exists button = document.getElementById("``leaveButtonId``Text")) {
-			button.innerHTML = text;
+			button.innerHTML = translate(text);
 		}
 	}
 
@@ -310,7 +323,7 @@ shared final class GameGui(Document document) {
 	
 	shared void showPlayerMessage(CheckerColor color, String message, Boolean busy) {
 		if (exists playerTimer = document.getElementById("``color``PlayerTimer")) {
-			playerTimer.innerHTML = message;
+			playerTimer.innerHTML = translate(message);
 		}
 		if (exists playerActivity = document.getElementById("``color``PlayerActivity")) {
 			if (busy) {
@@ -329,7 +342,7 @@ shared final class GameGui(Document document) {
 		showPlayerMessage(color, playerMessage, true);
 	}
 	
-	shared void showInitialState(String playerMessage = initalPlayerMessage) {
+	shared void showInitialState(String playerMessage = waitingTextKey) {
 		showCurrentPlayer(null);
 		hideAllCheckers();
 		resetState(black, playerMessage);
@@ -349,6 +362,15 @@ shared final class GameGui(Document document) {
 	shared void showDialog(String dialogName) {
 		dynamic {
 			jQuery("#``dialogName``").dialog("open");
+		}
+	}
+	
+	shared String translate(String key) {
+		if (key.empty || !key.startsWith("_")) {
+			return key;
+		}
+		dynamic {
+			return jQuery("#i18n #``key``").text();
 		}
 	}
 }

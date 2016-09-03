@@ -83,14 +83,14 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	void showInitialRollMessages(Duration remainingTime) {
 		if (game.mustRollDice(black)) {
-			gui.showPlayerMessage(black, gui.formatPeriod(remainingTime, "Timeout"), true);
+			gui.showPlayerMessage(black, gui.formatPeriod(remainingTime, gui.timeoutTextKey), true);
 		} else {
-			gui.showPlayerMessage(black, "Ready", false);
+			gui.showPlayerMessage(black, gui.readyTextKey, false);
 		}
 		if (game.mustRollDice(white)) {
-			gui.showPlayerMessage(white, gui.formatPeriod(remainingTime, "Timeout"), true);
+			gui.showPlayerMessage(white, gui.formatPeriod(remainingTime, gui.timeoutTextKey), true);
 		} else {
-			gui.showPlayerMessage(white, "Ready", false);
+			gui.showPlayerMessage(white, gui.readyTextKey, false);
 		}
 		
 		if (exists color = playerColor, game.mustRollDice(color)) {
@@ -101,8 +101,8 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	void showCurrentTurnMessages(CheckerColor currentColor, Duration remainingTime) {
-		gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, "Timeout"), true);
-		gui.showPlayerMessage(currentColor.oppositeColor, "Waiting...", true);
+		gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, gui.timeoutTextKey), true);
+		gui.showPlayerMessage(currentColor.oppositeColor, gui.waitingTextKey, true);
 		
 		if (exists color = playerColor, game.mustMakeMove(color)) {
 			gui.showCurrentPlayer(playerColor);
@@ -112,8 +112,8 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	void showLoadingMessages() {
-		gui.showPlayerMessage(black, "Loading...", true);
-		gui.showPlayerMessage(white, "Loading...", true);
+		gui.showPlayerMessage(black, gui.loadingTextKey, true);
+		gui.showPlayerMessage(white, gui.loadingTextKey, true);
 		gui.showCurrentPlayer(null);
 	}
 	
@@ -139,7 +139,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 		
 		if (exists color = playerColor, game.mustRollDice(color)) {
-			gui.showSubmitButton("Roll");
+			gui.showSubmitButton(gui.rollTextKey);
 		} else if (exists color = playerColor, game.mustMakeMove(color)) {
 			gui.showSubmitButton();
 		} else {
@@ -159,15 +159,15 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		gui.showCurrentPlayer(null);
 		if (message.playerId == playerId) {
 			if (game.initialRoll(message.roll, message.maxDuration)) {
-				gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration, "Timeout"), true);
+				gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration, gui.timeoutTextKey), true);
 				showInitialDices(message.roll);
-				gui.showSubmitButton("Roll");
+				gui.showSubmitButton(gui.rollTextKey);
 				return true;
 			} else {
 				return false;
 			}
 		} else {
-			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration, "Timeout"), true);
+			gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration, gui.timeoutTextKey), true);
 			showInitialDices(message.roll);
 			return true;
 		}
@@ -175,7 +175,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	function showPlayerReady(PlayerReadyMessage message) {
 		if (game.begin(message.playerColor)) {
-			gui.showPlayerMessage(message.playerColor, "Ready", false);
+			gui.showPlayerMessage(message.playerColor, gui.readyTextKey, false);
 			return true;
 		} else {
 			return false;
@@ -284,10 +284,10 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			gui.hidePossibleMoves();
 			gui.showSelectedChecker(null);
 			if (exists currentColor = game.currentColor) {
-				gui.showPlayerMessage(currentColor, "Timeout", false);
+				gui.showPlayerMessage(currentColor, gui.timeoutTextKey, false);
 			} else {
-				gui.showPlayerMessage(player1Color, "Timeout", true);
-				gui.showPlayerMessage(player2Color, "Timeout", true);
+				gui.showPlayerMessage(player1Color, gui.timeoutTextKey, true);
+				gui.showPlayerMessage(player2Color, gui.timeoutTextKey, true);
 			}
 			return true;
 		}

@@ -54,7 +54,7 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 		return _maxPlayerCount;
 	}
 	
-	shared Integer freeTableCount => tableList.count((Table element) => element.queueSize == 0);
+	shared Integer freeTableCount => tableList.count((table) => table.queueSize == 0);
 	shared Integer maxTableCount {
 		value busyTableCount = tableCount - freeTableCount;
 		if (_maxTableCount < busyTableCount) {
@@ -63,8 +63,8 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 		return _maxTableCount;
 	}
 	
-	function findReadyTable() => tableList.find((Table element) => element.queueSize == 1);
-	function findEmptyTable() => tableList.find((Table element) => element.queueSize == 0);
+	function findReadyTable() => tableList.find((table) => table.queueSize == 1);
+	function findEmptyTable() => tableList.find((table) => table.queueSize == 0);
 	
 	function sitPlayer(Player player) {
 		if (exists table = findReadyTable(), table.sitPlayer(player)) {

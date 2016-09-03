@@ -40,14 +40,14 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 	void showMatchEndMessage(PlayerId leaverId, PlayerId winnerId, CheckerColor color) {
 		value playerId = if (color == player1Color) then match.player1Id else match.player2Id;
 		if (playerId == winnerId) {
-			gui.showPlayerMessage(color, "Winner", false);
+			gui.showPlayerMessage(color, gui.winnerTextKey, false);
 			gui.showCurrentPlayer(color);
 		} else if (playerId == leaverId) {
-			gui.showPlayerMessage(color, "Left", false);
+			gui.showPlayerMessage(color, gui.leftTextKey, false);
 		} else if (leaverId == systemPlayerId) {
-			gui.showPlayerMessage(color, "Timeout", false);
+			gui.showPlayerMessage(color, gui.timeoutTextKey, false);
 		} else if (winnerId == systemPlayerId) {
-			gui.showPlayerMessage(color, "Tie", false);
+			gui.showPlayerMessage(color, gui.tieTextKey, false);
 		} else {
 			gui.showPlayerMessage(color, "", false);
 		}
@@ -68,11 +68,11 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 	}
 	
 	void showMatchBegin(MatchState match) {
-		gui.showPlayerMessage(player1Color, match.player1Ready then "Ready" else "Play?", !match.player1Ready);
-		gui.showPlayerMessage(player2Color, match.player2Ready then "Ready" else "Play?", !match.player2Ready);
+		gui.showPlayerMessage(player1Color, match.player1Ready then gui.readyTextKey else gui.beginTexKey, !match.player1Ready);
+		gui.showPlayerMessage(player2Color, match.player2Ready then gui.readyTextKey else gui.beginTexKey, !match.player2Ready);
 		gui.showCurrentPlayer(match.playerColor(playerId));
 		if (match.mustStartMatch(playerId)) {
-			gui.showSubmitButton("Play");
+			gui.showSubmitButton(gui.playTextKey);
 		} else {
 			gui.hideSubmitButton();
 		}
@@ -82,8 +82,8 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 	
 	void showResumingGame() {
 		gui.showCurrentPlayer(null);
-		gui.showPlayerMessage(player1Color, "Loading...", true);
-		gui.showPlayerMessage(player2Color, "Loading...", true);
+		gui.showPlayerMessage(player1Color, gui.loadingTextKey, true);
+		gui.showPlayerMessage(player2Color, gui.loadingTextKey, true);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
 		gui.showLeaveButton();	}
@@ -91,12 +91,12 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 	void showAccept(AcceptedMatchMessage message) {
 		match.markReady(message.playerId);
 		if (exists color = match.playerColor(message.playerId)) {
-				gui.showPlayerMessage(color, "Ready", false);
-			}
+			gui.showPlayerMessage(color, gui.readyTextKey, false);
+		}
 		if (message.playerId == playerId) {
-				gui.showCurrentPlayer(null);
-				gui.hideSubmitButton();
-			}
+			gui.showCurrentPlayer(null);
+			gui.hideSubmitButton();
+		}
 	}
 	
 	void showState() {

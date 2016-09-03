@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=1150">
 
     <link rel="stylesheet" href="/static/css/board.css">
-    <link rel="stylesheet" href="/static/css/jquery-ui.css">
+    <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
     <script src="/static/javascript/jquery-2.2.4.min.js"></script>
     <script src="/static/javascript/jquery-ui.min.js"></script>
     <script src="/static/javascript/sockjs.min.js"></script>
@@ -35,7 +35,7 @@
 	                	autoOpen: false,
 	                    modal: true,
 	                    buttons: [{
-                    		text:  $("#dialog-won").attr("data-buttonText"),
+                    		text:  $("#i18n #_retry").text(),
                     		click: function() { $(this).dialog("close"); return app.onPlayAgain(); }
                     	}]
 	                });
@@ -43,7 +43,7 @@
 	                	autoOpen: false,
 	                    modal: true,
 	                    buttons: [{
-	                    		text: $("#dialog-lost").attr("data-buttonText"),
+	                    		text: $("#i18n #_retry").text(),
 	                    		click: function() { $(this).dialog("close"); return app.onPlayAgain(); }
 	                    }]
 	                });
@@ -51,10 +51,10 @@
 	                	autoOpen: false,
 	                    modal: true,
 	                    buttons: [{
-	                    	text: $("#dialog-leave").attr("data-okButtonText"),
+	                    	text: $("#i18n #_leave").text(),
 	                    	click: function() { $(this).dialog("close"); return app.onLeaveConfirmed(); }
 	                    }, {
-	                      	text: $("#dialog-leave").attr("data-cancelButtonText"),
+	                      	text: $("#i18n #_cancel").text(),
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
@@ -208,20 +208,38 @@
       </div>
     </div><!-- end of gui -->
     
-    <div id="dialog-won" title="Game won" data-buttonText="Play again">
+    <div id="dialog-won" title="Game won">
 	  <p>
 	    <b>Congratulation. You've won the game.</b>
 	  </p>
 	</div>
-	<div id="dialog-lost" title="Game lost" data-buttonText="Play again">
+	<div id="dialog-lost" title="Game lost">
 	  <p>
 	    <b>Sorry. You've lost the game.</b>
 	  </p>
 	</div>
-	<div id="dialog-leave" title="Leave the game?" data-okButtonText="Leave" data-cancelButtonText="Cancel">
+	<div id="dialog-leave" title="Leave the game?">
 	  <p>
 	    <b>Do you really want to leave the table?</b>
 	  </p>
+	</div>
+	<div id="i18n" style="display: none">
+		<div id="_leave">Leave</div>
+		<div id="_cancel">Cancel</div>
+		<div id="_retry">Play again</div>
+		<div id="_timeout">Timeout</div>
+		<div id="_undo">Undo</div>
+		<div id="_roll">Roll</div>
+		<div id="_submit">Submit</div>
+		<div id="_waiting">Waiting...</div>
+		<div id="_loading">Loading...</div>
+		<div id="_joined">Joined</div>
+		<div id="_ready">Ready</div>
+		<div id="_winner">Winner</div>
+		<div id="_tie">Tie</div>
+		<div id="_left">Left</div>
+		<div id="_begin">Play?</div>
+		<div id="_play">Play</div>
 	</div>
   </body>
 </html>

@@ -30,9 +30,9 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 	void showJoinedState() {
 		gui.showEmptyGame();
 		gui.showPlayerInfo(player1Color, playerInfo.name, playerInfo.pictureUrl);
-		gui.showPlayerMessage(player1Color, "Joined", false);
+		gui.showPlayerMessage(player1Color, gui.joinedTextKey, false);
 		gui.showPlayerInfo(player2Color, null, null);
-		gui.showPlayerMessage(player2Color, "Waiting...", true);
+		gui.showPlayerMessage(player2Color, gui.waitingTextKey, true);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
 		gui.showLeaveButton();
@@ -44,7 +44,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		} else if (message.joined) {
 			showJoinedState();
 		} else {
-			gui.showInitialState();
+			gui.showInitialState("");
 		}
 	}
 	
@@ -61,7 +61,7 @@ shared final class TableClient(TableId tableId, PlayerInfo playerInfo, GameGui g
 		}
 		case (is LeftTableMessage) {
 			if (!matchClient exists, playerId == message.playerId) {
-				gui.showPlayerMessage(player1Color, "Left", false);
+				gui.showPlayerMessage(player1Color, gui.leftTextKey, false);
 				gui.showCurrentPlayer(player1Color);
 				gui.showPlayerMessage(player2Color, "", true);
 				gui.hideSubmitButton();
