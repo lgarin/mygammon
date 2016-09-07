@@ -32,8 +32,8 @@ class GameBoardTest() {
 	
 	test
 	shared void emptyBoardHasNoCheckerOutsideHomeArea() {
-		assert (!board.hasCheckersOutsideHomeArea(black));
-		assert (!board.hasCheckersOutsideHomeArea(white));
+		assert (!board.hasCheckersOutside(black));
+		assert (!board.hasCheckersOutside(white));
 	}
 	
 	test
@@ -105,13 +105,13 @@ class GameBoardTest() {
 	test
 	shared void putCheckerOutsideHomeArea() {
 		board.putNewCheckers(10, black, 1);
-		assert (board.hasCheckersOutsideHomeArea(black));
+		assert (board.hasCheckersOutside(black));
 	}
 	
 	test
 	shared void putCheckerInHomeArea() {
 		board.putNewCheckers(5, white, 1);
-		assert (!board.hasCheckersOutsideHomeArea(white));
+		assert (!board.hasCheckersOutside(white));
 	}
 	
 	test
@@ -162,8 +162,8 @@ class GameBoardTest() {
 	
 	test
 	shared void checkSourceRange() {
-		assert (0..25 == board.sourceRange(black));
-		assert (25..0 == board.sourceRange(white));
+		assert (0..24 == board.playRange(black));
+		assert (24..0 == board.playRange(white));
 	}
 	
 	test

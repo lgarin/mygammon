@@ -128,7 +128,7 @@ final class GameServer(StartGameMessage startGameMessage, GameConfiguration conf
 	
 	function endGame(PlayerId playerId, PlayerId winnerId = systemPlayerId) {
 		if (game.end()) {
-			matchCommander(EndMatchMessage(playerId, matchId, winnerId));
+			matchCommander(EndMatchMessage(playerId, matchId, winnerId, game.score));
 			return true;
 		} else {
 			return false;

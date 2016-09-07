@@ -97,7 +97,7 @@ shared class Game() {
 			return false;
 		} else if (board.countCheckers(target, color.oppositeColor) > 1) {
 			return false;
-		} else if (board.hasCheckersOutsideHomeArea(color)) {
+		} else if (board.hasCheckersOutside(color)) {
 			if (board.homePosition(color) == target) {
 				return false;
 			} else {
@@ -122,7 +122,7 @@ shared class Game() {
 	
 	shared {GameMove*} computeNextMoves(CheckerColor color, DiceRoll roll, Integer? sourcePosition = null) {
 		if (exists maxValue = roll.maxRemainingValue) {
-			value sourceRange = if (exists pos = sourcePosition) then pos..pos else board.sourceRange(color);
+			value sourceRange = if (exists pos = sourcePosition) then pos..pos else board.playRange(color);
 			return {
 				for (source in sourceRange)
 					for (target in board.targetRange(color, source, maxValue)) 
@@ -322,6 +322,10 @@ shared class Game() {
 	}
 	
 	shared Boolean ended => nextTimeout.millisecondsOfEpoch == 0;
+	
+	shared Integer score {
+		return (board.countCheckersInPlay(black) - board.countCheckersInPlay(white)).magnitude;
+	}
 	
 	shared [Integer*] checkerCounts(CheckerColor color) => board.checkerCounts(color);
 	

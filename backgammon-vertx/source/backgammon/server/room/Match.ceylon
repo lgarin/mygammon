@@ -56,22 +56,22 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 		}
 	}
 	
-	void endGame(PlayerId playerId, PlayerId winnerId) {
-		state.end(playerId, winnerId);		
-		messageBroadcaster(MatchEndedMessage(playerId, id, winnerId));
+	void endGame(PlayerId playerId, PlayerId winnerId, Integer score) {
+		state.end(playerId, winnerId, score);		
+		messageBroadcaster(MatchEndedMessage(playerId, id, winnerId, score));
 		table.removePlayer(player1.id);
 		table.removePlayer(player2.id);
 	}
 
-	shared Boolean end(PlayerId playerId, PlayerId? winnerId) {
+	shared Boolean end(PlayerId playerId, PlayerId? winnerId = null, Integer score = 0) {
 		if (gameEnded) {
 			return false;
 		} else if (!gameStarted) {
-			endGame(playerId, systemPlayerId);
+			endGame(playerId, systemPlayerId, score);
 			return true;
 		} else if (exists winnerId) {
 			// call from game server
-			endGame(playerId, winnerId);
+			endGame(playerId, winnerId, score);
 			return true;
 		} else {
 			// call from leave table

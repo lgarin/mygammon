@@ -384,8 +384,11 @@ shared final class GameGui(Document document) {
 		hideAllCheckers();
 	}
 	
-	shared void showDialog(String dialogName) {
+	shared void showDialog(String dialogName, {<String->String>*} variableMap = {}) {
 		dynamic {
+			for (value variableEntry in variableMap) {
+				jQuery("#``variableEntry.key``").html(variableEntry.item);
+			}
 			jQuery("#``dialogName``").dialog("open");
 		}
 	}

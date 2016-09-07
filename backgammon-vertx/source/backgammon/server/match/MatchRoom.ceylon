@@ -115,10 +115,10 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 				}
 			}
 			case (is EndMatchMessage) {
-				if (exists match = findMatch(message.matchId), match.end(message.playerId, message.winnerId)) {
-					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, true);
+				if (exists match = findMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score)) {
+					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, true);
 				} else {
-					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, false);
+					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, false);
 				}
 			}
 		}

@@ -53,7 +53,7 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 		}
 	}
 	
-	void showMatchEnd(PlayerId leaverId, PlayerId winnerId) {
+	void showMatchEnd(PlayerId leaverId, PlayerId winnerId, Integer score) {
 		gui.showCurrentPlayer(null);
 		showMatchEndMessage(leaverId, winnerId, player1Color);
 		showMatchEndMessage(leaverId, winnerId, player2Color);
@@ -61,7 +61,7 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 		gui.hideUndoButton();
 		gui.hideLeaveButton();
 		if (playerId == winnerId) {
-			gui.showDialog("dialog-won");
+			gui.showDialog("dialog-won", {"game-score" -> score.string});
 		} else if (exists looserId = match.opponentId(winnerId), playerId == looserId) {
 			gui.showDialog("dialog-lost");
 		}
@@ -104,7 +104,7 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 		gui.showPlayerInfo(player1Color, match.player1.name, match.player1.pictureUrl);
 		gui.showPlayerInfo(player2Color, match.player2.name, match.player2.pictureUrl);
 		if (match.gameEnded, exists leaverId = match.leaverId, exists winnerId = match.winnerId) {
-			showMatchEnd(leaverId, winnerId);
+			showMatchEnd(leaverId, winnerId, match.score);
 		} else if (match.gameStarted) {
 			showResumingGame();
 			initGameClient();
@@ -129,7 +129,7 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, GameG
 		}
 		case (is MatchEndedMessage) {
 			_gameClient = null;
-			showMatchEnd(message.playerId, message.winnerId);
+			showMatchEnd(message.playerId, message.winnerId, message.score);
 			return true;
 		}
 	}

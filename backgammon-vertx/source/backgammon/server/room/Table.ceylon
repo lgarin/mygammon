@@ -70,7 +70,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 		_match = null;
 		if (currentMatch.gameEnded) {
 			return removeFreePlayer(player);
-		} else if (currentMatch.end(player.id, null)) { // this method calls removePlayer
+		} else if (currentMatch.end(player.id)) { // this method calls removePlayer
 			return player;
 		} else {
 			_match = currentMatch;

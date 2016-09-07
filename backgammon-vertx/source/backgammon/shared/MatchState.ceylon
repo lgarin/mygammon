@@ -8,7 +8,7 @@ import ceylon.json {
 	Object
 }
 
-shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shared PlayerInfo player2, variable Boolean _player1Ready = false, variable Boolean _player2Ready = false, variable PlayerId? _winnerId = null, variable PlayerId? _leaverId = null) {
+shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shared PlayerInfo player2, variable Boolean _player1Ready = false, variable Boolean _player2Ready = false, variable PlayerId? _winnerId = null, variable PlayerId? _leaverId = null, variable Integer _score = 0) {
 	
 	shared PlayerId player1Id = PlayerId(player1.id);
 	shared PlayerId player2Id = PlayerId(player2.id);
@@ -18,6 +18,7 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 	
 	shared PlayerId? leaverId => _leaverId;
 	shared PlayerId? winnerId => _winnerId;
+	shared Integer score => _score;
 	
 	shared Boolean gameStarted => player1Ready && player2Ready;
 	shared Boolean gameEnded => winnerId exists && leaverId exists; 
@@ -75,19 +76,20 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 		}
 	}
 	
-	shared void end(PlayerId leaverId, PlayerId winnerId) {
+	shared void end(PlayerId leaverId, PlayerId winnerId, Integer score) {
 		_leaverId = leaverId;
 		_winnerId = winnerId;
+		_score = score;
 	}
 	
-	shared Object toJson() => Object({"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson(), "leaverId" -> leaverId?.toJson()});
+	shared Object toJson() => Object({"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson(), "leaverId" -> leaverId?.toJson(), "score" -> score});
 }
 
 shared MatchState? parseMatchState(Object? json) {
 	if (exists json) {
 		value winnerId = json.getStringOrNull("winnerId") exists then PlayerId(json.getString("winnerId")) else null;
 		value leaverId = json.getStringOrNull("leaverId") exists then PlayerId(json.getString("leaverId")) else null;
-		return MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), winnerId, leaverId);
+		return MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), winnerId, leaverId, json.getInteger("score"));
 	} else {
 		return null;
 	}

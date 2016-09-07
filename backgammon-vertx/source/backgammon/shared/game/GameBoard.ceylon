@@ -53,11 +53,11 @@ shared Integer blackHomePosition = boardPointCount - 1;
 
 shared final class GameBoard() {
 
-	value whitePlayRange = whiteGraveyardPosition..7;
-	value blackPlayRange = blackGraveyardPosition..18;
+	value whiteOutsideRange = whiteGraveyardPosition..7;
+	value blackOutsideRange = blackGraveyardPosition..18;
 	
-	value whiteSourceRange = whiteGraveyardPosition..whiteHomePosition;
-	value blackSourceRange = blackGraveyardPosition..blackHomePosition;
+	value whitePlayRange = whiteGraveyardPosition..whiteHomePosition + 1;
+	value blackPlayRange = blackGraveyardPosition..blackHomePosition - 1;
 
 	shared Integer graveyardPosition(CheckerColor color) {
 		switch (color)
@@ -71,16 +71,16 @@ shared final class GameBoard() {
 		case (black) { return blackHomePosition; }
 	}
 	
+	shared Range<Integer> outsideRange(CheckerColor color) {
+		switch (color)
+		case (white) { return whiteOutsideRange; }
+		case (black) { return blackOutsideRange; }
+	}
+	
 	shared Range<Integer> playRange(CheckerColor color) {
 		switch (color)
 		case (white) { return whitePlayRange; }
 		case (black) { return blackPlayRange; }
-	}
-	
-	shared Range<Integer> sourceRange(CheckerColor color) {
-		switch (color)
-		case (white) { return whiteSourceRange; }
-		case (black) { return blackSourceRange; }
 	}
 	
 	shared Integer directionSign(CheckerColor color) {
@@ -156,8 +156,12 @@ shared final class GameBoard() {
 	
 	shared Boolean hasCheckerInGraveyard(CheckerColor color) => hasChecker(graveyardPosition(color), color);
 
-	shared Boolean hasCheckersOutsideHomeArea(CheckerColor color) {
-		return playRange(color).any((Integer element) => hasChecker(element, color));
+	shared Boolean hasCheckersOutside(CheckerColor color) {
+		return outsideRange(color).any((element) => hasChecker(element, color));
+	}
+	
+	shared Integer countCheckersInPlay(CheckerColor color) {
+		return playRange(color).fold(0)((partial, position) => countCheckers(position, color) + partial);
 	}
 	
 	shared Boolean moveChecker(CheckerColor color, Integer sourcePosition, Integer targetPosition) {

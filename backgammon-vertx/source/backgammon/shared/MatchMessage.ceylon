@@ -21,15 +21,15 @@ shared AcceptedMatchMessage parseAcceptedMatchMessage(Object json) {
 	return AcceptedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), json.getBoolean("success"));
 }
 
-shared final class MatchEndedMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
-	toJson() => toExtendedJson({"winnerId" -> winnerId.toJson(), "success" -> success});
+shared final class MatchEndedMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId, shared Integer score, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
+	toJson() => toExtendedJson({"winnerId" -> winnerId.toJson(), "score" -> score, "success" -> success});
 	
 	shared Boolean isWinner(PlayerId id) => winnerId == id;
 	shared Boolean isLeaver(PlayerId id) => playerId == id;
 	shared Boolean isTimeout(PlayerId id) => playerId == systemPlayerId;
 }
 shared MatchEndedMessage parseMatchEndedMessage(Object json) {
-	return MatchEndedMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("winnerId")), json.getBoolean("success"));
+	return MatchEndedMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("winnerId")), json.getInteger("score"), json.getBoolean("success"));
 }
 
 shared final class AcceptMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId) satisfies InboundMatchMessage {}
@@ -37,11 +37,11 @@ shared AcceptMatchMessage parseAcceptMatchMessage(Object json) {
 	return AcceptMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")));
 }
 
-shared final class EndMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId) satisfies InboundMatchMessage {
-	toJson() => toExtendedJson({"winnerId" -> winnerId.toJson()});
+shared final class EndMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId, shared Integer score) satisfies InboundMatchMessage {
+	toJson() => toExtendedJson({"winnerId" -> winnerId.toJson(), "score" -> score});
 }
 shared EndMatchMessage parseEndMatchMessage(Object json) {
-	return EndMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("winnerId")));
+	return EndMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("winnerId")), json.getInteger("score"));
 }
 
 shared OutboundMatchMessage? parseOutboundMatchMessage(String typeName, Object json) {
