@@ -26,6 +26,24 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 		}
 	}
 	
+	shared [<Integer->Boolean>*] state {
+		if (isPair) {
+			if (values.size > 3) {
+				return [firstValue->true, secondValue->true, firstValue->true, secondValue->true];
+			} else if (values.size > 2) {
+				return [firstValue->true, secondValue->true, firstValue->true, secondValue->false];
+			} else if (values.size > 1) {
+				return [firstValue->true, secondValue->true, firstValue->false, secondValue->false];
+			} else if (values.size > 0) {
+				return [firstValue->true, secondValue->false, firstValue->false, secondValue->false];
+			} else {
+				return [firstValue->false, secondValue->false, firstValue->false, secondValue->false];
+			}
+		} else {
+			return [firstValue->values.contains(firstValue), secondValue->values.contains(secondValue)];
+		}
+	}
+	
 	shared List<Integer> remainingValues => values;
 	
 	function minValueAtLeast(Integer pointValue) => min(values.select((element) => element >= pointValue));

@@ -62,23 +62,40 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	void showInitialDices(DiceRoll roll) {
+		gui.hideAllDices(black);
+		gui.hideAllDices(white);
+		
 		if (exists currentColor = playerColor, game.mustRollDice(currentColor)) {
-			gui.showDiceValues(currentColor, null, null);
-			gui.showDiceValues(currentColor.oppositeColor, roll.getValue(currentColor.oppositeColor), null);
+			gui.showActiveDice(currentColor.oppositeColor, 0, roll.getValue(currentColor.oppositeColor));
 		} else {
-			gui.showDiceValues(black, roll.getValue(black), null);
-			gui.showDiceValues(white, roll.getValue(white), null);
+			gui.showActiveDice(black, 0, roll.getValue(black));
+			gui.showActiveDice(white, 0, roll.getValue(white));
 		}
 	}
 	
 	void showTurnDices(DiceRoll roll, CheckerColor color) {
-		gui.showDiceValues(color.oppositeColor, null, null);
-		gui.showDiceValues(color, roll.firstValue, roll.secondValue);
+		gui.hideAllDices(color.oppositeColor);
+
+		value hasMove = game.hasAvailableMove(color, roll);
+		value state = roll.state;
+		for (index in 0..3) {
+			if (exists diceState = state[index]) {
+				if (!diceState.item) {
+					gui.showFadedDice(color, index, diceState.key);
+				} else if (!hasMove) {
+					gui.showCrossedDice(color, index, diceState.key);
+				} else {
+					gui.showActiveDice(color, index, diceState.key);
+				}
+			} else {
+				gui.showActiveDice(color, index, null);
+			}
+		}
 	}
 	
 	void hideDices() {
-		gui.showDiceValues(black, null, null);
-		gui.showDiceValues(white, null, null);
+		gui.hideAllDices(black);
+		gui.hideAllDices(white);
 	}
 	
 	void showInitialRollMessages(Duration remainingTime) {
@@ -208,6 +225,13 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			if (exists color = playerColor, game.canUndoMoves(color)) {
 				gui.showUndoButton();
 			}
+			if (exists roll = game.currentRoll) {
+				showTurnDices(roll, message.playerColor);
+			}
+			if (message.playerId == playerId, exists roll = game.currentRoll, nonempty forcedMoves = game.computeForcedMoves(message.playerColor, roll)) {
+				gui.showPossibleMoves(game.board, message.playerColor, forcedMoves.map((element) => element.targetPosition));
+				gui.showSelectedPosition(game.board, message.playerColor, forcedMoves.first.sourcePosition);
+			}
 			if (exists color = playerColor, exists nextMove = nextMoves.first, game.isLegalMove(color, nextMove.sourcePosition, nextMove.targetPosition)) {
 				nextMoves = nextMoves.rest;
 				addDelayedGameMessage(MakeMoveMessage(matchId, playerId, nextMove.sourcePosition, nextMove.targetPosition), moveSequenceDelay);
@@ -223,6 +247,13 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	function showUndoneMoves(UndoneMovesMessage message) {
 		if (game.undoTurnMoves(message.playerColor)) {
 			gui.redrawCheckers(game.board);
+			if (exists color = playerColor, game.canUndoMoves(color)) {
+				gui.showUndoButton();
+			}
+			if (exists roll = game.currentRoll) {
+				showTurnDices(roll, message.playerColor);
+			}
+			nextMoves = [];
 			return true;
 		} else {
 			return false;
@@ -319,7 +350,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	shared Boolean handleSubmitEvent() {
 		if (exists color = playerColor, game.mustRollDice(color)) {
-			gui.showDiceValues(color, game.currentRoll?.getValue(color), null);
+			gui.showActiveDice(color, 0, game.currentRoll?.getValue(color));
 			gui.hideSubmitButton();
 			addDelayedGameMessage(PlayerBeginMessage(matchId, playerId), initialRollDelay);
 			return true;

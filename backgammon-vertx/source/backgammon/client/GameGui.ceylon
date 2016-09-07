@@ -127,17 +127,42 @@ shared final class GameGui(Document document) {
 	
 	shared void showDiceValues(CheckerColor color, Integer? value1, Integer? value2) {
 		if (exists value1) {
-			removeClass("``color``DiceNr1Container", "hidden");
-			setClass("``color``DiceNr1", "number", "``color``-``value1``");
+			setClass("``color``DiceNr1", "dice", "``color``-``value1``");
 		} else {
-			addClass("``color``DiceNr1Container", "hidden");
+			addClass("``color``DiceNr1", "hidden");
 		}
 		if (exists value2) {
-			removeClass("``color``DiceNr2Container", "hidden");
-			setClass("``color``DiceNr2", "number", "``color``-``value2``");
+			setClass("``color``DiceNr2", "dice", "``color``-``value2``");
 		} else {
-			addClass("``color``DiceNr2Container", "hidden");
+			addClass("``color``DiceNr2", "hidden");
 		}
+	}
+	
+	void showDice(CheckerColor color, Integer index, String diceClass, Integer? diceValue) {
+		if (exists diceValue) {
+			setClass("``color``DiceNr``index+1``", diceClass, "``color``-``diceValue``");
+		} else {
+			addClass("``color``DiceNr``index+1``", "hidden");
+		}
+	}
+	
+	shared void showActiveDice(CheckerColor color, Integer index, Integer? diceValue) {
+		showDice(color, index, "dice", diceValue);
+	}
+	
+	shared void showFadedDice(CheckerColor color, Integer index, Integer? diceValue) {
+		showDice(color, index, "dice-faded", diceValue);
+	}
+	
+	shared void showCrossedDice(CheckerColor color, Integer index, Integer? diceValue) {
+		showDice(color, index, "dice-crossed", diceValue);
+	}
+	
+	shared void hideAllDices(CheckerColor color) {
+		showActiveDice(color, 0, null);
+		showActiveDice(color, 1, null);
+		showActiveDice(color, 2, null);
+		showActiveDice(color, 3, null);
 	}
 	
 	function getDomIdUsingPoint(GameBoard board, CheckerColor color, Integer point) {
@@ -335,9 +360,9 @@ shared final class GameGui(Document document) {
 			}
 		}
 	}
-	
+
 	void resetState(CheckerColor color, String playerMessage) {
-		showDiceValues(color, null, null);
+		hideAllDices(color);
 		showPlayerInfo(color, null, null);
 		showPlayerMessage(color, playerMessage, true);
 	}
@@ -354,8 +379,8 @@ shared final class GameGui(Document document) {
 	
 	shared void showEmptyGame() {
 		showCurrentPlayer(null);
-		showDiceValues(black, null, null);
-		showDiceValues(white, null, null);
+		hideAllDices(black);
+		hideAllDices(white);
 		hideAllCheckers();
 	}
 	
