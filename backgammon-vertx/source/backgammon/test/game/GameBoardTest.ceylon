@@ -163,7 +163,7 @@ class GameBoardTest() {
 	test
 	shared void checkSourceRange() {
 		assert (0..24 == board.playRange(black));
-		assert (24..0 == board.playRange(white));
+		assert (25..1 == board.playRange(white));
 	}
 	
 	test
