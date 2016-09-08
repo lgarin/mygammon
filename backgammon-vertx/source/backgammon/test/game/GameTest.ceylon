@@ -97,10 +97,25 @@ class GameTest() {
 	shared void computeBestMoveSequenceFromGraveyard() {
 		value state = GameState();
 		state.blackCheckerCounts = {1, 0};
-		state.whiteCheckerCounts = {0, 1};
+		state.whiteCheckerCounts = {0, 0, 1};
 		game.state = state;
 		
-		value sequence = game.computeBestMoveSequence(black, DiceRoll(3, 1), 0, 4);
-		assert (sequence == [GameMoveInfo(0, 1, 1, true), GameMoveInfo(1, 4, 3, false)]);
+		value sequence = game.computeBestMoveSequence(black, DiceRoll(2, 1), 0, 3);
+		assert (sequence == [GameMoveInfo(0, 2, 2, true), GameMoveInfo(2, 3, 1, false)]);
+		
+		value sequence2 = game.computeBestMoveSequence(black, DiceRoll(2, 1), 0, 1);
+		assert (sequence2 == [GameMoveInfo(0, 1, 1, false)]);
+	}
+	
+	test
+	shared void computeBestMoveSequenceFromMidpoint() {
+		value state = GameState();
+		state.blackCheckerCounts = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+		state.whiteCheckerCounts = {};
+		game.state = state;
+		
+		value sequence = game.computeBestMoveSequence(black, DiceRoll(4, 5), 12, 16);
+		print(sequence);
+		assert (sequence == [GameMoveInfo(12, 16, 4, false)]);
 	}
 }

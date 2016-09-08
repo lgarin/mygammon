@@ -101,6 +101,7 @@ final class GameRoomEventBus(Vertx vertx) {
 					},
 					void (Throwable|Object|Null result) {
 						if (is Throwable result) {
+							logger(`package`).error("Failed processing for ``message.body() else message``", result);
 							message.fail(500, "Processing error: ``result.message``");
 						} else if (is Object result) {
 							message.reply(result);

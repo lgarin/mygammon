@@ -31,49 +31,49 @@ body {
 #blackDiceNr1 {
 	position: absolute;
 	top: 267px;
-	left:480px;
+	left:455px;
 }
 
 #blackDiceNr2 {
 	position: absolute;
 	top: 267px;
-	left:540px;
+	left:515px;
 }
 
 #blackDiceNr3 {
 	position: absolute;
 	top: 267px;
-	left:600px;
+	left:575px;
 }
 
 #blackDiceNr4 {
 	position: absolute;
 	top: 267px;
-	left:660px;
+	left:635px;
 }
 
 #whiteDiceNr1 {
 	position: absolute;
 	top: 267px;
-	left:300px;
+	left:280px;
 }
 
 #whiteDiceNr2 {
 	position: absolute;
 	top: 267px;
-	left:240px;
+	left:220px;
 }
 
 #whiteDiceNr3 {
 	position: absolute;
 	top: 267px;
-	left:180px;
+	left:160px;
 }
 
 #whiteDiceNr4 {
 	position: absolute;
 	top: 267px;
-	left:120px;
+	left:100px;
 }
 
 .point {

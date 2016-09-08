@@ -1,6 +1,6 @@
 import ceylon.json {
 	JsonObject = Object,
-	Array
+	JsonArray = Array
 }
 import ceylon.time {
 	Duration
@@ -25,13 +25,14 @@ shared final class GameState() extends Object() {
 		result.put("currentColor", currentColor?.name else null);
 		result.put("diceValue1", currentRoll?.firstValue else null);
 		result.put("diceValue2", currentRoll?.secondValue else null);
+		result.put("remainingDiceValues", JsonArray(currentRoll?.remainingValues else {}));
 		result.put("remainingUndo", remainingUndo);
 		result.put("blackReady", blackReady);
 		result.put("whiteReady", whiteReady);
 		result.put("remainingTime", remainingTime?.milliseconds);
-		result.put("blackCheckerCounts", Array(blackCheckerCounts));
-		result.put("whiteCheckerCounts", Array(whiteCheckerCounts));
-		result.put("currentMoves", Array(currentMoves.map((element) => element.toJson())));
+		result.put("blackCheckerCounts", JsonArray(blackCheckerCounts));
+		result.put("whiteCheckerCounts", JsonArray(whiteCheckerCounts));
+		result.put("currentMoves", JsonArray(currentMoves.map((element) => element.toJson())));
 		return result;
 	}
 	
@@ -80,7 +81,9 @@ shared GameState parseGameState(JsonObject json) {
 		result.currentColor = parseCheckerColor(colorName);
 	}
 	if (exists diceValue1 = json.getIntegerOrNull("diceValue1"), exists diceValue2 = json.getIntegerOrNull("diceValue2")) {
-		result.currentRoll = DiceRoll(diceValue1, diceValue2);
+		value roll = DiceRoll(diceValue1, diceValue2);
+		roll.resetRemainingValues(json.getArray("remainingDiceValues").narrow<Integer>());
+		result.currentRoll = roll;
 	}
 	result.remainingUndo = json.getInteger("remainingUndo");
 	result.blackReady = json.getBoolean("blackReady");

@@ -1,5 +1,6 @@
 import ceylon.json {
-	JsonObject = Object
+	JsonObject = Object,
+	JsonArray = Array
 }
 
 shared class GameMove(shared Integer sourcePosition, shared Integer targetPosition) extends Object() {
@@ -41,7 +42,9 @@ shared final class GameMoveInfo(Integer sourcePosition, Integer targetPosition, 
 	}
 }
 
-shared final class GameMoveSequence(Integer sourcePosition, Integer targetPosition, shared {GameMoveInfo*} moves) extends GameMove(sourcePosition, targetPosition) {
+shared final class GameMoveSequence(Integer sourcePosition, Integer targetPosition, shared [GameMoveInfo*] moves) extends GameMove(sourcePosition, targetPosition) {
+	
+	shared actual JsonObject toJson() => JsonObject({"sourcePosition" -> sourcePosition, "targetPosition" -> targetPosition, "moves" -> JsonArray(moves.map((element) => element.toJson()))});
 	
 	shared actual Boolean equals(Object that) {
 		if (is GameMoveSequence that) {

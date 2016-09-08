@@ -1,6 +1,7 @@
 import ceylon.collection {
 	ArrayList,
-	HashMap
+	HashMap,
+	unlinked
 }
 import ceylon.time {
 	Instant,
@@ -178,7 +179,7 @@ shared class Game() {
 	}
 	
 	void undoMove(GameMoveInfo move, DiceRoll roll, CheckerColor color) {
-		roll.addRemainingValue(move.rollValue);
+		assert (roll.addRemainingValue(move.rollValue));
 		assert (board.moveChecker(color, move.targetPosition, move.sourcePosition));
 		if (move.hitBlot) {
 			assert (board.moveChecker(color.oppositeColor, board.graveyardPosition(color.oppositeColor), move.targetPosition));
@@ -216,7 +217,7 @@ shared class Game() {
 		for (nextMove in computeNextMoves(color, roll, previousMove?.targetPosition)) {
 			value moveInfo = makeLegalMove(color, roll, nextMove.sourcePosition, nextMove.targetPosition);
 			value moveKey = GameMove(previousMove?.sourcePosition else nextMove.sourcePosition, nextMove.targetPosition);
-			value newMoves = if (exists previousMove) then {moveInfo, *previousMove.moves} else {moveInfo};
+			value newMoves = if (exists previousMove) then [moveInfo, *previousMove.moves] else [moveInfo];
 			if (exists otherMoves = allMoves[moveKey]) {
 				if (compareMoveSequence(otherMoves, newMoves) == smaller) {
 					allMoves.put(moveKey, newMoves);
@@ -232,9 +233,9 @@ shared class Game() {
 	}
 	
 	shared Map<GameMove, {GameMoveInfo*}> computeAllMoves(CheckerColor color, DiceRoll roll, Integer? sourcePosition = null) {
-		value allMoves = HashMap<GameMove, {GameMoveInfo*}>();
+		value allMoves = HashMap<GameMove, {GameMoveInfo*}>(unlinked);
 		if (exists sourcePosition) {
-			appendNextMoves(allMoves, color, roll, GameMoveSequence(sourcePosition, sourcePosition, {}));
+			appendNextMoves(allMoves, color, roll, GameMoveSequence(sourcePosition, sourcePosition, []));
 		} else {
 			appendNextMoves(allMoves, color, roll, null);
 		}
@@ -255,8 +256,8 @@ shared class Game() {
 	}
 	
 	shared [GameMoveInfo*] computeBestMoveSequence(CheckerColor color, DiceRoll roll, Integer sourcePosition, Integer targetPosition) {
-		value key = GameMove(sourcePosition, targetPosition);
 		value allMoves = computeAllMoves(color, roll, sourcePosition);
+		value key = GameMove(sourcePosition, targetPosition);
 		if (exists moves = allMoves[key]) {
 			return moves.sequence().reversed;
 		} else {

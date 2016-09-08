@@ -59,8 +59,43 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 	
 	shared Boolean hasRemainingValue(Integer diceValue) => values.contains(diceValue);
 	
-	shared void addRemainingValue(Integer diceValue) {
+	shared Boolean addRemainingValue(Integer diceValue) {
+		if (isPair) {
+			if (diceValue != firstValue) {
+				return false;
+			} else if (remainingValues.size > 4) {
+				return false;
+			}
+		} else {
+			if (diceValue != firstValue && diceValue != secondValue) {
+				return false;
+			} else if (remainingValues.contains(diceValue)) {
+				return false;
+			}
+		}
+		
 		values.add(diceValue);
+		return true;
+	}
+	
+	shared Boolean resetRemainingValues({Integer*} newValues) {
+		if (isPair) {
+			if (newValues.size > 4) {
+				return false;
+			} else if (newValues.any((element) => element != firstValue)) {
+				return false;
+			}
+		} else {
+			if (newValues.size > 2) {
+				return false;
+			} else if (newValues.any((element) => element != firstValue && element != secondValue)) {
+				return false;
+			}
+		}
+		
+		values.clear();
+		values.addAll(newValues);
+		return true;
 	}
 
 	shared actual Boolean equals(Object that) {
