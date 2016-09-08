@@ -1,4 +1,4 @@
-module backgammon.shared "1.1.6" {
+module backgammon.shared "1.1.7" {
 	import ceylon.collection "1.2.2";
 	import ceylon.buffer "1.2.2";
 	shared import ceylon.time "1.2.2";
