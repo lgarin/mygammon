@@ -21,8 +21,8 @@ import ceylon.test {
 class TableTest() {
 
 	value messageList = ArrayList<TableMessage>();
-	value room = Room("test", 1, messageList.add);
-	value table = room.findTable(TableId(room.roomId, 0));
+	value room = Room("test", 1, 10, messageList.add);
+	value table = room.findTable(TableId(room.roomId, 1));
 	assert (exists table);
 	
 	function makePlayer(String id) => Player(PlayerInfo(id, id, null), room);

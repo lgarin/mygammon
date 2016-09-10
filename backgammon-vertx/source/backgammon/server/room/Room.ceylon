@@ -18,7 +18,7 @@ import ceylon.time {
 	Instant
 }
 
-final shared class Room(shared String roomId, shared Integer tableCount, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+final shared class Room(shared String roomId, shared Integer tableCountLimit, shared Integer playerCountLimit, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared RoomId id = RoomId(roomId);
 	
@@ -27,9 +27,9 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 	value playerMap = HashMap<PlayerId, Player>(unlinked);
 	
 	variable Integer _maxTableCount = 0;
-	value tableList = ArrayList<Table>(tableCount);
-	for (i in 0:tableCount) {
-		tableList.add(Table(i, id, messageBroadcaster));
+	value tableList = ArrayList<Table>(tableCountLimit);
+	for (i in 0:tableCountLimit) {
+		tableList.add(Table(i + 1, id, messageBroadcaster));
 	}
 	
 	variable Integer _createdMatchCount = 0;
@@ -56,7 +56,7 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 	
 	shared Integer freeTableCount => tableList.count((table) => table.queueSize == 0);
 	shared Integer maxTableCount {
-		value busyTableCount = tableCount - freeTableCount;
+		value busyTableCount = tableCountLimit - freeTableCount;
 		if (_maxTableCount < busyTableCount) {
 			_maxTableCount = busyTableCount;
 		}
@@ -102,6 +102,8 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 	shared Player? definePlayer(PlayerInfo info) {
 		if (exists player = findPlayer(PlayerId(info.id))) {
 			return player;
+		} else if (playerMap.size >= playerCountLimit) {
+			return null;
 		} else {
 			value player = Player(info, this);
 			playerMap.put(player.id, player);
@@ -139,7 +141,7 @@ final shared class Room(shared String roomId, shared Integer tableCount, Anythin
 	
 	shared Table? findTable(TableId tableId) {
 		if (tableId.roomId == roomId) {
-			return tableList[tableId.table];
+			return tableList[tableId.table - 1];
 		} else {
 			return null;
 		}

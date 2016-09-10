@@ -1,6 +1,7 @@
 {
 	"roomId": "test",
-	"tableCount": 10,
+	"maxTableCount": 10,
+	"maxPlayerCount": 100,
 	"roomThreadCount": 2,
 	"gameThreadCount": 4,
 	"hostname": "localhost",

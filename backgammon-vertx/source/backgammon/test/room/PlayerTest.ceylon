@@ -19,8 +19,8 @@ class PlayerTest() {
 	
 	value messageList = ArrayList<RoomMessage>();
 	
-	value room = Room("room", 1, messageList.add);
-	value table = room.findTable(TableId(room.roomId, 0));
+	value room = Room("room", 1, 10, messageList.add);
+	value table = room.findTable(TableId(room.roomId, 1));
 	assert (exists table);
 	
 	function makePlayer(String id) => Player(PlayerInfo(id, id, null), room);

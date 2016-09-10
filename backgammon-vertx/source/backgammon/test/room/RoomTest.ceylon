@@ -18,7 +18,7 @@ import ceylon.test {
 
 class RoomTest() {
 	value messageList = ArrayList<RoomMessage>();
-	value room = Room("test1", 10, messageList.add);
+	value room = Room("test1", 10, 10, messageList.add);
 	
 	function makePlayerInfo(String id) => PlayerInfo(id, id, null);
 	
@@ -29,7 +29,7 @@ class RoomTest() {
 	
 	test
 	shared void newRoomHasTenTables() {
-		assert (room.tableCount == 10);
+		assert (room.tableCountLimit == 10);
 	}
 	
 	test

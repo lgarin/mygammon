@@ -41,7 +41,7 @@ import ceylon.time {
 shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander) {
 	
 	value lock = ObtainableLock(); 
-	value room = Room(configuration.roomId, configuration.tableCount, messageBroadcaster);
+	value room = Room(configuration.roomId, configuration.maxTableCount, configuration.maxPlayerCount, messageBroadcaster);
 	
 	function findRoom(RoomId roomId) => room.id == roomId then room else null;
 	function findTable(TableId tableId) => room.findTable(tableId);
@@ -139,7 +139,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 				maxPlayerCount = room.maxPlayerCount;
 				totalPlayerCount = room.createdPlayerCount;
 				freeTableCount = room.freeTableCount;
-				busyTableCount = room.tableCount - freeTableCount;
+				busyTableCount = room.tableCountLimit - freeTableCount;
 				maxTableCount = room.maxTableCount;
 				activeMatchCount = room.matchCount;
 				maxMatchCount = room.maxMatchCount;
