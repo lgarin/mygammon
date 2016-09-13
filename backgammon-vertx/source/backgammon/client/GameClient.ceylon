@@ -30,7 +30,7 @@ import backgammon.shared.game {
 	player2Color,
 	player1Color,
 	DiceRoll,
-	GameMoveInfo
+	GameState
 }
 
 import ceylon.time {
@@ -55,7 +55,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
-	variable [GameMoveInfo*] nextMoves = [];
+	variable [MakeMoveMessage|EndTurnMessage*] nextActions = [];
 	
 	void addDelayedGameMessage(InboundGameMessage message, Duration delay) {
 		delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(message, delay));
@@ -200,6 +200,8 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	function showTurnStart(StartTurnMessage message) {
+		delayedMessage = [];
+		nextActions = [];
 		game.endTurn(message.playerColor.oppositeColor);
 		if (game.beginTurn(message.playerColor, message.roll, message.maxDuration, message.maxUndo)) {
 			showTurnDices(message.roll, message.playerColor);
@@ -222,7 +224,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	function showPlayedMove(PlayedMoveMessage message) {
 		if (game.moveChecker(message.playerColor, message.sourcePosition, message.targetPosition)) {
 			gui.redrawCheckers(game.board);
-			if (exists color = playerColor, game.canUndoMoves(color)) {
+			if (exists color = playerColor, game.canUndoMoves(color), nextActions.narrow<EndTurnMessage>().empty) {
 				gui.showUndoButton();
 			}
 			if (exists roll = game.currentRoll) {
@@ -232,11 +234,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 				gui.showPossibleMoves(game.board, message.playerColor, forcedMoves.map((element) => element.targetPosition));
 				gui.showSelectedPosition(game.board, message.playerColor, forcedMoves.first.sourcePosition);
 			}
-			if (exists color = playerColor, exists nextMove = nextMoves.first, game.isLegalMove(color, nextMove.sourcePosition, nextMove.targetPosition)) {
-				nextMoves = nextMoves.rest;
-				addDelayedGameMessage(MakeMoveMessage(matchId, playerId, nextMove.sourcePosition, nextMove.targetPosition), moveSequenceDelay);
-			} else {
-				nextMoves = [];
+			if (exists color = playerColor, exists nextAction = nextActions.first) {
+				nextActions = nextActions.rest;
+				addDelayedGameMessage(nextAction, moveSequenceDelay);
 			}
 			return true;
 		} else {
@@ -253,13 +253,31 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			if (exists roll = game.currentRoll) {
 				showTurnDices(roll, message.playerColor);
 			}
-			nextMoves = [];
 			return true;
 		} else {
 			return false;
 		}
 	}
 
+	void resetState(GameState state) {
+		delayedMessage = [];
+		nextActions = [];
+		game.state = state;
+		showState();
+	}
+	
+	void showTimeout() {
+		gui.hideUndoButton();
+		gui.hidePossibleMoves();
+		gui.showSelectedChecker(null);
+		if (exists currentColor = game.currentColor) {
+				gui.showPlayerMessage(currentColor, gui.timeoutTextKey, false);
+			} else {
+				gui.showPlayerMessage(player1Color, gui.timeoutTextKey, true);
+				gui.showPlayerMessage(player2Color, gui.timeoutTextKey, true);
+			}
+	}
+	
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
 		if (message.matchId != matchId) {
 			return false;
@@ -282,7 +300,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			return showUndoneMoves(message);
 		}
 		case (is InvalidMoveMessage) {
-			if (message.playerId == playerId) { 
+			if (message.playerId == playerId) {
+				delayedMessage = [];
+				nextActions = [];
 				return false;
 			} else {
 				return true;
@@ -290,8 +310,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 		case (is DesynchronizedMessage) {
 			if (message.playerId == playerId) {
-				game.state = message.state;
-				showState();
+				resetState(message.state);
 			}
 			return true;
 		}
@@ -303,32 +322,26 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			}
 		}
 		case (is GameStateResponseMessage) {
-			game.state = message.state;
-			showState();
+			resetState(message.state);
 			return true;
 		}
 		case (is GameActionResponseMessage) {
 			return message.success;
 		}
 		case (is TurnTimedOutMessage) {
+			delayedMessage = [];
+			nextActions = [];
 			game.forceTimeout();
-			gui.hidePossibleMoves();
-			gui.showSelectedChecker(null);
-			if (exists currentColor = game.currentColor) {
-				gui.showPlayerMessage(currentColor, gui.timeoutTextKey, false);
-			} else {
-				gui.showPlayerMessage(player1Color, gui.timeoutTextKey, true);
-				gui.showPlayerMessage(player2Color, gui.timeoutTextKey, true);
-			}
+			showTimeout();
 			return true;
 		}
 	}
 	
 	void handleDelayedActions(Instant time) {
-		for (element in delayedMessage.select((DelayedGameMessage element) => element.mustSend(time))) {
+		for (element in delayedMessage.select((element) => element.mustSend(time))) {
 			messageBroadcaster(element.message);
 		}
-		delayedMessage = delayedMessage.select((DelayedGameMessage element) => !element.mustSend(time));
+		delayedMessage = delayedMessage.select((element) => !element.mustSend(time));
 	}
 	
 	shared Boolean handleTimerEvent(Instant time) {
@@ -359,7 +372,12 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			gui.showSelectedChecker(null);
 			gui.hideSubmitButton();
 			gui.hideUndoButton();
-			messageBroadcaster(EndTurnMessage(matchId, playerId));
+			
+			if (nextActions.empty) {
+				messageBroadcaster(EndTurnMessage(matchId, playerId));
+			} else {
+				nextActions = nextActions.withTrailing(EndTurnMessage(matchId, playerId));
+			}
 			return true;
 		} else {
 			return false;
@@ -368,6 +386,8 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	
 	shared Boolean handleUndoEvent() {
 		if (exists color = playerColor, game.canUndoMoves(color)) {
+			delayedMessage = [];
+			nextActions = [];
 			gui.hidePossibleMoves();
 			gui.showSelectedChecker(null);
 			gui.hideUndoButton();
@@ -400,8 +420,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			gui.showSelectedChecker(null);
 			gui.hidePossibleMoves();
 			gui.hideChecker(checker);
-			messageBroadcaster(MakeMoveMessage(matchId, playerId, moves.first.sourcePosition, moves.first.targetPosition));
-			nextMoves = moves.rest;
+			value actions = moves.collect((element) => MakeMoveMessage(matchId, playerId, element.sourcePosition, element.targetPosition));
+			nextActions = actions.rest;
+			messageBroadcaster(actions.first);
 			return true;
 		} else {
 			return false;
