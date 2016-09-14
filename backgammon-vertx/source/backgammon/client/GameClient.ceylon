@@ -271,11 +271,11 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		gui.hidePossibleMoves();
 		gui.showSelectedChecker(null);
 		if (exists currentColor = game.currentColor) {
-				gui.showPlayerMessage(currentColor, gui.timeoutTextKey, false);
-			} else {
-				gui.showPlayerMessage(player1Color, gui.timeoutTextKey, true);
-				gui.showPlayerMessage(player2Color, gui.timeoutTextKey, true);
-			}
+			gui.showPlayerMessage(currentColor, gui.timeoutTextKey, false);
+		} else {
+			gui.showPlayerMessage(player1Color, gui.timeoutTextKey, true);
+			gui.showPlayerMessage(player2Color, gui.timeoutTextKey, true);
+		}
 	}
 	
 	shared Boolean handleGameMessage(OutboundGameMessage message) {
@@ -361,6 +361,8 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		}
 	}
 	
+	value hasQueuedActions => !nextActions.empty || !delayedMessage.empty;
+	
 	shared Boolean handleSubmitEvent() {
 		if (exists color = playerColor, game.mustRollDice(color)) {
 			gui.showActiveDice(color, 0, game.currentRoll?.getValue(color));
@@ -373,10 +375,10 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			gui.hideSubmitButton();
 			gui.hideUndoButton();
 			
-			if (nextActions.empty) {
-				messageBroadcaster(EndTurnMessage(matchId, playerId));
-			} else {
+			if (hasQueuedActions) {
 				nextActions = nextActions.withTrailing(EndTurnMessage(matchId, playerId));
+			} else {
+				messageBroadcaster(EndTurnMessage(matchId, playerId));
 			}
 			return true;
 		} else {
@@ -401,7 +403,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	shared Boolean handleStartDrag(HTMLElement source) {
 		gui.showSelectedChecker(null);
 		gui.hidePossibleMoves();
-		if (exists color = playerColor, game.mustMakeMove(color), exists roll = game.currentRoll, exists position = gui.getPosition(source)) {
+		if (hasQueuedActions) {
+			return false;
+		} else if (exists color = playerColor, game.mustMakeMove(color), exists roll = game.currentRoll, exists position = gui.getPosition(source)) {
 			value moves = game.computeAllMoves(color, roll, position).keys;
 			if (!moves.empty) {
 				gui.showPossibleMoves(game.board, color, moves.map((element) => element.targetPosition));
@@ -430,7 +434,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	shared Boolean handleCheckerSelection(HTMLElement checker) {
-		if (gui.isTempChecker(checker), exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker)) {
+		if (hasQueuedActions) {
+			return false;
+		} else if (gui.isTempChecker(checker), exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker)) {
 			return makeMove(sourcePosition, targetPosition, checker);
 		} else if (exists sourcePosition = gui.getSelectedCheckerPosition(), exists targetPosition = gui.getPosition(checker), sourcePosition == targetPosition, exists color = playerColor) {
 			return makeMove(sourcePosition, game.board.homePosition(color), checker);
