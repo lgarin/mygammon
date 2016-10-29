@@ -115,7 +115,6 @@ class GameTest() {
 		game.state = state;
 		
 		value sequence = game.computeBestMoveSequence(black, DiceRoll(4, 5), 12, 16);
-		print(sequence);
 		assert (sequence == [GameMoveInfo(12, 16, 4, false)]);
 	}
 }
