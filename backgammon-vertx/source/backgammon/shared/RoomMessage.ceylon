@@ -29,7 +29,7 @@ shared sealed interface RoomResponseMessage {
 	shared formal Boolean success;
 }
 
-shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeftRoomMessage | FoundMatchTableMessage satisfies RoomMessage & RoomResponseMessage {
+shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeftRoomMessage | FoundMatchTableMessage | PlayerListMessage satisfies RoomMessage & RoomResponseMessage {
 	shared default actual Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success });
 }
 
@@ -62,6 +62,14 @@ shared FoundMatchTableMessage parseFoundMatchTableMessage(Object json) {
 	return FoundMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getIntegerOrNull("table"));
 }
 
+shared final class PlayerListMessage(shared actual RoomId roomId, shared [PlayerInfo*] newPlayers, shared [PlayerInfo*] oldPlayers) satisfies OutboundRoomMessage {
+	shared actual Boolean success = true;
+	shared actual PlayerId playerId = systemPlayerId;
+}
+shared PlayerListMessage parsePlayerListMessageMessage(Object json) {
+	return PlayerListMessage(parseRoomId(json.getString("roomId")), json.getArray("newPlayers").narrow<Object>().collect(parsePlayerInfo), json.getArray("oldPlayers").narrow<Object>().collect(parsePlayerInfo));
+}
+
 shared Object formatRoomMessage(RoomMessage message) {
 	return Object({type(message).declaration.name -> message.toJson()});
 }
@@ -81,6 +89,8 @@ shared OutboundRoomMessage? parseOutboundRoomMessage(String typeName, Object jso
 		return parseEnteredRoomMessage(json);
 	} else if (typeName == `class FoundMatchTableMessage`.name) {
 		return parseFoundMatchTableMessage(json);
+	} else if (typeName == `class PlayerListMessage`.name) {
+		return parsePlayerListMessageMessage(json);
 	} else {
 		return null;
 	}

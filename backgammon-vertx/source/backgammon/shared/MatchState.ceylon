@@ -67,9 +67,9 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 	}
 	
 	shared PlayerId? opponentId(PlayerId playerId) {
-		if (playerId == player1.id) {
+		if (playerId.id == player1.id) {
 			return player2Id;
-		} else if (playerId == player2.id) {
+		} else if (playerId.id == player2.id) {
 			return player1Id;
 		} else {
 			return null;

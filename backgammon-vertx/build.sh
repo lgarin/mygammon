@@ -14,8 +14,8 @@ NEW_VERSION="$V_MAJOR.$V_MINOR.$((V_PATCH + 1))"
 
 echo "Building version $CURRENT_VERSION"
 mkdir $VERSION_DIR
-./ceylonb compile --offline --out=$VERSION_DIR/modules backgammon.shared
-./ceylonb compile --offline --out=$VERSION_DIR/modules backgammon.server
+./ceylonb compile --offline --out=$VERSION_DIR/modules backgammon.shared backgammon.server
+./ceylonb compile-js --offline --compact backgammon.shared backgammon.client
 ./ceylonb copy --offline --out=$VERSION_DIR/client --js --with-dependencies backgammon.client
 cp -r static $VERSION_DIR
 git tag -f -a -m "Released version $CURRENT_VERSION" $CURRENT_VERSION

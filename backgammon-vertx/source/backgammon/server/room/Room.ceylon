@@ -6,7 +6,8 @@ import backgammon.shared {
 	OutboundMatchMessage,
 	TableId,
 	MatchId,
-	MatchState
+	MatchState,
+	PlayerListMessage
 }
 
 import ceylon.collection {
@@ -25,6 +26,9 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	variable Integer _createdPlayerCount = 0;
 	variable Integer _maxPlayerCount = 0;
 	value playerMap = HashMap<PlayerId, Player>(unlinked);
+	
+	value newPlayers = ArrayList<Player>(playerCountLimit);
+	value oldPlayers = ArrayList<Player>(playerCountLimit);
 	
 	variable Integer _maxTableCount = 0;
 	value tableList = ArrayList<Table>(tableCountLimit);
@@ -53,6 +57,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		}
 		return _maxPlayerCount;
 	}
+	shared Integer busyPlayerCount => playerMap.count((element) => element.item.isPlaying());
 	
 	shared Integer freeTableCount => tableList.count((table) => table.queueSize == 0);
 	shared Integer maxTableCount {
@@ -82,6 +87,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		}
 		if (player.leaveRoom(id)) {
 			playerMap.remove(player.id);
+			oldPlayers.add(player);
 			return player;
 		} else {
 			return null;
@@ -107,6 +113,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		} else {
 			value player = Player(info, this);
 			playerMap.put(player.id, player);
+			newPlayers.add(player);
 			_createdPlayerCount++;
 			return player;
 		}
@@ -180,4 +187,12 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 			return null;
 		}
 	}
+	
+	shared PlayerListMessage createPlayerListDelta() {
+		value message = PlayerListMessage(id, newPlayers.collect((element) => element.info), oldPlayers.collect((element) => element.info));
+		newPlayers.clear();
+		oldPlayers.clear();
+		return message;
+	}
+	
 }

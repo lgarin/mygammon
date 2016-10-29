@@ -5,11 +5,18 @@ resource=resource
 [defaults]
 flatclasspath=true
 encoding=Cp1252
-offline=true
+offline=false
+autoexportmavendependencies=false
+
+[repository "MAVEN"]
+url=aether:C:\\Dev\\maven\\settings.xml
+
+[repository "CACHE"]
+url=C:\\Dev\\ceylon\\cache
 
 [repositories]
-other=aether:C:\\Dev\\maven\\settings.xml
-cache=C:\\Dev\\ceylon\\cache
+cache=+CACHE
+other=+MAVEN
 
 [formattool]
 profile=default

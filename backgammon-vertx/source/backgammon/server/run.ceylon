@@ -107,7 +107,7 @@ void runModuleVerticle(Module mod) {
 	value container = vertxFactory.vertx();
 	log.info("Deploying version ``mod.version``...");
 	value options = DeploymentOptions { config = parseConfiguration();  };
-	container.deployVerticle("ceylon:``mod.name``/``mod.version``", options, (String|Throwable ar) {
+	HttpServerVerticle().deploy(container, options, (String|Throwable ar) {
 		if (is String ar) {
 			log.info("Deploy success");
 		} else {
