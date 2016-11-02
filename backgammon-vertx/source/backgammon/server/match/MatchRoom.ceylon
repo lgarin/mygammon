@@ -38,10 +38,11 @@ import ceylon.time {
 	Instant
 }
 
-shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander) {
+shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander) {
 	
 	value lock = ObtainableLock(); 
 	value room = Room(configuration.roomId, configuration.maxTableCount, configuration.maxPlayerCount, messageBroadcaster);
+	variable Instant lastNotification = Instant(0);
 	
 	function findRoom(RoomId roomId) => room.id == roomId then room else null;
 	function findTable(TableId tableId) => room.findTable(tableId);
@@ -145,6 +146,19 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundT
 				maxMatchCount = room.maxMatchCount;
 				totalMatchCount = room.createdMatchCount;
 			};
+		}
+	}
+	
+	shared void periodicNotification(Instant currentTime) {
+		try (lock) {
+			value playerCount = room.playerCount;
+			if (playerCount > 0 && lastNotification.durationTo(currentTime).milliseconds * configuration.maxPlayerMessageRate > playerCount) {
+				value message = room.createPlayerListDelta();
+				if (exists message) {
+					messageBroadcaster(message);
+				}
+				lastNotification = currentTime;
+			}
 		}
 	}
 }

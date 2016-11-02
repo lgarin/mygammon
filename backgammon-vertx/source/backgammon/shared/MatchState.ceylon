@@ -82,7 +82,7 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 		_score = score;
 	}
 	
-	shared Object toJson() => Object({"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson(), "leaverId" -> leaverId?.toJson(), "score" -> score});
+	shared Object toJson() => Object {"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson(), "leaverId" -> leaverId?.toJson(), "score" -> score};
 }
 
 shared MatchState? parseMatchState(Object? json) {

@@ -6,7 +6,7 @@ shared sealed interface MatchMessage of OutboundMatchMessage | InboundMatchMessa
 	shared formal MatchId matchId;
 	tableId => matchId.tableId;
 	
-	shared actual default Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson()});
+	shared actual default Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson()};
 }
 
 shared sealed interface OutboundMatchMessage of AcceptedMatchMessage | MatchEndedMessage satisfies MatchMessage {}

@@ -26,7 +26,7 @@ shared LeftTableMessage parseLeftTableMessage(Object json) {
 
 shared final class CreatedMatchMessage(shared actual PlayerId playerId, shared MatchId matchId, shared PlayerInfo player1, shared PlayerInfo player2) satisfies OutboundTableMessage {
 	tableId => matchId.tableId;
-	toJson() => Object({"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson()});
+	toJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson()};
 }
 shared CreatedMatchMessage parseCreatedMatchMessage(Object json) {
 	return CreatedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")));

@@ -81,15 +81,26 @@ final class GameRoomEventBus(Vertx vertx) {
 			sendInboundGenericMessage(message, "InboundGameMessage-``message.roomId``", parseOutboundGameMessage, responseHandler);
 		}
 	}
-
-	shared void publishOutboundTableMessage(OutboundTableMessage|OutboundMatchMessage msg) {
-		logger(`package`).info(formatRoomMessage(msg).string);
-		vertx.eventBus().publish("OutboundTableMessage-``msg.tableId``", formatRoomMessage(msg));
-	}
 	
-	shared void publishOutboundGameMessage(OutboundGameMessage msg) {
+	void publishOutboundGenericMessage(RoomMessage msg, String address) {
 		logger(`package`).info(formatRoomMessage(msg).string);
-		vertx.eventBus().publish("OutboundGameMessage-``msg.matchId``", formatRoomMessage(msg));
+		vertx.eventBus().publish(address, formatRoomMessage(msg));
+	}
+
+	shared void publishOutboundMessage(OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage|OutboundGameMessage message) {
+		switch (message)
+		case (is OutboundRoomMessage) {
+			publishOutboundGenericMessage(message, "OutboundRoomMessage-``message.roomId``");
+		}
+		case (is OutboundTableMessage) {
+			publishOutboundGenericMessage(message, "OutboundTableMessage-``message.tableId``");
+		}
+		case (is OutboundMatchMessage) {
+			publishOutboundGenericMessage(message, "OutboundTableMessage-``message.tableId``");
+		}
+		case (is OutboundGameMessage) {
+			publishOutboundGenericMessage(message, "OutboundGameMessage-``message.matchId``");
+		}
 	}
 	
 	void registerParallelConsumer(WorkerExecutor executor, String address, Object process(Object msg)) {

@@ -1,7 +1,8 @@
 import ceylon.json {
 
 	Object,
-	Value
+	Value,
+	JsonArray=Array
 }
 import ceylon.language.meta {
 
@@ -12,7 +13,7 @@ shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage 
 	shared formal PlayerId playerId;
 	shared formal RoomId roomId;
 	
-	shared default Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson()});
+	shared default Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson()};
 	shared default Object toJson() => toBaseJson();
 	shared Object toExtendedJson({<String->Value>*} entries) {
 		value result = toBaseJson();
@@ -30,7 +31,7 @@ shared sealed interface RoomResponseMessage {
 }
 
 shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeftRoomMessage | FoundMatchTableMessage | PlayerListMessage satisfies RoomMessage & RoomResponseMessage {
-	shared default actual Object toBaseJson() => Object({"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success });
+	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success };
 }
 
 shared final class EnterRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared PlayerInfo playerInfo) satisfies InboundRoomMessage {
@@ -65,6 +66,7 @@ shared FoundMatchTableMessage parseFoundMatchTableMessage(Object json) {
 shared final class PlayerListMessage(shared actual RoomId roomId, shared [PlayerInfo*] newPlayers, shared [PlayerInfo*] oldPlayers) satisfies OutboundRoomMessage {
 	shared actual Boolean success = true;
 	shared actual PlayerId playerId = systemPlayerId;
+	toJson() => toExtendedJson({"newPlayers" -> JsonArray {for (e in newPlayers) e.toJson()}, "oldPlayers" -> JsonArray {for (e in oldPlayers) e.toJson()} });
 }
 shared PlayerListMessage parsePlayerListMessageMessage(Object json) {
 	return PlayerListMessage(parseRoomId(json.getString("roomId")), json.getArray("newPlayers").narrow<Object>().collect(parsePlayerInfo), json.getArray("oldPlayers").narrow<Object>().collect(parsePlayerInfo));

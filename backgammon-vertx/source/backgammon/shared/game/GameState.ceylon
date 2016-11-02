@@ -32,7 +32,7 @@ shared final class GameState() extends Object() {
 		result.put("remainingTime", remainingTime?.milliseconds);
 		result.put("blackCheckerCounts", JsonArray(blackCheckerCounts));
 		result.put("whiteCheckerCounts", JsonArray(whiteCheckerCounts));
-		result.put("currentMoves", JsonArray(currentMoves.map((element) => element.toJson())));
+		result.put("currentMoves", JsonArray {for (e in currentMoves) e.toJson()});
 		return result;
 	}
 	

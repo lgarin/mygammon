@@ -12,7 +12,7 @@ import ceylon.buffer.charset {
 }
 
 shared final class PlayerInfo(shared String id, shared String name, shared String? pictureUrl) extends Object() {
-	shared JsonObject toJson() => JsonObject({"id" -> id, "name" -> name, "pictureUrl" -> pictureUrl});
+	shared JsonObject toJson() => JsonObject {"id" -> id, "name" -> name, "pictureUrl" -> pictureUrl};
 	shared String toBase64() => base64StringStandard.encode(utf8.encode(toJson().string));
 	
 	shared actual Boolean equals(Object that) {

@@ -25,6 +25,7 @@ import io.vertx.ceylon.web.handler {
 
 final class HttpServerVerticle() extends Verticle() {
 	
+	variable String lastStatistic = "";
 	value log = logger(`package`);
 	
 	void startHttp(RoomConfiguration roomConfig) {
@@ -49,28 +50,31 @@ final class HttpServerVerticle() extends Verticle() {
 		log.info("Started http://``roomConfig.hostname``:``roomConfig.port``");
 	}
 	
+	void handleStatistic(MatchRoom matchRoom, GameRoom gameRoom) {
+		value statistic = "``matchRoom.statistic`` ``gameRoom.statistic``";
+		if (statistic != lastStatistic) {
+			lastStatistic = statistic;
+			log.info(statistic);
+		}
+	}
+	
 	void startRoom(RoomConfiguration roomConfig) {
 		value eventBus = GameRoomEventBus(vertx);
 
-		value matchRoom = MatchRoom(roomConfig, eventBus.publishOutboundTableMessage, eventBus.queueInboundMessage);
+		value matchRoom = MatchRoom(roomConfig, eventBus.publishOutboundMessage, eventBus.queueInboundMessage);
 		eventBus.registerInboundRoomMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processRoomMessage);
 		eventBus.registerInboundTableMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processTableMessage);
 		eventBus.registerInboundMatchMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processMatchMessage);
 		
-		value gameRoom = GameRoom(roomConfig, eventBus.publishOutboundGameMessage, eventBus.queueInboundMessage);
+		value gameRoom = GameRoom(roomConfig, eventBus.publishOutboundMessage, eventBus.queueInboundMessage);
 		eventBus.registerInboundGameMessageConsumer(roomConfig.roomId, roomConfig.gameThreadCount, gameRoom.processGameMessage);
-		
-		variable String lastStatistic = "";
 		
 		vertx.setPeriodic(roomConfig.serverAdditionalTimeout.milliseconds / 2, void (Integer val) {
 			value currentTime = now();
 			matchRoom.periodicCleanup(currentTime);
 			gameRoom.periodicCleanup(currentTime);
-			value statistic = "``matchRoom.statistic`` ``gameRoom.statistic``";
-			if (statistic != lastStatistic) {
-				lastStatistic = statistic;
-				log.info(statistic);
-			}
+			matchRoom.periodicNotification(currentTime);
+			handleStatistic(matchRoom, gameRoom);
 		});
 		
 		log.info("Started room ``roomConfig.roomId``");

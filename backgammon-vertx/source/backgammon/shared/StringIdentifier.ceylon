@@ -21,10 +21,10 @@ shared final class RoomId(shared String roomId) extends StringIdentifier(roomId)
 	toJson() => roomId;
 }
 shared final class TableId(shared String roomId, shared Integer table) extends StringIdentifier("``roomId``-table-``table``") {
-	toJson() => JsonObject({"roomId" -> roomId, "table" -> table});
+	toJson() => JsonObject {"roomId" -> roomId, "table" -> table};
 }
 shared final class MatchId(shared TableId tableId, shared Instant timestamp) extends StringIdentifier("``tableId``-game-``timestamp.millisecondsOfEpoch``") {
-	toJson() => JsonObject({"roomId" -> tableId.roomId, "table" -> tableId.table, "timestamp" -> timestamp.millisecondsOfEpoch});
+	toJson() => JsonObject {"roomId" -> tableId.roomId, "table" -> tableId.table, "timestamp" -> timestamp.millisecondsOfEpoch};
 }
 shared final class PlayerId(shared String id) extends StringIdentifier(id) {
 	toJson() => id;
