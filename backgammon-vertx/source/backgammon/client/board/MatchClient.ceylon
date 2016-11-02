@@ -23,7 +23,7 @@ import ceylon.time {
 	Instant
 }
 
-shared final class MatchClient(PlayerInfo player, shared MatchState match, GameGui gui, Anything(InboundGameMessage|InboundMatchMessage) messageBroadcaster) {
+shared final class MatchClient(PlayerInfo player, shared MatchState match, BoardGui gui, Anything(InboundGameMessage|InboundMatchMessage) messageBroadcaster) {
 	
 	shared MatchId matchId = match.id;
 	

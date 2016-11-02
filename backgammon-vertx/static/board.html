@@ -20,24 +20,25 @@
 	    require(
 	            [ 'backgammon/client/1.1.9/backgammon.client-1.1.9' ],
 	            function(app) {
+	            	var board = app.createBoard();
 	            	$(".checker").draggable({
 	            	    revert: "invalid",
-	            	    start: function(event) { return app.onStartDrag(event.target); },
-	            	 	stop: function(event) { return app.onEndDrag(event.target); }
+	            	    start: function(event) { return board.onStartDrag(event.target); },
+	            	 	stop: function(event) { return board.onEndDrag(event.target); }
 	            	});
 	            	$(".point").droppable({
-	            		drop: function(event, ui) { return app.onDrop(event.target, ui.draggable[0]); }
+	            		drop: function(event, ui) { return board.onDrop(event.target, ui.draggable[0]); }
 	            	});
-	            	$(".button").on("click", function(event) { return app.onButton(event.currentTarget); });
-	            	$(".checker").on("click", function(event) { return app.onChecker(event.currentTarget); });
-	            	$(".topdown-checker").on("click", function(event) { return app.onChecker(event.currentTarget); });
-	            	window.setInterval(function() { return app.onTimer(); }, 100);
+	            	$(".button").on("click", function(event) { return board.onButton(event.currentTarget); });
+	            	$(".checker").on("click", function(event) { return board.onChecker(event.currentTarget); });
+	            	$(".topdown-checker").on("click", function(event) { return board.onChecker(event.currentTarget); });
+	            	window.setInterval(function() { return board.onTimer(); }, 100);
 	                $("#dialog-won").dialog({
 	                	autoOpen: false,
 	                    modal: true,
 	                    buttons: [{
                     		text:  $("#i18n #_retry").text(),
-                    		click: function() { $(this).dialog("close"); return app.onPlayAgain(); }
+                    		click: function() { $(this).dialog("close"); return board.onPlayAgain(); }
                     	}]
 	                });
 	                $("#dialog-lost").dialog({
@@ -45,7 +46,7 @@
 	                    modal: true,
 	                    buttons: [{
 	                    		text: $("#i18n #_retry").text(),
-	                    		click: function() { $(this).dialog("close"); return app.onPlayAgain(); }
+	                    		click: function() { $(this).dialog("close"); return board.onPlayAgain(); }
 	                    }]
 	                });
 	                $("#dialog-leave").dialog({
@@ -53,13 +54,12 @@
 	                    modal: true,
 	                    buttons: [{
 	                    	text: $("#i18n #_leave").text(),
-	                    	click: function() { $(this).dialog("close"); return app.onLeaveConfirmed(); }
+	                    	click: function() { $(this).dialog("close"); return board.onLeaveConfirmed(); }
 	                    }, {
 	                      	text: $("#i18n #_cancel").text(),
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
-	                app.run();
 	            }
 	    );
     </script>

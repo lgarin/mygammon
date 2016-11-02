@@ -1,4 +1,4 @@
-class EventBusClient(String address, void onMessage(String message), void onError(String error)) {
+shared class EventBusClient(String address, void onMessage(String message), void onError(String error)) {
 	dynamic eventBus;
 	
 	dynamic {

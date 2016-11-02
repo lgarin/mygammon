@@ -38,7 +38,7 @@ import ceylon.time {
 	now,
 	Duration
 }
-shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? playerColor, GameGui gui, Anything(InboundGameMessage) messageBroadcaster) {
+shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? playerColor, BoardGui gui, Anything(InboundGameMessage) messageBroadcaster) {
 	
 	// TODO should be part of configuration
 	value initialRollDelay = Duration(2000);

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>MyGammon</title>
+
+    <meta name="viewport" content="width=1150">
+	
+	<link rel="shortcut icon" type="image/x-icon" href="/static/images/favicon.ico"/>
+    <link rel="stylesheet" href="/static/css/board.css">
+    <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
+    <script src="/static/javascript/jquery-3.1.0.min.js"></script>
+    <script src="/static/javascript/jquery-ui.min.js"></script>
+    <script src="/static/javascript/sockjs.min.js"></script>
+    <script src="/static/javascript/vertx-eventbus.js"></script>
+	<script src="/static/javascript/require.js"></script>
+	<script type="text/javascript">
+	    require.config({
+	        baseUrl : '/client'
+	    });
+	    require(
+	            [ 'backgammon/client/1.1.9/backgammon.client-1.1.9' ],
+	            function(app) {
+	                var room = app.createRoom();
+	            }
+	    );
+    </script>
+  </head>
+
+  <body>
+    <div id="gui">
+      <div id="player-list">
+        
+        
+      </div><!-- end of player list -->
+
+	  <div id="leave" class="button hidden" style="right:5px;bottom:0px;">
+        <div id="leaveText" class="leave">Leave</div>
+      </div>
+    </div><!-- end of gui -->
+
+    <div id="dialog-won" title="Game won">
+	  <p>
+	    <b>Congratulation. You've won the game with </b><b id="game-score">0</b><b> point(s).</b> 
+	  </p>
+	</div>
+	<div id="dialog-lost" title="Game lost">
+	  <p>
+	    <b>Sorry. You've lost the game.</b>
+	  </p>
+	</div>
+	<div id="dialog-leave" title="Leave the game?">
+	  <p>
+	    <b>Do you really want to leave the table?</b>
+	  </p>
+	</div>
+	<div id="i18n" style="display: none">
+		<div id="_leave">Leave</div>
+		<div id="_cancel">Cancel</div>
+		<div id="_retry">Play again</div>
+		<div id="_timeout">Timeout</div>
+		<div id="_undo">Undo</div>
+		<div id="_roll">Roll</div>
+		<div id="_submit">Submit</div>
+		<div id="_waiting">Waiting...</div>
+		<div id="_loading">Loading...</div>
+		<div id="_joined">Joined</div>
+		<div id="_ready">Ready</div>
+		<div id="_winner">Winner</div>
+		<div id="_tie">Tie</div>
+		<div id="_left">Left</div>
+		<div id="_begin">Play?</div>
+		<div id="_play">Play</div>
+	</div>
+  </body>
+</html>

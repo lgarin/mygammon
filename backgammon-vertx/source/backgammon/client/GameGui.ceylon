@@ -17,10 +17,7 @@ import backgammon.client.browser {
 	Element
 }
 
-shared final class GameGui(Document document) {
-	shared String undoButtonId = "undo";
-	shared String leaveButtonId = "leave";
-	shared String submitButtonId = "submit";
+shared class GameGui(Document document) extends BaseGui(document) {
 	
 	shared String defaultPlayerName = "";
 	shared String leaveTextKey = "_leave";
@@ -38,32 +35,6 @@ shared final class GameGui(Document document) {
 	shared String playTextKey = "_play";
 	shared String joinedTextKey = "_joined";
 	
-	void resetClass(Element element, String* classNames) {
-		value classList = element.classList;
-		while (classList.length > 0) {
-			if (exists item = classList.item(0)) {
-				classList.remove(item);
-			}
-		}
-		for (value className in classNames) {
-			classList.add(className);
-		}
-	}
-	
-	void setClass(String elementId, String* classNames) {
-		if (exists element = document.getElementById(elementId)) {
-			resetClass(element, *classNames);
-		}
-	}
-	
-	void addClass(String elementId, String className) {
-		document.getElementById(elementId)?.classList?.add(className);
-	}
-	
-	void removeClass(String elementId, String className) {
-		document.getElementById(elementId)?.classList?.remove(className);
-	}
-	
 	function formatSeconds(Integer seconds) => if (seconds < 10) then "0" + seconds.string else seconds.string;
 	
 	shared String formatPeriod(Duration duration, String timeoutMessage) {
@@ -74,55 +45,6 @@ shared final class GameGui(Document document) {
 		value minutes = totalSeconds / 60;
 		value seconds = totalSeconds - minutes * 60;
 		return "``minutes``:``formatSeconds(seconds)``";
-	}
-	
-	shared void hideUndoButton() {
-		addClass(undoButtonId, "hidden");
-	}
-	
-	shared void showUndoButton(String text = undoTextKey) {
-		removeClass(undoButtonId, "hidden");
-		if (exists button = document.getElementById("``undoButtonId``Text")) {
-			button.innerHTML = translate(text);
-		}
-	}
-
-	shared void hideSubmitButton() {
-		addClass(submitButtonId, "hidden");
-	}
-	
-	shared void showSubmitButton(String text = submitTextKey) {
-		removeClass(submitButtonId, "hidden");
-		if (exists button = document.getElementById("``submitButtonId``Text")) {
-			button.innerHTML = translate(text);
-		}
-	}
-
-	shared void hideLeaveButton() {
-		addClass(leaveButtonId, "hidden");
-	}
-	
-	shared void showLeaveButton(String text = leaveTextKey) {
-		removeClass(leaveButtonId, "hidden");
-		if (exists button = document.getElementById("``leaveButtonId``Text")) {
-			button.innerHTML = translate(text);
-		}
-	}
-
-	shared void showCurrentPlayer(CheckerColor? currentColor) {
-		switch (currentColor)
-		case (black) {
-			removeClass("whitePlayer", "selected");
-			addClass("blackPlayer", "selected");
-		}
-		case (white) {
-			addClass("whitePlayer", "selected");
-			removeClass("blackPlayer", "selected");
-		}
-		else {
-			removeClass("whitePlayer", "selected");
-			removeClass("blackPlayer", "selected");
-		}
 	}
 	
 	shared void showDiceValues(CheckerColor color, Integer? value1, Integer? value2) {
@@ -191,7 +113,7 @@ shared final class GameGui(Document document) {
 		}
 	}
 	
-	void hideAllCheckers() {
+	shared void hideAllCheckers() {
 		value checkers = document.getElementsByClassName("checker");
 		for (i in 0:checkers.length) {
 			if (exists checker = checkers.item(i)) {
@@ -328,77 +250,6 @@ shared final class GameGui(Document document) {
 			return getPosition(parent);
 		} else {
 			return null;
-		}
-	}
-	
-	shared void showPlayerInfo(CheckerColor color, String? name, String? pictureUrl) {
-		if (exists playerLabel = document.getElementById("``color``PlayerName")) {
-			playerLabel.innerHTML = name else defaultPlayerName;
-		}
-		if (exists playerImage = document.getElementById("``color``PlayerImage")) {
-			if (exists pictureUrl) {
-				playerImage.setAttribute("src", pictureUrl);
-				playerImage.classList.remove("player-unknown");
-			} else {
-				playerImage.setAttribute("src", "");
-				playerImage.classList.add("player-unknown");
-			}
-		}
-	}
-	
-	shared void showPlayerMessage(CheckerColor color, String message, Boolean busy) {
-		if (exists playerTimer = document.getElementById("``color``PlayerTimer")) {
-			playerTimer.innerHTML = translate(message);
-		}
-		if (exists playerActivity = document.getElementById("``color``PlayerActivity")) {
-			if (busy) {
-				playerActivity.classList.add("player-busy");
-				playerActivity.classList.remove("player-ready");
-			} else {
-				playerActivity.classList.remove("player-busy");
-				playerActivity.classList.add("player-ready");
-			}
-		}
-	}
-
-	void resetState(CheckerColor color, String playerMessage) {
-		hideAllDices(color);
-		showPlayerInfo(color, null, null);
-		showPlayerMessage(color, playerMessage, true);
-	}
-	
-	shared void showInitialState(String playerMessage = waitingTextKey) {
-		showCurrentPlayer(null);
-		hideAllCheckers();
-		resetState(black, playerMessage);
-		resetState(white, playerMessage);
-		hideLeaveButton();
-		hideUndoButton();
-		hideSubmitButton();
-	}
-	
-	shared void showEmptyGame() {
-		showCurrentPlayer(null);
-		hideAllDices(black);
-		hideAllDices(white);
-		hideAllCheckers();
-	}
-	
-	shared void showDialog(String dialogName, {<String->String>*} variableMap = {}) {
-		dynamic {
-			for (value variableEntry in variableMap) {
-				jQuery("#``variableEntry.key``").html(variableEntry.item);
-			}
-			jQuery("#``dialogName``").dialog("open");
-		}
-	}
-	
-	shared String translate(String key) {
-		if (key.empty || !key.startsWith("_")) {
-			return key;
-		}
-		dynamic {
-			return jQuery("#i18n #``key``").text();
 		}
 	}
 }
