@@ -72,6 +72,9 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 		} else if (exists winnerId) {
 			// call from game server
 			endGame(playerId, winnerId, score);
+			if (exists player = findPlayer(winnerId)) {
+				player.increaseScore(score);
+			}
 			return true;
 		} else {
 			// call from leave table

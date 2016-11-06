@@ -23,6 +23,7 @@ final class GoogleUserInfo(Object json, User token) {
 	shared String displayName = json.getString("displayName");
 	// TODO use regex instead of replace
 	shared String pictureUrl = json.getObject("image").getString("url").replace("sz=50", "sz=100");
+	shared String iconUrl = json.getObject("image").getString("url").replace("sz=50", "sz=25");
 	shared String userId => token.principal().getString("access_token");
 }
 

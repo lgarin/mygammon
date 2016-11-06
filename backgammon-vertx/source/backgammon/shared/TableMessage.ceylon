@@ -49,7 +49,7 @@ shared final class TableStateResponseMessage(shared actual PlayerId playerId, sh
 	
 }
 shared TableStateResponseMessage parseTableStateResponseMessage(Object json) {
-	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), json.getBoolean("joined"), parseMatchState(json.getObjectOrNull("match")), json.getBoolean("success"));
+	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), json.getBoolean("joined"), parseNullableMatchState(json.getObjectOrNull("match")), json.getBoolean("success"));
 }
 
 

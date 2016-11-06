@@ -42,6 +42,7 @@
         		<th>Name</th>
         		<th>Table</th>
         		<th>Score</th>
+        		<th>Win %</th>
         		</tr>
         	</thead>
         	<tbody>
@@ -53,15 +54,16 @@
 
 	<script type="text/html" id="player-empty-template">
 	    <tr>
-        	<td colspan="3">No player</td>
+        	<td colspan="4">No player</td>
         </tr>
 	</script>
 	
 	<script type="text/html" id="player-row-template">
-		<tr id="player-row-template" data-id="playerId" onclick="room.onPlayerClick($(this).attr('id'))">
-   			<td data-content="playerName"></td>
-   			<td data-content="playerTable"></td>
-   			<td data-content="playerScore"></td>
+		<tr id="player-row-template" data-id="id" onclick="room.onPlayerClick($(this).attr('id'))">
+   			<td><img data-src="iconUrl" style=""></img><span style="margin-left:10px" data-content="name"></span></td>
+   			<td data-content="tableId.index"></td>
+   			<td data-content="score"></td>
+   			<td data-content="win"></td>
    		</tr>
 	</script>
  

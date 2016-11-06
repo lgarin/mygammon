@@ -11,8 +11,8 @@ import ceylon.buffer.charset {
 	utf8
 }
 
-shared final class PlayerInfo(shared String id, shared String name, shared String? pictureUrl) extends Object() {
-	shared JsonObject toJson() => JsonObject {"id" -> id, "name" -> name, "pictureUrl" -> pictureUrl};
+shared final class PlayerInfo(shared String id, shared String name, shared String? pictureUrl = null, shared String? iconUrl = null) extends Object() {
+	shared JsonObject toJson() => JsonObject {"id" -> id, "name" -> name, "pictureUrl" -> pictureUrl, "iconUrl" -> iconUrl};
 	shared String toBase64() => base64StringStandard.encode(utf8.encode(toJson().string));
 	
 	shared actual Boolean equals(Object that) {
@@ -30,7 +30,7 @@ shared final class PlayerInfo(shared String id, shared String name, shared Strin
 }
 
 shared PlayerInfo parsePlayerInfo(JsonObject json) {
-	return PlayerInfo(json.getString("id"), json.getString("name"), json.getStringOrNull("pictureUrl"));
+	return PlayerInfo(json.getString("id"), json.getString("name"), json.getStringOrNull("pictureUrl"), json.getStringOrNull("iconUrl"));
 }
 
 shared PlayerInfo? parseBase64PlayerInfo(String base64) {

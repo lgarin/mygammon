@@ -8,9 +8,7 @@ import ceylon.time {
 shared abstract class StringIdentifier(String id) extends Object() {
 	string = id;
 	
-	shared actual Boolean equals(Object that) {
-		return id == that.string;
-	}
+	shared actual Boolean equals(Object that) => id == that.string;
 	
 	shared actual Integer hash => id.hash;
 	
@@ -32,18 +30,16 @@ shared final class PlayerId(shared String id) extends StringIdentifier(id) {
 
 shared PlayerId systemPlayerId = PlayerId("");
 
-shared RoomId parseRoomId(String json) {
-	return RoomId(json);
-}
+shared RoomId parseRoomId(String json) => RoomId(json);
 
-shared TableId parseTableId(JsonObject json) {
-	return TableId(json.getString("roomId"), json.getInteger("table"));
-}
+shared TableId parseTableId(JsonObject json) => TableId(json.getString("roomId"), json.getInteger("table"));
 
-shared MatchId parseMatchId(JsonObject json) {
-	return MatchId(parseTableId(json), Instant(json.getInteger("timestamp")));
-}
+shared TableId? parseNullableTableId(JsonObject? json) => if (exists json) then parseTableId(json) else null; 
 
-shared PlayerId parsePlayerId(String json) {
-	return PlayerId(json);
-}
+shared MatchId parseMatchId(JsonObject json) => MatchId(parseTableId(json), Instant(json.getInteger("timestamp")));
+
+shared MatchId? parseNullableMatchId(JsonObject? json) => if (exists json) then parseMatchId(json) else null; 
+
+shared PlayerId parsePlayerId(String json) => PlayerId(json);
+
+shared PlayerId? parseNullablePlayerId(String? json) => if (exists json) then parsePlayerId(json) else null;

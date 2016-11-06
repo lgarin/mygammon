@@ -43,7 +43,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 
 		void handler(GoogleUserInfo? userInfo) {
 			if (exists userInfo) {
-				value playerInfo = PlayerInfo(userInfo.userId, userInfo.displayName, userInfo.pictureUrl);
+				value playerInfo = PlayerInfo(userInfo.userId, userInfo.displayName, userInfo.pictureUrl, userInfo.iconUrl);
 				completeLogin(routingContext, playerInfo);
 			} else {
 				routingContext.clearUser();

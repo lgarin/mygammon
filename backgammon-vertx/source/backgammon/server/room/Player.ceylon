@@ -3,7 +3,9 @@ import backgammon.shared {
 	RoomId,
 	TableId,
 	MatchId,
-	PlayerInfo
+	PlayerInfo,
+	PlayerState,
+	PlayerStatistic
 }
 
 import ceylon.time {
@@ -21,7 +23,11 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	shared Room? room => _room;
 	shared Table? table => _table;
 	shared Match? match => _match;
-	shared PlayerId id = PlayerId(info.id);	
+	shared PlayerId id = PlayerId(info.id);
+	
+	variable PlayerStatistic statistic = PlayerStatistic(0, 0, 0);
+	
+	shared PlayerState state => PlayerState(info.id, info.name, statistic, table?.id, match?.id, info.iconUrl);
 	
 	shared Boolean isInRoom(RoomId roomId) {
 		return room?.id?.equals(roomId) else false;
@@ -114,10 +120,17 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 		lastActivity = now();
 		
 		if (isInMatch(matchId) && isAtTable(matchId.tableId)) {
+			statistic = statistic.increaseGameCount();
+			room?.registerPlayerChange(id);
 			return true;
 		} else {
 			return false;
 		}
+	}
+	
+	shared void increaseScore(Integer score) {
+		statistic = statistic.increaseWinCount(score);
+		room?.registerPlayerChange(id);
 	}
 
 	shared Boolean isPlaying() {
@@ -139,5 +152,4 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 			return null;
 		}
 	}
-	
 }

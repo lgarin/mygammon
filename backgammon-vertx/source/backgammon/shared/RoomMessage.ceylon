@@ -68,13 +68,13 @@ shared FoundMatchTableMessage parseFoundMatchTableMessage(Object json) {
 	return FoundMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getIntegerOrNull("table"));
 }
 
-shared final class PlayerListMessage(shared actual RoomId roomId, shared [PlayerInfo*] newPlayers = [], shared [PlayerInfo*] oldPlayers = []) satisfies OutboundRoomMessage {
+shared final class PlayerListMessage(shared actual RoomId roomId, shared [PlayerState*] newPlayers = [], shared [PlayerState*] oldPlayers = [], shared [PlayerState*] updatedPlayers = []) satisfies OutboundRoomMessage {
 	shared actual Boolean success = !newPlayers.empty || !oldPlayers.empty;
 	shared actual PlayerId playerId = systemPlayerId;
-	toJson() => toExtendedJson({"newPlayers" -> JsonArray {for (e in newPlayers) e.toJson()}, "oldPlayers" -> JsonArray {for (e in oldPlayers) e.toJson()} });
+	toJson() => toExtendedJson({"newPlayers" -> JsonArray {for (e in newPlayers) e.toJson()}, "oldPlayers" -> JsonArray {for (e in oldPlayers) e.toJson()}, "updatedPlayers" -> JsonArray {for (e in updatedPlayers) e.toJson()} });
 }
 shared PlayerListMessage parsePlayerListMessageMessage(Object json) {
-	return PlayerListMessage(parseRoomId(json.getString("roomId")), json.getArray("newPlayers").narrow<Object>().collect(parsePlayerInfo), json.getArray("oldPlayers").narrow<Object>().collect(parsePlayerInfo));
+	return PlayerListMessage(parseRoomId(json.getString("roomId")), json.getArray("newPlayers").narrow<Object>().collect(parsePlayerState), json.getArray("oldPlayers").narrow<Object>().collect(parsePlayerState), json.getArray("updatedPlayers").narrow<Object>().collect(parsePlayerState));
 }
 
 shared Object formatRoomMessage(RoomMessage message) {

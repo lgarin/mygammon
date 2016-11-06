@@ -85,12 +85,6 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 	shared Object toJson() => Object {"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson(), "leaverId" -> leaverId?.toJson(), "score" -> score};
 }
 
-shared MatchState? parseMatchState(Object? json) {
-	if (exists json) {
-		value winnerId = json.getStringOrNull("winnerId") exists then PlayerId(json.getString("winnerId")) else null;
-		value leaverId = json.getStringOrNull("leaverId") exists then PlayerId(json.getString("leaverId")) else null;
-		return MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), winnerId, leaverId, json.getInteger("score"));
-	} else {
-		return null;
-	}
-}
+shared MatchState parseMatchState(Object json) => MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), parseNullablePlayerId("winnedId"), parseNullablePlayerId("leaverId"), json.getInteger("score"));
+
+shared MatchState? parseNullableMatchState(Object? json) => if (exists json) then parseMatchState(json) else null;

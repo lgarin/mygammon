@@ -7,13 +7,15 @@ import backgammon.shared {
 	TableId,
 	MatchId,
 	MatchState,
-	PlayerListMessage
+	PlayerListMessage,
+	PlayerState
 }
 
 import ceylon.collection {
 	ArrayList,
 	HashMap,
-	unlinked
+	unlinked,
+	HashSet
 }
 import ceylon.time {
 	Instant
@@ -28,6 +30,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	value playerMap = HashMap<PlayerId, Player>(unlinked);
 	
 	value newPlayers = ArrayList<Player>(playerCountLimit);
+	value updatedPlayers = HashSet<Player>(unlinked);
 	value oldPlayers = ArrayList<Player>(playerCountLimit);
 	
 	variable Integer _maxTableCount = 0;
@@ -126,6 +129,16 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 			return null;
 		}
 	}
+	
+	shared Player? registerPlayerChange(PlayerId playerId) {
+		if (exists player = findPlayer(playerId)) {
+			updatedPlayers.add(player);
+			return player;
+		} else {
+			return null;
+		}
+	}
+	
 	shared Table? findMatchTable(PlayerId playerId) {
 		if (exists player = findPlayer(playerId)) {
 			if (exists table = player.table, table.isInRoom(id)) {
@@ -189,17 +202,18 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	}
 	
 	shared PlayerListMessage? createPlayerListDelta() {
-		if (newPlayers.empty && oldPlayers.empty) {
+		if (newPlayers.empty && oldPlayers.empty && updatedPlayers.empty) {
 			return null;
 		}
-		value message = PlayerListMessage(id, [for (element in newPlayers) element.info], [for (element in oldPlayers) element.info]);
+		value message = PlayerListMessage(id, [for (element in newPlayers) element.state], [for (element in oldPlayers) element.state]);
 		newPlayers.clear();
 		oldPlayers.clear();
+		updatedPlayers.clear();
 		return message;
 	}
 	
-	shared [PlayerInfo*] createPlayerList() {
-		return [for (element in playerMap.items) element.info];
+	shared [PlayerState*] createPlayerList() {
+		return [for (element in playerMap.items) element.state];
 	}
 	
 }

@@ -20,7 +20,7 @@ class RoomTest() {
 	value messageList = ArrayList<RoomMessage>();
 	value room = Room("test1", 10, 10, messageList.add);
 	
-	function makePlayerInfo(String id) => PlayerInfo(id, id, null);
+	function makePlayerInfo(String id) => PlayerInfo(id, id);
 	
 	test
 	shared void newRoomHasNoPlayer() {

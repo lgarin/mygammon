@@ -10,13 +10,11 @@ import backgammon.shared {
 	RoomId,
 	parseOutboundRoomMessage,
 	OutboundRoomMessage,
-	PlayerListMessage,
-	PlayerInfo
+	PlayerListMessage
 }
 
 import ceylon.json {
-	Object,
-	JsonArray=Array
+	Object
 }
 import ceylon.regex {
 	regex
@@ -24,6 +22,7 @@ import ceylon.regex {
 shared class RoomPage() extends BasePage() {
 	
 	variable EventBusClient? roomEventClient = null;
+	value playerList = PlayerListModel();
 	
 	RoomId? extractRoomId(String pageUrl) {
 		value match = regex("/room/(\\w+)").find(pageUrl);
@@ -47,10 +46,10 @@ shared class RoomPage() extends BasePage() {
 		return true;
 	}
 	
-	shared void showPlayers(PlayerInfo[] newPlayers) {
-		// TODO should be an array of ActivePlayerInfo
-		value data = if (newPlayers.empty) then "{}" else JsonArray({for (p in newPlayers) Object({"playerId" -> p.id, "playerName" -> p.name, "playerScore" -> 0})}).string;
-		value template = if (newPlayers.empty) then "#player-empty-template" else "#player-row-template";
+	shared void showPlayers(PlayerListMessage message) {
+		playerList.update(message);
+		value data = playerList.toTemplateData();
+		value template = if (playerList.empty) then "#player-empty-template" else "#player-row-template";
 		print(data);
 		dynamic {
 			jQuery("#player-list-table tbody").loadTemplate(jQuery(template), JSON.parse(data));
@@ -59,7 +58,7 @@ shared class RoomPage() extends BasePage() {
 	
 	shared Boolean handleRoomMessage(OutboundRoomMessage message) {
 		if (is PlayerListMessage message) {
-			showPlayers(message.newPlayers);
+			showPlayers(message);
 			return true;
 		} else {
 			return false;

@@ -23,7 +23,7 @@ class PlayerTest() {
 	value table = room.findTable(TableId(room.roomId, 1));
 	assert (exists table);
 	
-	function makePlayer(String id) => Player(PlayerInfo(id, id, null), room);
+	function makePlayer(String id) => Player(PlayerInfo(id, id), room);
 	
 	value player = makePlayer("player");
 	
