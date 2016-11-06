@@ -24,7 +24,7 @@ shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage 
 	string => toJson().string;
 }
 
-shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage satisfies RoomMessage {}
+shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage | RoomStateRequestMessage satisfies RoomMessage {}
 
 shared sealed interface RoomResponseMessage {
 	shared formal Boolean success;
@@ -48,6 +48,11 @@ shared FindMatchTableMessage parseFindMatchTableMessage(Object json) {
 	return FindMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
 }
 
+shared final class RoomStateRequestMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
+shared RoomStateRequestMessage parseRoomStateRequestMessage(Object json) {
+	return RoomStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
+}
+
 shared final class EnteredRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}
 shared EnteredRoomMessage parseEnteredRoomMessage(Object json) {
 	return EnteredRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getBoolean("success"));
@@ -63,8 +68,8 @@ shared FoundMatchTableMessage parseFoundMatchTableMessage(Object json) {
 	return FoundMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getIntegerOrNull("table"));
 }
 
-shared final class PlayerListMessage(shared actual RoomId roomId, shared [PlayerInfo*] newPlayers, shared [PlayerInfo*] oldPlayers) satisfies OutboundRoomMessage {
-	shared actual Boolean success = true;
+shared final class PlayerListMessage(shared actual RoomId roomId, shared [PlayerInfo*] newPlayers = [], shared [PlayerInfo*] oldPlayers = []) satisfies OutboundRoomMessage {
+	shared actual Boolean success = !newPlayers.empty || !oldPlayers.empty;
 	shared actual PlayerId playerId = systemPlayerId;
 	toJson() => toExtendedJson({"newPlayers" -> JsonArray {for (e in newPlayers) e.toJson()}, "oldPlayers" -> JsonArray {for (e in oldPlayers) e.toJson()} });
 }
@@ -81,6 +86,8 @@ shared InboundRoomMessage? parseInboundRoomMessage(String typeName, Object json)
 		return parseEnterRoomMessage(json);
 	} else if (typeName == `class FindMatchTableMessage`.name) {
 		return parseFindMatchTableMessage(json);
+	} else if (typeName == `class RoomStateRequestMessage`.name) {
+		return parseRoomStateRequestMessage(json);
 	} else {
 		return null;
 	}

@@ -188,14 +188,18 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		}
 	}
 	
-	shared PlayerListMessage? createPlayerListDelta () {
+	shared PlayerListMessage? createPlayerListDelta() {
 		if (newPlayers.empty && oldPlayers.empty) {
 			return null;
 		}
-		value message = PlayerListMessage(id, newPlayers.collect((element) => element.info), oldPlayers.collect((element) => element.info));
+		value message = PlayerListMessage(id, [for (element in newPlayers) element.info], [for (element in oldPlayers) element.info]);
 		newPlayers.clear();
 		oldPlayers.clear();
 		return message;
+	}
+	
+	shared [PlayerInfo*] createPlayerList() {
+		return [for (element in playerMap.items) element.info];
 	}
 	
 }

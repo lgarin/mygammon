@@ -1,26 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
     <title>MyGammon</title>
-
-    <meta name="viewport" content="width=1150">
 	
 	<link rel="shortcut icon" type="image/x-icon" href="/static/images/favicon.ico"/>
-    <link rel="stylesheet" href="/static/css/board.css">
+	<link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
-    <script src="/static/javascript/jquery-3.1.0.min.js"></script>
+    <script src="/static/javascript/jquery-3.1.1.min.js"></script>
     <script src="/static/javascript/jquery-ui.min.js"></script>
+    <script src="/static/javascript/bootstrap.min.js"></script>
     <script src="/static/javascript/sockjs.min.js"></script>
     <script src="/static/javascript/vertx-eventbus.js"></script>
 	<script src="/static/javascript/require.js"></script>
+	<script src="/static/javascript/jquery.loadTemplate.min.js"></script>
 	<script type="text/javascript">
+		var room = null;
 	    require.config({
 	        baseUrl : '/client'
 	    });
 	    require(
 	            [ 'backgammon/client/1.1.9/backgammon.client-1.1.9' ],
 	            function(app) {
-	                var room = app.createRoom();
+	                room = app.createRoom();
+	                $(".btn").on("click", function(event) { return room.onButton(event.currentTarget); });
 	            }
 	    );
     </script>
@@ -28,31 +33,38 @@
 
   <body>
     <div id="gui">
-      <div id="player-list">
-        
-        
-      </div><!-- end of player list -->
+    
+      <button id="play" type="button" class="btn btn-primary">Play</button>
+    
+      <table id="player-list-table" class="table table-hover">
+        	<thead>
+        		<tr>
+        		<th>Name</th>
+        		<th>Table</th>
+        		<th>Score</th>
+        		</tr>
+        	</thead>
+        	<tbody>
+        	</tbody>
+        </table>
 
-	  <div id="leave" class="button hidden" style="right:5px;bottom:0px;">
-        <div id="leaveText" class="leave">Leave</div>
-      </div>
     </div><!-- end of gui -->
 
-    <div id="dialog-won" title="Game won">
-	  <p>
-	    <b>Congratulation. You've won the game with </b><b id="game-score">0</b><b> point(s).</b> 
-	  </p>
-	</div>
-	<div id="dialog-lost" title="Game lost">
-	  <p>
-	    <b>Sorry. You've lost the game.</b>
-	  </p>
-	</div>
-	<div id="dialog-leave" title="Leave the game?">
-	  <p>
-	    <b>Do you really want to leave the table?</b>
-	  </p>
-	</div>
+
+	<script type="text/html" id="player-empty-template">
+	    <tr>
+        	<td colspan="3">No player</td>
+        </tr>
+	</script>
+	
+	<script type="text/html" id="player-row-template">
+		<tr id="player-row-template" data-id="playerId" onclick="room.onPlayerClick($(this).attr('id'))">
+   			<td data-content="playerName"></td>
+   			<td data-content="playerTable"></td>
+   			<td data-content="playerScore"></td>
+   		</tr>
+	</script>
+ 
 	<div id="i18n" style="display: none">
 		<div id="_leave">Leave</div>
 		<div id="_cancel">Cancel</div>

@@ -31,7 +31,9 @@ import backgammon.shared {
 	RoomId,
 	TableId,
 	EndGameMessage,
-	MatchId
+	MatchId,
+	RoomStateRequestMessage,
+	PlayerListMessage
 }
 
 import ceylon.time {
@@ -74,6 +76,13 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 					return FoundMatchTableMessage(message.playerId, message.roomId, table.index);
 				} else {
 					return FoundMatchTableMessage(message.playerId, message.roomId, null);
+				}
+			}
+			case (is RoomStateRequestMessage) {
+				if (exists room = findRoom(message.roomId)) {
+					return PlayerListMessage(message.roomId, room.createPlayerList());
+				} else {
+					return PlayerListMessage(message.roomId);
 				}
 			}
 		}

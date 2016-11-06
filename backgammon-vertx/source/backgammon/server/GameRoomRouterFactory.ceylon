@@ -34,7 +34,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 			if (is Throwable result) {
 				routingContext.fail(result);
 			} else {
-				context.sendRedirect("/room/``roomId``/play");
+				context.sendRedirect("/room/``roomId``");
 			}
 		});
 	}
@@ -52,6 +52,10 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 		}
 		
 		googleProfileClient.fetchUserInfo(routingContext, handler);
+	}
+	
+	void handleRoom(RoutingContext routingContext) {
+		routingContext.reroute("static/room.html");
 	}
 
 	void handlePlay(RoutingContext routingContext) {
@@ -78,6 +82,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 	shared Router createRouter() {
 		value router = routerFactory.router(vertx);
 		router.route("/start").handler(handleStart);
+		router.route("/room/:roomId").handler(handleRoom);
 		router.route("/room/:roomId/play").handler(handlePlay);
 		router.route("/room/:roomId/table/:tableId").handler(handleTable);
 		return router;

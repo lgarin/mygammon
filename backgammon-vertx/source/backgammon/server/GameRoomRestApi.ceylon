@@ -13,7 +13,8 @@ import backgammon.shared {
 	EndTurnMessage,
 	EndGameMessage,
 	UndoMovesMessage,
-	MakeMoveMessage
+	MakeMoveMessage,
+	RoomStateRequestMessage
 }
 import io.vertx.ceylon.core {
 	Vertx
@@ -101,9 +102,17 @@ final class GameRoomRestApi(Vertx vertx) {
 			forwardResponse(context, EndGameMessage(matchId, playerId));
 		}
 	}
+	
+	void handlePlayerListRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getCurrentPlayerId()) {
+			forwardResponse(context, RoomStateRequestMessage(playerId, roomId));
+		}
+	}
 
 	shared Router createRouter() {
 		value restApi = routerFactory.router(vertx);
+		restApi.get("/room/:roomId/playerlist").handler(handlePlayerListRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/state").handler(handleTableStateRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/leave").handler(handleTableLeaveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);

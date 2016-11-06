@@ -166,7 +166,7 @@ final class GameRoomEventBus(Vertx vertx) {
 		};
 		
 		value bridgeOptions = BridgeOptions {
-			outboundPermitteds = {PermittedOptions { addressRegex = "^OutboundTableMessage-.*"; }, PermittedOptions { addressRegex = "^OutboundGameMessage-.*"; } };
+			outboundPermitteds = {PermittedOptions { addressRegex = "^OutboundRoomMessage-.*"; }, PermittedOptions { addressRegex = "^OutboundTableMessage-.*"; }, PermittedOptions { addressRegex = "^OutboundGameMessage-.*"; } };
 		};
 		return sockJSHandler.create(vertx, sockJsOptions).bridge(bridgeOptions);
 	}
