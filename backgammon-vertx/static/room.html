@@ -1,89 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <title>MyGammon</title>
-	
-	<link rel="shortcut icon" type="image/x-icon" href="/static/images/favicon.ico"/>
-	<link rel="stylesheet" href="/static/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
-    <script src="/static/javascript/jquery-3.1.1.min.js"></script>
-    <script src="/static/javascript/jquery-ui.min.js"></script>
-    <script src="/static/javascript/bootstrap.min.js"></script>
-    <script src="/static/javascript/sockjs.min.js"></script>
-    <script src="/static/javascript/vertx-eventbus.js"></script>
-	<script src="/static/javascript/require.js"></script>
-	<script src="/static/javascript/jquery.loadTemplate.min.js"></script>
-	<script type="text/javascript">
-		var room = null;
-	    require.config({
-	        baseUrl : '/client'
-	    });
-	    require(
-	            [ 'backgammon/client/1.1.9/backgammon.client-1.1.9' ],
-	            function(app) {
-	                room = app.createRoom();
-	                $(".btn").on("click", function(event) { return room.onButton(event.currentTarget); });
-	            }
-	    );
-    </script>
-  </head>
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+			<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <body>
-    <div id="gui">
-    
-      <button id="play" type="button" class="btn btn-primary">Play</button>
-    
-      <table id="player-list-table" class="table table-hover">
-        	<thead>
-        		<tr>
-        		<th>Name</th>
-        		<th>Table</th>
-        		<th>Score</th>
-        		<th>Win %</th>
-        		</tr>
-        	</thead>
-        	<tbody>
-        	</tbody>
-        </table>
+				<title>MyGammon</title>
 
-    </div><!-- end of gui -->
+				<link rel="shortcut icon" type="image/x-icon" href="/static/images/favicon.ico" />
+				<link rel="stylesheet" href="/static/css/bootstrap.min.css">
+					<link rel="stylesheet" href="/static/css/jquery-ui.min.css">
+						<script src="/static/javascript/jquery-3.1.1.min.js"></script>
+						<script src="/static/javascript/jquery-ui.min.js"></script>
+						<script src="/static/javascript/bootstrap.min.js"></script>
+						<script src="/static/javascript/sockjs.min.js"></script>
+						<script src="/static/javascript/vertx-eventbus.js"></script>
+						<script src="/static/javascript/require.js"></script>
+						<script src="/static/javascript/jquery.loadTemplate.min.js"></script>
+						<script type="text/javascript">
+							require.config({
+							baseUrl : '/client'
+							});
+							require(
+							[ 'backgammon/client/1.1.9/backgammon.client-1.1.9' ],
+							function(app) {
+							var room = app.createRoom();
+							$(".btn").on("click", function(event) { room.onButton(event.currentTarget); });
+							$("#player-list-table tbody").on("click", ".player-row",
+							function(event) { room.onPlayerClick($(this).attr('id')); });
+							}
+							);
+						</script>
+	</head>
+
+	<body>
+
+		<nav class="navbar navbar-inverse">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="http://mygammon.com/index.php">MyGammon</a>
+				</div>
+				<div class="collapse navbar-collapse">
+					<ul class="nav navbar-nav">
+						<li class="active btn btn-default navbar-btn">
+							<span class="glyphicon glyphicon-home"></span>
+							Home
+						</li>
+						<li id="play" class="btn btn-default navbar-btn">
+							<span class="glyphicon glyphicon-triangle-right"></span>
+							Play
+						</li>
+					</ul>
+					<ul class="nav navbar-nav navbar-right">
+						<li>
+							<a href="http://mygammon.com/index.php">
+								<span class="glyphicon glyphicon-log-out"></span>
+								Logout
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</nav> 
+
+		<div id="gui" class="container-fluid">
+			<div class="row content">
+				<div class="col-sm-3 sidenav">
+					<table id="player-list-table" class="table table-hover">
+						<thead>
+							<tr>
+								<th class="col-md-6">Name</th>
+								<th class="col-md-2">Table</th>
+								<th class="col-md-2">Score</th>
+								<th class="col-md-2">Win %</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+				<div class="col-sm-9">
+
+				</div>
+			</div>
+
+		</div><!-- end of gui -->
 
 
-	<script type="text/html" id="player-empty-template">
-	    <tr>
-        	<td colspan="4">No player</td>
-        </tr>
-	</script>
-	
-	<script type="text/html" id="player-row-template">
-		<tr id="player-row-template" data-id="id" onclick="room.onPlayerClick($(this).attr('id'))">
-   			<td><img data-src="iconUrl" style=""></img><span style="margin-left:10px" data-content="name"></span></td>
-   			<td data-content="tableId.index"></td>
-   			<td data-content="score"></td>
-   			<td data-content="win"></td>
-   		</tr>
-	</script>
- 
-	<div id="i18n" style="display: none">
-		<div id="_leave">Leave</div>
-		<div id="_cancel">Cancel</div>
-		<div id="_retry">Play again</div>
-		<div id="_timeout">Timeout</div>
-		<div id="_undo">Undo</div>
-		<div id="_roll">Roll</div>
-		<div id="_submit">Submit</div>
-		<div id="_waiting">Waiting...</div>
-		<div id="_loading">Loading...</div>
-		<div id="_joined">Joined</div>
-		<div id="_ready">Ready</div>
-		<div id="_winner">Winner</div>
-		<div id="_tie">Tie</div>
-		<div id="_left">Left</div>
-		<div id="_begin">Play?</div>
-		<div id="_play">Play</div>
-	</div>
-  </body>
+		<script type="text/html" id="player-empty-template">
+			<tr class="empty-row">
+				<td colspan="4">No active player in this room for the moment</td>
+			</tr>
+		</script>
+
+		<script type="text/html" id="player-row-template">
+			<tr class="player-row" data-id="id">
+				<td>
+					<img data-src="iconUrl" style=""></img>
+					<span style="margin-left:10px" data-content="name"></span>
+				</td>
+				<td data-content="tableId.index"></td>
+				<td data-content="score"></td>
+				<td data-content="win"></td>
+			</tr>
+		</script>
+
+		<div id="i18n" style="display: none">
+			<div id="_leave">Leave</div>
+			<div id="_cancel">Cancel</div>
+			<div id="_retry">Play again</div>
+			<div id="_timeout">Timeout</div>
+			<div id="_undo">Undo</div>
+			<div id="_roll">Roll</div>
+			<div id="_submit">Submit</div>
+			<div id="_waiting">Waiting...</div>
+			<div id="_loading">Loading...</div>
+			<div id="_joined">Joined</div>
+			<div id="_ready">Ready</div>
+			<div id="_winner">Winner</div>
+			<div id="_tie">Tie</div>
+			<div id="_left">Left</div>
+			<div id="_begin">Play?</div>
+			<div id="_play">Play</div>
+		</div>
+	</body>
 </html>
