@@ -7,6 +7,7 @@
 				<title>MyGammon</title>
 
 				<link rel="shortcut icon" type="image/x-icon" href="/static/images/favicon.ico" />
+				<link rel="stylesheet" href="/static/css/room.css">
 				<link rel="stylesheet" href="/static/css/bootstrap.min.css">
 					<link rel="stylesheet" href="/static/css/jquery-ui.min.css">
 						<script src="/static/javascript/jquery-3.1.1.min.js"></script>
@@ -71,16 +72,141 @@
 								<th class="col-md-6">Name</th>
 								<th class="col-md-2">Table</th>
 								<th class="col-md-2">Score</th>
-								<th class="col-md-2">Win %</th>
+								<th class="col-md-2">Win&nbsp;%</th>
 							</tr>
 						</thead>
 						<tbody>
 						</tbody>
 					</table>
-				</div>
+				</div> <!-- end of player list -->
 				<div class="col-sm-9">
-
-				</div>
+				
+					<div id="whitePlayer" class="player">
+						 <div>
+				        	<label id="whitePlayerName"></label>
+				         </div>
+						 <div class="player-picture">
+				         	<img id="whitePlayerImage" src="/static/images/unknown.png"/>
+				         	<span class="white-small-checker"></span>
+				         </div>
+				         <div>
+				         	<span class="glyphicon player-busy" id="whitePlayerActivity"></span>
+				         	<label id="whitePlayerTimer">Loading...</label>
+				         </div>
+				    </div> <!-- end of white player -->
+				    
+				    <div id="blackPlayer" class="player">
+				         <div>
+				        	<label id="blackPlayerName"></label>
+				         </div>
+				         <div class="player-picture">
+				         	<img id="blackPlayerImage" src="/static/images/unknown.png"/>
+				         	<span class="black-small-checker"></span>
+				         </div>
+				         <div>
+				         	<span class="glyphicon player-busy" id="blackPlayerActivity"></span>
+				         	<label id="blackPlayerTimer">Loading...</label>
+				         </div>
+			       </div>  <!-- end of black player -->
+				
+					<div id="game-board">
+				        <div id="whiteDiceNr1" class="dice white-1 hidden"></div>
+				        <div id="whiteDiceNr2" class="dice white-1 hidden"></div>
+				        <div id="whiteDiceNr3" class="dice white-1 hidden"></div>
+				        <div id="whiteDiceNr4" class="dice white-1 hidden"></div>
+				        <div id="blackDiceNr1" class="dice black-1 hidden"></div>
+				        <div id="blackDiceNr2" class="dice black-1 hidden"></div>
+				        <div id="blackDiceNr3" class="dice black-1 hidden"></div>
+				        <div id="blackDiceNr4" class="dice black-1 hidden"></div>
+				
+				        <div id="point-black-graveyard" class="point" style="top:167px;left:187px;">
+				        	<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-white-home" class="point" style="top:188px;left:394px;">
+				        	<div class="topdown-checker hidden" style="top:0px"></div><div class="topdown-checker hidden" style="top:6px"></div><div class="topdown-checker hidden" style="top:12px"></div><div class="topdown-checker hidden" style="top:18px"></div><div class="topdown-checker hidden" style="top:24px"></div><div class="topdown-checker hidden" style="top:30px"></div><div class="topdown-checker hidden" style="top:36px"></div><div class="topdown-checker hidden" style="top:42px"></div><div class="topdown-checker hidden" style="top:48px"></div><div class="topdown-checker hidden" style="top:54px"></div><div class="topdown-checker hidden" style="top:60px"></div><div class="topdown-checker hidden" style="top:66px"></div><div class="topdown-checker hidden" style="top:72px"></div><div class="topdown-checker hidden" style="top:78px"></div><div class="topdown-checker hidden" style="top:84px"></div>
+				        </div>
+				        <div id="point-1" class="point" style="top:167px;left:362px;">
+				        	<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-2" class="point" style="top:167px;left:333px;">
+				        	<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-3" class="point" style="top:167px;left:304px;">
+							<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-4" class="point" style="top:167px;left:275px;">
+							<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-5" class="point" style="top:167px;left:245px;">
+							<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-6" class="point" style="top:167px;left:216px;">
+							<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-7" class="point" style="top:167px;left:159px;">
+							<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-8" class="point" style="top:167px;left:129px;">
+							<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-9" class="point" style="top:167px;left:100px;">
+							<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-10" class="point" style="top:167px;left:71px;">
+							<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-11" class="point" style="top:167px;left:41px;">
+							<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-12" class="point" style="top:167px;left:12px;">
+							<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+				        <div id="point-13" class="point" style="top:8px;left:12px;">
+				        	<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-14" class="point" style="top:8px;left:41px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-15" class="point" style="top:8px;left:71px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-16" class="point" style="top:8px;left:100px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-17" class="point" style="top:8px;left:129px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-18" class="point" style="top:8px;left:159px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-19" class="point" style="top:8px;left:216px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-20" class="point" style="top:8px;left:245px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-21" class="point" style="top:8px;left:275px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-22" class="point" style="top:8px;left:304px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-23" class="point" style="top:8px;left:333px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-24" class="point" style="top:8px;left:362px;">
+							<div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:80px"></div>
+				        </div>
+				        <div id="point-black-home" class="point" style="top:18px;left:394px;">
+				        	<div class="topdown-checker hidden" style="top:0px"></div><div class="topdown-checker hidden" style="top:6px"></div><div class="topdown-checker hidden" style="top:12px"></div><div class="topdown-checker hidden" style="top:18px"></div><div class="topdown-checker hidden" style="top:24px"></div><div class="topdown-checker hidden" style="top:30px"></div><div class="topdown-checker hidden" style="top:36px"></div><div class="topdown-checker hidden" style="top:42px"></div><div class="topdown-checker hidden" style="top:48px"></div><div class="topdown-checker hidden" style="top:54px"></div><div class="topdown-checker hidden" style="top:60px"></div><div class="topdown-checker hidden" style="top:66px"></div><div class="topdown-checker hidden" style="top:72px"></div><div class="topdown-checker hidden" style="top:78px"></div><div class="topdown-checker hidden" style="top:84px"></div>
+				        </div>
+				        <div id="point-white-graveyard" class="point" style="top:19px;left:187px;">
+				        	<div class="checker hidden" style="top:100px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div><div class="checker hidden" style="top:0px"></div><div class="checker hidden" style="top:90px"></div><div class="checker hidden" style="top:70px"></div><div class="checker hidden" style="top:50px"></div><div class="checker hidden" style="top:30px"></div><div class="checker hidden" style="top:10px"></div><div class="checker hidden" style="top:80px"></div><div class="checker hidden" style="top:60px"></div><div class="checker hidden" style="top:40px"></div><div class="checker hidden" style="top:20px"></div>
+				        </div>
+			        
+			       </div><!-- end of game board -->
+			       
+				</div> <!-- end of live game -->
 			</div>
 
 		</div><!-- end of gui -->

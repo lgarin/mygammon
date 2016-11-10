@@ -19,8 +19,13 @@ import ceylon.json {
 import ceylon.regex {
 	regex
 }
+import backgammon.client.board {
+
+	BoardGui
+}
 shared class RoomPage() extends BasePage() {
 	
+	value gui = BoardGui(window.document);
 	variable EventBusClient? roomEventClient = null;
 	value playerList = PlayerListModel();
 	
@@ -42,6 +47,7 @@ shared class RoomPage() extends BasePage() {
 	}
 	
 	shared Boolean onPlayerClick(String playerId) {
+		// TODO
 		print(playerId);
 		return true;
 	}
@@ -50,7 +56,6 @@ shared class RoomPage() extends BasePage() {
 		playerList.update(message);
 		value data = playerList.toTemplateData();
 		value template = if (playerList.empty) then "#player-empty-template" else "#player-row-template";
-		print(data);
 		dynamic {
 			jQuery("#player-list-table tbody").loadTemplate(jQuery(template), JSON.parse(data));
 		}
@@ -78,6 +83,10 @@ shared class RoomPage() extends BasePage() {
 			print(playerInfo.toJson());
 			roomEventClient = EventBusClient("OutboundRoomMessage-``roomId``", onServerMessage, onServerError);
 			makeApiRequest("/api/room/``roomId``/playerlist");
+			gui.showEmptyGame();
+		} else {
+			gui.addClass("play", "hidden");
+			gui.showEmptyGame();
 		}
 	}
 }

@@ -190,8 +190,8 @@ body {
 
 .topdown-checker {
     position: absolute;
-    width: 43px;
-    min-width: 43px;
+    width: 44px;
+    min-width: 44px;
     height: 17px;
     min-height: 17px;
     background-image: url("../images/checkers_topdown.png");
