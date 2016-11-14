@@ -24,10 +24,10 @@
 							require(
 							[ 'backgammon/client/1.1.9/backgammon.client-1.1.9' ],
 							function(app) {
-							var room = app.createRoom();
-							$(".btn").on("click", function(event) { room.onButton(event.currentTarget); });
-							$("#player-list-table tbody").on("click", ".player-row",
-							function(event) { room.onPlayerClick($(this).attr('id')); });
+								var room = app.createRoom();
+								$(".btn").on("click", function(event) { room.onButton(event.currentTarget); });
+								$("#player-list-table tbody").on("click", ".player-row", function(event) { room.onPlayerClick($(this).attr('id')); });
+								window.setInterval(function() { return room.onTimer(); }, 100);
 							}
 							);
 						</script>

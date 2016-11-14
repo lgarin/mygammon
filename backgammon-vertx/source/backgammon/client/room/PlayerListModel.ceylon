@@ -1,6 +1,7 @@
 import backgammon.shared {
 	PlayerState,
-	PlayerListMessage
+	PlayerListMessage,
+	TableId
 }
 
 import ceylon.collection {
@@ -24,6 +25,13 @@ class PlayerListModel() {
 	
 	function toRowData(PlayerState state) {
 		return Object({"id" -> state.id, "name" -> state.name, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.iconUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage});
+	}
+	
+	shared TableId? findTable(String playerId) {
+		if (exists playerState = playerMap[playerId]) {
+			return playerState.tableId;
+		}
+		return null;
 	}
 	
  	shared String toTemplateData() {
