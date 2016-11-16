@@ -201,13 +201,14 @@
 .player {
 	display: inline-block;
     padding: 5px;
-    width: 210px;
+    width: 200px;
     word-wrap: break-word;
 }
 
 .player.selected {
+  margin: 10px;
   border-radius:5px;
-  background-color: #804000;
+  background-color: #F5F5F5;
   opacity: 1;
 }
 

@@ -1,14 +1,13 @@
-import backgammon.client {
-
-	GameGui
+import backgammon.client.board {
+	BoardGui
 }
 import backgammon.client.browser {
-
 	Document
 }
-class RoomGui(Document document) extends GameGui(document) {
+class RoomGui(Document document) extends BoardGui(document) {
 	
 	value playButtonId = "play";
+	value tablePreviewId = "table-preview";
 	
 	shared void hidePlayButton() {
 		addClass(playButtonId, "hidden");
@@ -16,5 +15,13 @@ class RoomGui(Document document) extends GameGui(document) {
 	
 	shared void showPlayButton() {
 		removeClass(playButtonId, "hidden");
+	}
+	
+	shared void hideTablePreview() {
+		addClass(tablePreviewId, "hidden");
+	}
+	
+	shared void showTablePreview() {
+		removeClass(tablePreviewId, "hidden");
 	}
 }

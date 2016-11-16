@@ -3,7 +3,6 @@ import backgammon.client {
 	EventBusClient
 }
 import backgammon.client.board {
-	BoardGui,
 	TableClient
 }
 import backgammon.client.browser {
@@ -59,7 +58,7 @@ import ceylon.time {
 }
 shared class RoomPage() extends BasePage() {
 	
-	value gui = BoardGui(window.document);
+	value gui = RoomGui(window.document);
 	variable TableClient? tableClient = null;
 	variable EventBusClient? roomEventClient = null;
 	variable EventBusClient? tableEventClient = null;
@@ -119,11 +118,13 @@ shared class RoomPage() extends BasePage() {
 		}
 		
 		if (exists tableId = playerList.findTable(playerId), exists playerInfo = extractPlayerInfo(window.document.cookie)) {
+			gui.showInitialState();
 			tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
 			tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
 			gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
+			gui.showTablePreview();
 		} else {
-			gui.showInitialState();
+			gui.hideTablePreview();
 		}
 		
 		return true;
@@ -134,7 +135,7 @@ shared class RoomPage() extends BasePage() {
 		value data = playerList.toTemplateData();
 		value template = if (playerList.empty) then "#player-empty-template" else "#player-row-template";
 		dynamic {
-			jQuery("#player-list-table tbody").loadTemplate(jQuery(template), JSON.parse(data));
+			jQuery("#player-list tbody").loadTemplate(jQuery(template), JSON.parse(data));
 		}
 	}
 	

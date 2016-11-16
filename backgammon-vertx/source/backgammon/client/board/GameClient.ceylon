@@ -121,7 +121,9 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		gui.showPlayerMessage(currentColor, gui.formatPeriod(remainingTime, gui.timeoutTextKey), true);
 		gui.showPlayerMessage(currentColor.oppositeColor, gui.waitingTextKey, true);
 		
-		if (exists color = playerColor, game.mustMakeMove(color)) {
+		if (!exists playerColor) {
+			gui.showCurrentPlayer(currentColor);
+		} else if (game.mustMakeMove(playerColor)) {
 			gui.showCurrentPlayer(playerColor);
 		} else {
 			gui.showCurrentPlayer(null);
