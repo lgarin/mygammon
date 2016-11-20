@@ -32,11 +32,17 @@ shared abstract class BaseGui(Document document) {
 	}
 	
 	shared void showDialog(String dialogName, {<String->String>*} variableMap = {}) {
+		replaceVariables(variableMap);
+		dynamic {
+			jQuery("#``dialogName``").dialog("open");
+		}
+	}
+	
+	shared void replaceVariables({<String->String>*} variableMap) {
 		dynamic {
 			for (value variableEntry in variableMap) {
 				jQuery("#``variableEntry.key``").html(variableEntry.item);
 			}
-			jQuery("#``dialogName``").dialog("open");
 		}
 	}
 	

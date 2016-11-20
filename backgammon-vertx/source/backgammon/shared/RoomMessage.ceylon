@@ -24,13 +24,13 @@ shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage 
 	string => toJson().string;
 }
 
-shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage | RoomStateRequestMessage satisfies RoomMessage {}
+shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage | FindEmptyTableMessage | RoomStateRequestMessage satisfies RoomMessage {}
 
 shared sealed interface RoomResponseMessage {
 	shared formal Boolean success;
 }
 
-shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeftRoomMessage | FoundMatchTableMessage | PlayerListMessage satisfies RoomMessage & RoomResponseMessage {
+shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeftRoomMessage | FoundMatchTableMessage | FoundEmptyTableMessage | PlayerListMessage satisfies RoomMessage & RoomResponseMessage {
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success };
 }
 
@@ -42,10 +42,18 @@ shared EnterRoomMessage parseEnterRoomMessage(Object json) {
 }
 
 shared final class LeaveRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
+shared LeaveRoomMessage parseLeaveRoomMessage(Object json) {
+	return LeaveRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
+}
 
 shared final class FindMatchTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
 shared FindMatchTableMessage parseFindMatchTableMessage(Object json) {
 	return FindMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
+}
+
+shared final class FindEmptyTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
+shared FindEmptyTableMessage parseFindEmptyTableMessage(Object json) {
+	return FindEmptyTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
 }
 
 shared final class RoomStateRequestMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
@@ -59,6 +67,9 @@ shared EnteredRoomMessage parseEnteredRoomMessage(Object json) {
 }
 
 shared final class LeftRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}
+shared LeftRoomMessage parseLeftRoomMessage(Object json) {
+	return LeftRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getBoolean("success"));
+}
 
 shared final class FoundMatchTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer? table) satisfies OutboundRoomMessage {
 	shared actual Boolean success => table exists;
@@ -66,6 +77,15 @@ shared final class FoundMatchTableMessage(shared actual PlayerId playerId, share
 }
 shared FoundMatchTableMessage parseFoundMatchTableMessage(Object json) {
 	return FoundMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getIntegerOrNull("table"));
+}
+
+shared final class FoundEmptyTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer? table) satisfies OutboundRoomMessage {
+	shared actual Boolean success => table exists;
+	toJson() => toExtendedJson({"table" -> table});
+	shared TableId? tableId => if (exists table) then TableId(roomId.roomId, table) else null;
+}
+shared FoundEmptyTableMessage parseFoundEmptyTableMessage(Object json) {
+	return FoundEmptyTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getIntegerOrNull("table"));
 }
 
 shared final class PlayerListMessage(shared actual RoomId roomId, shared [PlayerState*] newPlayers = [], shared [PlayerState*] oldPlayers = [], shared [PlayerState*] updatedPlayers = []) satisfies OutboundRoomMessage {
@@ -84,8 +104,12 @@ shared Object formatRoomMessage(RoomMessage message) {
 shared InboundRoomMessage? parseInboundRoomMessage(String typeName, Object json) {
 	if (typeName == `class EnterRoomMessage`.name) {
 		return parseEnterRoomMessage(json);
+	} else if (typeName == `class LeaveRoomMessage`.name) {
+		return parseLeaveRoomMessage(json);
 	} else if (typeName == `class FindMatchTableMessage`.name) {
 		return parseFindMatchTableMessage(json);
+	} else if (typeName == `class FindEmptyTableMessage`.name) {
+		return parseFindEmptyTableMessage(json);
 	} else if (typeName == `class RoomStateRequestMessage`.name) {
 		return parseRoomStateRequestMessage(json);
 	} else {
@@ -96,8 +120,12 @@ shared InboundRoomMessage? parseInboundRoomMessage(String typeName, Object json)
 shared OutboundRoomMessage? parseOutboundRoomMessage(String typeName, Object json) {
 	if (typeName == `class EnteredRoomMessage`.name) {
 		return parseEnteredRoomMessage(json);
+	} else if (typeName == `class LeftRoomMessage`.name) {
+		return parseLeftRoomMessage(json);
 	} else if (typeName == `class FoundMatchTableMessage`.name) {
 		return parseFoundMatchTableMessage(json);
+	} else if (typeName == `class FoundEmptyTableMessage`.name) {
+		return parseFoundEmptyTableMessage(json);
 	} else if (typeName == `class PlayerListMessage`.name) {
 		return parsePlayerListMessageMessage(json);
 	} else {

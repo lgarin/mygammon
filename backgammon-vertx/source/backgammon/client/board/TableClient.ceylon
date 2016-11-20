@@ -22,7 +22,7 @@ import ceylon.time {
 	Instant
 }
 
-shared final class TableClient(TableId tableId, PlayerInfo playerInfo, BoardGui gui, Anything(InboundGameMessage|InboundMatchMessage|InboundTableMessage) messageBroadcaster) {
+shared final class TableClient(shared TableId tableId, PlayerInfo playerInfo, BoardGui gui, Anything(InboundGameMessage|InboundMatchMessage|InboundTableMessage) messageBroadcaster) {
 	
 	value playerId = PlayerId(playerInfo.id);
 	variable MatchClient? matchClient = null;

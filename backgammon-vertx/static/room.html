@@ -46,14 +46,18 @@
 							<span class="glyphicon glyphicon-home"></span>
 							Home
 						</li>
-						<li id="play" class="btn btn-default navbar-btn">
+						<li id="play" class="btn btn-default navbar-btn hidden">
 							<span class="glyphicon glyphicon-triangle-right"></span>
 							Play
 						</li>
+						<li id="new" class="btn btn-default navbar-btn hidden">
+							<span class="glyphicon glyphicon-plus-sign"></span>
+							New table
+						</li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
-						<li>
-							<a href="http://mygammon.com/index.php">
+						<li id="exit" class="btn">
+							<a>
 								<span class="glyphicon glyphicon-log-out"></span>
 								Logout
 							</a>
@@ -206,6 +210,11 @@
 			        
 			       </div><!-- end of game board -->
 			       
+			       <div>
+			       		Queue: <b id="queue-size">0</b>
+			       		<button id="sit">Sit</button>
+			       </div>
+			       
 				</div> <!-- end of live game -->
 			</div>
 
@@ -224,7 +233,7 @@
 					<img data-src="iconUrl" style=""></img>
 					<span style="margin-left:10px" data-content="name"></span>
 				</td>
-				<td data-content="tableId.index"></td>
+				<td data-content="tableId.table"></td>
 				<td data-content="score"></td>
 				<td data-content="win"></td>
 			</tr>

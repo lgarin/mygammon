@@ -44,7 +44,15 @@ import backgammon.shared {
 	InboundRoomMessage,
 	EnterRoomMessage,
 	LeaveRoomMessage,
-	FindMatchTableMessage
+	FindMatchTableMessage,
+	FindEmptyTableMessage,
+	FoundEmptyTableMessage,
+	TableId,
+	PlayerInfo,
+	JoinTableMessage,
+	LeftTableMessage,
+	JoinedTableMessage,
+	LeftRoomMessage
 }
 
 import ceylon.json {
@@ -65,6 +73,10 @@ shared class RoomPage() extends BasePage() {
 	variable EventBusClient? gameEventClient = null;
 	value playerList = PlayerListModel();
 	
+	variable Integer queueSize = 0;
+	variable PlayerInfo? playerInfo = null;
+	variable RoomId? roomId = null;
+	
 	RoomId? extractRoomId(String pageUrl) {
 		value match = regex("/room/(\\w+)").find(pageUrl);
 		if (exists match, exists roomId = match.groups[0]) {
@@ -74,12 +86,37 @@ shared class RoomPage() extends BasePage() {
 	}
 	
 	shared Boolean onButton(HTMLElement target) {
-		if (target.id == "play") {
-			if (exists roomId = extractRoomId(window.location.href)) {
-				window.location.\iassign("``roomId``/play");
+		if (target.id == gui.playButtonId) {
+			if (exists currentRoomId = roomId) {
+				window.location.\iassign("``currentRoomId``/play");
+				return true;
+			} else {
+				return false;
 			}
+		} else if (target.id == gui.newButtonId) {
+			if (exists currentRoomId = roomId, exists currentPlayerInfo = playerInfo) {
+				roomCommander(FindEmptyTableMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
+				return true;
+			} else {
+				return false;
+			}
+		} else if (target.id == gui.sitButtonId) {
+			if (exists currentRoomId = roomId, exists currentPlayerInfo = playerInfo, exists tableId = tableClient?.tableId) {
+				gameCommander(JoinTableMessage(PlayerId(currentPlayerInfo.id), tableId));
+				return true;
+			} else {
+				return false;
+			}
+		} else if (target.id == gui.exitButtonId) {
+			if (exists currentRoomId = roomId, exists currentPlayerInfo = playerInfo) {
+				roomCommander(LeaveRoomMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
 		}
-		return true;
 	}
 	
 	void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage message) {
@@ -109,33 +146,49 @@ shared class RoomPage() extends BasePage() {
 		case (is TableStateRequestMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/state");
 		}
+		case (is JoinTableMessage) {
+			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/join");
+		}
+	}
+	
+	function showTable(TableId newTableId, PlayerInfo playerInfo) {
+		if (exists currentTableClient = tableClient, currentTableClient.tableId == newTableId) {
+			return true;
+		}
+		gui.showInitialState();
+		tableClient = TableClient(newTableId, playerInfo, gui, gameCommander);
+		tableEventClient = EventBusClient("OutboundTableMessage-``newTableId``", onServerMessage, onServerError);
+		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), newTableId));
+		gui.showTablePreview();
+		gui.showSitButton();
+		gui.showQueueSize(null);
+		return true;
 	}
 	
 	shared Boolean onPlayerClick(String playerId) {
+		
+		if (exists currentGameEventClient = gameEventClient) {
+			currentGameEventClient.close();
+		}
 		
 		if (exists currentTableEventClient = tableEventClient) {
 			currentTableEventClient.close();
 		}
 		
-		if (exists tableId = playerList.findTable(playerId), exists playerInfo = extractPlayerInfo(window.document.cookie)) {
-			gui.showInitialState();
-			tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
-			tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
-			gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
-			gui.showTablePreview();
+		if (exists tableId = playerList.findTable(playerId), exists currentPlayerInfo = playerInfo) {
+			return showTable(tableId, currentPlayerInfo);
 		} else {
 			gui.hideTablePreview();
+			return true;
 		}
-		
-		return true;
 	}
 	
 	shared void showPlayers(PlayerListMessage message) {
 		playerList.update(message);
-		value data = playerList.toTemplateData();
-		value template = if (playerList.empty) then "#player-empty-template" else "#player-row-template";
-		dynamic {
-			jQuery("#player-list tbody").loadTemplate(jQuery(template), JSON.parse(data));
+		if (playerList.empty) {
+			gui.showEmptyPlayerList();
+		} else {
+			gui.showPlayerList(playerList.toTemplateData());
 		}
 	}
 	
@@ -151,6 +204,24 @@ shared class RoomPage() extends BasePage() {
 		if (is PlayerListMessage message) {
 			showPlayers(message);
 			return true;
+		} else if (is FoundEmptyTableMessage message) {
+			if (exists tableId = message.tableId, exists currentPlayerInfo = playerInfo) {
+				return showTable(tableId, currentPlayerInfo);
+			} else {
+				return false;
+			}
+		} else if (is LeftRoomMessage message) {
+			
+			if (exists currentGameEventClient = gameEventClient) {
+				currentGameEventClient.close();
+			}
+			if (exists currentTableEventClient = tableEventClient) {
+				currentTableEventClient.close();
+			}
+			playerInfo = null;
+			window.document.cookie = "";
+			gui.showClosedState();
+			return true;
 		} else {
 			return false;
 		}
@@ -163,10 +234,17 @@ shared class RoomPage() extends BasePage() {
 		}
 		
 		if (is TableStateResponseMessage message, exists currentMatch = message.match) {
+			gui.showQueueSize(queueSize = message.queueSize);
 			// TODO some changes may occur on the state between the response and the registration
 			gameEventClient = EventBusClient("OutboundGameMessage-``currentMatch.id``", onServerMessage, onServerError);
 		} else if (is CreatedMatchMessage message) {
 			gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
+		}
+		
+		if (is JoinedTableMessage message) {
+			gui.showQueueSize(++queueSize);
+		} else if (is LeftTableMessage message) {
+			gui.showQueueSize(--queueSize);
 		}
 		
 		if (exists currentClient = tableClient) {
@@ -222,20 +300,26 @@ shared class RoomPage() extends BasePage() {
 		case (is RoomStateRequestMessage) {
 			makeApiRequest("/api/room/``message.roomId``/playerlist");
 		}
+		case (is FindEmptyTableMessage) {
+			makeApiRequest("/api/room/``message.roomId``/opentable");
+		}
 		case (is EnterRoomMessage) {}
-		case (is LeaveRoomMessage) {}
+		case (is LeaveRoomMessage) {
+			makeApiRequest("/api/room/``message.roomId``/leave");
+		}
 		case (is FindMatchTableMessage) {}
 	}
 
 	shared void run() {
-		if (exists roomId = extractRoomId(window.location.href), exists playerInfo = extractPlayerInfo(window.document.cookie)) {
-			print(playerInfo.toJson());
-			roomEventClient = EventBusClient("OutboundRoomMessage-``roomId``", onServerMessage, onServerError);
-			roomCommander(RoomStateRequestMessage(PlayerId(playerInfo.id), roomId));
-			gui.showEmptyGame();
+		roomId = extractRoomId(window.location.href);
+		playerInfo = extractPlayerInfo(window.document.cookie);
+		if (exists currentRoomId = roomId, exists currentPlayerInfo = playerInfo) {
+			print(currentPlayerInfo.toJson());
+			roomEventClient = EventBusClient("OutboundRoomMessage-``currentRoomId``", onServerMessage, onServerError);
+			roomCommander(RoomStateRequestMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
+			gui.showBeginState(currentPlayerInfo);
 		} else {
-			gui.addClass("play", "hidden");
-			gui.showEmptyGame();
+			gui.showClosedState();
 		}
 	}
 }

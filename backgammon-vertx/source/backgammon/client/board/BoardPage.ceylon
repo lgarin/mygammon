@@ -33,7 +33,8 @@ import backgammon.shared {
 	AcceptMatchMessage,
 	TableStateResponseMessage,
 	EndTurnMessage,
-	PlayerId
+	PlayerId,
+	JoinTableMessage
 }
 
 import ceylon.json {
@@ -221,6 +222,9 @@ shared class BoardPage() extends BasePage() {
 		}
 		case (is GameStateRequestMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/state");
+		}
+		case (is JoinTableMessage) {
+			// ignore
 		}
 		case (is LeaveTableMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/leave");

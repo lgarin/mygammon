@@ -14,7 +14,10 @@ import backgammon.shared {
 	EndGameMessage,
 	UndoMovesMessage,
 	MakeMoveMessage,
-	RoomStateRequestMessage
+	RoomStateRequestMessage,
+	FindEmptyTableMessage,
+	JoinTableMessage,
+	LeaveRoomMessage
 }
 import io.vertx.ceylon.core {
 	Vertx
@@ -50,6 +53,13 @@ final class GameRoomRestApi(Vertx vertx) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists tableId = context.getRequestTableId(), exists playerId = context.getCurrentPlayerId()) {
 			forwardResponse(context, LeaveTableMessage(playerId, tableId));
+		}
+	}
+	
+	void handleTableJoinRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		if (exists tableId = context.getRequestTableId(), exists playerId = context.getCurrentPlayerId()) {
+			forwardResponse(context, JoinTableMessage(playerId, tableId));
 		}
 	}
 	
@@ -109,12 +119,29 @@ final class GameRoomRestApi(Vertx vertx) {
 			forwardResponse(context, RoomStateRequestMessage(playerId, roomId));
 		}
 	}
+	
+	void handleOpenTableRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getCurrentPlayerId()) {
+			forwardResponse(context, FindEmptyTableMessage(playerId, roomId));
+		}
+	}
+	
+	void handleRoomLeaveRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getCurrentPlayerId()) {
+			forwardResponse(context, LeaveRoomMessage(playerId, roomId));
+		}
+	}
 
 	shared Router createRouter() {
 		value restApi = routerFactory.router(vertx);
 		restApi.get("/room/:roomId/playerlist").handler(handlePlayerListRequest);
+		restApi.get("/room/:roomId/opentable").handler(handleOpenTableRequest);
+		restApi.get("/room/:roomId/leave").handler(handleRoomLeaveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/state").handler(handleTableStateRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/leave").handler(handleTableLeaveRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/join").handler(handleTableJoinRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/accept").handler(handlMatchAcceptRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/begin").handler(handlPlayerBeginRequest);

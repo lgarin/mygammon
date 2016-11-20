@@ -71,17 +71,18 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		return _maxTableCount;
 	}
 	
-	function findReadyTable() => tableList.find((table) => table.queueSize == 1);
-	function findEmptyTable() => tableList.find((table) => table.queueSize == 0);
-	
-	function sitPlayer(Player player) {
-		if (exists table = findReadyTable(), table.sitPlayer(player)) {
-			return table;
-		}
-		if (exists table = findEmptyTable(), table.sitPlayer(player)) {
+	function openTable(Player player) {
+		if (exists table = tableList.find((table) => table.queueSize == 0), table.sitPlayer(player)) {
 			return table;
 		}
 		return null;
+	}
+	
+	function sitPlayer(Player player) {
+		if (exists table = tableList.find((table) => table.queueSize == 1), table.sitPlayer(player)) {
+			return table;
+		}
+		return openTable(player);
 	}
 	
 	function doRemovePlayer(Player player) {
@@ -151,6 +152,28 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 				}
 			} else if (!player.table exists) {
 				return sitPlayer(player);
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	
+	shared Table? findEmptyTable(PlayerId playerId) {
+		if (exists player = findPlayer(playerId)) {
+			if (exists table = player.table, table.isInRoom(id)) {
+				if (player.isPlaying()) {
+					return null;
+				} else if (table.queueSize == 1) {
+					return table;
+				} else if (table.removePlayer(playerId) exists) {
+					return openTable(player);
+				} else {
+					return null;
+				}
+			} else if (!player.table exists) {
+				return openTable(player);
 			} else {
 				return null;
 			}
