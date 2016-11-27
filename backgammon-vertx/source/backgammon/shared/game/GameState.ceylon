@@ -52,9 +52,9 @@ shared final class GameState() extends Object() {
 				blackReady==that.blackReady && 
 				whiteReady==that.whiteReady && 
 				equalsOrBothNull(remainingTime, that.remainingTime) &&
-				blackCheckerCounts==that.blackCheckerCounts && 
-				whiteCheckerCounts==that.whiteCheckerCounts && 
-				currentMoves==that.currentMoves;
+				blackCheckerCounts.sequence()==that.blackCheckerCounts.sequence() && 
+				whiteCheckerCounts.sequence()==that.whiteCheckerCounts.sequence() && 
+				currentMoves.sequence()==that.currentMoves.sequence();
 		}
 		else {
 			return false;

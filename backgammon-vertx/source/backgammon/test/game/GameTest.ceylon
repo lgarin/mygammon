@@ -40,8 +40,8 @@ class GameTest() {
 		value state = game.state;
 		assert (state.currentColor is Null);
 		assert (state.currentRoll is Null);
-		assert (state.blackCheckerCounts == [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 0, 0]);
-		assert (state.whiteCheckerCounts == [0, 0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0]);
+		assert (state.blackCheckerCounts.sequence() == [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 0, 0]);
+		assert (state.whiteCheckerCounts.sequence() == [0, 0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0]);
 		assert (!state.blackReady);
 		assert (!state.whiteReady);
 		assert (state.remainingUndo == 0);

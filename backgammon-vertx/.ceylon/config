@@ -5,7 +5,6 @@ resource=resource
 [defaults]
 flatclasspath=true
 encoding=Cp1252
-offline=false
 autoexportmavendependencies=false
 
 [repository "MAVEN"]
@@ -14,9 +13,13 @@ url=aether:C:\\Dev\\maven\\settings.xml
 [repository "CACHE"]
 url=C:\\Dev\\ceylon\\cache
 
+[repository "REMOTE"]
+url=https://modules.ceylon-lang.org/repo/1
+
 [repositories]
 cache=+CACHE
 other=+MAVEN
+remote=+REMOTE
 
 [formattool]
 profile=default
