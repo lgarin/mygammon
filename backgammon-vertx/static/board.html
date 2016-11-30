@@ -36,7 +36,6 @@
 	            	$(".btn").on("click", function(event) { return board.onButton(event.currentTarget); });
 	            	$(".checker").on("click", function(event) { return board.onChecker(event.currentTarget); });
 	            	$(".topdown-checker").on("click", function(event) { return board.onChecker(event.currentTarget); });
-	            	window.setInterval(function() { return board.onTimer(); }, 100);
 	                $("#dialog-won").dialog({
 	                	autoOpen: false,
 	                    modal: true,
@@ -75,6 +74,7 @@
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
+	                window.setInterval(function() { return board.onTimer(); }, 100);
 	            }
 	    );
     </script>

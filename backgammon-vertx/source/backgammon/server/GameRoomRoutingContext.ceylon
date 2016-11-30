@@ -21,16 +21,19 @@ import io.vertx.ceylon.web {
 final class GameRoomRoutingContext(RoutingContext rc) {
 	
 	shared void setCurrentPlayerInfo(PlayerInfo playerInfo) {
-		rc.session()?.put("playerInfo", playerInfo);
-		rc.addCookie(cookieFactory.cookie("playerInfo", playerInfo.toBase64()));
+		if (exists session = rc.session()) {
+			session.put("playerInfo", playerInfo);
+			rc.addCookie(cookieFactory.cookie("playerInfo", playerInfo.toBase64()).setMaxAge(session.timeout() / 1000));
+		}
 	}
 	
 	shared void clearUser() {
 		rc.session()?.destroy();
 		rc.user()?.clearCache();
 		rc.clearUser();
-		rc.removeCookie("playerInfo");
-		rc.removeCookie("vertx-web.session");
+		if (exists cookie = rc.cookies().find((cookie) => cookie.getName() == "playerInfo")) {
+			rc.addCookie(cookie.setMaxAge(0));
+		}
 	}
 	
 	PlayerInfo? getCurrentPlayerInfo() => rc.session()?.get<PlayerInfo>("playerInfo");

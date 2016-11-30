@@ -30,7 +30,7 @@ shared sealed interface RoomResponseMessage {
 	shared formal Boolean success;
 }
 
-shared sealed interface OutboundRoomMessage of EnteredRoomMessage | LeftRoomMessage | FoundMatchTableMessage | FoundEmptyTableMessage | PlayerListMessage | PlayerStateMessage satisfies RoomMessage & RoomResponseMessage {
+shared sealed interface OutboundRoomMessage of RoomActionResponseMessage | FoundMatchTableMessage | FoundEmptyTableMessage | PlayerListMessage | PlayerStateMessage satisfies RoomMessage & RoomResponseMessage {
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success };
 }
 
@@ -66,14 +66,9 @@ shared PlayerStateRequestMessage parsePlayerStateRequestMessage(Object json) {
 	return PlayerStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
 }
 
-shared final class EnteredRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}
-shared EnteredRoomMessage parseEnteredRoomMessage(Object json) {
-	return EnteredRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getBoolean("success"));
-}
-
-shared final class LeftRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}
-shared LeftRoomMessage parseLeftRoomMessage(Object json) {
-	return LeftRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getBoolean("success"));
+shared final class RoomActionResponseMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}
+shared RoomActionResponseMessage parseRoomActionResponseMessage(Object json) {
+	return RoomActionResponseMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getBoolean("success"));
 }
 
 shared final class FoundMatchTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared Integer? table) satisfies OutboundRoomMessage {
@@ -135,10 +130,8 @@ shared InboundRoomMessage? parseInboundRoomMessage(String typeName, Object json)
 }
 
 shared OutboundRoomMessage? parseOutboundRoomMessage(String typeName, Object json) {
-	if (typeName == `class EnteredRoomMessage`.name) {
-		return parseEnteredRoomMessage(json);
-	} else if (typeName == `class LeftRoomMessage`.name) {
-		return parseLeftRoomMessage(json);
+	if (typeName == `class RoomActionResponseMessage`.name) {
+		return parseRoomActionResponseMessage(json);
 	} else if (typeName == `class FoundMatchTableMessage`.name) {
 		return parseFoundMatchTableMessage(json);
 	} else if (typeName == `class FoundEmptyTableMessage`.name) {

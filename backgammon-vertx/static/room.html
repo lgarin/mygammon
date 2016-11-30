@@ -27,7 +27,6 @@
 					var room = app.createRoom();
 					$(".btn").on("click", function(event) { return room.onButton(event.currentTarget); });
 					$("#player-list tbody").on("click", ".player-row", function(event) { return room.onPlayerClick($(this).attr('id')); });
-					window.setInterval(function() { return room.onTimer(); }, 100);
 					$("#dialog-logout").dialog({
 		            	autoOpen: false,
 		                modal: true,
@@ -39,6 +38,7 @@
 		            	  	click: function() { $(this).dialog("close"); return true; }
 		                }]
 	            	});
+	            	window.setInterval(function() { return room.onTimer(); }, 100);
 				}
 			);
 		</script>

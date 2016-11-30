@@ -47,11 +47,39 @@ import ceylon.time {
 	now
 }
 shared class BoardPage() extends BasePage() {
+	value tableRegex = regex("/room/(\\w+)/table/(\\d+)");
 	value gui = BoardGui(window.document);
 	variable TableClient? tableClient = null;
 	variable String? draggedElementStyle = null;
 	variable EventBusClient? tableEventClient = null;
 	variable EventBusClient? gameEventClient = null;
+	
+	function extractTableId() {
+		value match = tableRegex.find(window.location.href);
+		if (exists match, exists roomId = match.groups[0], exists table = match.groups[1]) {
+			if (exists tableIndex = parseInteger(table)) {
+				return TableId(roomId, tableIndex);
+			} 
+		}
+		return null;
+	}
+	
+	function checkLogin() {
+		if (exists playerInfo = extractPlayerInfo()) {
+			return playerInfo;
+		}
+		
+		if (exists currentGameEventClient = gameEventClient) {
+			currentGameEventClient.close();
+		}
+		
+		if (exists currentTableEventClient = tableEventClient) {
+			currentTableEventClient.close();
+		}
+		
+		gui.showClosedState();
+		return null;
+	}
 	
 	shared Boolean onStartDrag(HTMLElement source) {
 		draggedElementStyle = source.getAttribute("style");
@@ -72,6 +100,11 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onDrop(HTMLElement target, HTMLElement source) {
+		value currentPlayer = checkLogin();
+		if (!exists currentPlayer) {
+			return true;
+		}
+		
 		if (exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleDrop(target, source);
 		} else {
@@ -80,6 +113,18 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onButton(HTMLElement target) {
+		if (target.id == gui.startButtonId) {
+			window.location.\iassign("/start");
+			return true;
+		} else if (target.id == gui.homeButtonId, exists tableId = extractTableId()) {
+			window.location.\iassign("/room/``tableId.roomId``");
+			return true;
+		}
+		
+		value currentPlayer = checkLogin();
+		if (!exists currentPlayer) {
+			return true;
+		}
 		
 		if (target.id == gui.leaveButtonId) {
 			gui.showDialog("dialog-leave");
@@ -88,12 +133,6 @@ shared class BoardPage() extends BasePage() {
 			return currentTableClient.handleSubmitEvent();
 		} else if (target.id == gui.undoButtonId, exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleUndoEvent();
-		} else if (target.id == gui.startButtonId) {
-			window.location.\iassign("/start");
-			return true;
-		} else if (target.id == gui.homeButtonId, exists tableId = extractTableId(window.location.href)) {
-			window.location.\iassign("/room/``tableId.roomId``");
-			return true;
 		} else if (target.id == gui.exitButtonId) {
 			if (exists gameClient = tableClient?.gameClient) {
 				gui.showDialog("dialog-logout");
@@ -108,6 +147,11 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onChecker(HTMLElement checker) {
+		value currentPlayer = checkLogin();
+		if (!exists currentPlayer) {
+			return true;
+		}
+		
 		if (exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleCheckerSelection(checker);
 		} else {
@@ -116,6 +160,11 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onTimer() {
+		value currentPlayer = checkLogin();
+		if (!exists currentPlayer) {
+			return false;
+		}
+		
 		if (exists currentClient = tableClient) {
 			return currentClient.handleTimerEvent(now());
 		} else {
@@ -124,6 +173,11 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onLeaveConfirmed() {
+		value currentPlayer = checkLogin();
+		if (!exists currentPlayer) {
+			return true;
+		}
+		
 		if (exists currentTableClient = tableClient) {
 			currentTableClient.handleLeaveEvent();
 			return true;
@@ -142,20 +196,7 @@ shared class BoardPage() extends BasePage() {
 		return true;
 	}
 	
-	shared actual Boolean handleServerMessage(String typeName, Object json) {
-		if (exists message = parseOutboundTableMessage(typeName, json)) {
-			return handleTableMessage(message);
-		} else if (exists message = parseOutboundMatchMessage(typeName, json)) {
-			return handleMatchMessage(message);
-		} else if (exists message = parseOutboundGameMessage(typeName, json)) {
-			return handleGameMessage(message);
-		} else {
-			onServerError("Unsupported message type: ``typeName``");
-			return true;
-		}
-	}
-
-	Boolean handleTableMessage(OutboundTableMessage message) {
+	function handleTableMessage(OutboundTableMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
 			return false;
@@ -175,7 +216,7 @@ shared class BoardPage() extends BasePage() {
 		}
 	}
 	
-	Boolean handleMatchMessage(OutboundMatchMessage message) {
+	function handleMatchMessage(OutboundMatchMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
 			return false;
@@ -192,7 +233,7 @@ shared class BoardPage() extends BasePage() {
 		}
 	}
 	
-	Boolean handleGameMessage(OutboundGameMessage message) {
+	function handleGameMessage(OutboundGameMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
 			return false;
@@ -205,14 +246,22 @@ shared class BoardPage() extends BasePage() {
 		}
 	}
 	
-	TableId? extractTableId(String pageUrl) {
-		value match = regex("/room/(\\w+)/table/(\\d+)").find(pageUrl);
-		if (exists match, exists roomId = match.groups[0], exists table = match.groups[1]) {
-			if (exists tableIndex = parseInteger(table)) {
-				return TableId(roomId, tableIndex);
-			} 
+	shared actual Boolean handleServerMessage(String typeName, Object json) {
+		value currentPlayerInfo = checkLogin();
+		if (!exists currentPlayerInfo) {
+			return true;
 		}
-		return null;
+		
+		if (exists message = parseOutboundTableMessage(typeName, json)) {
+			return handleTableMessage(message);
+		} else if (exists message = parseOutboundMatchMessage(typeName, json)) {
+			return handleMatchMessage(message);
+		} else if (exists message = parseOutboundGameMessage(typeName, json)) {
+			return handleGameMessage(message);
+		} else {
+			onServerError("Unsupported message type: ``typeName``");
+			return true;
+		}
 	}
 
 	void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage message) {
@@ -257,7 +306,7 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared void run() {
-		if (exists tableId = extractTableId(window.location.href), exists playerInfo = extractPlayerInfo(window.document.cookie)) {
+		if (exists tableId = extractTableId(), exists playerInfo = extractPlayerInfo()) {
 			print(playerInfo.toJson());
 			tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
 			tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);

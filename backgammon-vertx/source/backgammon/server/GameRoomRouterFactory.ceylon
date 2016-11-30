@@ -10,9 +10,9 @@ import backgammon.shared {
 	RoomId,
 	PlayerId,
 	EnterRoomMessage,
-	EnteredRoomMessage,
 	FoundMatchTableMessage,
-	LeaveRoomMessage
+	LeaveRoomMessage,
+	RoomActionResponseMessage
 }
 
 import io.vertx.ceylon.core {
@@ -32,7 +32,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 	void completeLogin(RoutingContext routingContext, PlayerInfo playerInfo) {
 		value context = GameRoomRoutingContext(routingContext);
 		context.setCurrentPlayerInfo(playerInfo);
-		eventBus.sendInboundMessage(EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|EnteredRoomMessage result) {
+		eventBus.sendInboundMessage(EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|RoomActionResponseMessage result) {
 			if (is Throwable result) {
 				routingContext.fail(result);
 			} else {

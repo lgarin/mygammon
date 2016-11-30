@@ -12,8 +12,6 @@ import backgammon.shared {
 	OutboundMatchMessage,
 	LeaveRoomMessage,
 	FindMatchTableMessage,
-	EnteredRoomMessage,
-	LeftRoomMessage,
 	FoundMatchTableMessage,
 	OutboundRoomMessage,
 	TableStateRequestMessage,
@@ -39,7 +37,8 @@ import backgammon.shared {
 	JoinTableMessage,
 	JoinedTableMessage,
 	PlayerStateRequestMessage,
-	PlayerStateMessage
+	PlayerStateMessage,
+	RoomActionResponseMessage
 }
 
 import ceylon.time {
@@ -61,9 +60,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			switch (message)
 			case (is EnterRoomMessage) {
 				if (exists room = findRoom(message.roomId), exists player = room.definePlayer(message.playerInfo)) {
-					return EnteredRoomMessage(message.playerId, message.roomId, true);
+					return RoomActionResponseMessage(message.playerId, message.roomId, true);
 				} else {
-					return EnteredRoomMessage(message.playerId, message.roomId, false);
+					return RoomActionResponseMessage(message.playerId, message.roomId, false);
 				}
 			}
 			case (is LeaveRoomMessage) {
@@ -71,9 +70,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 					if (exists match = player.match, match.hasGame) {
 						gameCommander(EndGameMessage(match.id, player.id));
 					}
-					return LeftRoomMessage(message.playerId, message.roomId, true);
+					return RoomActionResponseMessage(message.playerId, message.roomId, true);
 				} else {
-					return LeftRoomMessage(message.playerId, message.roomId, false);
+					return RoomActionResponseMessage(message.playerId, message.roomId, false);
 				}
 			}
 			case (is FindMatchTableMessage) {

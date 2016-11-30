@@ -33,7 +33,7 @@ final class HttpServerVerticle() extends Verticle() {
 		value authRouterFactory = GoogleAuthRouterFactory(vertx, roomConfig.hostname, roomConfig.port);
 		value router = routerFactory.router(vertx);
 
-		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(roomConfig.playerInactiveTimeout.milliseconds));
+		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(roomConfig.userSessionTimeout.milliseconds));
 		//router.route().handler(loggerHandler.create().handle);		
 		
 		router.route("/logs/*").handler(staticHandler.create("logs").setCachingEnabled(false).setDirectoryListing(true).handle);
