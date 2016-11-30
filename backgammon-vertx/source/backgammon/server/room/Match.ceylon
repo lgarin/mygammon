@@ -21,7 +21,7 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 
 	shared Boolean gameStarted => state.gameStarted;
 	shared Boolean gameEnded => state.gameEnded;
-	shared Boolean hasGame => state.gameStarted && !state.gameEnded;
+	shared Boolean hasGame => state.hasGame;
 	
 	shared Player? findPlayer(PlayerId playerId) {
 		if (player1.id == playerId) {

@@ -67,4 +67,22 @@ final class GoogleProfileClient(Vertx vertx) {
 			handler(null);
 		}
 	}
+	
+	shared void logout(RoutingContext context, void handler(Boolean success)) {
+		if (exists token = context.user()) {
+			value request = httpClient.getAbs("https://accounts.google.com/o/oauth2/revoke?token=``token.principal().getString("access_token")``");
+			request.handler {
+				void handler(HttpClientResponse res) {
+					if (res.statusCode() == 200) {
+						handler(true);
+					} else {
+						handler(false);
+					}
+				}
+			};
+			request.end();
+		} else {
+			handler(false);
+		}
+	}
 }

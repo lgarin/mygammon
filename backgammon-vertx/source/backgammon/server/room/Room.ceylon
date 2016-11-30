@@ -73,6 +73,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	
 	function openTable(Player player) {
 		if (exists table = tableList.find((table) => table.queueSize == 0), table.sitPlayer(player)) {
+			updatedPlayers.add(player);
 			return table;
 		}
 		return null;
@@ -80,6 +81,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	
 	function sitPlayer(Player player) {
 		if (exists table = tableList.find((table) => table.queueSize == 1), table.sitPlayer(player)) {
+			updatedPlayers.add(player);
 			return table;
 		}
 		return openTable(player);
@@ -87,6 +89,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	
 	function doRemovePlayer(Player player) {
 		if (exists table = player.table) {
+			updatedPlayers.add(player);
 			table.removePlayer(player.id);
 		}
 		if (player.leaveRoom(id)) {
@@ -228,7 +231,9 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		if (newPlayers.empty && oldPlayers.empty && updatedPlayers.empty) {
 			return null;
 		}
-		value message = PlayerListMessage(id, [for (element in newPlayers) element.state], [for (element in oldPlayers) element.state]);
+		updatedPlayers.removeAll(newPlayers);
+		updatedPlayers.removeAll(oldPlayers);
+		value message = PlayerListMessage(id, [for (element in newPlayers) element.state], [for (element in oldPlayers) element.state], [for (element in updatedPlayers) element.state]);
 		newPlayers.clear();
 		oldPlayers.clear();
 		updatedPlayers.clear();

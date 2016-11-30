@@ -11,11 +11,18 @@ import backgammon.client.browser {
 import backgammon.client {
 	GameGui
 }
+import backgammon.shared {
+
+	PlayerInfo
+}
 shared class BoardGui(Document document) extends GameGui(document) {
 	
 	shared String undoButtonId = "undo";
 	shared String leaveButtonId = "leave";
 	shared String submitButtonId = "submit";
+	shared String exitButtonId = "exit";
+	shared String homeButtonId = "home";
+	shared String startButtonId = "start";
 	
 	shared void hideUndoButton() {
 		addClass(undoButtonId, "hidden");
@@ -48,6 +55,30 @@ shared class BoardGui(Document document) extends GameGui(document) {
 		if (exists button = document.getElementById("``leaveButtonId``Text")) {
 			button.innerHTML = translate(text);
 		}
+	}
+	
+	shared void hideExitButton() {
+		addClass(exitButtonId, "hidden");
+	}
+	
+	shared void showExitButton() {
+		removeClass(exitButtonId, "hidden");
+	}
+	
+	shared void hideHomeButton() {
+		addClass(homeButtonId, "hidden");
+	}
+	
+	shared void showHomeButton() {
+		removeClass(homeButtonId, "hidden");
+	}
+	
+	shared void hideStartButton() {
+		addClass(startButtonId, "hidden");
+	}
+	
+	shared void showStartButton() {
+		removeClass(startButtonId, "hidden");
 	}
 
 	shared void showCurrentPlayer(CheckerColor? currentColor) {
@@ -102,7 +133,7 @@ shared class BoardGui(Document document) extends GameGui(document) {
 		showPlayerMessage(color, playerMessage, true);
 	}
 	
-	shared void showInitialState(String playerMessage = waitingTextKey) {
+	shared void showInitialGame(String playerMessage = waitingTextKey) {
 		showCurrentPlayer(null);
 		hideAllCheckers();
 		resetState(black, playerMessage);
@@ -117,5 +148,17 @@ shared class BoardGui(Document document) extends GameGui(document) {
 		hideAllDices(black);
 		hideAllDices(white);
 		hideAllCheckers();
+	}
+	
+	shared default void showClosedState() {
+		hideExitButton();
+		showStartButton();
+		showInitialGame("");
+	}
+	
+	shared default void showBeginState(PlayerInfo playerInfo) {
+		showExitButton();
+		hideStartButton();
+		showEmptyGame();
 	}
 }

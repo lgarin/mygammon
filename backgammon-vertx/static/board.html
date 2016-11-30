@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  	<meta name="viewport" content="width=1150">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"></meta>
+  	<meta name="viewport" content="width=1150"></meta>
   
     <title>MyGammon</title>
 
-	<link rel="shortcut icon" type="image/x-icon" href="/static/images/favicon.ico"/>
-    <link rel="stylesheet" href="/static/css/board.css">
-    <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
+	<link rel="shortcut icon" type="image/x-icon" href="/static/images/favicon.ico"></link>
+    <link rel="stylesheet" href="/static/css/board.css"></link>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css"></link>
+    <link rel="stylesheet" href="/static/css/jquery-ui.min.css"></link>
     <script src="/static/javascript/jquery-3.1.1.min.js"></script>
     <script src="/static/javascript/jquery-ui.min.js"></script>
+    <script src="/static/javascript/bootstrap.min.js"></script>
     <script src="/static/javascript/sockjs.min.js"></script>
     <script src="/static/javascript/vertx-eventbus.js"></script>
 	<script src="/static/javascript/require.js"></script>
@@ -31,6 +33,7 @@
 	            		drop: function(event, ui) { return board.onDrop(event.target, ui.draggable[0]); }
 	            	});
 	            	$(".button").on("click", function(event) { return board.onButton(event.currentTarget); });
+	            	$(".btn").on("click", function(event) { return board.onButton(event.currentTarget); });
 	            	$(".checker").on("click", function(event) { return board.onChecker(event.currentTarget); });
 	            	$(".topdown-checker").on("click", function(event) { return board.onChecker(event.currentTarget); });
 	            	window.setInterval(function() { return board.onTimer(); }, 100);
@@ -61,12 +64,57 @@
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
+	                $("#dialog-logout").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: [{
+	                    	text: $("#i18n #_logout").text(),
+	                    	click: function() { $(this).dialog("close"); return board.onLogoutConfirmed(); }
+	                    }, {
+	                      	text: $("#i18n #_cancel").text(),
+	                	  	click: function() { $(this).dialog("close"); return true; }
+	                    }]
+	                });
 	            }
 	    );
     </script>
   </head>
 
   <body>
+  	<nav class="navbar navbar-inverse">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="http://mygammon.com/index.php">MyGammon</a>
+				</div>
+				<div class="collapse navbar-collapse">
+					<ul class="nav navbar-nav">
+						<li id="home" class="btn btn-default navbar-btn">
+							<span class="glyphicon glyphicon-home"></span>
+							Room
+						</li>
+						<li id="play" class="active btn btn-default navbar-btn">
+							<span class="glyphicon glyphicon-triangle-right"></span>
+							Game
+						</li>
+					</ul>
+					<ul class="nav navbar-nav navbar-right">
+						<li id="exit" class="btn">
+							<a>
+								<span class="glyphicon glyphicon-off"></span>
+								Logout
+							</a>
+						</li>
+						<li id="start" class="btn hidden">
+							<a>
+								<span class="glyphicon glyphicon-log-in"></span>
+								Login
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+  
     <div id="gui">
       <div id="game-board">
         <div id="whiteDiceNr1" class="dice white-1 hidden"></div>
@@ -204,22 +252,28 @@
       </div>
     </div><!-- end of gui -->
 
-    <div id="dialog-won" title="Game won">
+    <div id="dialog-won" title="Game won" style="display: none">
 	  <p>
 	    <b>Congratulation. You've won the game with </b><b id="game-score">0</b><b> point(s).</b> 
 	  </p>
 	</div>
-	<div id="dialog-lost" title="Game lost">
+	<div id="dialog-lost" title="Game lost" style="display: none">
 	  <p>
 	    <b>Sorry. You've lost the game.</b>
 	  </p>
 	</div>
-	<div id="dialog-leave" title="Leave the game?">
+	<div id="dialog-leave" title="Leave the game?" style="display: none">
 	  <p>
 	    <b>Do you really want to leave the table?</b>
 	  </p>
 	</div>
+	<div id="dialog-logout" title="Leave the game?" style="display: none">
+	  <p>
+	    <b>You have a game in progress.<br/>Do you really want to logout?</b>
+	  </p>
+	</div>
 	<div id="i18n" style="display: none">
+		<div id="_logout">Logout</div>
 		<div id="_leave">Leave</div>
 		<div id="_cancel">Cancel</div>
 		<div id="_retry">Play again</div>

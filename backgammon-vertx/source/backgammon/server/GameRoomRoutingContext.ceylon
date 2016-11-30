@@ -5,15 +5,17 @@ import backgammon.shared {
 	RoomId,
 	PlayerId
 }
+
+import ceylon.json {
+	Object
+}
 import ceylon.time {
 	Instant
 }
+
 import io.vertx.ceylon.web {
 	RoutingContext,
 	cookieFactory=cookie
-}
-import ceylon.json {
-	Object
 }
 
 final class GameRoomRoutingContext(RoutingContext rc) {
@@ -21,6 +23,14 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 	shared void setCurrentPlayerInfo(PlayerInfo playerInfo) {
 		rc.session()?.put("playerInfo", playerInfo);
 		rc.addCookie(cookieFactory.cookie("playerInfo", playerInfo.toBase64()));
+	}
+	
+	shared void clearUser() {
+		rc.session()?.destroy();
+		rc.user()?.clearCache();
+		rc.clearUser();
+		rc.removeCookie("playerInfo");
+		rc.removeCookie("vertx-web.session");
 	}
 	
 	PlayerInfo? getCurrentPlayerInfo() => rc.session()?.get<PlayerInfo>("playerInfo");
@@ -39,6 +49,17 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 	shared RoomId? getRequestRoomId(Boolean withFailure = true) {
 		if (exists roomId = rc.request().getParam("roomId")) {
 			return RoomId(roomId);
+		} else {
+			if (withFailure) {
+				failWithBadRequest();
+			}
+			return null;
+		}
+	}
+	
+	shared PlayerId? getRequestPlayerId(Boolean withFailure = true) {
+		if (exists playerId = rc.request().getParam("playerId")) {
+			return PlayerId(playerId);
 		} else {
 			if (withFailure) {
 				failWithBadRequest();

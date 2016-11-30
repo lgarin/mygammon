@@ -21,7 +21,8 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 	shared Integer score => _score;
 	
 	shared Boolean gameStarted => player1Ready && player2Ready;
-	shared Boolean gameEnded => winnerId exists && leaverId exists; 
+	shared Boolean gameEnded => winnerId exists && leaverId exists;
+	shared Boolean hasGame => gameStarted && !gameEnded;
 	
 	shared CheckerColor? winnerColor {
 		if (exists currentWinnerId = winnerId, currentWinnerId == player1Id) {

@@ -44,7 +44,7 @@ shared final class TableClient(shared TableId tableId, PlayerInfo playerInfo, Bo
 		} else if (message.joined) {
 			showJoinedState();
 		} else {
-			gui.showInitialState("");
+			gui.showInitialGame(gui.leftTextKey);
 		}
 	}
 	

@@ -213,9 +213,10 @@ body {
     min-height: 111px;
     background-image: url("../images/buttons.png");
     opacity: 0.8;
-    font-size: 24px;
+    font-size: 20px;
     text-align: center;
     text-shadow: #000000 0px 0px 3px;
+    color: #FFFFFF;
     line-height: 180px;
     cursor: pointer;
 }
@@ -251,9 +252,10 @@ body {
     min-height: 49px;
     background-image: url("../images/button_small.png");
     opacity: 0.8;
-    font-size: 24px;
+    font-size: 20px;
     text-align: center;
     text-shadow: #000000 0px 0px 3px;
+    color: #FFFFFF;
     line-height: 49px;
 }
 .small_button:hover {
@@ -266,8 +268,9 @@ body {
     left: 5px;
     width: 180px;
     word-wrap: break-word;
-    font-size: 24px;
+    font-size: 20px;
     text-shadow: #000000 0px 0px 3px;
+    color: #FFFFFF;
     opacity: 0.8;
 }
 

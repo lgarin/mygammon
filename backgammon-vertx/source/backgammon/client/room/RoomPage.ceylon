@@ -21,7 +21,6 @@ import backgammon.shared {
 	OutboundMatchMessage,
 	RoomResponseMessage,
 	OutboundTableMessage,
-	CreatedMatchMessage,
 	TableStateResponseMessage,
 	OutboundGameMessage,
 	TableStateRequestMessage,
@@ -52,7 +51,9 @@ import backgammon.shared {
 	JoinTableMessage,
 	LeftTableMessage,
 	JoinedTableMessage,
-	LeftRoomMessage
+	LeftRoomMessage,
+	PlayerStateRequestMessage,
+	PlayerStateMessage
 }
 
 import ceylon.json {
@@ -107,12 +108,17 @@ shared class RoomPage() extends BasePage() {
 			} else {
 				return false;
 			}
+		} else if (target.id == gui.startButtonId) {
+			window.location.\iassign("/start");
+			return true;
 		} else if (target.id == gui.exitButtonId) {
 			if (exists currentRoomId = roomId, exists currentPlayerInfo = playerInfo) {
-				roomCommander(LeaveRoomMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
+				roomCommander(PlayerStateRequestMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
 				return true;
 			} else {
-				return false;
+				//gui.showClosedState();
+				window.location.\iassign("/logout");
+				return true;
 			}
 		} else {
 			return false;
@@ -155,13 +161,18 @@ shared class RoomPage() extends BasePage() {
 		if (exists currentTableClient = tableClient, currentTableClient.tableId == newTableId) {
 			return true;
 		}
-		gui.showInitialState();
+		gui.showInitialGame();
 		tableClient = TableClient(newTableId, playerInfo, gui, gameCommander);
 		tableEventClient = EventBusClient("OutboundTableMessage-``newTableId``", onServerMessage, onServerError);
 		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), newTableId));
 		gui.showTablePreview();
 		gui.showSitButton();
 		gui.showQueueSize(null);
+		return true;
+	}
+	
+	shared Boolean onLogoutConfirmed() {
+		window.location.\iassign("/logout");
 		return true;
 	}
 	
@@ -201,6 +212,17 @@ shared class RoomPage() extends BasePage() {
 	}
 	
 	Boolean handleRoomMessage(OutboundRoomMessage message) {
+		
+		if (!message.success && message is PlayerListMessage) {
+			gui.showClosedState();
+			return true;
+		} else if (!message.success && message is PlayerStateMessage) {
+			gui.showClosedState();
+			return true;
+		} else if (!message.success) {
+			return false;
+		}
+		
 		if (is PlayerListMessage message) {
 			showPlayers(message);
 			return true;
@@ -218,10 +240,16 @@ shared class RoomPage() extends BasePage() {
 			if (exists currentTableEventClient = tableEventClient) {
 				currentTableEventClient.close();
 			}
-			playerInfo = null;
-			window.document.cookie = "";
 			gui.showClosedState();
 			return true;
+		} else if (is PlayerStateMessage message) {
+			if (!message.hasGame) {
+				window.location.\iassign("/logout");
+				return true;
+			} else {
+				gui.showDialog("dialog-logout");
+				return true;
+			}
 		} else {
 			return false;
 		}
@@ -237,8 +265,6 @@ shared class RoomPage() extends BasePage() {
 			gui.showQueueSize(queueSize = message.queueSize);
 			// TODO some changes may occur on the state between the response and the registration
 			gameEventClient = EventBusClient("OutboundGameMessage-``currentMatch.id``", onServerMessage, onServerError);
-		} else if (is CreatedMatchMessage message) {
-			gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
 		}
 		
 		if (is JoinedTableMessage message) {
@@ -273,6 +299,10 @@ shared class RoomPage() extends BasePage() {
 	
 	Boolean handleGameMessage(OutboundGameMessage message) {
 		
+		if (is RoomResponseMessage message, !message.success) {
+			return false;
+		}
+		
 		if (exists currentClient = tableClient) {
 			return currentClient.handleGameMessage(message);
 		} else {
@@ -298,7 +328,7 @@ shared class RoomPage() extends BasePage() {
 	void roomCommander(InboundRoomMessage message) {
 		switch(message)
 		case (is RoomStateRequestMessage) {
-			makeApiRequest("/api/room/``message.roomId``/playerlist");
+			makeApiRequest("/api/room/``message.roomId``/listplayer");
 		}
 		case (is FindEmptyTableMessage) {
 			makeApiRequest("/api/room/``message.roomId``/opentable");
@@ -306,6 +336,9 @@ shared class RoomPage() extends BasePage() {
 		case (is EnterRoomMessage) {}
 		case (is LeaveRoomMessage) {
 			makeApiRequest("/api/room/``message.roomId``/leave");
+		}
+		case (is PlayerStateRequestMessage) {
+			makeApiRequest("/api/room/``message.roomId``/player/``message.playerId``/state");
 		}
 		case (is FindMatchTableMessage) {}
 	}

@@ -17,7 +17,8 @@ import backgammon.shared {
 	RoomStateRequestMessage,
 	FindEmptyTableMessage,
 	JoinTableMessage,
-	LeaveRoomMessage
+	LeaveRoomMessage,
+	PlayerStateRequestMessage
 }
 import io.vertx.ceylon.core {
 	Vertx
@@ -133,10 +134,17 @@ final class GameRoomRestApi(Vertx vertx) {
 			forwardResponse(context, LeaveRoomMessage(playerId, roomId));
 		}
 	}
+	
+	void handlePlayerStateRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getRequestPlayerId()) {
+			forwardResponse(context, PlayerStateRequestMessage(playerId, roomId));
+		}
+	}
 
 	shared Router createRouter() {
 		value restApi = routerFactory.router(vertx);
-		restApi.get("/room/:roomId/playerlist").handler(handlePlayerListRequest);
+		restApi.get("/room/:roomId/listplayer").handler(handlePlayerListRequest);
 		restApi.get("/room/:roomId/opentable").handler(handleOpenTableRequest);
 		restApi.get("/room/:roomId/leave").handler(handleRoomLeaveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/state").handler(handleTableStateRequest);
@@ -149,6 +157,7 @@ final class GameRoomRestApi(Vertx vertx) {
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/undomoves").handler(handlUndoMovesRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handlEndTurnRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endgame").handler(handlEndGameRequest);
+		restApi.get("/room/:roomId/player/:playerId/state").handler(handlePlayerStateRequest);
 		return restApi;
 	}
 }

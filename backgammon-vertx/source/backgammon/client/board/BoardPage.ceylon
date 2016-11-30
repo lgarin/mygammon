@@ -88,8 +88,21 @@ shared class BoardPage() extends BasePage() {
 			return currentTableClient.handleSubmitEvent();
 		} else if (target.id == gui.undoButtonId, exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleUndoEvent();
+		} else if (target.id == gui.startButtonId) {
+			window.location.\iassign("/start");
+			return true;
+		} else if (target.id == gui.homeButtonId, exists tableId = extractTableId(window.location.href)) {
+			window.location.\iassign("/room/``tableId.roomId``");
+			return true;
+		} else if (target.id == gui.exitButtonId) {
+			if (exists gameClient = tableClient?.gameClient) {
+				gui.showDialog("dialog-logout");
+			} else {
+				//gui.showInitialState();
+				window.location.\iassign("/logout");
+			}
+			return true;
 		}
-		
 		
 		return false;
 	}
@@ -117,6 +130,11 @@ shared class BoardPage() extends BasePage() {
 		} else {
 			return false;
 		}
+	}
+	
+	shared Boolean onLogoutConfirmed() {
+		window.location.\iassign("/logout");
+		return true;
 	}
 	
 	shared Boolean onPlayAgain() {
@@ -175,6 +193,10 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	Boolean handleGameMessage(OutboundGameMessage message) {
+		
+		if (is RoomResponseMessage message, !message.success) {
+			return false;
+		}
 		
 		if (exists currentClient = tableClient) {
 			return currentClient.handleGameMessage(message);
@@ -240,8 +262,9 @@ shared class BoardPage() extends BasePage() {
 			tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
 			tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
 			gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
+			gui.showBeginState(playerInfo);
 		} else {
-			gui.showInitialState();
+			gui.showClosedState();
 		}
 	}
 }

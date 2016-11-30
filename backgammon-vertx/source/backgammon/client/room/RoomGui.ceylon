@@ -13,7 +13,6 @@ class RoomGui(Document document) extends BoardGui(document) {
 	shared String playButtonId = "play";
 	shared String newButtonId = "new";
 	shared String sitButtonId = "sit";
-	shared String exitButtonId = "exit";
 	
 	value tablePreviewId = "table-preview";
 	
@@ -41,14 +40,6 @@ class RoomGui(Document document) extends BoardGui(document) {
 		removeClass(sitButtonId, "hidden");
 	}
 	
-	shared void hideExitButton() {
-		addClass(sitButtonId, "hidden");
-	}
-	
-	shared void showExitButton() {
-		removeClass(sitButtonId, "hidden");
-	}
-	
 	shared void hideTablePreview() {
 		addClass(tablePreviewId, "hidden");
 	}
@@ -73,22 +64,20 @@ class RoomGui(Document document) extends BoardGui(document) {
 		}
 	}
 	
-	shared void showClosedState() {
+	shared actual void showClosedState() {
+		super.showClosedState();
 		showEmptyPlayerList();
-		hideExitButton();
 		hidePlayButton();
 		hideNewButton();
 		hideSitButton();
 		hideTablePreview();
-		showEmptyGame();
 	}
 	
-	shared void showBeginState(PlayerInfo playerInfo) {
-		showExitButton();
+	shared actual void showBeginState(PlayerInfo playerInfo) {
+		super.showBeginState(playerInfo);
 		showPlayButton();
 		showNewButton();
 		hideSitButton();
 		hideTablePreview();
-		showEmptyGame();
 	}
 }
