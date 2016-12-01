@@ -34,7 +34,8 @@ import backgammon.shared {
 	TableStateResponseMessage,
 	EndTurnMessage,
 	PlayerId,
-	JoinTableMessage
+	JoinTableMessage,
+	PlayerInfo
 }
 
 import ceylon.json {
@@ -47,7 +48,7 @@ import ceylon.time {
 	now
 }
 shared class BoardPage() extends BasePage() {
-	value tableRegex = regex("/room/(\\w+)/table/(\\d+)");
+	variable TableId? tableId = null;
 	value gui = BoardGui(window.document);
 	variable TableClient? tableClient = null;
 	variable String? draggedElementStyle = null;
@@ -55,20 +56,18 @@ shared class BoardPage() extends BasePage() {
 	variable EventBusClient? gameEventClient = null;
 	
 	function extractTableId() {
-		value match = tableRegex.find(window.location.href);
-		if (exists match, exists roomId = match.groups[0], exists table = match.groups[1]) {
-			if (exists tableIndex = parseInteger(table)) {
-				return TableId(roomId, tableIndex);
-			} 
+		if (!tableId exists) {
+			value match = regex("/room/(\\w+)/table/(\\d+)").find(window.location.href);
+			if (exists match, exists roomId = match.groups[0], exists table = match.groups[1]) {
+				if (exists tableIndex = parseInteger(table)) {
+					tableId = TableId(roomId, tableIndex);
+				} 
+			}
 		}
-		return null;
+		return tableId;
 	}
 	
-	function checkLogin() {
-		if (exists playerInfo = extractPlayerInfo()) {
-			return playerInfo;
-		}
-		
+	void logout() {
 		if (exists currentGameEventClient = gameEventClient) {
 			currentGameEventClient.close();
 		}
@@ -78,7 +77,6 @@ shared class BoardPage() extends BasePage() {
 		}
 		
 		gui.showClosedState();
-		return null;
 	}
 	
 	shared Boolean onStartDrag(HTMLElement source) {
@@ -100,11 +98,7 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onDrop(HTMLElement target, HTMLElement source) {
-		value currentPlayer = checkLogin();
-		if (!exists currentPlayer) {
-			return true;
-		}
-		
+
 		if (exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleDrop(target, source);
 		} else {
@@ -119,14 +113,7 @@ shared class BoardPage() extends BasePage() {
 		} else if (target.id == gui.homeButtonId, exists tableId = extractTableId()) {
 			window.location.\iassign("/room/``tableId.roomId``");
 			return true;
-		}
-		
-		value currentPlayer = checkLogin();
-		if (!exists currentPlayer) {
-			return true;
-		}
-		
-		if (target.id == gui.leaveButtonId) {
+		} else if (target.id == gui.leaveButtonId) {
 			gui.showDialog("dialog-leave");
 			return true;
 		} else if (target.id == gui.submitButtonId, exists currentTableClient = tableClient) {
@@ -147,11 +134,7 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onChecker(HTMLElement checker) {
-		value currentPlayer = checkLogin();
-		if (!exists currentPlayer) {
-			return true;
-		}
-		
+
 		if (exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleCheckerSelection(checker);
 		} else {
@@ -160,11 +143,7 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onTimer() {
-		value currentPlayer = checkLogin();
-		if (!exists currentPlayer) {
-			return false;
-		}
-		
+
 		if (exists currentClient = tableClient) {
 			return currentClient.handleTimerEvent(now());
 		} else {
@@ -173,11 +152,7 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onLeaveConfirmed() {
-		value currentPlayer = checkLogin();
-		if (!exists currentPlayer) {
-			return true;
-		}
-		
+
 		if (exists currentTableClient = tableClient) {
 			currentTableClient.handleLeaveEvent();
 			return true;
@@ -192,13 +167,17 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onPlayAgain() {
-		window.location.\iassign("/start");
-		return true;
+		if (exists tableId = extractTableId()) {
+			window.location.\iassign("/room/``tableId.roomId``/play");
+			return true;
+		}
+		return false;
 	}
 	
 	function handleTableMessage(OutboundTableMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
+			logout();
 			return false;
 		}
 		
@@ -219,6 +198,7 @@ shared class BoardPage() extends BasePage() {
 	function handleMatchMessage(OutboundMatchMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
+			logout();
 			return false;
 		}
 		
@@ -236,6 +216,7 @@ shared class BoardPage() extends BasePage() {
 	function handleGameMessage(OutboundGameMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
+			logout();
 			return false;
 		}
 		
@@ -247,11 +228,7 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared actual Boolean handleServerMessage(String typeName, Object json) {
-		value currentPlayerInfo = checkLogin();
-		if (!exists currentPlayerInfo) {
-			return true;
-		}
-		
+
 		if (exists message = parseOutboundTableMessage(typeName, json)) {
 			return handleTableMessage(message);
 		} else if (exists message = parseOutboundMatchMessage(typeName, json)) {
@@ -305,15 +282,19 @@ shared class BoardPage() extends BasePage() {
 		}
 	}
 	
+	void login(PlayerInfo playerInfo, TableId tableId) {
+		print(playerInfo.toJson());
+		tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
+		tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
+		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
+		gui.showBeginState(playerInfo);
+	}
+	
 	shared void run() {
 		if (exists tableId = extractTableId(), exists playerInfo = extractPlayerInfo()) {
-			print(playerInfo.toJson());
-			tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
-			tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
-			gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
-			gui.showBeginState(playerInfo);
+			login(playerInfo, tableId);
 		} else {
-			gui.showClosedState();
+			logout();
 		}
 	}
 }

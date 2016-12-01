@@ -4,6 +4,10 @@ import backgammon.shared.game {
 import ceylon.json {
 	Object
 }
+import ceylon.time {
+
+	Duration
+}
 
 shared final class RoomConfiguration(Object? json) extends GameConfiguration(json) {
 	shared String roomId = json?.getStringOrNull("roomId") else "test";
@@ -14,4 +18,5 @@ shared final class RoomConfiguration(Object? json) extends GameConfiguration(jso
 	shared Integer maxPlayerMessageRate = json?.getIntegerOrNull("maxPlayerMessageRate") else 10;
 	shared String hostname = json?.getStringOrNull("hostname") else "localhost";
 	shared Integer port = json?.getIntegerOrNull("port") else 8080;
+	shared Duration userSessionTimeout => Duration(playerInactiveTimeout.milliseconds + serverAdditionalTimeout.milliseconds);
 }

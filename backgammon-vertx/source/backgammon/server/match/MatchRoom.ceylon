@@ -185,8 +185,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	
 	shared void periodicNotification(Instant currentTime) {
 		try (lock) {
-			value playerCount = room.playerCount;
-			if (playerCount > 0 && lastNotification.durationTo(currentTime).milliseconds * configuration.maxPlayerMessageRate > playerCount) {
+			if (room.playerListDeltaSize > 0 && lastNotification.durationTo(currentTime).milliseconds * configuration.maxPlayerMessageRate > room.playerCount) {
 				value message = room.createPlayerListDelta();
 				if (exists message) {
 					messageBroadcaster(message);

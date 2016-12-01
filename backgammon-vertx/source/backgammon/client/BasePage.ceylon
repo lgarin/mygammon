@@ -24,10 +24,7 @@ import ceylon.json {
 }
 abstract shared class BasePage() {
 	
-	value playerInfoRegex = regex("playerInfo=([^\\;\\s]+)");
-	variable String? lastCookie = null;
-	variable PlayerInfo? lastPlayerInfo = null;
-	variable String? lastEncodedPlayerInfo = null;
+	variable PlayerInfo? playerInfo = null;
 	shared formal Boolean handleServerMessage(String typeName, Object json);
 	
 	shared void onServerMessage(String messageString) {
@@ -63,12 +60,7 @@ abstract shared class BasePage() {
 	}
 	
 	function extractEncodedPlayerInfo() {
-		value cookie = window.document.cookie;
-		if (exists oldCookie = lastCookie, cookie == oldCookie, exists encodedPlayerInfo = lastEncodedPlayerInfo) {
-			return encodedPlayerInfo;
-		}
-		lastCookie = cookie;
-		value match = playerInfoRegex.find(cookie);
+		value match = regex("playerInfo=([^\\;\\s]+)").find(window.document.cookie);
 		if (exists match) {
 			return match.groups[0];
 		}
@@ -76,16 +68,11 @@ abstract shared class BasePage() {
 	}
 	
 	shared PlayerInfo? extractPlayerInfo() {
-		// TODO remove caching if regex performance is improved
-		if (exists encodedInfo = extractEncodedPlayerInfo()) {
-			if (exists playerInfo = lastPlayerInfo, exists encodedPlayerInfo = lastEncodedPlayerInfo, encodedPlayerInfo == encodedInfo) {
-				return lastPlayerInfo;
+		if (!playerInfo exists) {
+			if (exists encodedInfo = extractEncodedPlayerInfo()) {
+				playerInfo = parseBase64PlayerInfo(encodedInfo);
 			}
-			value playerInfo = parseBase64PlayerInfo(encodedInfo);
-			lastEncodedPlayerInfo = encodedInfo;
-			lastPlayerInfo = playerInfo;
-			return playerInfo; 
 		}
-		return null;
+		return playerInfo;
 	}
 }

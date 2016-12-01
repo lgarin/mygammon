@@ -227,6 +227,8 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		}
 	}
 	
+	shared Integer playerListDeltaSize => newPlayers.size + oldPlayers.size + updatedPlayers.size; 
+	
 	shared PlayerListMessage? createPlayerListDelta() {
 		if (newPlayers.empty && oldPlayers.empty && updatedPlayers.empty) {
 			return null;

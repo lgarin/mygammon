@@ -65,7 +65,7 @@ import ceylon.time {
 	now
 }
 shared class RoomPage() extends BasePage() {
-	value roomRegex = regex("/room/(\\w+)");
+	variable RoomId? roomId = null;
 	value gui = RoomGui(window.document);
 	variable TableClient? tableClient = null;
 	variable EventBusClient? roomEventClient = null;
@@ -76,59 +76,30 @@ shared class RoomPage() extends BasePage() {
 	variable Integer queueSize = 0;
 	
 	function extractRoomId() {
-		value match = roomRegex.find(window.location.href);
-		if (exists match, exists roomId = match.groups[0]) {
-			return RoomId(roomId);
+		if (!roomId exists) {
+			value match = regex("/room/(\\w+)").find(window.location.href);
+			if (exists match, exists id = match.groups[0]) {
+				roomId = RoomId(id);
+			}
 		}
-		return null;
+		return roomId;
 	}
-	
-	function checkLogin() {
-		if (exists playerInfo = extractPlayerInfo()) {
-			return playerInfo;
-		}
-		
-		if (exists currentGameEventClient = gameEventClient) {
-			currentGameEventClient.close();
-		}
-		
-		if (exists currentTableEventClient = tableEventClient) {
-			currentTableEventClient.close();
-		} 
-		
-		if (exists currentRoomEventClient = roomEventClient) {
-			currentRoomEventClient.close();
-		}
-		
-		gui.showClosedState();
-		return null;
-	}
-	
+
 	shared Boolean onButton(HTMLElement target) {
 		
 		if (target.id == gui.startButtonId) {
 			window.location.\iassign("/start");
 			return true;
-		}
-		
-		value currentPlayerInfo = checkLogin();
-		if (!exists currentPlayerInfo) {
-			return true;
-		}
-		
-		if (target.id == gui.playButtonId, exists currentRoomId = extractRoomId()) {
-			window.location.\iassign("``currentRoomId``/play");
-			return true;
 		} else if (target.id == gui.playButtonId, exists currentRoomId = extractRoomId()) {
-			window.location.\iassign("``currentRoomId``/play");
+			window.location.\iassign("/room/``currentRoomId``/play");
 			return true;
-		} else if (target.id == gui.newButtonId, exists currentRoomId = extractRoomId()) {
+		} else if (target.id == gui.newButtonId, exists currentRoomId = extractRoomId(), exists currentPlayerInfo = extractPlayerInfo()) {
 			roomCommander(FindEmptyTableMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
 			return true;
-		} else if (target.id == gui.sitButtonId, exists currentRoomId = extractRoomId(), exists tableId = tableClient?.tableId ) {
+		} else if (target.id == gui.sitButtonId, exists currentRoomId = extractRoomId(), exists tableId = tableClient?.tableId, exists currentPlayerInfo = extractPlayerInfo()) {
 			gameCommander(JoinTableMessage(PlayerId(currentPlayerInfo.id), tableId));
 			return true;
-		} else if (target.id == gui.exitButtonId, exists currentRoomId = extractRoomId()) {
+		} else if (target.id == gui.exitButtonId, exists currentRoomId = extractRoomId(), exists currentPlayerInfo = extractPlayerInfo()) {
 			roomCommander(PlayerStateRequestMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
 			return true;
 		} else {
@@ -197,12 +168,8 @@ shared class RoomPage() extends BasePage() {
 	}
 	
 	shared Boolean onPlayerClick(String playerId) {
-		value currentPlayerInfo = checkLogin();
-		if (!exists currentPlayerInfo) {
-			return true;
-		}
-		
-		if (exists tableId = playerList.findTable(playerId)) {
+
+		if (exists tableId = playerList.findTable(playerId), exists currentPlayerInfo = extractPlayerInfo()) {
 			return showTable(tableId, currentPlayerInfo);
 		} else {
 			gui.hideTablePreview();
@@ -220,10 +187,6 @@ shared class RoomPage() extends BasePage() {
 	}
 	
 	shared Boolean onTimer() {
-		value currentPlayerInfo = checkLogin();
-		if (!exists currentPlayerInfo) {
-			return false;
-		}
 
 		if (exists currentClient = tableClient) {
 			return currentClient.handleTimerEvent(now());
@@ -232,13 +195,35 @@ shared class RoomPage() extends BasePage() {
 		}
 	}
 	
+	void logout() {
+		if (exists currentGameEventClient = gameEventClient) {
+			currentGameEventClient.close();
+		}
+		
+		if (exists currentTableEventClient = tableEventClient) {
+			currentTableEventClient.close();
+		} 
+		
+		if (exists currentRoomEventClient = roomEventClient) {
+			currentRoomEventClient.close();
+		}
+		
+		gui.showClosedState();
+	}
+
+	
 	function handleRoomMessage(OutboundRoomMessage message, PlayerInfo currentPlayerInfo) {
 		
 		if (!message.success) {
+			logout();
 			return false;
 		}
 		
 		if (is PlayerListMessage message) {
+			if (message.isOldPlayer(currentPlayerInfo.id)) {
+				logout();
+				return true;
+			}
 			showPlayers(message);
 			return true;
 		} else if (is FoundEmptyTableMessage message) {
@@ -263,6 +248,7 @@ shared class RoomPage() extends BasePage() {
 	function handleTableMessage(OutboundTableMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
+			logout();
 			return false;
 		}
 		
@@ -288,6 +274,7 @@ shared class RoomPage() extends BasePage() {
 	function handleMatchMessage(OutboundMatchMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
+			logout();
 			return false;
 		}
 		
@@ -305,6 +292,7 @@ shared class RoomPage() extends BasePage() {
 	function handleGameMessage(OutboundGameMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
+			logout();
 			return false;
 		}
 		
@@ -316,12 +304,8 @@ shared class RoomPage() extends BasePage() {
 	}
 		
 	shared actual Boolean handleServerMessage(String typeName, Object json)  {
-		value currentPlayerInfo = checkLogin();
-		if (!exists currentPlayerInfo) {
-			return true;
-		}
-			
-		if (exists message = parseOutboundRoomMessage(typeName, json)) {
+		
+		if (exists message = parseOutboundRoomMessage(typeName, json), exists currentPlayerInfo = extractPlayerInfo()) {
 			return handleRoomMessage(message, currentPlayerInfo);
 		} else if (exists message = parseOutboundTableMessage(typeName, json)) {
 			return handleTableMessage(message);
@@ -353,14 +337,18 @@ shared class RoomPage() extends BasePage() {
 		case (is FindMatchTableMessage) {}
 	}
 
+	void login(PlayerInfo currentPlayerInfo, RoomId currentRoomId) {
+		print(currentPlayerInfo.toJson());
+		roomEventClient = EventBusClient("OutboundRoomMessage-``currentRoomId``", onServerMessage, onServerError);
+		roomCommander(RoomStateRequestMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
+		gui.showBeginState(currentPlayerInfo);
+	}
+	
 	shared void run() {
 		if (exists currentRoomId = extractRoomId(), exists currentPlayerInfo = extractPlayerInfo()) {
-			print(currentPlayerInfo.toJson());
-			roomEventClient = EventBusClient("OutboundRoomMessage-``currentRoomId``", onServerMessage, onServerError);
-			roomCommander(RoomStateRequestMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
-			gui.showBeginState(currentPlayerInfo);
+			login(currentPlayerInfo, currentRoomId);
 		} else {
-			gui.showClosedState();
+			logout();
 		}
 	}
 }
