@@ -140,6 +140,10 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 			return false;
 		}
 	}
+	
+	shared void markActive() {
+		lastActivity = now();
+	}
 
 	shared Boolean isInactiveSince(Instant timeoutTime) => lastActivity < timeoutTime;
 	

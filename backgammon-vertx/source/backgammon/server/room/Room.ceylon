@@ -214,6 +214,8 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	shared MatchState? findMatchState(TableId tableId, PlayerId playerId) {
 		if (exists player = findPlayer(playerId), exists match = player.findRecentMatch(tableId)) {
 			return match.state;
+		} else if (exists table = findTable(tableId)) {
+			return table.match?.state;
 		} else {
 			return null;
 		}

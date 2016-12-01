@@ -69,13 +69,8 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	void logout() {
-		if (exists currentGameEventClient = gameEventClient) {
-			currentGameEventClient.close();
-		}
-		
-		if (exists currentTableEventClient = tableEventClient) {
-			currentTableEventClient.close();
-		}
+		gameEventClient?.close();
+		tableEventClient?.close();
 		
 		window.location.\iassign("/logout");
 	}
@@ -155,6 +150,7 @@ shared class BoardPage() extends BasePage() {
 
 		if (exists currentTableClient = tableClient) {
 			currentTableClient.handleLeaveEvent();
+			window.location.\iassign("/room/``currentTableClient.tableId.roomId``");
 			return true;
 		} else {
 			return false;

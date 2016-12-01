@@ -52,7 +52,8 @@ import backgammon.shared {
 	LeftTableMessage,
 	JoinedTableMessage,
 	PlayerStateRequestMessage,
-	PlayerStateMessage
+	PlayerStateMessage,
+	CreatedMatchMessage
 }
 
 import ceylon.json {
@@ -144,13 +145,10 @@ shared class RoomPage() extends BasePage() {
 			return true;
 		}
 		
-		if (exists currentGameEventClient = gameEventClient) {
-			currentGameEventClient.close();
-		}
-		
-		if (exists currentTableEventClient = tableEventClient) {
-			currentTableEventClient.close();
-		}
+		gameEventClient?.close();
+		gameEventClient = null;
+		tableEventClient?.close();
+		tableEventClient = null;
 		
 		gui.showInitialGame();
 		tableClient = TableClient(newTableId, playerInfo, gui, gameCommander);
@@ -167,12 +165,21 @@ shared class RoomPage() extends BasePage() {
 		return true;
 	}
 	
+	void hideTable() {
+		tableClient = null;
+		gameEventClient?.close();
+		gameEventClient = null;
+		tableEventClient?.close();
+		tableEventClient = null;
+		gui.hideTablePreview();
+	}
+	
 	shared Boolean onPlayerClick(String playerId) {
 
 		if (exists tableId = playerList.findTable(playerId), exists currentPlayerInfo = extractPlayerInfo()) {
 			return showTable(tableId, currentPlayerInfo);
 		} else {
-			gui.hideTablePreview();
+			hideTable();
 			return true;
 		}
 	}
@@ -195,17 +202,14 @@ shared class RoomPage() extends BasePage() {
 	}
 	
 	void logout() {
-		if (exists currentGameEventClient = gameEventClient) {
-			currentGameEventClient.close();
-		}
+		gameEventClient?.close();
+		gameEventClient = null;
 		
-		if (exists currentTableEventClient = tableEventClient) {
-			currentTableEventClient.close();
-		} 
+		tableEventClient?.close();
+		tableEventClient = null;
 		
-		if (exists currentRoomEventClient = roomEventClient) {
-			currentRoomEventClient.close();
-		}
+		roomEventClient?.close();
+		roomEventClient = null;
 		
 		window.location.\iassign("/logout");
 	}
@@ -253,7 +257,11 @@ shared class RoomPage() extends BasePage() {
 		if (is TableStateResponseMessage message, exists currentMatch = message.match) {
 			gui.showQueueSize(queueSize = message.queueSize);
 			// TODO some changes may occur on the state between the response and the registration
+			gameEventClient?.close();
 			gameEventClient = EventBusClient("OutboundGameMessage-``currentMatch.id``", onServerMessage, onServerError);
+		} else if (is CreatedMatchMessage message) {
+			gameEventClient?.close();
+			gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
 		}
 		
 		if (is JoinedTableMessage message) {

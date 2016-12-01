@@ -41,7 +41,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 		});
 	}
 	
-	void handleStart(RoutingContext routingContext) {
+	void fetchUserInfo(RoutingContext routingContext) {
 		value context = GameRoomRoutingContext(routingContext);
 		void handler(GoogleUserInfo? userInfo) {
 			if (exists userInfo) {
@@ -52,8 +52,16 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 				context.fail(Exception("No info returned for current user"));
 			}
 		}
-		
 		googleProfileClient.fetchUserInfo(routingContext, handler);
+	}
+	
+	void handleStart(RoutingContext routingContext) {
+		value context = GameRoomRoutingContext(routingContext);
+		if (exists playerInfo = context.getCurrentPlayerInfo()) {
+			completeLogin(routingContext, playerInfo);
+		} else {
+			fetchUserInfo(routingContext);
+		}
 	}
 	
 	void handleRoom(RoutingContext routingContext) {

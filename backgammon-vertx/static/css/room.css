@@ -206,10 +206,7 @@
 }
 
 .player.selected {
-  margin: 10px;
-  border-radius:5px;
-  background-color: #F5F5F5;
-  opacity: 1;
+
 }
 
 .player-picture {

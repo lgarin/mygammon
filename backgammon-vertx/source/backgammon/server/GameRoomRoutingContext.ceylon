@@ -36,7 +36,7 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 		}
 	}
 	
-	function getCurrentPlayerInfo() => rc.session()?.get<PlayerInfo>("playerInfo");
+	shared PlayerInfo? getCurrentPlayerInfo() => rc.session()?.get<PlayerInfo>("playerInfo");
 	
 	shared PlayerId? getCurrentPlayerId(Boolean withFailure = true) {
 		if (exists playerInfo = getCurrentPlayerInfo()) {

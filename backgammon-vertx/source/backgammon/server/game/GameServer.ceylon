@@ -313,7 +313,12 @@ final class GameServer(StartGameMessage startGameMessage, GameConfiguration conf
 	}
 	
 	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
-		if (exists color = toPlayerColor(message.playerId)) {
+		if (is GameStateRequestMessage message) {
+			try (lock) {
+				// TODO cannot determine color
+				return GameStateResponseMessage(matchId, message.playerId, player1Color, game.state);
+			}
+		} else if (exists color = toPlayerColor(message.playerId)) {
 			Instant currentTime = now();
 			try (lock) {
 				return process(message, currentTime, color);

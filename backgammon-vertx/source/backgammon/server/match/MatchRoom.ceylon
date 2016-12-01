@@ -118,6 +118,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			}
 			case (is LeaveTableMessage) {
 				if (exists table = findTable(message.tableId), exists player = table.removePlayer(message.playerId)) {
+					player.markActive();
 					if (exists match = player.match, match.hasGame) {
 						gameCommander(EndGameMessage(match.id, player.id));
 					}
@@ -128,6 +129,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			}
 			case (is TableStateRequestMessage) {
 				if (exists table = findTable(message.tableId), exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId)) {
+					player.markActive();
 					return TableStateResponseMessage(message.playerId, message.tableId, table.queueSize, table.findPlayer(message.playerId) exists, room.findMatchState(message.tableId, message.playerId), true);
 				} else {
 					return TableStateResponseMessage(message.playerId, message.tableId, 0, false, null, false);
