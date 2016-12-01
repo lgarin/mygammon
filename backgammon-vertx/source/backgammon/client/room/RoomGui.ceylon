@@ -63,16 +63,7 @@ class RoomGui(Document document) extends BoardGui(document) {
 			jQuery("#player-list tbody").loadTemplate(jQuery("#player-empty-template"));
 		}
 	}
-	
-	shared actual void showClosedState() {
-		super.showClosedState();
-		showEmptyPlayerList();
-		hidePlayButton();
-		hideNewButton();
-		hideSitButton();
-		hideTablePreview();
-	}
-	
+
 	shared actual void showBeginState(PlayerInfo playerInfo) {
 		super.showBeginState(playerInfo);
 		showPlayButton();

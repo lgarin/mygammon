@@ -150,12 +150,6 @@ shared class BoardGui(Document document) extends GameGui(document) {
 		hideAllCheckers();
 	}
 	
-	shared default void showClosedState() {
-		hideExitButton();
-		showStartButton();
-		showInitialGame("");
-	}
-	
 	shared default void showBeginState(PlayerInfo playerInfo) {
 		showExitButton();
 		hideStartButton();

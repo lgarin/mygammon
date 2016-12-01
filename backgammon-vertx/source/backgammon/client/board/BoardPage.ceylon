@@ -35,7 +35,8 @@ import backgammon.shared {
 	EndTurnMessage,
 	PlayerId,
 	JoinTableMessage,
-	PlayerInfo
+	PlayerInfo,
+	LeftTableMessage
 }
 
 import ceylon.json {
@@ -76,7 +77,7 @@ shared class BoardPage() extends BasePage() {
 			currentTableEventClient.close();
 		}
 		
-		gui.showClosedState();
+		window.location.\iassign("/logout");
 	}
 	
 	shared Boolean onStartDrag(HTMLElement source) {
@@ -124,8 +125,7 @@ shared class BoardPage() extends BasePage() {
 			if (exists gameClient = tableClient?.gameClient) {
 				gui.showDialog("dialog-logout");
 			} else {
-				//gui.showInitialState();
-				window.location.\iassign("/logout");
+				logout();
 			}
 			return true;
 		}
@@ -162,7 +162,7 @@ shared class BoardPage() extends BasePage() {
 	}
 	
 	shared Boolean onLogoutConfirmed() {
-		window.location.\iassign("/logout");
+		logout();
 		return true;
 	}
 	
@@ -178,7 +178,7 @@ shared class BoardPage() extends BasePage() {
 		
 		if (is RoomResponseMessage message, !message.success) {
 			logout();
-			return false;
+			return true;
 		}
 		
 		if (is TableStateResponseMessage message, exists currentMatch = message.match) {
@@ -186,6 +186,9 @@ shared class BoardPage() extends BasePage() {
 			gameEventClient = EventBusClient("OutboundGameMessage-``currentMatch.id``", onServerMessage, onServerError);
 		} else if (is CreatedMatchMessage message) {
 			gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
+		} else if (is LeftTableMessage message, exists currentPlayer = extractPlayerInfo(), message.playerId.id == currentPlayer.id) {
+			// check for logout
+			gameCommander(TableStateRequestMessage(message.playerId, message.tableId));
 		}
 		
 		if (exists currentClient = tableClient) {
@@ -198,7 +201,6 @@ shared class BoardPage() extends BasePage() {
 	function handleMatchMessage(OutboundMatchMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
-			logout();
 			return false;
 		}
 		
@@ -216,7 +218,6 @@ shared class BoardPage() extends BasePage() {
 	function handleGameMessage(OutboundGameMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
-			logout();
 			return false;
 		}
 		

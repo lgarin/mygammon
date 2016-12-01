@@ -163,7 +163,7 @@ shared class RoomPage() extends BasePage() {
 	}
 	
 	shared Boolean onLogoutConfirmed() {
-		window.location.\iassign("/logout");
+		logout();
 		return true;
 	}
 	
@@ -187,7 +187,6 @@ shared class RoomPage() extends BasePage() {
 	}
 	
 	shared Boolean onTimer() {
-
 		if (exists currentClient = tableClient) {
 			return currentClient.handleTimerEvent(now());
 		} else {
@@ -208,7 +207,7 @@ shared class RoomPage() extends BasePage() {
 			currentRoomEventClient.close();
 		}
 		
-		gui.showClosedState();
+		window.location.\iassign("/logout");
 	}
 
 	
@@ -216,7 +215,7 @@ shared class RoomPage() extends BasePage() {
 		
 		if (!message.success) {
 			logout();
-			return false;
+			return true;
 		}
 		
 		if (is PlayerListMessage message) {
@@ -234,7 +233,7 @@ shared class RoomPage() extends BasePage() {
 			}
 		} else if (is PlayerStateMessage message) {
 			if (!message.hasGame) {
-				window.location.\iassign("/logout");
+				logout();
 				return true;
 			} else {
 				gui.showDialog("dialog-logout");
@@ -248,7 +247,6 @@ shared class RoomPage() extends BasePage() {
 	function handleTableMessage(OutboundTableMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
-			logout();
 			return false;
 		}
 		
@@ -274,7 +272,6 @@ shared class RoomPage() extends BasePage() {
 	function handleMatchMessage(OutboundMatchMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
-			logout();
 			return false;
 		}
 		
@@ -292,7 +289,6 @@ shared class RoomPage() extends BasePage() {
 	function handleGameMessage(OutboundGameMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
-			logout();
 			return false;
 		}
 		
