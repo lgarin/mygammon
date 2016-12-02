@@ -72,8 +72,8 @@ class TableTest() {
 	
 	test
 	shared void removeUnknownPlayer() {
-		value result = table.removePlayer(makePlayer("player1").id);
-		assert (!result exists);
+		value result = table.removePlayer(makePlayer("player1"));
+		assert (!result);
 		assert (messageList.empty);
 		assert (messageList.count((TableMessage element) => element is LeftTableMessage) == 0);
 	}
@@ -82,8 +82,8 @@ class TableTest() {
 	shared void removeKnownPlayer() {
 		value player = makePlayer("player1");
 		table.sitPlayer(player);
-		value result = table.removePlayer(player.id);
-		assert (result exists);
+		value result = table.removePlayer(player);
+		assert (result);
 		assert (messageList.count((TableMessage element) => element is LeftTableMessage) == 1);
 	}
 }

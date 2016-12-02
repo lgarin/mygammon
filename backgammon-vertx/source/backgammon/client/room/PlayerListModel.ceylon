@@ -23,8 +23,9 @@ class PlayerListModel() {
 		playerMap.putAll({for (p in message.updatedPlayers) p.id -> p});
 	}
 	
-	function toRowData(PlayerState state) {
-		return Object({"id" -> state.id, "name" -> state.name, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.iconUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage});
+	function toRowData(Boolean hideTable)(PlayerState state) {
+		value tableClass = !hideTable && state.tableId exists then "" else "hidden";
+		return Object({"id" -> state.id, "name" -> state.name, "tableClass" -> tableClass, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.iconUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage});
 	}
 	
 	shared TableId? findTable(String playerId) {
@@ -34,11 +35,11 @@ class PlayerListModel() {
 		return null;
 	}
 	
- 	shared String toTemplateData() {
+ 	shared String toTemplateData(Boolean hideTable) {
 		if (playerMap.empty) {
 			return Object().string;
 		}
-		return Array(playerMap.items.map(toRowData)).string;
+		return Array(playerMap.items.map(toRowData(hideTable))).string;
 	}
 	
 	shared Boolean empty => playerMap.empty;

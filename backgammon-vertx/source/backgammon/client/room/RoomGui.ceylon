@@ -67,7 +67,6 @@ class RoomGui(Document document) extends BoardGui(document) {
 	shared actual void showBeginState(PlayerInfo playerInfo) {
 		super.showBeginState(playerInfo);
 		showPlayButton();
-		showNewButton();
 		hideSitButton();
 		hideTablePreview();
 	}

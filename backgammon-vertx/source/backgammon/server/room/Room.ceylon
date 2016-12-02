@@ -87,17 +87,21 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		return openTable(player);
 	}
 	
-	function doRemovePlayer(Player player) {
+	shared Boolean removePlayer(Player player) {
+		if (!player.isInRoom(id)) {
+			return false;
+		}
+		
 		if (exists table = player.table) {
 			updatedPlayers.add(player);
-			table.removePlayer(player.id);
+			table.removePlayer(player);
 		}
 		if (player.leaveRoom(id)) {
 			playerMap.remove(player.id);
 			oldPlayers.add(player);
-			return player;
+			return true;
 		} else {
-			return null;
+			return false;
 		}
 	}
 	
@@ -105,7 +109,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		variable value result = 0;
 		for (player in playerMap.items.clone()) {
 			if (!player.isPlaying() && player.isInactiveSince(timeoutTime)) {
-				doRemovePlayer(player);
+				removePlayer(player);
 				result++;
 			}
 		}
@@ -126,60 +130,48 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		}
 	}
 	
-	shared Player? removePlayer(PlayerId playerId) {
-		if (exists player = findPlayer(playerId)) {
-		 	return doRemovePlayer(player);
-		} else {
-			return null;
-		}
-	}
-	
-	shared Player? registerPlayerChange(PlayerId playerId) {
-		if (exists player = findPlayer(playerId)) {
+	shared Boolean registerPlayerChange(Player player) {
+		if (player.isInRoom(id)) {
 			updatedPlayers.add(player);
-			return player;
+			return true;
 		} else {
-			return null;
+			return false;
 		}
 	}
 	
-	shared Table? findMatchTable(PlayerId playerId) {
-		if (exists player = findPlayer(playerId)) {
-			if (exists table = player.table, table.isInRoom(id)) {
-				if (player.isPlaying()) {
-					return table;
-				} else if (table.removePlayer(playerId) exists) {
-					return sitPlayer(player);
-				} else {
-					return null;
-				}
-			} else if (!player.table exists) {
+	shared Table? findMatchTable(Player player) {
+		if (!player.isInRoom(id)) {
+			return null;
+		} else if (exists table = player.table, table.isInRoom(id)) {
+			if (player.isPlaying()) {
+				return table;
+			} else if (table.removePlayer(player)) {
 				return sitPlayer(player);
 			} else {
 				return null;
 			}
+		} else if (!player.table exists) {
+			return sitPlayer(player);
 		} else {
 			return null;
 		}
 	}
 	
-	shared Table? findEmptyTable(PlayerId playerId) {
-		if (exists player = findPlayer(playerId)) {
-			if (exists table = player.table, table.isInRoom(id)) {
-				if (player.isPlaying()) {
-					return null;
-				} else if (table.queueSize == 1) {
-					return table;
-				} else if (table.removePlayer(playerId) exists) {
-					return openTable(player);
-				} else {
-					return null;
-				}
-			} else if (!player.table exists) {
+	shared Table? findEmptyTable(Player player) {
+		if (!player.isInRoom(id)) {
+			return null;
+		} else if (exists table = player.table, table.isInRoom(id)) {
+			if (player.isPlaying()) {
+				return null;
+			} else if (table.queueSize == 1) {
+				return table;
+			} else if (table.removePlayer(player)) {
 				return openTable(player);
 			} else {
 				return null;
 			}
+		} else if (!player.table exists) {
+			return openTable(player);
 		} else {
 			return null;
 		}
@@ -211,11 +203,11 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		return matchMap[matchId];
 	}
 	
-	shared MatchState? findMatchState(TableId tableId, PlayerId playerId) {
-		if (exists player = findPlayer(playerId), exists match = player.findRecentMatch(tableId)) {
+	shared MatchState? findMatchState(TableId tableId, Player player) {
+		if (exists match = player.findRecentMatch(tableId)) {
 			return match.state;
 		} else if (exists table = findTable(tableId)) {
-			return table.match?.state;
+			return table.matchState;
 		} else {
 			return null;
 		}

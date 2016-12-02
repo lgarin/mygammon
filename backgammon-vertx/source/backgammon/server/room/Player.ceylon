@@ -18,7 +18,7 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	variable Table? _table = null;
 	variable Match? _previousMatch = null;
 	variable Match? _match = null;
-	variable Instant lastActivity = now();
+	variable Instant lastActivity = Instant(0);
 
 	shared Room? room => _room;
 	shared Table? table => _table;
@@ -75,8 +75,6 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	}
 
 	shared Boolean joinTable(Table newTable) {
-		lastActivity = now();
-		
 		if (!isInRoom(newTable.roomId)) {
 			return false;
 		} else if (isPlaying()) {
@@ -102,8 +100,6 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	}
 	
 	shared Boolean joinMatch(Match currentMatch) {
-		lastActivity = now();
-		
 		if (match exists) {
 			return false;
 		} else if (currentMatch.gameStarted) {
@@ -117,11 +113,9 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	}
 	
 	shared Boolean acceptMatch(MatchId matchId) {
-		lastActivity = now();
-		
 		if (isInMatch(matchId) && isAtTable(matchId.tableId)) {
 			statistic = statistic.increaseGameCount();
-			room?.registerPlayerChange(id);
+			room?.registerPlayerChange(this);
 			return true;
 		} else {
 			return false;
@@ -130,7 +124,7 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	
 	shared void increaseScore(Integer score) {
 		statistic = statistic.increaseWinCount(score);
-		room?.registerPlayerChange(id);
+		room?.registerPlayerChange(this);
 	}
 
 	shared Boolean isPlaying() {

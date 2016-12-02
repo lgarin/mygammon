@@ -1,12 +1,12 @@
 import backgammon.server.room {
-	Room
+	Room,
+	Player
 }
 import backgammon.shared {
 	JoinedTableMessage,
 	CreatedMatchMessage,
 	RoomMessage,
-	PlayerInfo,
-	PlayerId
+	PlayerInfo
 }
 
 import ceylon.collection {
@@ -54,24 +54,24 @@ class RoomTest() {
 	
 	test
 	shared void removeExistingPlayer() {
-		value player = makePlayerInfo("player1");
-		room.definePlayer(player);
-		value result = room.removePlayer(PlayerId(player.id));
-		assert (result exists);
+		value player = room.definePlayer(makePlayerInfo("player1"));
+		assert (exists player);
+		value result = room.removePlayer(player);
+		assert (result);
 	}
 	
 	test
 	shared void removeNonExistingPlayer() {
-		value player = makePlayerInfo("player1");
-		value result = room.removePlayer(PlayerId(player.id));
-		assert (!result exists);
+		value player = Player(makePlayerInfo("player1"));
+		value result = room.removePlayer(player);
+		assert (!result);
 	}
 	
 	test
 	shared void sitPlayerWithoutOpponent() {
 		value player = room.definePlayer(makePlayerInfo("player1"));
 		assert (exists player);
-		value result = room.findMatchTable(player.id);
+		value result = room.findMatchTable(player);
 		assert (result exists);
 		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 1);
 	}
@@ -82,9 +82,9 @@ class RoomTest() {
 		assert (exists player1);
 		value player2 = room.definePlayer(makePlayerInfo("player2"));
 		assert (exists player2);
-		value result1 = room.findMatchTable(player1.id);
+		value result1 = room.findMatchTable(player1);
 		assert (result1 exists);
-		value result2 = room.findMatchTable(player2.id);
+		value result2 = room.findMatchTable(player2);
 		assert (result2 exists);
 		assert (messageList.count((RoomMessage element) => element is JoinedTableMessage) == 2);
 		assert (messageList.count((RoomMessage element) => element is CreatedMatchMessage) == 1);

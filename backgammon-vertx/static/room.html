@@ -38,6 +38,28 @@
 		            	  	click: function() { $(this).dialog("close"); return true; }
 		                }]
 	            	});
+	            	$("#dialog-accept").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: [{
+	                    	text: $("#i18n #_play").text(),
+	                    	click: function() { $(this).dialog("close"); return board.onAcceptMatch(); }
+	                    }, {
+	                      	text: $("#i18n #_cancel").text(),
+	                	  	click: function() { $(this).dialog("close"); return true; }
+	                    }]
+	                });
+	            	$("#dialog-leave").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: [{
+	                    	text: $("#i18n #_leave").text(),
+	                    	click: function() { $(this).dialog("close"); return board.onLeaveConfirmed(); }
+	                    }, {
+	                      	text: $("#i18n #_cancel").text(),
+	                	  	click: function() { $(this).dialog("close"); return true; }
+	                    }]
+	                });
 	            	window.setInterval(function() { return room.onTimer(); }, 100);
 				}
 			);
@@ -61,7 +83,11 @@
 						</li>
 						<li id="new" class="btn btn-default navbar-btn hidden">
 							<span class="glyphicon glyphicon-plus-sign"></span>
-							New table
+							Open table
+						</li>
+						<li id="leave" class="btn btn-default navbar-btn hidden">
+							<span class="glyphicon glyphicon-minus-sign"></span>
+							Leave table
 						</li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
@@ -85,7 +111,7 @@
 		<div id="gui" class="container-fluid">
 			<div class="row content">
 				<div class="col-sm-4 sidenav">
-					<table id="player-list" class="table table-hover">
+					<table id="player-list" class="table">
 						<thead>
 							<tr>
 								<th class="col-md-6">Name</th>
@@ -250,12 +276,22 @@
 					<img data-src="iconUrl" style=""></img>
 					<span style="margin-left:10px" data-content="name"></span>
 				</td>
-				<td data-content="tableId.table"></td>
+				<td><button type="button" data-class="tableClass" class="btn btn-link" data-id="tableId.table"><span class="glyphicon glyphicon-triangle-right"></span></button><div data-content="tableId.table">&nbsp;</div></td>
 				<td data-content="score"></td>
 				<td data-content="win"></td>
 			</tr>
 		</script>
 		
+		<div id="dialog-accept" title="Join the game?" style="display: none">
+		  <p>
+		    <b>Do you accept to play this game?</b>
+		  </p>
+		</div>
+		<div id="dialog-leave" title="Leave the game?" style="display: none">
+		  <p>
+		    <b>Do you really want to leave the table?</b>
+		  </p>
+		</div>
 		<div id="dialog-logout" title="Leave the game?" style="display: none">
 		  <p>
 		    <b>You have a game in progress.<br/>Do you really want to logout?</b>

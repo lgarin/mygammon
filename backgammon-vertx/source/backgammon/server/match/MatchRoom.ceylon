@@ -60,13 +60,14 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			switch (message)
 			case (is EnterRoomMessage) {
 				if (exists room = findRoom(message.roomId), exists player = room.definePlayer(message.playerInfo)) {
+					player.markActive();
 					return RoomActionResponseMessage(message.playerId, message.roomId, true);
 				} else {
 					return RoomActionResponseMessage(message.playerId, message.roomId, false);
 				}
 			}
 			case (is LeaveRoomMessage) {
-				if (exists room = findRoom(message.roomId), exists player = room.removePlayer(message.playerId)) {
+				if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId), room.removePlayer(player)) {
 					if (exists match = player.match, match.hasGame) {
 						gameCommander(EndGameMessage(match.id, player.id));
 					}
@@ -76,14 +77,16 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				}
 			}
 			case (is FindMatchTableMessage) {
-				if (exists room = findRoom(message.roomId), exists table = room.findMatchTable(message.playerId)) {
+				if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId), exists table = room.findMatchTable(player)) {
+					player.markActive();
 					return FoundMatchTableMessage(message.playerId, message.roomId, table.index);
 				} else {
 					return FoundMatchTableMessage(message.playerId, message.roomId, null);
 				}
 			}
 			case (is FindEmptyTableMessage) {
-				if (exists room = findRoom(message.roomId), exists table = room.findEmptyTable(message.playerId)) {
+				if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId), exists table = room.findEmptyTable(player)) {
+					player.markActive();
 					return FoundEmptyTableMessage(message.playerId, message.roomId, table.index);
 				} else {
 					return FoundEmptyTableMessage(message.playerId, message.roomId, null);
@@ -110,15 +113,18 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 		try (lock) {
 			switch (message)
 			case (is JoinTableMessage) {
-				if (exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.sitPlayer(player)) {
+				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.sitPlayer(player)) {
+					player.markActive();
+					room.registerPlayerChange(player);
 					return JoinedTableMessage(message.playerId, message.tableId, true);
 				} else {
 					return JoinedTableMessage(message.playerId, message.tableId, false);
 				}
 			}
 			case (is LeaveTableMessage) {
-				if (exists table = findTable(message.tableId), exists player = table.removePlayer(message.playerId)) {
+				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.removePlayer(player)) {
 					player.markActive();
+					room.registerPlayerChange(player);
 					if (exists match = player.match, match.hasGame) {
 						gameCommander(EndGameMessage(match.id, player.id));
 					}
@@ -128,9 +134,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				}
 			}
 			case (is TableStateRequestMessage) {
-				if (exists table = findTable(message.tableId), exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId)) {
+				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId)) {
 					player.markActive();
-					return TableStateResponseMessage(message.playerId, message.tableId, table.queueSize, table.findPlayer(message.playerId) exists, room.findMatchState(message.tableId, message.playerId), true);
+					return TableStateResponseMessage(message.playerId, message.tableId, table.queueSize, player.isAtTable(message.tableId), room.findMatchState(message.tableId, player), true);
 				} else {
 					return TableStateResponseMessage(message.playerId, message.tableId, 0, false, null, false);
 				}
@@ -142,7 +148,8 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 		try (lock) {
 			switch (message)
 			case (is AcceptMatchMessage) {
-				if (exists match = findMatch(message.matchId), match.markReady(message.playerId)) {
+				if (exists room = findRoom(message.roomId), exists match = findMatch(message.matchId), exists player = room.findPlayer(message.playerId), match.markReady(message.playerId)) {
+					player.markActive();
 					if (match.gameStarted) {
 						gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
 					}
@@ -152,7 +159,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				}
 			}
 			case (is EndMatchMessage) {
-				if (exists match = findMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score)) {
+				if (exists room = findRoom(message.roomId), exists match = findMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score)) {
 					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, true);
 				} else {
 					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, false);

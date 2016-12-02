@@ -6,7 +6,8 @@ import backgammon.shared {
 	OutboundMatchMessage,
 	PlayerId,
 	LeftTableMessage,
-	JoinedTableMessage
+	JoinedTableMessage,
+	MatchState
 }
 
 import ceylon.collection {
@@ -20,6 +21,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	
 	variable Match? _match = null;
 	shared Match? match => _match;
+	shared MatchState? matchState => _match?.state;
 	
 	value playerQueue = HashMap<PlayerId, Player>(linked);
 	
@@ -60,9 +62,9 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 		if (player.leaveTable(id)) {
 			playerQueue.remove(player.id);
 			messageBroadcaster(LeftTableMessage(player.id, id));
-			return player;
+			return true;
 		} else {
-			return null;
+			return false;
 		}
 	}
 	
@@ -71,32 +73,24 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 		if (currentMatch.gameEnded) {
 			return removeFreePlayer(player);
 		} else if (currentMatch.end(player.id)) { // this method calls removePlayer
-			return player;
+			return true;
 		} else {
 			_match = currentMatch;
-			return null;
+			return false;
 		}
 	}
 	
-	shared Player? removePlayer(PlayerId playerId) {
-		if (exists player = findPlayer(playerId)) {
-			if (exists currentMatch = match, currentMatch.findPlayer(playerId) exists) {
+	shared Boolean removePlayer(Player player) {
+		if (player.isAtTable(id)) {
+			if (exists currentMatch = match, currentMatch.findPlayer(player.id) exists) {
 				return removeMatchPlayer(currentMatch, player);
 			} else {
 				return removeFreePlayer(player);
 			}
 		} else {
-			return null;
+			return false;
 		}
 	}
 
-	shared Player? findPlayer(PlayerId playerId) {
-		if (exists player = playerQueue[playerId], player.isAtTable(id)) {
-			return player;
-		} else {
-			return null;
-		}
-	}
-	
 	shared Boolean isInRoom(RoomId roomId) => id.roomId == roomId.roomId;
 }

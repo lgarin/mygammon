@@ -59,8 +59,8 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 	void endGame(PlayerId playerId, PlayerId winnerId, Integer score) {
 		state.end(playerId, winnerId, score);		
 		messageBroadcaster(MatchEndedMessage(playerId, id, winnerId, score));
-		table.removePlayer(player1.id);
-		table.removePlayer(player2.id);
+		table.removePlayer(player1);
+		table.removePlayer(player2);
 	}
 
 	shared Boolean end(PlayerId playerId, PlayerId? winnerId = null, Integer score = 0) {
@@ -79,8 +79,8 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 		} else {
 			// call from leave table
 			// will trigger a EndGameMessage in match room
-			table.removePlayer(player1.id);
-			table.removePlayer(player2.id);
+			table.removePlayer(player1);
+			table.removePlayer(player2);
 			return true;
 		}
 	}

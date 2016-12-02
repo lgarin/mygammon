@@ -97,6 +97,8 @@ shared class RoomPage() extends BasePage() {
 		} else if (target.id == gui.newButtonId, exists currentRoomId = extractRoomId(), exists currentPlayerInfo = extractPlayerInfo()) {
 			roomCommander(FindEmptyTableMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
 			return true;
+		} else if (target.id == gui.leaveButtonId, exists currentTableClient = tableClient) {
+			return currentTableClient.handleLeaveEvent();
 		} else if (target.id == gui.sitButtonId, exists currentRoomId = extractRoomId(), exists tableId = tableClient?.tableId, exists currentPlayerInfo = extractPlayerInfo()) {
 			gameCommander(JoinTableMessage(PlayerId(currentPlayerInfo.id), tableId));
 			return true;
@@ -112,6 +114,7 @@ shared class RoomPage() extends BasePage() {
 		print(formatRoomMessage(message));
 		switch (message)
 		case (is AcceptMatchMessage) {
+			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");
 		}
 		case (is StartGameMessage) {
 		}
@@ -131,6 +134,7 @@ shared class RoomPage() extends BasePage() {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/state");
 		}
 		case (is LeaveTableMessage) {
+			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/leave");
 		}
 		case (is TableStateRequestMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/state");
@@ -184,12 +188,40 @@ shared class RoomPage() extends BasePage() {
 		}
 	}
 	
-	void showPlayers(PlayerListMessage message) {
-		playerList.update(message);
+	shared Boolean onLeaveConfirmed() {
+		
+		if (exists currentTableClient = tableClient) {
+			currentTableClient.handleLeaveEvent();
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean onAcceptMatch() {
+		
+		if (exists currentTableClient = tableClient) {
+			// TODO
+			//gameCommander(AcceptMatchMessage(playerId, matchId));
+			window.location.\iassign("/room/``currentTableClient.tableId.roomId``/table/``currentTableClient.tableId.table``");
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	void refreshPlayerList(TableId? joinedTableId) {
+		if (exists joinedTableId) {
+			gui.hideNewButton();
+			gui.showLeaveButton();
+		} else {
+			gui.showNewButton();
+			gui.hideLeaveButton();
+		}
 		if (playerList.empty) {
 			gui.showEmptyPlayerList();
 		} else {
-			gui.showPlayerList(playerList.toTemplateData());
+			gui.showPlayerList(playerList.toTemplateData(joinedTableId exists));
 		}
 	}
 	
@@ -226,11 +258,15 @@ shared class RoomPage() extends BasePage() {
 			if (message.isOldPlayer(currentPlayerInfo.id)) {
 				logout();
 				return true;
+			} else {
+				playerList.update(message);
+				refreshPlayerList(playerList.findTable(currentPlayerInfo.id));
+				// TODO show table
+				return true;
 			}
-			showPlayers(message);
-			return true;
 		} else if (is FoundEmptyTableMessage message) {
 			if (exists tableId = message.tableId) {
+				refreshPlayerList(tableId);
 				return showTable(tableId, currentPlayerInfo);
 			} else {
 				return false;
@@ -262,6 +298,10 @@ shared class RoomPage() extends BasePage() {
 		} else if (is CreatedMatchMessage message) {
 			gameEventClient?.close();
 			gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
+			if (exists playerInfo = extractPlayerInfo(), message.player1.id == playerInfo.id || message.player2.id == playerInfo.id) {
+				// TODO store message
+				gui.showDialog("dialog-accept");
+			}
 		}
 		
 		if (is JoinedTableMessage message) {
