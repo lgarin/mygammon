@@ -27,7 +27,7 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	
 	variable PlayerStatistic statistic = PlayerStatistic(0, 0, 0);
 	
-	shared PlayerState state => PlayerState(info.id, info.name, statistic, table?.id, match?.id, info.iconUrl);
+	shared PlayerState state => PlayerState(info.id, info.name, statistic, table?.id, match?.id, info.pictureUrl, info.iconUrl);
 	
 	shared Boolean isInRoom(RoomId roomId) {
 		return room?.id?.equals(roomId) else false;

@@ -17,6 +17,7 @@ import backgammon.shared {
 }
 shared class BoardGui(Document document) extends GameGui(document) {
 	
+	shared String hiddenClass = "hidden";
 	shared String undoButtonId = "undo";
 	shared String leaveButtonId = "leave";
 	shared String submitButtonId = "submit";
@@ -25,60 +26,60 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	shared String startButtonId = "start";
 	
 	shared void hideUndoButton() {
-		addClass(undoButtonId, "hidden");
+		addClass(undoButtonId, hiddenClass);
 	}
 	
 	shared void showUndoButton(String text = undoTextKey) {
-		removeClass(undoButtonId, "hidden");
+		removeClass(undoButtonId, hiddenClass);
 		if (exists button = document.getElementById("``undoButtonId``Text")) {
 			button.innerHTML = translate(text);
 		}
 	}
 	
 	shared void hideSubmitButton() {
-		addClass(submitButtonId, "hidden");
+		addClass(submitButtonId, hiddenClass);
 	}
 	
 	shared void showSubmitButton(String text = submitTextKey) {
-		removeClass(submitButtonId, "hidden");
+		removeClass(submitButtonId, hiddenClass);
 		if (exists button = document.getElementById("``submitButtonId``Text")) {
 			button.innerHTML = translate(text);
 		}
 	}
 	
 	shared void hideLeaveButton() {
-		addClass(leaveButtonId, "hidden");
+		addClass(leaveButtonId, hiddenClass);
 	}
 	
 	shared void showLeaveButton(String text = leaveTextKey) {
-		removeClass(leaveButtonId, "hidden");
+		removeClass(leaveButtonId, hiddenClass);
 		if (exists button = document.getElementById("``leaveButtonId``Text")) {
 			button.innerHTML = translate(text);
 		}
 	}
 	
 	shared void hideExitButton() {
-		addClass(exitButtonId, "hidden");
+		addClass(exitButtonId, hiddenClass);
 	}
 	
 	shared void showExitButton() {
-		removeClass(exitButtonId, "hidden");
+		removeClass(exitButtonId, hiddenClass);
 	}
 	
 	shared void hideHomeButton() {
-		addClass(homeButtonId, "hidden");
+		addClass(homeButtonId, hiddenClass);
 	}
 	
 	shared void showHomeButton() {
-		removeClass(homeButtonId, "hidden");
+		removeClass(homeButtonId, hiddenClass);
 	}
 	
 	shared void hideStartButton() {
-		addClass(startButtonId, "hidden");
+		addClass(startButtonId, hiddenClass);
 	}
 	
 	shared void showStartButton() {
-		removeClass(startButtonId, "hidden");
+		removeClass(startButtonId, hiddenClass);
 	}
 
 	shared void showCurrentPlayer(CheckerColor? currentColor) {

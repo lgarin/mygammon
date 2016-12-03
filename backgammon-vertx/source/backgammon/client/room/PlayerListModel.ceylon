@@ -13,7 +13,7 @@ import ceylon.json {
 	Object
 }
 
-class PlayerListModel() {
+class PlayerListModel(String hiddenClass) {
 
 	value playerMap = HashMap<String, PlayerState>(linked);
 	
@@ -23,9 +23,17 @@ class PlayerListModel() {
 		playerMap.putAll({for (p in message.updatedPlayers) p.id -> p});
 	}
 	
-	function toRowData(Boolean hideTable)(PlayerState state) {
-		value tableClass = !hideTable && state.tableId exists then "" else "hidden";
-		return Object({"id" -> state.id, "name" -> state.name, "tableClass" -> tableClass, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.iconUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage});
+	function toRowData(Boolean hideButtons)(PlayerState state) {
+		
+		String buttonClass;
+		if (hideButtons && state.tableId exists) {
+			buttonClass = "disabled";
+		} else if (state.tableId exists) {
+			buttonClass = "";
+		} else {
+			buttonClass = hiddenClass;
+		}
+		return Object({"id" -> state.id, "name" -> state.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.iconUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage});
 	}
 	
 	shared TableId? findTable(String playerId) {
@@ -35,11 +43,13 @@ class PlayerListModel() {
 		return null;
 	}
 	
- 	shared String toTemplateData(Boolean hideTable) {
+	shared PlayerState? findPlayer(String playerId) => playerMap[playerId];
+	
+ 	shared String toTemplateData(Boolean hideButtons) {
 		if (playerMap.empty) {
 			return Object().string;
 		}
-		return Array(playerMap.items.map(toRowData(hideTable))).string;
+		return Array(playerMap.items.map(toRowData(hideButtons))).string;
 	}
 	
 	shared Boolean empty => playerMap.empty;

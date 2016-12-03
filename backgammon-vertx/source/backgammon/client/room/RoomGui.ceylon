@@ -17,35 +17,35 @@ class RoomGui(Document document) extends BoardGui(document) {
 	value tablePreviewId = "table-preview";
 	
 	shared void hidePlayButton() {
-		addClass(playButtonId, "hidden");
+		addClass(playButtonId, hiddenClass);
 	}
 	
 	shared void showPlayButton() {
-		removeClass(playButtonId, "hidden");
+		removeClass(playButtonId, hiddenClass);
 	}
 	
 	shared void hideNewButton() {
-		addClass(newButtonId, "hidden");
+		addClass(newButtonId, hiddenClass);
 	}
 	
 	shared void showNewButton() {
-		removeClass(newButtonId, "hidden");
+		removeClass(newButtonId, hiddenClass);
 	}
 	
 	shared void hideSitButton() {
-		addClass(sitButtonId, "hidden");
+		addClass(sitButtonId, hiddenClass);
 	}
 	
 	shared void showSitButton() {
-		removeClass(sitButtonId, "hidden");
+		removeClass(sitButtonId, hiddenClass);
 	}
 	
 	shared void hideTablePreview() {
-		addClass(tablePreviewId, "hidden");
+		addClass(tablePreviewId, hiddenClass);
 	}
 	
 	shared void showTablePreview() {
-		removeClass(tablePreviewId, "hidden");
+		removeClass(tablePreviewId, hiddenClass);
 	}
 	
 	shared void showQueueSize(Integer? queueSize) {

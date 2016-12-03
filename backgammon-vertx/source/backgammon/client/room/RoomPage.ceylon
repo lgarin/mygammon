@@ -72,7 +72,7 @@ shared class RoomPage() extends BasePage() {
 	variable EventBusClient? roomEventClient = null;
 	variable EventBusClient? tableEventClient = null;
 	variable EventBusClient? gameEventClient = null;
-	value playerList = PlayerListModel();
+	value playerList = PlayerListModel(gui.hiddenClass);
 	
 	variable Integer queueSize = 0;
 	
@@ -157,6 +157,8 @@ shared class RoomPage() extends BasePage() {
 		gui.showInitialGame();
 		tableClient = TableClient(newTableId, playerInfo, gui, gameCommander);
 		tableEventClient = EventBusClient("OutboundTableMessage-``newTableId``", onServerMessage, onServerError);
+		// TODO api do not use the playerId
+		// TODO add a flag to request message
 		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), newTableId));
 		gui.showTablePreview();
 		gui.showSitButton();
@@ -180,8 +182,8 @@ shared class RoomPage() extends BasePage() {
 	
 	shared Boolean onPlayerClick(String playerId) {
 
-		if (exists tableId = playerList.findTable(playerId), exists currentPlayerInfo = extractPlayerInfo()) {
-			return showTable(tableId, currentPlayerInfo);
+		if (exists playerState = playerList.findPlayer(playerId), exists tableId = playerState.tableId) {
+			return showTable(tableId, playerState.toPlayerInfo());
 		} else {
 			hideTable();
 			return true;
@@ -222,6 +224,10 @@ shared class RoomPage() extends BasePage() {
 			gui.showEmptyPlayerList();
 		} else {
 			gui.showPlayerList(playerList.toTemplateData(joinedTableId exists));
+		}
+		
+		if (exists joinedTableId, exists playerInfo = extractPlayerInfo()) {
+			showTable(joinedTableId, playerInfo);
 		}
 	}
 	

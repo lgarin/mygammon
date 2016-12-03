@@ -26,7 +26,7 @@
 				function(app) {
 					var room = app.createRoom();
 					$(".btn").on("click", function(event) { return room.onButton(event.currentTarget); });
-					$("#player-list tbody").on("click", ".player-row", function(event) { return room.onPlayerClick($(this).attr('id')); });
+					$("#player-list tbody").on("click", ".player-row-button", function(event) { return room.onPlayerClick($(this).attr('id')); });
 					$("#dialog-logout").dialog({
 		            	autoOpen: false,
 		                modal: true,
@@ -110,21 +110,21 @@
 
 		<div id="gui" class="container-fluid">
 			<div class="row content">
-				<div class="col-sm-4 sidenav">
+				<div class="col-sm-6 sidenav">
 					<table id="player-list" class="table">
 						<thead>
 							<tr>
-								<th class="col-md-6">Name</th>
-								<th class="col-md-2">Table</th>
-								<th class="col-md-2">Score</th>
-								<th class="col-md-2">Win&nbsp;%</th>
+								<th class="col-md-9">Name</th>
+								<th class="col-md-1" style="min-width: 100px">Table</th>
+								<th class="col-md-1" style="min-width: 100px">Score</th>
+								<th class="col-md-1" style="min-width: 100px">Win&nbsp;%</th>
 							</tr>
 						</thead>
 						<tbody>
 						</tbody>
 					</table>
 				</div> <!-- end of player list -->
-				<div id="table-preview" class="col-sm-8 hidden">
+				<div id="table-preview" class="col-sm-6 hidden">
 				
 					<div id="whitePlayer" class="player">
 						 <div>
@@ -271,12 +271,13 @@
 		</script>
 
 		<script type="text/html" id="player-row-template">
-			<tr class="player-row" data-id="id">
+			<tr class="player-row">
 				<td>
 					<img data-src="iconUrl" style=""></img>
 					<span style="margin-left:10px" data-content="name"></span>
 				</td>
-				<td><button type="button" data-class="tableClass" class="btn btn-link" data-id="tableId.table"><span class="glyphicon glyphicon-triangle-right"></span></button><div data-content="tableId.table">&nbsp;</div></td>
+				<td>
+					<button data-class="buttonClass" type="button" class="player-row-button btn btn-default btn-xs" data-id="id">View</i></button>
 				<td data-content="score"></td>
 				<td data-content="win"></td>
 			</tr>
