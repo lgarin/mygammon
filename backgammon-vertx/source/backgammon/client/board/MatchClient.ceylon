@@ -1,6 +1,5 @@
 import backgammon.shared {
 	MatchState,
-	PlayerInfo,
 	PlayerId,
 	OutboundMatchMessage,
 	AcceptedMatchMessage,
@@ -23,11 +22,10 @@ import ceylon.time {
 	Instant
 }
 
-shared final class MatchClient(PlayerInfo player, shared MatchState match, BoardGui gui, Anything(InboundGameMessage|InboundMatchMessage) messageBroadcaster) {
+shared final class MatchClient(PlayerId playerId, shared MatchState match, BoardGui gui, Anything(InboundGameMessage|InboundMatchMessage) messageBroadcaster) {
 	
 	shared MatchId matchId = match.id;
 	
-	value playerId = PlayerId(player.id);
 	variable GameClient? _gameClient = null;
 	shared GameClient? gameClient => _gameClient;
 	
@@ -77,7 +75,11 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, Board
 			gui.hideSubmitButton();
 		}
 		gui.hideUndoButton();
-		gui.showLeaveButton();
+		if (match.playerColor(playerId) exists) {
+			gui.showLeaveButton();
+		} else {
+			gui.hideLeaveButton();
+		}
 	}
 	
 	void showResumingGame() {
@@ -86,7 +88,11 @@ shared final class MatchClient(PlayerInfo player, shared MatchState match, Board
 		gui.showPlayerMessage(player2Color, gui.loadingTextKey, true);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		gui.showLeaveButton();	}
+		if (match.playerColor(playerId) exists) {
+			gui.showLeaveButton();
+		} else {
+			gui.hideLeaveButton();
+		}	}
 	
 	void showAccept(AcceptedMatchMessage message) {
 		match.markReady(message.playerId);

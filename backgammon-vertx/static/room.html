@@ -43,7 +43,7 @@
 	                    modal: true,
 	                    buttons: [{
 	                    	text: $("#i18n #_play").text(),
-	                    	click: function() { $(this).dialog("close"); return board.onAcceptMatch(); }
+	                    	click: function() { $(this).dialog("close"); return room.onAcceptMatch(); }
 	                    }, {
 	                      	text: $("#i18n #_cancel").text(),
 	                	  	click: function() { $(this).dialog("close"); return true; }
@@ -54,7 +54,7 @@
 	                    modal: true,
 	                    buttons: [{
 	                    	text: $("#i18n #_leave").text(),
-	                    	click: function() { $(this).dialog("close"); return board.onLeaveConfirmed(); }
+	                    	click: function() { $(this).dialog("close"); return room.onLeaveConfirmed(); }
 	                    }, {
 	                      	text: $("#i18n #_cancel").text(),
 	                	  	click: function() { $(this).dialog("close"); return true; }

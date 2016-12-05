@@ -98,7 +98,8 @@ shared class RoomPage() extends BasePage() {
 			roomCommander(FindEmptyTableMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
 			return true;
 		} else if (target.id == gui.leaveButtonId, exists currentTableClient = tableClient) {
-			return currentTableClient.handleLeaveEvent();
+			gui.showDialog("dialog-leave");
+			return true;
 		} else if (target.id == gui.sitButtonId, exists currentRoomId = extractRoomId(), exists tableId = tableClient?.tableId, exists currentPlayerInfo = extractPlayerInfo()) {
 			gameCommander(JoinTableMessage(PlayerId(currentPlayerInfo.id), tableId));
 			return true;
@@ -137,33 +138,36 @@ shared class RoomPage() extends BasePage() {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/leave");
 		}
 		case (is TableStateRequestMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/state");
+			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/state/``message.targetPlayerId.id``");
 		}
 		case (is JoinTableMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/join");
 		}
 	}
 	
-	function showTable(TableId newTableId, PlayerInfo playerInfo) {
-		if (exists currentTableClient = tableClient, currentTableClient.tableId == newTableId) {
+	function showTable(TableId newTableId, PlayerInfo targetPlayerInfo) {
+		if (exists currentPlayerInfo = extractPlayerInfo()) {
+			if (exists currentTableClient = tableClient, currentTableClient.tableId == newTableId) {
+				return true;
+			}
+			
+			gameEventClient?.close();
+			gameEventClient = null;
+			tableEventClient?.close();
+			tableEventClient = null;
+			
+			gui.showInitialGame();
+			value playerId = PlayerId(currentPlayerInfo.id);
+			tableClient = TableClient(playerId, newTableId, targetPlayerInfo, gui, gameCommander);
+			tableEventClient = EventBusClient("OutboundTableMessage-``newTableId``", onServerMessage, onServerError);
+			gameCommander(TableStateRequestMessage(playerId, newTableId, PlayerId(targetPlayerInfo.id)));
+			gui.showTablePreview();
+			gui.showSitButton();
+			gui.showQueueSize(null);
 			return true;
+		} else {
+			return false;
 		}
-		
-		gameEventClient?.close();
-		gameEventClient = null;
-		tableEventClient?.close();
-		tableEventClient = null;
-		
-		gui.showInitialGame();
-		tableClient = TableClient(newTableId, playerInfo, gui, gameCommander);
-		tableEventClient = EventBusClient("OutboundTableMessage-``newTableId``", onServerMessage, onServerError);
-		// TODO api do not use the playerId
-		// TODO add a flag to request message
-		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), newTableId));
-		gui.showTablePreview();
-		gui.showSitButton();
-		gui.showQueueSize(null);
-		return true;
 	}
 	
 	shared Boolean onLogoutConfirmed() {
@@ -182,7 +186,9 @@ shared class RoomPage() extends BasePage() {
 	
 	shared Boolean onPlayerClick(String playerId) {
 
-		if (exists playerState = playerList.findPlayer(playerId), exists tableId = playerState.tableId) {
+		if (exists currentPlayer = extractPlayerInfo(), exists playerState = playerList.findPlayer(currentPlayer.id), playerState.tableId exists) {
+			return false;
+		} else if (exists playerState = playerList.findPlayer(playerId), exists tableId = playerState.tableId) {
 			return showTable(tableId, playerState.toPlayerInfo());
 		} else {
 			hideTable();
@@ -203,8 +209,6 @@ shared class RoomPage() extends BasePage() {
 	shared Boolean onAcceptMatch() {
 		
 		if (exists currentTableClient = tableClient) {
-			// TODO
-			//gameCommander(AcceptMatchMessage(playerId, matchId));
 			window.location.\iassign("/room/``currentTableClient.tableId.roomId``/table/``currentTableClient.tableId.table``");
 			return true;
 		} else {
@@ -212,7 +216,7 @@ shared class RoomPage() extends BasePage() {
 		}
 	}
 	
-	void refreshPlayerList(TableId? joinedTableId) {
+	void refreshPlayerList(TableId? joinedTableId, PlayerInfo playerInfo) {
 		if (exists joinedTableId) {
 			gui.hideNewButton();
 			gui.showLeaveButton();
@@ -226,7 +230,7 @@ shared class RoomPage() extends BasePage() {
 			gui.showPlayerList(playerList.toTemplateData(joinedTableId exists));
 		}
 		
-		if (exists joinedTableId, exists playerInfo = extractPlayerInfo()) {
+		if (exists joinedTableId) {
 			showTable(joinedTableId, playerInfo);
 		}
 	}
@@ -266,14 +270,13 @@ shared class RoomPage() extends BasePage() {
 				return true;
 			} else {
 				playerList.update(message);
-				refreshPlayerList(playerList.findTable(currentPlayerInfo.id));
-				// TODO show table
+				refreshPlayerList(playerList.findTable(currentPlayerInfo.id), currentPlayerInfo);
 				return true;
 			}
 		} else if (is FoundEmptyTableMessage message) {
 			if (exists tableId = message.tableId) {
-				refreshPlayerList(tableId);
-				return showTable(tableId, currentPlayerInfo);
+				refreshPlayerList(tableId, currentPlayerInfo);
+				return true;
 			} else {
 				return false;
 			}
@@ -305,7 +308,6 @@ shared class RoomPage() extends BasePage() {
 			gameEventClient?.close();
 			gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
 			if (exists playerInfo = extractPlayerInfo(), message.player1.id == playerInfo.id || message.player2.id == playerInfo.id) {
-				// TODO store message
 				gui.showDialog("dialog-accept");
 			}
 		}

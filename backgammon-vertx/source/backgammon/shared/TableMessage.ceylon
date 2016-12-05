@@ -44,10 +44,12 @@ shared LeaveTableMessage parseLeaveTableMessage(Object json) {
 	return LeaveTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
 }
 
-shared final class TableStateRequestMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies InboundTableMessage {}
+shared final class TableStateRequestMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared PlayerId targetPlayerId = playerId) satisfies InboundTableMessage {
+	toJson() => toExtendedJson({"targetPlayerId" -> targetPlayerId.toJson()});
+}
 
 shared TableStateRequestMessage parseTableStateRequestMessage(Object json) {
-	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
+	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), parsePlayerId(json.getString("targetPlayerId")));
 }
 
 shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared Integer queueSize, shared Boolean joined, shared MatchState? match, shared actual Boolean success) satisfies OutboundTableMessage & RoomResponseMessage {

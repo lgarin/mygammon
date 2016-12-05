@@ -275,13 +275,13 @@ shared class BoardPage() extends BasePage() {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/leave");
 		}
 		case (is TableStateRequestMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/state");
+			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/state/``message.targetPlayerId.id``");
 		}
 	}
 	
 	void login(PlayerInfo playerInfo, TableId tableId) {
 		print(playerInfo.toJson());
-		tableClient = TableClient(tableId, playerInfo, gui, gameCommander);
+		tableClient = TableClient(PlayerId(playerInfo.id), tableId, playerInfo, gui, gameCommander);
 		tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
 		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
 		gui.showBeginState(playerInfo);

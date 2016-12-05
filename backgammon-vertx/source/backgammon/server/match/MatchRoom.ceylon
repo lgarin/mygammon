@@ -134,9 +134,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				}
 			}
 			case (is TableStateRequestMessage) {
-				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId)) {
+				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId), exists targetPlayer = room.findPlayer(message.targetPlayerId)) {
 					player.markActive();
-					return TableStateResponseMessage(message.playerId, message.tableId, table.queueSize, player.isAtTable(message.tableId), room.findMatchState(message.tableId, player), true);
+					return TableStateResponseMessage(message.playerId, message.tableId, table.queueSize, targetPlayer.isAtTable(message.tableId), room.findMatchState(table, targetPlayer), true);
 				} else {
 					return TableStateResponseMessage(message.playerId, message.tableId, 0, false, null, false);
 				}

@@ -22,9 +22,8 @@ import ceylon.time {
 	Instant
 }
 
-shared final class TableClient(shared TableId tableId, PlayerInfo playerInfo, BoardGui gui, Anything(InboundGameMessage|InboundMatchMessage|InboundTableMessage) messageBroadcaster) {
+shared final class TableClient(shared PlayerId playerId, shared TableId tableId, PlayerInfo playerInfo, BoardGui gui, Anything(InboundGameMessage|InboundMatchMessage|InboundTableMessage) messageBroadcaster) {
 	
-	value playerId = PlayerId(playerInfo.id);
 	variable MatchClient? matchClient = null;
 	
 	void showJoinedState() {
@@ -35,12 +34,16 @@ shared final class TableClient(shared TableId tableId, PlayerInfo playerInfo, Bo
 		gui.showPlayerMessage(player2Color, gui.waitingTextKey, true);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		gui.showLeaveButton();
+		if (playerInfo.id == playerId.id) {
+			gui.showLeaveButton();
+		} else {
+			gui.hideLeaveButton();
+		}
 	}
 	
 	void handleTableStateResponseMessage(TableStateResponseMessage message) {
 		if (exists match = message.match) {
-			matchClient = MatchClient(playerInfo, match, gui, messageBroadcaster);
+			matchClient = MatchClient(playerId, match, gui, messageBroadcaster);
 		} else if (message.joined) {
 			showJoinedState();
 		} else {
@@ -56,7 +59,7 @@ shared final class TableClient(shared TableId tableId, PlayerInfo playerInfo, Bo
 		switch (message)
 		case (is CreatedMatchMessage) {
 			value match = MatchState(message.matchId, message.player1, message.player2);
-			matchClient = MatchClient(playerInfo, match, gui, messageBroadcaster);
+			matchClient = MatchClient(playerId, match, gui, messageBroadcaster);
 			return true;
 		}
 		case (is LeftTableMessage) {

@@ -45,8 +45,8 @@ final class GameRoomRestApi(Vertx vertx) {
 
 	void handleTableStateRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
-		if (exists tableId = context.getRequestTableId(), exists playerId = context.getCurrentPlayerId()) {
-			forwardResponse(context, TableStateRequestMessage(playerId, tableId));
+		if (exists tableId = context.getRequestTableId(), exists playerId = context.getCurrentPlayerId(), exists targetPlayerId = context.getRequestPlayerId()) {
+			forwardResponse(context, TableStateRequestMessage(playerId, tableId, targetPlayerId));
 		}
 	}
 	
@@ -147,7 +147,7 @@ final class GameRoomRestApi(Vertx vertx) {
 		restApi.get("/room/:roomId/listplayer").handler(handlePlayerListRequest);
 		restApi.get("/room/:roomId/opentable").handler(handleOpenTableRequest);
 		restApi.get("/room/:roomId/leave").handler(handleRoomLeaveRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/state").handler(handleTableStateRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/state/:playerId").handler(handleTableStateRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/leave").handler(handleTableLeaveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/join").handler(handleTableJoinRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);

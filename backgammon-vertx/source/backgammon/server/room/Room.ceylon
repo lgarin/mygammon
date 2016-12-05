@@ -143,7 +143,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		if (!player.isInRoom(id)) {
 			return null;
 		} else if (exists table = player.table, table.isInRoom(id)) {
-			if (player.isPlaying()) {
+			if (player.isPlaying()) { // TODO should be enough to check for a started match
 				return table;
 			} else if (table.removePlayer(player)) {
 				return sitPlayer(player);
@@ -203,13 +203,11 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		return matchMap[matchId];
 	}
 	
-	shared MatchState? findMatchState(TableId tableId, Player player) {
-		if (exists match = player.findRecentMatch(tableId)) {
+	shared MatchState? findMatchState(Table table, Player player) {
+		if (exists match = player.findRecentMatch(table.id)) {
 			return match.state;
-		} else if (exists table = findTable(tableId)) {
+		} else  {
 			return table.matchState;
-		} else {
-			return null;
 		}
 	}
 	
