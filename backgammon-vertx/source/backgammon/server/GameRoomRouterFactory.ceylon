@@ -75,7 +75,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 				if (is Throwable result) {
 					routingContext.fail(result);
 				} else if (exists table = result.table) {
-					context.sendRedirect("/room/``roomId``/table/``table``");
+					context.sendRedirect("/room/``roomId``/table/``table``/play");
 				} else {
 					routingContext.fail(503);
 				}
@@ -108,7 +108,8 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 		router.route("/logout").handler(handleLogout);
 		router.route("/room/:roomId").handler(handleRoom);
 		router.route("/room/:roomId/play").handler(handlePlay);
-		router.route("/room/:roomId/table/:tableId").handler(handleTable);
+		router.route("/room/:roomId/table/:tableId/view").handler(handleTable);
+		router.route("/room/:roomId/table/:tableId/play").handler(handleTable);
 		return router;
 	}
 }

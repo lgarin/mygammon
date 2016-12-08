@@ -116,9 +116,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.sitPlayer(player)) {
 					player.markActive();
 					room.registerPlayerChange(player);
-					return JoinedTableMessage(message.playerId, message.tableId, true);
+					return JoinedTableMessage(message.playerId, message.tableId, player.info);
 				} else {
-					return JoinedTableMessage(message.playerId, message.tableId, false);
+					return JoinedTableMessage(message.playerId, message.tableId, null);
 				}
 			}
 			case (is LeaveTableMessage) {
@@ -134,11 +134,15 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				}
 			}
 			case (is TableStateRequestMessage) {
-				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId), exists targetPlayer = room.findPlayer(message.targetPlayerId)) {
+				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId)) {
 					player.markActive();
-					return TableStateResponseMessage(message.playerId, message.tableId, table.queueSize, targetPlayer.isAtTable(message.tableId), room.findMatchState(table, targetPlayer), true);
+					if (message.current) {
+						return TableStateResponseMessage(message.playerId, message.tableId, table.matchState, table.queueState, true);
+					} else {
+						return TableStateResponseMessage(message.playerId, message.tableId, player.findRecentMatchState(table.id), table.queueState, true);
+					}
 				} else {
-					return TableStateResponseMessage(message.playerId, message.tableId, 0, false, null, false);
+					return TableStateResponseMessage(message.playerId, message.tableId, null, [], false);
 				}
 			}
 		}

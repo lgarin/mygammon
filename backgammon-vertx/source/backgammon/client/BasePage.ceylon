@@ -11,7 +11,9 @@ import ceylon.time {
 import backgammon.shared {
 
 	PlayerInfo,
-	parseBase64PlayerInfo
+	parseBase64PlayerInfo,
+	systemPlayerId,
+	PlayerId
 }
 import ceylon.regex {
 
@@ -74,5 +76,12 @@ abstract shared class BasePage() {
 			}
 		}
 		return playerInfo;
+	}
+	
+	shared PlayerId currentPlayerId {
+		if (exists playerInfo = extractPlayerInfo()) {
+			return PlayerId(playerInfo.id);
+		}
+		return systemPlayerId;
 	}
 }

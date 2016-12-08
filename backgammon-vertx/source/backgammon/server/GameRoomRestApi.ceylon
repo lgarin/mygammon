@@ -43,10 +43,10 @@ final class GameRoomRestApi(Vertx vertx) {
 		});
 	}
 
-	void handleTableStateRequest(RoutingContext rc) {
+	void handleTableStateRequest(Boolean current)(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
-		if (exists tableId = context.getRequestTableId(), exists playerId = context.getCurrentPlayerId(), exists targetPlayerId = context.getRequestPlayerId()) {
-			forwardResponse(context, TableStateRequestMessage(playerId, tableId, targetPlayerId));
+		if (exists tableId = context.getRequestTableId(), exists playerId = context.getCurrentPlayerId()) {
+			forwardResponse(context, TableStateRequestMessage(playerId, tableId, current));
 		}
 	}
 	
@@ -147,7 +147,8 @@ final class GameRoomRestApi(Vertx vertx) {
 		restApi.get("/room/:roomId/listplayer").handler(handlePlayerListRequest);
 		restApi.get("/room/:roomId/opentable").handler(handleOpenTableRequest);
 		restApi.get("/room/:roomId/leave").handler(handleRoomLeaveRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/state/:playerId").handler(handleTableStateRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/currentstate").handler(handleTableStateRequest(true));
+		restApi.get("/room/:roomId/table/:tableIndex/playerstate").handler(handleTableStateRequest(false));
 		restApi.get("/room/:roomId/table/:tableIndex/leave").handler(handleTableLeaveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/join").handler(handleTableJoinRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);

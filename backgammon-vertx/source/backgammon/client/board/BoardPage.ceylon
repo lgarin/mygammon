@@ -33,10 +33,8 @@ import backgammon.shared {
 	AcceptMatchMessage,
 	TableStateResponseMessage,
 	EndTurnMessage,
-	PlayerId,
 	JoinTableMessage,
-	PlayerInfo,
-	LeftTableMessage
+	PlayerInfo
 }
 
 import ceylon.json {
@@ -67,6 +65,8 @@ shared class BoardPage() extends BasePage() {
 		}
 		return tableId;
 	}
+	
+	function isPreview() => window.location.href.endsWith("view");
 	
 	void logout() {
 		gameEventClient?.close();
@@ -150,7 +150,6 @@ shared class BoardPage() extends BasePage() {
 
 		if (exists currentTableClient = tableClient) {
 			currentTableClient.handleLeaveEvent();
-			window.location.\iassign("/room/``currentTableClient.tableId.roomId``");
 			return true;
 		} else {
 			return false;
@@ -180,11 +179,10 @@ shared class BoardPage() extends BasePage() {
 		if (is TableStateResponseMessage message, exists currentMatch = message.match) {
 			// TODO some changes may occur on the state between the response and the registration
 			gameEventClient = EventBusClient("OutboundGameMessage-``currentMatch.id``", onServerMessage, onServerError);
+		} else if (is CreatedMatchMessage message, message.hasPlayer(currentPlayerId), isPreview()) {
+			window.location.\iassign("/room/``message.tableId.roomId``/table/``message.tableId.table``/player");
 		} else if (is CreatedMatchMessage message) {
 			gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
-		} else if (is LeftTableMessage message, exists currentPlayer = extractPlayerInfo(), message.playerId.id == currentPlayer.id) {
-			// check for logout
-			gameCommander(TableStateRequestMessage(message.playerId, message.tableId));
 		}
 		
 		if (exists currentClient = tableClient) {
@@ -275,21 +273,22 @@ shared class BoardPage() extends BasePage() {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/leave");
 		}
 		case (is TableStateRequestMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/state/``message.targetPlayerId.id``");
+			value suffix = isPreview() then "currentstate" else "playerstate"; 
+			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/``suffix``");
 		}
 	}
 	
-	void login(PlayerInfo playerInfo, TableId tableId) {
+	void login(PlayerInfo playerInfo, TableId tableId, Boolean viewTable) {
 		print(playerInfo.toJson());
-		tableClient = TableClient(PlayerId(playerInfo.id), tableId, playerInfo, gui, gameCommander);
+		tableClient = TableClient(currentPlayerId, tableId, gui, viewTable, gameCommander);
 		tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
-		gameCommander(TableStateRequestMessage(PlayerId(playerInfo.id), tableId));
+		gameCommander(TableStateRequestMessage(currentPlayerId, tableId, viewTable));
 		gui.showBeginState(playerInfo);
 	}
 	
 	shared void run() {
 		if (exists tableId = extractTableId(), exists playerInfo = extractPlayerInfo()) {
-			login(playerInfo, tableId);
+			login(playerInfo, tableId, isPreview());
 		} else {
 			logout();
 		}

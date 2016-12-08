@@ -5,7 +5,8 @@ import backgammon.shared {
 	MatchId,
 	PlayerInfo,
 	PlayerState,
-	PlayerStatistic
+	PlayerStatistic,
+	MatchState
 }
 
 import ceylon.time {
@@ -141,11 +142,11 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 
 	shared Boolean isInactiveSince(Instant timeoutTime) => lastActivity < timeoutTime;
 	
-	shared Match? findRecentMatch(TableId tableId) {
+	shared MatchState? findRecentMatchState(TableId tableId) {
 		if (exists currentMatch = match, currentMatch.table.id == tableId) {
-			return currentMatch;
+			return currentMatch.state;
 		} else if (exists previousMatch = _previousMatch, previousMatch.table.id == tableId) {
-			return previousMatch;
+			return previousMatch.state;
 		} else {
 			return null;
 		}

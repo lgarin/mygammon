@@ -6,7 +6,6 @@ import backgammon.shared {
 	OutboundMatchMessage,
 	TableId,
 	MatchId,
-	MatchState,
 	PlayerListMessage,
 	PlayerState
 }
@@ -143,13 +142,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		if (!player.isInRoom(id)) {
 			return null;
 		} else if (exists table = player.table, table.isInRoom(id)) {
-			if (player.isPlaying()) { // TODO should be enough to check for a started match
-				return table;
-			} else if (table.removePlayer(player)) {
-				return sitPlayer(player);
-			} else {
-				return null;
-			}
+			return table;
 		} else if (!player.table exists) {
 			return sitPlayer(player);
 		} else {
@@ -202,15 +195,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	shared Match? findMatch(MatchId matchId) {
 		return matchMap[matchId];
 	}
-	
-	shared MatchState? findMatchState(Table table, Player player) {
-		if (exists match = player.findRecentMatch(table.id)) {
-			return match.state;
-		} else  {
-			return table.matchState;
-		}
-	}
-	
+
 	shared Player? findPlayer(PlayerId playerId) {
 		if (exists player = playerMap[playerId], player.isInRoom(id)) {
 			return player;

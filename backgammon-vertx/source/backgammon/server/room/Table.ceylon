@@ -7,7 +7,8 @@ import backgammon.shared {
 	PlayerId,
 	LeftTableMessage,
 	JoinedTableMessage,
-	MatchState
+	MatchState,
+	PlayerInfo
 }
 
 import ceylon.collection {
@@ -27,6 +28,8 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	
 	shared Integer queueSize => playerQueue.size;
 	
+	shared [PlayerInfo*] queueState => [for (e in playerQueue.items) e.info]; 
+	
 	function createMatch(Player player1, Player player2) {
 		value currentMatch = Match(player1, player2, this, messageBroadcaster);
 		if (player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch)) {
@@ -42,7 +45,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 		if (playerQueue.defines(player.id)) {
 			return false;
 		} else if (player.joinTable(this)) {
-			messageBroadcaster(JoinedTableMessage(player.id, id));
+			messageBroadcaster(JoinedTableMessage(player.id, id, player.info));
 			if (match exists){
 				playerQueue.put(player.id, player);
 				return true;

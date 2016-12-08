@@ -6,13 +6,19 @@ import backgammon.client.browser {
 }
 import backgammon.shared {
 
-	PlayerInfo
+	PlayerInfo,
+	TableId,
+	PlayerState
+}
+import ceylon.json {
+
+	Object
 }
 class RoomGui(Document document) extends BoardGui(document) {
 	
 	shared String playButtonId = "play";
 	shared String newButtonId = "new";
-	shared String sitButtonId = "sit";
+	shared String joinButtonId = "join";
 	
 	value tablePreviewId = "table-preview";
 	
@@ -31,15 +37,7 @@ class RoomGui(Document document) extends BoardGui(document) {
 	shared void showNewButton() {
 		removeClass(newButtonId, hiddenClass);
 	}
-	
-	shared void hideSitButton() {
-		addClass(sitButtonId, hiddenClass);
-	}
-	
-	shared void showSitButton() {
-		removeClass(sitButtonId, hiddenClass);
-	}
-	
+
 	shared void hideTablePreview() {
 		addClass(tablePreviewId, hiddenClass);
 	}
@@ -48,8 +46,19 @@ class RoomGui(Document document) extends BoardGui(document) {
 		removeClass(tablePreviewId, hiddenClass);
 	}
 	
-	shared void showQueueSize(Integer? queueSize) {
-		replaceVariables({"queue-size" -> (queueSize?.string else "-")});
+	shared void hideJoinButton() {
+		addClass(joinButtonId, hiddenClass);
+	}
+	
+	shared void showTableInfo(TableId tableId, PlayerState? playerState) {
+		value baseTableLink = "/room/``tableId.roomId``/table/``tableId.table``"; 
+		value sitted = playerState?.isAtTable(tableId) else false;
+		value tableLink =  if (sitted) then "``baseTableLink``/play" else "``baseTableLink``/view";
+		value buttonClass = if (sitted) then hiddenClass else "";
+		value data = Object {"tableLink" -> tableLink, "tableId" -> tableId.table, "buttonClass" -> buttonClass}.string;
+		dynamic {
+			jQuery("#table-info").loadTemplate(jQuery("#table-info-template"), JSON.parse(data));
+		}
 	}
 	
 	shared void showPlayerList(String data) {
@@ -67,7 +76,6 @@ class RoomGui(Document document) extends BoardGui(document) {
 	shared actual void showBeginState(PlayerInfo playerInfo) {
 		super.showBeginState(playerInfo);
 		showPlayButton();
-		hideSitButton();
 		hideTablePreview();
 	}
 }
