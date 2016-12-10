@@ -110,14 +110,18 @@ shared class BoardPage() extends BasePage() {
 			window.location.\iassign("/room/``tableId.roomId``");
 			return true;
 		} else if (target.id == gui.leaveButtonId) {
-			gui.showDialog("dialog-leave");
-			return true;
+			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
+				gui.showDialog("dialog-leave");
+				return true;
+			} else {
+				return onLeaveConfirmed();
+			}
 		} else if (target.id == gui.submitButtonId, exists currentTableClient = tableClient) {
 			return currentTableClient.handleSubmitEvent();
 		} else if (target.id == gui.undoButtonId, exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleUndoEvent();
 		} else if (target.id == gui.exitButtonId) {
-			if (exists gameClient = tableClient?.gameClient) {
+			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
 				gui.showDialog("dialog-logout");
 			} else {
 				logout();

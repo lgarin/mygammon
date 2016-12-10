@@ -139,4 +139,6 @@ shared final class TableClient(shared PlayerId playerId, shared TableId tableId,
 	}
 	
 	shared GameClient? gameClient => matchClient?.gameClient;
+	
+	shared Boolean playerIsInMatch => matchClient?.match?.playerColor(playerId) exists;
 }

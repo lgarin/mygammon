@@ -50,7 +50,6 @@ import backgammon.shared {
 	PlayerInfo,
 	JoinTableMessage,
 	PlayerStateRequestMessage,
-	PlayerStateMessage,
 	CreatedMatchMessage,
 	JoinedTableMessage,
 	LeftTableMessage
@@ -96,16 +95,24 @@ shared class RoomPage() extends BasePage() {
 			gui.hideNewButton();
 			roomCommander(FindEmptyTableMessage(currentPlayerId, currentRoomId));
 			return true;
-		} else if (target.id == gui.leaveButtonId, exists currentTableClient = tableClient) {
-			gui.showDialog("dialog-leave");
-			return true;
+		} else if (target.id == gui.leaveButtonId) {
+			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
+				gui.showDialog("dialog-leave");
+				return true;
+			} else {
+				return onLeaveConfirmed();
+			}
 		} else if (target.id == gui.joinButtonId, exists currentRoomId = extractRoomId(), exists tableId = tableClient?.tableId) {
 			gui.hideJoinButton();
+			gui.hideNewButton();
 			gameCommander(JoinTableMessage(currentPlayerId, tableId));
 			return true;
 		} else if (target.id == gui.exitButtonId, exists currentRoomId = extractRoomId()) {
-			// check for active game
-			roomCommander(PlayerStateRequestMessage(currentPlayerId, currentRoomId));
+			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
+				gui.showDialog("dialog-logout");
+			} else {
+				logout();
+			}
 			return true;
 		} else {
 			return false;
@@ -275,14 +282,6 @@ shared class RoomPage() extends BasePage() {
 				return true;
 			} else {
 				return false;
-			}
-		} else if (is PlayerStateMessage message) {
-			if (!message.hasGame) {
-				logout();
-				return true;
-			} else {
-				gui.showDialog("dialog-logout");
-				return true;
 			}
 		} else {
 			return false;
