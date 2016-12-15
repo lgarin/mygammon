@@ -22,9 +22,9 @@ git tag -f -a -m "Released version $CURRENT_VERSION" $CURRENT_VERSION
 
 echo "Preparing next version $NEW_VERSION"
 ./ceylonb version --set $NEW_VERSION --confirm=none backgammon.shared backgammon.server backgammon.client backgammon.test
-sed -i -r "s/(backgammon.client.)$VERSION_PATTERN/\1$NEW_VERSION/g" static/board.html
-unix2dos static/board.html
-sed -i -r "s/(backgammon.server.)$VERSION_PATTERN/\1$NEW_VERSION/g" Backgammon\ Server.launch
-unix2dos Backgammon\ Verticle.launch
+sed -i -r "s/(backgammon.client.)$VERSION_PATTERN/\1$NEW_VERSION/g" static/*.html
+unix2dos static/*.html
+sed -i -r "s/(backgammon.server.)$VERSION_PATTERN/\1$NEW_VERSION/g" *.launch
+unix2dos *.launch
 git add .
 git commit -m "Version bump to $NEW_VERSION"
