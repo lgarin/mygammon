@@ -84,6 +84,8 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 	}
 	
 	shared Object toJson() => Object {"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson(), "leaverId" -> leaverId?.toJson(), "score" -> score};
+	
+	shared Boolean hasPlayer(PlayerId playerId) => playerColor(playerId) exists;
 }
 
 shared MatchState parseMatchState(Object json) => MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), parseNullablePlayerId(json.getStringOrNull("winnerId")), parseNullablePlayerId(json.getStringOrNull("leaverId")), json.getInteger("score"));

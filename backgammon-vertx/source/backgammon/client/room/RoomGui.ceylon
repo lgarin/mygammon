@@ -18,7 +18,6 @@ class RoomGui(Document document) extends BoardGui(document) {
 	
 	shared String playButtonId = "play";
 	shared String newButtonId = "new";
-	shared String joinButtonId = "join";
 	
 	value tablePreviewId = "table-preview";
 	
@@ -46,15 +45,13 @@ class RoomGui(Document document) extends BoardGui(document) {
 		removeClass(tablePreviewId, hiddenClass);
 	}
 	
-	shared void hideJoinButton() {
-		addClass(joinButtonId, hiddenClass);
-	}
-	
-	shared void showTableInfo(TableId tableId, PlayerState? playerState) {
+	shared void showTableInfo(TableId tableId, PlayerState? currentPlayerState) {
 		value baseTableLink = "/room/``tableId.roomId``/table/``tableId.table``"; 
-		value sitted = playerState?.isAtTable(tableId) else false;
-		value tableLink =  if (sitted) then "``baseTableLink``/play" else "``baseTableLink``/view";
+		value sitted = currentPlayerState?.isAtTable(tableId) else false;
 		value buttonClass = if (sitted) then hiddenClass else "";
+		value playing = currentPlayerState?.isPlayingAtTable(tableId) else false;
+		value tableLink =  if (playing) then "``baseTableLink``/play" else "``baseTableLink``/view";
+		
 		value data = Object {"tableLink" -> tableLink, "tableId" -> tableId.table, "buttonClass" -> buttonClass}.string;
 		dynamic {
 			jQuery("#table-info").loadTemplate(jQuery("#table-info-template"), JSON.parse(data));

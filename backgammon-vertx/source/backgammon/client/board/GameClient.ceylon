@@ -170,12 +170,6 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		} else {
 			gui.hideUndoButton();
 		}
-		
-		if (exists color = playerColor) {
-			gui.showLeaveButton();
-		} else {
-			gui.hideLeaveButton();
-		}
 	}
 	
 	function showInitialRoll(InitialRollMessage message) {

@@ -202,7 +202,8 @@ shared class RoomPage() extends BasePage() {
 	shared Boolean onLeaveConfirmed() {
 		
 		if (exists currentTableClient = tableClient) {
-			currentTableClient.handleLeaveEvent();
+			gui.hideLeaveButton();
+			gameCommander(LeaveTableMessage(currentPlayerId, currentTableClient.tableId));
 			return true;
 		} else {
 			return false;

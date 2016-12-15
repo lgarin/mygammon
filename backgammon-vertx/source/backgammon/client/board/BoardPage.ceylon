@@ -34,7 +34,9 @@ import backgammon.shared {
 	TableStateResponseMessage,
 	EndTurnMessage,
 	JoinTableMessage,
-	PlayerInfo
+	PlayerInfo,
+	JoinedTableMessage,
+	LeftTableMessage
 }
 
 import ceylon.json {
@@ -109,6 +111,10 @@ shared class BoardPage() extends BasePage() {
 		} else if (target.id == gui.homeButtonId, exists tableId = extractTableId()) {
 			window.location.\iassign("/room/``tableId.roomId``");
 			return true;
+		} else if (target.id == gui.joinButtonId, exists tableId = extractTableId()) {
+			gui.hideJoinButton();
+			gameCommander(JoinTableMessage(currentPlayerId, tableId));
+			return true;
 		} else if (target.id == gui.leaveButtonId) {
 			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
 				gui.showDialog("dialog-leave");
@@ -153,7 +159,8 @@ shared class BoardPage() extends BasePage() {
 	shared Boolean onLeaveConfirmed() {
 
 		if (exists currentTableClient = tableClient) {
-			currentTableClient.handleLeaveEvent();
+			gui.hideLeaveButton();
+			gameCommander(LeaveTableMessage(currentPlayerId, currentTableClient.tableId));
 			return true;
 		} else {
 			return false;
@@ -180,13 +187,40 @@ shared class BoardPage() extends BasePage() {
 			return true;
 		}
 		
+		// TODO cleanup this block
+		if (is TableStateResponseMessage message) {
+			if (message.isPlayerInQueue(currentPlayerId)) {
+				gui.hideJoinButton();
+				gui.showLeaveButton();
+			} else {
+				gui.hideLeaveButton();
+				if (isPreview()) {
+					gui.showJoinButton();
+				}
+			}
+		} else if (is JoinedTableMessage message, message.playerId == currentPlayerId) {
+			gui.hideJoinButton();
+			gui.showLeaveButton();
+		} else if (is LeftTableMessage message, message.playerId == currentPlayerId) {
+			gui.hideLeaveButton();
+			if (isPreview()) {
+				gui.showJoinButton();
+			}
+		}
+		
 		if (is TableStateResponseMessage message, exists currentMatch = message.match) {
-			// TODO some changes may occur on the state between the response and the registration
-			gameEventClient = EventBusClient("OutboundGameMessage-``currentMatch.id``", onServerMessage, onServerError);
-		} else if (is CreatedMatchMessage message, message.hasPlayer(currentPlayerId), isPreview()) {
-			window.location.\iassign("/room/``message.tableId.roomId``/table/``message.tableId.table``/player");
+			if (currentMatch.hasPlayer(currentPlayerId) && isPreview()) {
+				window.location.\iassign("/room/``message.tableId.roomId``/table/``message.tableId.table``/play");
+			} else {
+				// TODO some changes may occur on the state between the response and the registration
+				gameEventClient = EventBusClient("OutboundGameMessage-``currentMatch.id``", onServerMessage, onServerError);
+			}
 		} else if (is CreatedMatchMessage message) {
-			gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
+			if (message.hasPlayer(currentPlayerId) && isPreview()) {
+				window.location.\iassign("/room/``message.tableId.roomId``/table/``message.tableId.table``/play");
+			} else {
+				gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
+			}
 		}
 		
 		if (exists currentClient = tableClient) {
@@ -202,8 +236,11 @@ shared class BoardPage() extends BasePage() {
 			return false;
 		}
 		
-		if (is MatchEndedMessage message, exists eventBus = gameEventClient) {
-			eventBus.close();
+		if (is MatchEndedMessage message) {
+			gameEventClient?.close();
+			if (!isPreview()) {
+				tableEventClient?.close();
+			}
 		}
 		
 		if (exists currentClient = tableClient) {
@@ -271,7 +308,7 @@ shared class BoardPage() extends BasePage() {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/state");
 		}
 		case (is JoinTableMessage) {
-			// ignore
+			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/join");
 		}
 		case (is LeaveTableMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/leave");

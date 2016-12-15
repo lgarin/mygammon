@@ -20,6 +20,7 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	shared String hiddenClass = "hidden";
 	shared String undoButtonId = "undo";
 	shared String leaveButtonId = "leave";
+	shared String joinButtonId = "join";
 	shared String submitButtonId = "submit";
 	shared String exitButtonId = "exit";
 	shared String homeButtonId = "home";
@@ -51,11 +52,16 @@ shared class BoardGui(Document document) extends GameGui(document) {
 		addClass(leaveButtonId, hiddenClass);
 	}
 	
-	shared void showLeaveButton(String text = leaveTextKey) {
+	shared void showLeaveButton() {
 		removeClass(leaveButtonId, hiddenClass);
-		if (exists button = document.getElementById("``leaveButtonId``Text")) {
-			button.innerHTML = translate(text);
-		}
+	}
+
+	shared void showJoinButton() {
+		removeClass(joinButtonId, hiddenClass);
+	}
+
+	shared void hideJoinButton() {
+		addClass(joinButtonId, hiddenClass);
 	}
 	
 	shared void hideExitButton() {
@@ -139,7 +145,6 @@ shared class BoardGui(Document document) extends GameGui(document) {
 		hideAllCheckers();
 		resetState(black, playerMessage);
 		resetState(white, playerMessage);
-		hideLeaveButton();
 		hideUndoButton();
 		hideSubmitButton();
 	}

@@ -57,7 +57,6 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 		showMatchEndMessage(leaverId, winnerId, player2Color);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		gui.hideLeaveButton();
 		if (playerId == winnerId) {
 			gui.showDialog("dialog-won", {"game-score" -> score.string});
 		} else if (exists looserId = match.opponentId(winnerId), playerId == looserId) {
@@ -75,11 +74,6 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 			gui.hideSubmitButton();
 		}
 		gui.hideUndoButton();
-		if (match.playerColor(playerId) exists) {
-			gui.showLeaveButton();
-		} else {
-			gui.hideLeaveButton();
-		}
 	}
 	
 	void showResumingGame() {
@@ -88,11 +82,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 		gui.showPlayerMessage(player2Color, gui.loadingTextKey, true);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		if (match.playerColor(playerId) exists) {
-			gui.showLeaveButton();
-		} else {
-			gui.hideLeaveButton();
-		}	}
+	}
 	
 	void showAccept(AcceptedMatchMessage message) {
 		match.markReady(message.playerId);

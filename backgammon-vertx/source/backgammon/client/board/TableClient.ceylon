@@ -8,7 +8,6 @@ import backgammon.shared {
 	OutboundTableMessage,
 	LeftTableMessage,
 	InboundMatchMessage,
-	LeaveTableMessage,
 	InboundTableMessage,
 	PlayerId,
 	OutboundGameMessage,
@@ -20,6 +19,7 @@ import backgammon.shared.game {
 	player2Color,
 	player1Color
 }
+
 import ceylon.time {
 	Instant
 }
@@ -36,11 +36,6 @@ shared final class TableClient(shared PlayerId playerId, shared TableId tableId,
 		gui.showPlayerMessage(player2Color, gui.waitingTextKey, true);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		if (playerInfo.id == playerId.id) {
-			gui.showLeaveButton();
-		} else {
-			gui.hideLeaveButton();
-		}
 	}
 	
 	void handleTableStateResponseMessage(TableStateResponseMessage message) {
@@ -72,7 +67,6 @@ shared final class TableClient(shared PlayerId playerId, shared TableId tableId,
 				gui.showPlayerMessage(player2Color, "", true);
 				gui.hideSubmitButton();
 				gui.hideUndoButton();
-				gui.hideLeaveButton();
 			}
 			return true;
 		}
@@ -132,13 +126,8 @@ shared final class TableClient(shared PlayerId playerId, shared TableId tableId,
 		}
 	}
 	
-	shared Boolean handleLeaveEvent() {
-		gui.hideLeaveButton();
-		messageBroadcaster(LeaveTableMessage(playerId, tableId));
-		return true;
-	}
-	
 	shared GameClient? gameClient => matchClient?.gameClient;
 	
-	shared Boolean playerIsInMatch => matchClient?.match?.playerColor(playerId) exists;
+	// TODO cleanup this function
+	shared Boolean playerIsInMatch => matchClient?.match?.playerColor(playerId) exists && !(matchClient?.match?.gameEnded else false);
 }

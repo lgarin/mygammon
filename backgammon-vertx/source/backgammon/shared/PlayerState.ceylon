@@ -16,6 +16,7 @@ shared final class PlayerState(shared String id, shared String name, shared Play
 	shared PlayerId playerId => PlayerId(id);
 	shared PlayerInfo toPlayerInfo() => PlayerInfo(id, name, pictureUrl, iconUrl);
 	shared Boolean isAtTable(TableId otherTableId) => if (exists tableId) then tableId == otherTableId else false;
+	shared Boolean isPlayingAtTable(TableId otherTableId) => matchId exists && isAtTable(otherTableId);
 	shared PlayerState withTable(TableId? tableId) => PlayerState(id, name, statistic, tableId, matchId, pictureUrl, iconUrl);
 }
 

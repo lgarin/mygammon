@@ -59,6 +59,7 @@ shared TableStateRequestMessage parseTableStateRequestMessage(Object json) {
 shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared MatchState? match, shared [PlayerInfo*] playerQueue, shared actual Boolean success) satisfies OutboundTableMessage & RoomResponseMessage {
 	toJson() => toExtendedJson {"match" -> match?.toJson(), "playerQueue" -> Array {for (e in playerQueue) e.toJson()}, "success" -> success};
 	shared Boolean gameStarted => match?.gameStarted else false;
+	shared Boolean isPlayerInQueue(PlayerId playerId) => playerQueue.any((item) => item.id == playerId.id);
 	
 }
 shared TableStateResponseMessage parseTableStateResponseMessage(Object json) {
