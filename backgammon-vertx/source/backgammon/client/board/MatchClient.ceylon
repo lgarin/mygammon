@@ -29,6 +29,8 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 	variable GameClient? _gameClient = null;
 	shared GameClient? gameClient => _gameClient;
 	
+	shared Boolean playerIsInMatch => match.playerColor(playerId) exists && !match.gameEnded;
+	
 	function initGameClient() {
 		value result = GameClient(playerId, match.id, match.playerColor(playerId), gui, messageBroadcaster);
 		_gameClient = result;

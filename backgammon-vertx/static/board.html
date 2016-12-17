@@ -44,7 +44,7 @@
                     		click: function() { $(this).dialog("close"); return board.onPlayAgain(); }
                     	}, {
 	                    	text: $("#i18n #_leave").text(),
-	                    	click: function() { $(this).dialog("close"); return board.onLeaveConfirmed(); }
+	                    	click: function() { $(this).dialog("close"); return board.onStopPlay(); }
 	                    }]
 	                });
 	                $("#dialog-lost").dialog({
@@ -55,7 +55,7 @@
 	                    	click: function() { $(this).dialog("close"); return board.onPlayAgain(); }
 	                    }, {
 	                    	text: $("#i18n #_leave").text(),
-	                    	click: function() { $(this).dialog("close"); return board.onLeaveConfirmed(); }
+	                    	click: function() { $(this).dialog("close"); return board.onStopPlay(); }
 	                    }]
 	                });
 	                $("#dialog-leave").dialog({

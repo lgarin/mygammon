@@ -92,6 +92,7 @@ shared class RoomPage() extends BasePage() {
 			window.location.\iassign("/room/``currentRoomId``/play");
 			return true;
 		} else if (target.id == gui.newButtonId, exists currentRoomId = extractRoomId()) {
+			gui.hideJoinButton();
 			gui.hideNewButton();
 			roomCommander(FindEmptyTableMessage(currentPlayerId, currentRoomId));
 			return true;
@@ -202,8 +203,8 @@ shared class RoomPage() extends BasePage() {
 	shared Boolean onLeaveConfirmed() {
 		
 		if (exists currentTableClient = tableClient) {
-			gui.hideLeaveButton();
 			gameCommander(LeaveTableMessage(currentPlayerId, currentTableClient.tableId));
+			window.location.\iassign("/room/``currentTableClient.tableId.roomId``");
 			return true;
 		} else {
 			return false;
@@ -224,6 +225,7 @@ shared class RoomPage() extends BasePage() {
 		if (exists joinedTableId) {
 			gui.hideNewButton();
 			gui.showLeaveButton();
+			gui.hideJoinButton();
 		} else {
 			gui.showNewButton();
 			gui.hideLeaveButton();
@@ -249,14 +251,9 @@ shared class RoomPage() extends BasePage() {
 	
 	void logout() {
 		gameEventClient?.close();
-		gameEventClient = null;
-		
 		tableEventClient?.close();
-		tableEventClient = null;
-		
 		roomEventClient?.close();
-		roomEventClient = null;
-		
+
 		window.location.\iassign("/logout");
 	}
 
@@ -312,7 +309,8 @@ shared class RoomPage() extends BasePage() {
 			playerList.updateTable(message.playerId, null);
 		}
 		
-		gui.showTableInfo(message.tableId, playerList.findPlayer(currentPlayerId));
+		//gui.showTableInfo(message.tableId, playerList.findPlayer(currentPlayerId));
+		refreshPlayerList(message.tableId);
 		
 		if (exists currentClient = tableClient) {
 			return currentClient.handleTableMessage(message);

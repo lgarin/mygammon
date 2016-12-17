@@ -91,15 +91,16 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 	
 	void handleLogout(RoutingContext routingContext) {
 		value context = GameRoomRoutingContext(routingContext);
-		googleProfileClient.logout(routingContext, void (Boolean success) {
-			if (success) {
-				if (exists playerInfo = context.getCurrentPlayerId(false)) {
-					eventBus.sendInboundMessage(LeaveRoomMessage(PlayerId(playerInfo.id), RoomId(roomId)), noop);
-				}
-				context.clearUser();
-			}
-			context.sendRedirect("/start");
-		});
+		if (exists playerInfo = context.getCurrentPlayerId(false)) {
+			eventBus.sendInboundMessage(LeaveRoomMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Anything response) {
+				googleProfileClient.logout(routingContext, void (Boolean success) {
+					if (success) {
+						context.clearUser();
+						context.sendRedirect("/start");
+					}
+				});
+			});
+		}
 	}
 
 	shared Router createRouter() {

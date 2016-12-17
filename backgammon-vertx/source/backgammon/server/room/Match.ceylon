@@ -61,6 +61,7 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 		messageBroadcaster(MatchEndedMessage(playerId, id, winnerId, score));
 		table.removePlayer(player1);
 		table.removePlayer(player2);
+		// TODO unregister match in room
 	}
 
 	shared Boolean end(PlayerId playerId, PlayerId? winnerId = null, Integer score = 0) {

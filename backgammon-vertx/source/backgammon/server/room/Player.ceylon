@@ -48,9 +48,11 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 		} else if (table exists) {
 			return false;
 		} else {
+			/*
 			if (exists currentMatch = _match) {
 				unregisterOldMatch(currentMatch);
 			}
+			 */
 			_room = null;
 			return true;
 		}
@@ -72,7 +74,7 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 			_previousMatch = currentMatch;
 		}
 		_match = null;
-		room?.removeMatch(currentMatch.id);
+		room?.removeMatch(currentMatch.id); // TODO still necessary?
 	}
 
 	shared Boolean joinTable(Table newTable) {

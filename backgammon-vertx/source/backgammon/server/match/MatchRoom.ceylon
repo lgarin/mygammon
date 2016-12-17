@@ -27,9 +27,7 @@ import backgammon.shared {
 	EndMatchMessage,
 	MatchEndedMessage,
 	RoomId,
-	TableId,
 	EndGameMessage,
-	MatchId,
 	RoomStateRequestMessage,
 	PlayerListMessage,
 	FindEmptyTableMessage,
@@ -52,8 +50,6 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	variable Instant lastNotification = Instant(0);
 	
 	function findRoom(RoomId roomId) => room.id == roomId then room else null;
-	function findTable(TableId tableId) => room.findTable(tableId);
-	function findMatch(MatchId matchId) => room.findMatch(matchId);
 	
 	shared OutboundRoomMessage processRoomMessage(InboundRoomMessage message) {
 		try (lock) {
@@ -67,11 +63,11 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				}
 			}
 			case (is LeaveRoomMessage) {
-				if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId), room.removePlayer(player)) {
+				if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId)) {
 					if (exists match = player.match, match.hasGame) {
 						gameCommander(EndGameMessage(match.id, player.id));
 					}
-					return RoomActionResponseMessage(message.playerId, message.roomId, true);
+					return RoomActionResponseMessage(message.playerId, message.roomId, room.removePlayer(player));
 				} else {
 					return RoomActionResponseMessage(message.playerId, message.roomId, false);
 				}
@@ -113,7 +109,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 		try (lock) {
 			switch (message)
 			case (is JoinTableMessage) {
-				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.sitPlayer(player)) {
+				if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.sitPlayer(player)) {
 					player.markActive();
 					room.registerPlayerChange(player);
 					return JoinedTableMessage(message.playerId, message.tableId, player.info);
@@ -122,19 +118,19 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				}
 			}
 			case (is LeaveTableMessage) {
-				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.removePlayer(player)) {
+				if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId)) {
 					player.markActive();
 					room.registerPlayerChange(player);
 					if (exists match = player.match, match.hasGame) {
 						gameCommander(EndGameMessage(match.id, player.id));
 					}
-					return LeftTableMessage(message.playerId, message.tableId, true);
+					return LeftTableMessage(message.playerId, message.tableId, table.removePlayer(player));
 				} else {
 					return LeftTableMessage(message.playerId, message.tableId, false);
 				}
 			}
 			case (is TableStateRequestMessage) {
-				if (exists room = findRoom(message.roomId), exists table = findTable(message.tableId), exists player = room.findPlayer(message.playerId)) {
+				if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId)) {
 					player.markActive();
 					if (message.current) {
 						return TableStateResponseMessage(message.playerId, message.tableId, table.matchState, table.queueState, true);
@@ -152,7 +148,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 		try (lock) {
 			switch (message)
 			case (is AcceptMatchMessage) {
-				if (exists room = findRoom(message.roomId), exists match = findMatch(message.matchId), exists player = room.findPlayer(message.playerId), match.markReady(message.playerId)) {
+				if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), exists player = room.findPlayer(message.playerId), match.markReady(message.playerId)) {
 					player.markActive();
 					if (match.gameStarted) {
 						gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
@@ -163,7 +159,8 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				}
 			}
 			case (is EndMatchMessage) {
-				if (exists room = findRoom(message.roomId), exists match = findMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score)) {
+				if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score)) {
+					room.removeMatch(match.id);
 					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, true);
 				} else {
 					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, false);

@@ -180,6 +180,14 @@ shared class BoardPage() extends BasePage() {
 		return false;
 	}
 	
+	shared Boolean onStopPlay() {
+		if (exists tableId = extractTableId()) {
+			window.location.\iassign("/room/``tableId.roomId``");
+			return true;
+		}
+		return false;
+	}
+	
 	function handleTableMessage(OutboundTableMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {

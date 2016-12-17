@@ -128,6 +128,5 @@ shared final class TableClient(shared PlayerId playerId, shared TableId tableId,
 	
 	shared GameClient? gameClient => matchClient?.gameClient;
 	
-	// TODO cleanup this function
-	shared Boolean playerIsInMatch => matchClient?.match?.playerColor(playerId) exists && !(matchClient?.match?.gameEnded else false);
+	shared Boolean playerIsInMatch => matchClient?.playerIsInMatch else false;
 }
