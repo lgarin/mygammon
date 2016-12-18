@@ -1,6 +1,5 @@
 import backgammon.shared {
 	PlayerId,
-	RoomId,
 	TableId,
 	MatchId,
 	PlayerInfo,
@@ -14,49 +13,25 @@ import ceylon.time {
 	now
 }
 
-final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
+final shared class Player(shared PlayerInfo info) {
 	
 	variable Table? _table = null;
 	variable Match? _previousMatch = null;
 	variable Match? _match = null;
 	variable Instant lastActivity = Instant(0);
 
-	shared Room? room => _room;
 	shared Table? table => _table;
 	shared Match? match => _match;
 	shared PlayerId id = PlayerId(info.id);
 	
-	variable PlayerStatistic statistic = PlayerStatistic(0, 0, 0);
+	variable PlayerStatistic _statistic = PlayerStatistic(0, 0, 0);
 	
-	shared PlayerState state => PlayerState(info.id, info.name, statistic, table?.id, match?.id, info.pictureUrl, info.iconUrl);
+	shared PlayerStatistic statistic => _statistic;
+	shared PlayerState state => PlayerState(info.id, info.name, _statistic, table?.id, match?.id, info.pictureUrl, info.iconUrl);
+
+	shared Boolean isAtTable(TableId tableId) => table?.id?.equals(tableId) else false;
 	
-	shared Boolean isInRoom(RoomId roomId) {
-		return room?.id?.equals(roomId) else false;
-	}
-	
-	shared Boolean isAtTable(TableId tableId) {
-		return table?.id?.equals(tableId) else false;
-	}
-	
-	shared Boolean isInMatch(MatchId matchId) {
-		return match?.id?.equals(matchId) else false;
-	}
-	
-	shared Boolean leaveRoom(RoomId roomId) {
-		if (!isInRoom(roomId)) {
-			return false;
-		} else if (table exists) {
-			return false;
-		} else {
-			/*
-			if (exists currentMatch = _match) {
-				unregisterOldMatch(currentMatch);
-			}
-			 */
-			_room = null;
-			return true;
-		}
-	}
+	shared Boolean isInMatch(MatchId matchId) => match?.id?.equals(matchId) else false;
 	
 	shared Boolean leaveTable(TableId tableId) {
 		if (!isAtTable(tableId)) {
@@ -68,19 +43,16 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	}
 	
 	void unregisterOldMatch(Match currentMatch) {
-		if (exists currentTable = table, currentTable.id == currentMatch.table.id) {
+		if (exists currentTable = table, currentTable.id == currentMatch.tableId) {
 			_previousMatch = null;
 		} else {
 			_previousMatch = currentMatch;
 		}
 		_match = null;
-		room?.removeMatch(currentMatch.id); // TODO still necessary?
 	}
 
 	shared Boolean joinTable(Table newTable) {
-		if (!isInRoom(newTable.roomId)) {
-			return false;
-		} else if (isPlaying()) {
+		if (isPlaying()) {
 			return false;
 		} else if (exists currentTable = table) {
 			if (currentTable.id == newTable.id) {
@@ -97,11 +69,6 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 		return true;
 	}
 	
-	void registerNewMatch(Match currentMatch) {
-		_match = currentMatch;
-		room?.addMatch(currentMatch);
-	}
-	
 	shared Boolean joinMatch(Match currentMatch) {
 		if (match exists) {
 			return false;
@@ -110,24 +77,25 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 		} else if (!isAtTable(currentMatch.id.tableId)) {
 			return false;
 		} else {
-			registerNewMatch(currentMatch);
+			_match = currentMatch;
 			return true;
 		}
 	}
 	
-	shared Boolean acceptMatch(MatchId matchId) {
+	shared Boolean canAcceptMatch(MatchId matchId) {
 		if (isInMatch(matchId) && isAtTable(matchId.tableId)) {
-			statistic = statistic.increaseGameCount();
-			room?.registerPlayerChange(this);
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
+	shared void increasePlayedGame() {
+		_statistic = _statistic.increaseGameCount();
+	}
+	
 	shared void increaseScore(Integer score) {
-		statistic = statistic.increaseWinCount(score);
-		room?.registerPlayerChange(this);
+		_statistic = _statistic.increaseWinCount(score);
 	}
 
 	shared Boolean isPlaying() {
@@ -145,9 +113,9 @@ final shared class Player(shared PlayerInfo info, variable Room? _room = null) {
 	shared Boolean isInactiveSince(Instant timeoutTime) => lastActivity < timeoutTime;
 	
 	shared MatchState? findRecentMatchState(TableId tableId) {
-		if (exists currentMatch = match, currentMatch.table.id == tableId) {
+		if (exists currentMatch = match, currentMatch.tableId == tableId) {
 			return currentMatch.state;
-		} else if (exists previousMatch = _previousMatch, previousMatch.table.id == tableId) {
+		} else if (exists previousMatch = _previousMatch, previousMatch.tableId == tableId) {
 			return previousMatch.state;
 		} else {
 			return null;

@@ -5,17 +5,19 @@ import backgammon.shared {
 	MatchEndedMessage,
 	AcceptedMatchMessage,
 	OutboundMatchMessage,
-	systemPlayerId
+	systemPlayerId,
+	TableId
 }
 
 import ceylon.time {
 	now
 }
 
-shared class Match(shared Player player1, shared Player player2, shared Table table, Anything(OutboundMatchMessage) messageBroadcaster) {
+shared class Match(shared Player player1, shared Player player2, Table table, Anything(OutboundMatchMessage) messageBroadcaster) {
 	
 	value creationTime = now();
 	shared MatchId id = MatchId(table.id, creationTime);
+	shared TableId tableId = table.id;
 
 	shared MatchState state = MatchState(id, player1.info, player2.info);
 
@@ -45,7 +47,7 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 
 	shared Boolean markReady(PlayerId playerId) {
 		if (exists player = findPlayer(playerId)) {
-			if (player.acceptMatch(id) && state.markReady(playerId)) {
+			if (player.canAcceptMatch(id) && state.markReady(playerId)) {
 				messageBroadcaster(AcceptedMatchMessage(playerId, id));
 				return true;
 			} else {
@@ -61,9 +63,16 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 		messageBroadcaster(MatchEndedMessage(playerId, id, winnerId, score));
 		table.removePlayer(player1);
 		table.removePlayer(player2);
-		// TODO unregister match in room
 	}
 
+	void updatePlayerStatistics(PlayerId winnerId, Integer score) {
+		player1.increasePlayedGame();
+		player2.increasePlayedGame();
+		if (exists winner = findPlayer(winnerId)) {
+			winner.increaseScore(score);
+		}
+	}
+	
 	shared Boolean end(PlayerId playerId, PlayerId? winnerId = null, Integer score = 0) {
 		if (gameEnded) {
 			return false;
@@ -73,9 +82,7 @@ shared class Match(shared Player player1, shared Player player2, shared Table ta
 		} else if (exists winnerId) {
 			// call from game server
 			endGame(playerId, winnerId, score);
-			if (exists player = findPlayer(winnerId)) {
-				player.increaseScore(score);
-			}
+			updatePlayerStatistics(winnerId, score);
 			return true;
 		} else {
 			// call from leave table

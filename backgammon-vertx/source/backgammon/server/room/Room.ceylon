@@ -70,6 +70,16 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		return _maxTableCount;
 	}
 	
+	function addMatch(Match? match) {
+		if (exists match) {
+			_createdMatchCount++;
+			matchMap.put(match.id, match);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	function openTable(Player player) {
 		if (exists table = tableList.find((table) => table.queueSize == 0), table.sitPlayer(player)) {
 			updatedPlayers.add(player);
@@ -81,27 +91,20 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	function sitPlayer(Player player) {
 		if (exists table = tableList.find((table) => table.queueSize == 1), table.sitPlayer(player)) {
 			updatedPlayers.add(player);
+			addMatch(table.newMatch());
 			return table;
 		}
 		return openTable(player);
 	}
 	
-	shared Boolean removePlayer(Player player) {
-		if (!player.isInRoom(id)) {
-			return false;
-		}
-		
+	shared void removePlayer(Player player) {
 		if (exists table = player.table) {
 			updatedPlayers.add(player);
 			table.removePlayer(player);
+			addMatch(table.newMatch());
 		}
-		if (player.leaveRoom(id)) {
-			playerMap.remove(player.id);
-			oldPlayers.add(player);
-			return true;
-		} else {
-			return false;
-		}
+		playerMap.remove(player.id);
+		oldPlayers.add(player);
 	}
 	
 	shared Integer removeInactivePlayers(Instant timeoutTime) {
@@ -121,7 +124,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		} else if (playerMap.size >= playerCountLimit) {
 			return null;
 		} else {
-			value player = Player(info, this);
+			value player = Player(info);
 			playerMap.put(player.id, player);
 			newPlayers.add(player);
 			_createdPlayerCount++;
@@ -129,19 +132,14 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		}
 	}
 	
-	shared Boolean registerPlayerChange(Player player) {
-		if (player.isInRoom(id)) {
+	shared void registerPlayerChange(Player player) {
+		if (playerMap.defines(player.id)) {
 			updatedPlayers.add(player);
-			return true;
-		} else {
-			return false;
 		}
 	}
 	
 	shared Table? findMatchTable(Player player) {
-		if (!player.isInRoom(id)) {
-			return null;
-		} else if (exists table = player.table, table.isInRoom(id)) {
+		if (exists table = player.table) {
 			return table;
 		} else if (!player.table exists) {
 			return sitPlayer(player);
@@ -151,9 +149,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	}
 	
 	shared Table? findEmptyTable(Player player) {
-		if (!player.isInRoom(id)) {
-			return null;
-		} else if (exists table = player.table, table.isInRoom(id)) {
+		if (exists table = player.table) {
 			if (player.isPlaying()) {
 				return null;
 			} else if (table.queueSize == 1) {
@@ -178,16 +174,6 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		}
 	}
 	
-	shared Boolean addMatch(Match match) {
-		if (matchMap.defines(match.id)) {
-			return false;
-		} else {
-			_createdMatchCount++;
-			matchMap.put(match.id, match);
-			return true;
-		}
-	}
-	
 	shared Boolean removeMatch(MatchId matchId) {
 		return matchMap.remove(matchId) exists;
 	}
@@ -196,13 +182,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		return matchMap[matchId];
 	}
 
-	shared Player? findPlayer(PlayerId playerId) {
-		if (exists player = playerMap[playerId], player.isInRoom(id)) {
-			return player;
-		} else {
-			return null;
-		}
-	}
+	shared Player? findPlayer(PlayerId playerId) =>  playerMap[playerId];
 	
 	shared Integer playerListDeltaSize => newPlayers.size + oldPlayers.size + updatedPlayers.size; 
 	

@@ -63,7 +63,7 @@ final class GameRoomEventBus(Vertx vertx) {
 	}
 	
 	shared void queueInboundMessage(InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message) {
-		vertx.runOnContext(() => sendInboundMessage(message, void (Anything response) {}));
+		vertx.runOnContext(() => sendInboundMessage(message, noop));
 	}
 	
 	shared void sendInboundMessage<OutboundMessage>(InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies RoomMessage {

@@ -5,10 +5,10 @@ import backgammon.shared.game {
 }
 
 import ceylon.json {
-	Object
+	JsonObject = Object
 }
 
-shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shared PlayerInfo player2, variable Boolean _player1Ready = false, variable Boolean _player2Ready = false, variable PlayerId? _winnerId = null, variable PlayerId? _leaverId = null, variable Integer _score = 0) {
+shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shared PlayerInfo player2, variable Boolean _player1Ready = false, variable Boolean _player2Ready = false, variable PlayerId? _winnerId = null, variable PlayerId? _leaverId = null, variable Integer _score = 0) extends Object() {
 	
 	shared PlayerId player1Id = PlayerId(player1.id);
 	shared PlayerId player2Id = PlayerId(player2.id);
@@ -83,11 +83,38 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 		_score = score;
 	}
 	
-	shared Object toJson() => Object {"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson(), "leaverId" -> leaverId?.toJson(), "score" -> score};
+	shared JsonObject toJson() => JsonObject {"id" -> id.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "player1Ready" -> player1Ready, "player2Ready" -> player2Ready, "winnerId" -> winnerId?.toJson(), "leaverId" -> leaverId?.toJson(), "score" -> score};
 	
 	shared Boolean hasPlayer(PlayerId playerId) => playerColor(playerId) exists;
+	
+	string => toJson().string;
+	
+	shared actual Boolean equals(Object that) {
+		if (is MatchState that) {
+			return id==that.id && 
+				_player1Ready==that._player1Ready && 
+				_player2Ready==that._player2Ready && 
+				_score==that._score && 
+				player1Id==that.player1Id && 
+				player2Id==that.player2Id;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	shared actual Integer hash {
+		variable value hash = 1;
+		hash = 31*hash + id.hash;
+		hash = 31*hash + _player1Ready.hash;
+		hash = 31*hash + _player2Ready.hash;
+		hash = 31*hash + _score;
+		hash = 31*hash + player1Id.hash;
+		hash = 31*hash + player2Id.hash;
+		return hash;
+	}
 }
 
-shared MatchState parseMatchState(Object json) => MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), parseNullablePlayerId(json.getStringOrNull("winnerId")), parseNullablePlayerId(json.getStringOrNull("leaverId")), json.getInteger("score"));
+shared MatchState parseMatchState(JsonObject json) => MatchState(parseMatchId(json.getObject("id")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getBoolean("player1Ready"), json.getBoolean("player2Ready"), parseNullablePlayerId(json.getStringOrNull("winnerId")), parseNullablePlayerId(json.getStringOrNull("leaverId")), json.getInteger("score"));
 
-shared MatchState? parseNullableMatchState(Object? json) => if (exists json) then parseMatchState(json) else null;
+shared MatchState? parseNullableMatchState(JsonObject? json) => if (exists json) then parseMatchState(json) else null;

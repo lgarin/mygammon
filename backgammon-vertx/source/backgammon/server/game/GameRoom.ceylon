@@ -31,12 +31,12 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	
 	value roomId = RoomId(configuration.roomId);
 	value lock = ObtainableLock(); 
-	value gameMap = HashMap<MatchId, GameServer>();
-	variable Integer _gameCount = 0;
+	value managerMap = HashMap<MatchId, GameManager>();
+	variable Integer _totalGameCount = 0;
 	variable Integer _maxGameCount = 0;
 	
-	value totalGameCount => _gameCount;
-	value activeGameCount => gameMap.size;
+	value totalGameCount => _totalGameCount;
+	value activeGameCount => managerMap.size;
 	value maxGameCount {
 		if (_maxGameCount < activeGameCount) {
 			_maxGameCount = activeGameCount;
@@ -44,36 +44,36 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		return _maxGameCount;
 	}
 	
-	function getGameServer(InboundGameMessage message) {
+	function getGameManager(InboundGameMessage message) {
 		try (lock) {
-			if (exists currentServer = gameMap[message.matchId]) {
-				return currentServer;
+			if (exists currentManager = managerMap[message.matchId]) {
+				return currentManager;
 			} else if (is StartGameMessage message) {
-				value server = GameServer(message, configuration, messageBroadcaster, matchCommander);
-				gameMap.put(message.matchId, server);
-				_gameCount++;
-				return server;
+				value manager = GameManager(message, configuration, messageBroadcaster, matchCommander);
+				managerMap.put(message.matchId, manager);
+				_totalGameCount++;
+				return manager;
 			} else {
 				return null;
 			}
 		}
 	}
 	
-	function getAllGamerServers() {
+	function getAllGamerMangers() {
 		try (lock) {
-			return gameMap.items.clone();
+			return managerMap.items.clone();
 		}
 	}
 	
-	void removeGameServer(GameServer game) {
+	void removeGameManager(GameManager game) {
 		try (lock) {
-			gameMap.remove(game.matchId);
+			managerMap.remove(game.matchId);
 		}
 	}
 	
 	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
-		if (exists server = getGameServer(message)) {
-			return server.processGameMessage(message);
+		if (exists manager = getGameManager(message)) {
+			return manager.processGameMessage(message);
 		} else {
 			// TODO cannot determine color
 			return GameActionResponseMessage(message.matchId, message.playerId, black, false);
@@ -81,9 +81,9 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	}
 	
 	shared void periodicCleanup(Instant currentTime) {
-		for (game in getAllGamerServers()) {
+		for (game in getAllGamerMangers()) {
 			if (game.ended) {
-				removeGameServer(game);
+				removeGameManager(game);
 			} else {
 				game.notifyTimeouts(currentTime);
 			}

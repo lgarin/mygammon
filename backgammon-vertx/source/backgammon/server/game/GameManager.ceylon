@@ -46,7 +46,7 @@ import ceylon.time {
 	now
 }
 
-final class GameServer(StartGameMessage startGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
+final class GameManager(StartGameMessage startGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
 	
 	shared MatchId matchId = startGameMessage.matchId;
 	value player1Id = startGameMessage.playerId;
@@ -144,6 +144,18 @@ final class GameServer(StartGameMessage startGameMessage, GameConfiguration conf
 		}
 	}
 	
+	function switchTurn() {
+		value nextColor = game.currentColor;
+		assert (exists nextColor);
+		value roll = diceRoller.roll();
+		value factor = roll.isPair then 2 else 1;
+		value turnDuration = game.hasAvailableMove(nextColor, roll) then configuration.maxTurnDuration.scale(factor) else configuration.maxEmptyTurnDuration;
+		value maxUndo = configuration.maxUndoPerTurn * factor;
+		assert (game.beginTurn(nextColor, roll, turnDuration, maxUndo));
+		messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, maxUndo));
+		return true;
+	}
+	
 	function endTurn(CheckerColor playerColor) {
 		softTimeoutNotified = false;
 		
@@ -161,15 +173,7 @@ final class GameServer(StartGameMessage startGameMessage, GameConfiguration conf
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
 		} else if (game.endTurn(playerColor)) {
-			value nextColor = game.currentColor;
-			assert (exists nextColor);
-			value roll = diceRoller.roll();
-			value factor = roll.isPair then 2 else 1;
-			value turnDuration = game.hasAvailableMove(nextColor, roll) then configuration.maxTurnDuration.scale(factor) else configuration.maxEmptyTurnDuration;
-			value maxUndo = configuration.maxUndoPerTurn * factor;
-			assert (game.beginTurn(nextColor, roll, turnDuration, maxUndo));
-			messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, maxUndo));
-			return true;
+			return switchTurn();
 		} else if (game.hasWon(playerColor)) {
 			return endGame(toPlayerId(playerColor), toPlayerId(playerColor));
 		} else {
@@ -205,20 +209,24 @@ final class GameServer(StartGameMessage startGameMessage, GameConfiguration conf
 		}
 	}
 	
+	function beginFirstTurn(CheckerColor currentColor) {
+		value roll = diceRoller.roll();
+		value factor = roll.isPair then 2 else 1;
+		value turnDuration = configuration.maxTurnDuration.scale(factor);
+		value maxUndo = configuration.maxUndoPerTurn * factor;
+		if (game.beginTurn(currentColor, roll, turnDuration, maxUndo)) {
+			messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), currentColor, roll, turnDuration, maxUndo));
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	function beginGame(CheckerColor playerColor) {
 		if (game.begin(playerColor)) {
 			messageBroadcaster(PlayerReadyMessage(matchId, toPlayerId(playerColor), playerColor));
 			if (exists currentColor = game.currentColor) {
-				value roll = diceRoller.roll();
-				value factor = roll.isPair then 2 else 1;
-				value turnDuration = configuration.maxTurnDuration.scale(factor);
-				value maxUndo = configuration.maxUndoPerTurn * factor;
-				if (game.beginTurn(currentColor, roll, turnDuration, maxUndo)) {
-					messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), currentColor, roll, turnDuration, maxUndo));
-					return true;
-				} else {
-					return false;
-				}
+				return beginFirstTurn(currentColor);
 			} else if (exists roll = game.currentRoll, roll.isPair) {
 				return sendInitialRoll();
 			} else {

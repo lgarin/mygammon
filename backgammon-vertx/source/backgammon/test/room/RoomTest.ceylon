@@ -56,15 +56,15 @@ class RoomTest() {
 	shared void removeExistingPlayer() {
 		value player = room.definePlayer(makePlayerInfo("player1"));
 		assert (exists player);
-		value result = room.removePlayer(player);
-		assert (result);
+		room.removePlayer(player);
+		assert (!room.findPlayer(player.id) exists);
 	}
 	
 	test
 	shared void removeNonExistingPlayer() {
 		value player = Player(makePlayerInfo("player1"));
-		value result = room.removePlayer(player);
-		assert (!result);
+		room.removePlayer(player);
+		assert (!room.findPlayer(player.id) exists);
 	}
 	
 	test

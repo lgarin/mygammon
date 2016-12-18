@@ -1,11 +1,12 @@
 import backgammon.server.room {
-	Room,
-	Player
+	Player,
+	Table
 }
 import backgammon.shared {
 	RoomMessage,
 	PlayerInfo,
-	TableId
+	RoomId,
+	PlayerStatistic
 }
 
 import ceylon.collection {
@@ -14,48 +15,35 @@ import ceylon.collection {
 import ceylon.test {
 	test
 }
+import ceylon.time {
+	now
+}
 
 class PlayerTest() {
 	
 	value messageList = ArrayList<RoomMessage>();
 	
-	value room = Room("room", 1, 10, messageList.add);
-	value table = room.findTable(TableId(room.roomId, 1));
-	assert (exists table);
+	value table = Table(1, RoomId("room"), messageList.add);
 	
-	function makePlayer(String id) => Player(PlayerInfo(id, id), room);
+	function makePlayer(String id) => Player(PlayerInfo(id, id));
 	
 	value player = makePlayer("player");
 	
 	test
-	shared void newPlayerIsInRoom() {
-		value result = player.isInRoom(room.id);
-		assert (result);
-	}
-	
-	test
-	shared void leaveRoom() {
-		value result = player.leaveRoom(room.id);
-		assert (result);
-	}
-	
-	test
-	shared void isNotInRoomAfterLeaving() {
-		player.leaveRoom(room.id);
-		value result = player.isInRoom(room.id);
-		assert (!result);
-	}
-	
-	test
-	shared void newPlayerHasNoTable() {
+	shared void checkNewPlayer() {
 		assert (!player.table exists);
+		assert (!player.match exists);
+		assert (!player.isPlaying());
+		assert (player.isInactiveSince(now()));
+		assert (player.statistic == PlayerStatistic(0, 0, 0));
 	}
 	
 	test
-	shared void newPlayerHasNoMatch() {
-		assert (!player.match exists);
+	shared void markPlayerActiveUpdatesActivity() {
+		player.markActive();
+		assert (!player.isInactiveSince(now()));
 	}
-	
+
 	test
 	shared void joinChoosenTable() {
 		value result = player.joinTable(table);
@@ -106,7 +94,7 @@ class PlayerTest() {
 		table.sitPlayer(player);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
-		value match = table.match;
+		value match = table.newMatch();
 		assert (exists match);
 		match.markReady(player.id);
 		match.markReady(opponent.id);
@@ -115,14 +103,15 @@ class PlayerTest() {
 	}
 
 	test
-	shared void acceptMatch() {
+	shared void joinNewMatch() {
 		table.sitPlayer(player);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
-		value match = table.match;
+		value match = table.newMatch();
 		assert (exists match);
-		value result = player.acceptMatch(match.id);
+		value result = player.canAcceptMatch(match.id);
 		assert (result);
+		assert (player.statistic == PlayerStatistic(0, 0, 0));
 	}
 	
 	test
@@ -131,11 +120,23 @@ class PlayerTest() {
 		table.sitPlayer(other);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
-		value match = table.match;
+		value match = table.newMatch();
 		assert (exists match);
 		match.markReady(other.id);
 		match.markReady(opponent.id);
-		value result = player.acceptMatch(match.id);
+		value result = player.canAcceptMatch(match.id);
 		assert (!result);
+	}
+	
+	test
+	shared void increaseScore() {
+		player.increaseScore(100);
+		assert (player.statistic == PlayerStatistic(0, 1, 100));
+	}
+	
+	test
+	shared void increasePlayedGame() {
+		player.increasePlayedGame();
+		assert (player.statistic == PlayerStatistic(1, 0, 0));
 	}
 }

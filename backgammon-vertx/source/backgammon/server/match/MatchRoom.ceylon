@@ -51,57 +51,118 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	
 	function findRoom(RoomId roomId) => room.id == roomId then room else null;
 	
+	function enterRoom(EnterRoomMessage message) {
+		if (exists room = findRoom(message.roomId), exists player = room.definePlayer(message.playerInfo)) {
+			player.markActive();
+			return RoomActionResponseMessage(message.playerId, message.roomId, true);
+		} else {
+			return RoomActionResponseMessage(message.playerId, message.roomId, false);
+		}
+	}
+	
+	function leaveRoom(LeaveRoomMessage message) {
+		if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId)) {
+			if (exists match = player.match, match.hasGame) {
+				gameCommander(EndGameMessage(match.id, player.id));
+			}
+			room.removePlayer(player);
+			return RoomActionResponseMessage(message.playerId, message.roomId, true);
+		} else {
+			return RoomActionResponseMessage(message.playerId, message.roomId, false);
+		}
+	}
+	
+	function findMatchTable(FindMatchTableMessage message) {
+		if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId), exists table = room.findMatchTable(player)) {
+			player.markActive();
+			return FoundMatchTableMessage(message.playerId, message.roomId, table.index);
+		} else {
+			return FoundMatchTableMessage(message.playerId, message.roomId, null);
+		}
+	}
+	
+	function findEmptyTable(FindEmptyTableMessage message) {
+		if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId), exists table = room.findEmptyTable(player)) {
+			player.markActive();
+			return FoundEmptyTableMessage(message.playerId, message.roomId, table.index);
+		} else {
+			return FoundEmptyTableMessage(message.playerId, message.roomId, null);
+		}
+	}
+	
+	function getRoomState(RoomStateRequestMessage message) {
+		if (exists room = findRoom(message.roomId)) {
+			return PlayerListMessage(message.roomId, room.createPlayerList());
+		} else {
+			return PlayerListMessage(message.roomId);
+		}
+	}
+	
+	function getPlayerState(PlayerStateRequestMessage message) {
+		if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId)) {
+			return PlayerStateMessage(message.roomId, player.state, player.match?.state);
+		} else {
+			return PlayerStateMessage(message.roomId, null, null);
+		}
+	}
+	
 	shared OutboundRoomMessage processRoomMessage(InboundRoomMessage message) {
 		try (lock) {
 			switch (message)
 			case (is EnterRoomMessage) {
-				if (exists room = findRoom(message.roomId), exists player = room.definePlayer(message.playerInfo)) {
-					player.markActive();
-					return RoomActionResponseMessage(message.playerId, message.roomId, true);
-				} else {
-					return RoomActionResponseMessage(message.playerId, message.roomId, false);
-				}
+				return enterRoom(message);
 			}
 			case (is LeaveRoomMessage) {
-				if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId)) {
-					if (exists match = player.match, match.hasGame) {
-						gameCommander(EndGameMessage(match.id, player.id));
-					}
-					return RoomActionResponseMessage(message.playerId, message.roomId, room.removePlayer(player));
-				} else {
-					return RoomActionResponseMessage(message.playerId, message.roomId, false);
-				}
+				return leaveRoom(message);
 			}
 			case (is FindMatchTableMessage) {
-				if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId), exists table = room.findMatchTable(player)) {
-					player.markActive();
-					return FoundMatchTableMessage(message.playerId, message.roomId, table.index);
-				} else {
-					return FoundMatchTableMessage(message.playerId, message.roomId, null);
-				}
+				return findMatchTable(message);
 			}
 			case (is FindEmptyTableMessage) {
-				if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId), exists table = room.findEmptyTable(player)) {
-					player.markActive();
-					return FoundEmptyTableMessage(message.playerId, message.roomId, table.index);
-				} else {
-					return FoundEmptyTableMessage(message.playerId, message.roomId, null);
-				}
+				return findEmptyTable(message);
 			}
 			case (is RoomStateRequestMessage) {
-				if (exists room = findRoom(message.roomId)) {
-					return PlayerListMessage(message.roomId, room.createPlayerList());
-				} else {
-					return PlayerListMessage(message.roomId);
-				}
+				return getRoomState(message);
 			}
 			case (is PlayerStateRequestMessage) {
-				if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId)) {
-					return PlayerStateMessage(message.roomId, player.state, player.match?.state);
-				} else {
-					return PlayerStateMessage(message.roomId, null, null);
-				}
+				return getPlayerState(message);
 			}
+		}
+	}
+	
+	function joinTable(JoinTableMessage message) {
+		if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.sitPlayer(player)) {
+			player.markActive();
+			room.registerPlayerChange(player);
+			return JoinedTableMessage(message.playerId, message.tableId, player.info);
+		} else {
+			return JoinedTableMessage(message.playerId, message.tableId, null);
+		}
+	}
+	
+	function leaveTable(LeaveTableMessage message) {
+		if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId)) {
+			player.markActive();
+			room.registerPlayerChange(player);
+			if (exists match = player.match, match.hasGame) {
+				gameCommander(EndGameMessage(match.id, player.id));
+			}
+			return LeftTableMessage(message.playerId, message.tableId, table.removePlayer(player));
+		} else {
+			return LeftTableMessage(message.playerId, message.tableId, false);
+		}
+	}
+	
+	function getTableState(TableStateRequestMessage message) {
+		if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId)) {
+			player.markActive();
+			if (message.current) {
+				return TableStateResponseMessage(message.playerId, message.tableId, table.matchState, table.queueState, true);
+			} else {
+				return TableStateResponseMessage(message.playerId, message.tableId, player.findRecentMatchState(table.id), table.queueState, true);
+			}
+		} else {
+			return TableStateResponseMessage(message.playerId, message.tableId, null, [], false);
 		}
 	}
 	
@@ -109,38 +170,38 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 		try (lock) {
 			switch (message)
 			case (is JoinTableMessage) {
-				if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.sitPlayer(player)) {
-					player.markActive();
-					room.registerPlayerChange(player);
-					return JoinedTableMessage(message.playerId, message.tableId, player.info);
-				} else {
-					return JoinedTableMessage(message.playerId, message.tableId, null);
-				}
+				return joinTable(message);
 			}
 			case (is LeaveTableMessage) {
-				if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId)) {
-					player.markActive();
-					room.registerPlayerChange(player);
-					if (exists match = player.match, match.hasGame) {
-						gameCommander(EndGameMessage(match.id, player.id));
-					}
-					return LeftTableMessage(message.playerId, message.tableId, table.removePlayer(player));
-				} else {
-					return LeftTableMessage(message.playerId, message.tableId, false);
-				}
+				return leaveTable(message);
 			}
 			case (is TableStateRequestMessage) {
-				if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId)) {
-					player.markActive();
-					if (message.current) {
-						return TableStateResponseMessage(message.playerId, message.tableId, table.matchState, table.queueState, true);
-					} else {
-						return TableStateResponseMessage(message.playerId, message.tableId, player.findRecentMatchState(table.id), table.queueState, true);
-					}
-				} else {
-					return TableStateResponseMessage(message.playerId, message.tableId, null, [], false);
-				}
+				return getTableState(message);
 			}
+		}
+	}
+	
+	function acceptMatch(AcceptMatchMessage message) {
+		if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), exists player = room.findPlayer(message.playerId), match.markReady(message.playerId)) {
+			player.markActive();
+			room.registerPlayerChange(player);
+			if (match.gameStarted) {
+				gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
+			}
+			return AcceptedMatchMessage(message.playerId, message.matchId, true);
+		} else {
+			return AcceptedMatchMessage(message.playerId, message.matchId, false);
+		}
+	}
+	
+	function endMatch(EndMatchMessage message) {
+		if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score)) {
+			room.registerPlayerChange(match.player1);
+			room.registerPlayerChange(match.player2);
+			room.removeMatch(match.id);
+			return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, true);
+		} else {
+			return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, false);
 		}
 	}
 	
@@ -148,23 +209,10 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 		try (lock) {
 			switch (message)
 			case (is AcceptMatchMessage) {
-				if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), exists player = room.findPlayer(message.playerId), match.markReady(message.playerId)) {
-					player.markActive();
-					if (match.gameStarted) {
-						gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
-					}
-					return AcceptedMatchMessage(message.playerId, message.matchId, true);
-				} else {
-					return AcceptedMatchMessage(message.playerId, message.matchId, false);
-				}
+				return acceptMatch(message);
 			}
 			case (is EndMatchMessage) {
-				if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score)) {
-					room.removeMatch(match.id);
-					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, true);
-				} else {
-					return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, false);
-				}
+				return endMatch(message);
 			}
 		}
 	}
@@ -183,7 +231,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				activePlayerCount = room.playerCount;
 				maxPlayerCount = room.maxPlayerCount;
 				totalPlayerCount = room.createdPlayerCount;
-				freeTableCount = room.freeTableCount;
+				freeTableCount = freeTableCount;
 				busyTableCount = room.tableCountLimit - freeTableCount;
 				maxTableCount = room.maxTableCount;
 				activeMatchCount = room.matchCount;

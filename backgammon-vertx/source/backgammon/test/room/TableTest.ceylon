@@ -1,6 +1,6 @@
 import backgammon.server.room {
 	Player,
-	Room
+	Table
 }
 import backgammon.shared {
 	CreatedMatchMessage,
@@ -8,7 +8,7 @@ import backgammon.shared {
 	TableMessage,
 	LeftTableMessage,
 	JoinedTableMessage,
-	TableId
+	RoomId
 }
 
 import ceylon.collection {
@@ -21,15 +21,16 @@ import ceylon.test {
 class TableTest() {
 
 	value messageList = ArrayList<TableMessage>();
-	value room = Room("test", 1, 10, messageList.add);
-	value table = room.findTable(TableId(room.roomId, 1));
-	assert (exists table);
+	value table = Table(1, RoomId("room"), messageList.add);
 	
-	function makePlayer(String id) => Player(PlayerInfo(id, id), room);
+	function makePlayer(String id) => Player(PlayerInfo(id, id));
 	
 	test
 	shared void newTableIsFree() {
 		assert (table.queueSize == 0);
+		assert (table.queueState == []);
+		assert (!table.newMatch() exists);
+		assert (!table.matchState exists);
 	}
 	
 	test
@@ -37,6 +38,8 @@ class TableTest() {
 		value result = table.sitPlayer(makePlayer("player1"));
 		assert (result);
 		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 1);
+		assert (table.queueSize == 1);
+		assert (!table.newMatch() exists);
 	}
 	
 	test
@@ -46,6 +49,8 @@ class TableTest() {
 		value result = table.sitPlayer(player);
 		assert (!result);
 		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 1);
+		assert (table.queueSize == 1);
+		assert (!table.newMatch() exists);
 	}
 	
 	test
@@ -55,7 +60,10 @@ class TableTest() {
 		value result2 = table.sitPlayer(makePlayer("player2"));
 		assert (result2);
 		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 2);
+		assert (table.queueSize == 2);
+		assert (table.newMatch() exists);
 		assert (messageList.count((TableMessage element) => element is CreatedMatchMessage) == 1);
+		assert (exists state = table.matchState, !state.gameStarted && !state.gameEnded);
 	}
 	
 	test
@@ -67,7 +75,16 @@ class TableTest() {
 		assert (result);
 		assert (table.queueSize == 3);
 		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 3);
+	}
+	
+	test
+	shared void createNewMatch() {
+		table.sitPlayer(makePlayer("player1"));
+		table.sitPlayer(makePlayer("player2"));
+		value match = table.newMatch();
+		assert (exists match);
 		assert (messageList.count((TableMessage element) => element is CreatedMatchMessage) == 1);
+		assert (exists state = table.matchState, !state.gameStarted && !state.gameEnded);
 	}
 	
 	test
@@ -82,8 +99,20 @@ class TableTest() {
 	shared void removeKnownPlayer() {
 		value player = makePlayer("player1");
 		table.sitPlayer(player);
+		assert (table.queueSize == 1);
 		value result = table.removePlayer(player);
 		assert (result);
 		assert (messageList.count((TableMessage element) => element is LeftTableMessage) == 1);
+		assert (table.queueSize == 0);
+	}
+	
+	test
+	shared void removePlayerInMatch() {
+		table.sitPlayer(makePlayer("player1"));
+		table.sitPlayer(makePlayer("player2"));
+		value match = table.newMatch();
+		assert (exists match);
+		value result = table.removePlayer(match.player1);
+		assert (result);
 	}
 }

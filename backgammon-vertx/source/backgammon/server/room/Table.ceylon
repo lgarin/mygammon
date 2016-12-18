@@ -21,7 +21,6 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	shared TableId id = TableId(roomId.string, index);
 	
 	variable Match? _match = null;
-	shared Match? match => _match;
 	shared MatchState? matchState => _match?.state;
 	
 	value playerQueue = HashMap<PlayerId, Player>(linked);
@@ -30,6 +29,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	
 	shared [PlayerInfo*] queueState => [for (e in playerQueue.items) e.info]; 
 	
+	// TODO this must be done in MatchRoom class
 	function createMatch(Player player1, Player player2) {
 		value currentMatch = Match(player1, player2, this, messageBroadcaster);
 		if (player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch)) {
@@ -41,21 +41,25 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 		}
 	}
 	
+	value firstQueuedPlayer => playerQueue.first?.item;
+	value secondQueuedPlayer =>  playerQueue.rest.first?.item;
+	
+	shared Match? newMatch() {
+		if (!_match exists, exists player1 = firstQueuedPlayer, exists player2 = secondQueuedPlayer) {
+			createMatch(player1, player2);
+			return _match;
+		} else {
+			return null;
+		}
+	}
+	
 	shared Boolean sitPlayer(Player player) {
 		if (playerQueue.defines(player.id)) {
 			return false;
 		} else if (player.joinTable(this)) {
 			messageBroadcaster(JoinedTableMessage(player.id, id, player.info));
-			if (match exists){
-				playerQueue.put(player.id, player);
-				return true;
-			} else if (exists opponent = playerQueue.first) {
-				playerQueue.put(player.id, player);
-				return createMatch(opponent.item, player);
-			} else {
-				playerQueue.put(player.id, player);
-				return true;
-			}
+			playerQueue.put(player.id, player);
+			return true;
 		} else {
 			return false;
 		}
@@ -85,7 +89,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	
 	shared Boolean removePlayer(Player player) {
 		if (player.isAtTable(id)) {
-			if (exists currentMatch = match, currentMatch.findPlayer(player.id) exists) {
+			if (exists currentMatch = _match, currentMatch.findPlayer(player.id) exists) {
 				return removeMatchPlayer(currentMatch, player);
 			} else {
 				return removeFreePlayer(player);
@@ -94,6 +98,4 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 			return false;
 		}
 	}
-
-	shared Boolean isInRoom(RoomId roomId) => id.roomId == roomId.roomId;
 }
