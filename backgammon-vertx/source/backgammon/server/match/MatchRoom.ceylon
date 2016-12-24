@@ -65,8 +65,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			if (exists match = player.match, match.hasGame) {
 				gameCommander(EndGameMessage(match.id, player.id));
 			}
-			room.removePlayer(player);
-			return RoomActionResponseMessage(message.playerId, message.roomId, true);
+			return RoomActionResponseMessage(message.playerId, message.roomId, room.removePlayer(player));
 		} else {
 			return RoomActionResponseMessage(message.playerId, message.roomId, false);
 		}
@@ -75,6 +74,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	function findMatchTable(FindMatchTableMessage message) {
 		if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId), exists table = room.findMatchTable(player)) {
 			player.markActive();
+			room.registerPlayerChange(player);
 			return FoundMatchTableMessage(message.playerId, message.roomId, table.index);
 		} else {
 			return FoundMatchTableMessage(message.playerId, message.roomId, null);
@@ -84,6 +84,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	function findEmptyTable(FindEmptyTableMessage message) {
 		if (exists room = findRoom(message.roomId), exists player = room.findPlayer(message.playerId), exists table = room.findEmptyTable(player)) {
 			player.markActive();
+			room.registerPlayerChange(player);
 			return FoundEmptyTableMessage(message.playerId, message.roomId, table.index);
 		} else {
 			return FoundEmptyTableMessage(message.playerId, message.roomId, null);
@@ -134,6 +135,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 		if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.sitPlayer(player)) {
 			player.markActive();
 			room.registerPlayerChange(player);
+			room.createMatch(table);
 			return JoinedTableMessage(message.playerId, message.tableId, player.info);
 		} else {
 			return JoinedTableMessage(message.playerId, message.tableId, null);
@@ -198,8 +200,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 		if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score)) {
 			room.registerPlayerChange(match.player1);
 			room.registerPlayerChange(match.player2);
-			room.removeMatch(match.id);
-			return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, true);
+			return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, room.removeMatch(match));
 		} else {
 			return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, false);
 		}
@@ -244,10 +245,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	shared void periodicNotification(Instant currentTime) {
 		try (lock) {
 			if (room.playerListDeltaSize > 0 && lastNotification.durationTo(currentTime).milliseconds * configuration.maxPlayerMessageRate > room.playerCount) {
-				value message = room.createPlayerListDelta();
-				if (exists message) {
-					messageBroadcaster(message);
-				}
+				messageBroadcaster(room.createPlayerListDelta());
 				lastNotification = currentTime;
 			}
 		}

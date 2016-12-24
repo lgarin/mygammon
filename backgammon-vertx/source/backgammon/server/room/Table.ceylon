@@ -29,7 +29,6 @@ final shared class Table(shared Integer index, shared RoomId roomId, Anything(Ou
 	
 	shared [PlayerInfo*] queueState => [for (e in playerQueue.items) e.info]; 
 	
-	// TODO this must be done in MatchRoom class
 	function createMatch(Player player1, Player player2) {
 		value currentMatch = Match(player1, player2, this, messageBroadcaster);
 		if (player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch)) {

@@ -70,8 +70,8 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		return _maxTableCount;
 	}
 	
-	function addMatch(Match? match) {
-		if (exists match) {
+	shared Boolean createMatch(Table table) {
+		if (exists match = table.newMatch()) {
 			_createdMatchCount++;
 			matchMap.put(match.id, match);
 			return true;
@@ -79,10 +79,9 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 			return false;
 		}
 	}
-	
+
 	function openTable(Player player) {
 		if (exists table = tableList.find((table) => table.queueSize == 0), table.sitPlayer(player)) {
-			updatedPlayers.add(player);
 			return table;
 		}
 		return null;
@@ -90,21 +89,21 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	
 	function sitPlayer(Player player) {
 		if (exists table = tableList.find((table) => table.queueSize == 1), table.sitPlayer(player)) {
-			updatedPlayers.add(player);
-			addMatch(table.newMatch());
+			createMatch(table);
 			return table;
 		}
 		return openTable(player);
 	}
 	
-	shared void removePlayer(Player player) {
+	shared Boolean removePlayer(Player player) {
 		if (exists table = player.table) {
 			updatedPlayers.add(player);
 			table.removePlayer(player);
-			addMatch(table.newMatch());
+			createMatch(table);
 		}
 		playerMap.remove(player.id);
 		oldPlayers.add(player);
+		return true;
 	}
 	
 	shared Integer removeInactivePlayers(Instant timeoutTime) {
@@ -174,8 +173,13 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		}
 	}
 	
-	shared Boolean removeMatch(MatchId matchId) {
-		return matchMap.remove(matchId) exists;
+	shared Boolean removeMatch(Match match) {
+		if (!match.gameEnded) {
+			return false;
+		} else if (exists table = findTable(match.tableId)) {
+			createMatch(table);
+		}
+		return matchMap.remove(match.id) exists;
 	}
 	
 	shared Match? findMatch(MatchId matchId) {
@@ -186,10 +190,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	
 	shared Integer playerListDeltaSize => newPlayers.size + oldPlayers.size + updatedPlayers.size; 
 	
-	shared PlayerListMessage? createPlayerListDelta() {
-		if (newPlayers.empty && oldPlayers.empty && updatedPlayers.empty) {
-			return null;
-		}
+	shared PlayerListMessage createPlayerListDelta() {
 		updatedPlayers.removeAll(newPlayers);
 		updatedPlayers.removeAll(oldPlayers);
 		value message = PlayerListMessage(id, [for (element in newPlayers) element.state], [for (element in oldPlayers) element.state], [for (element in updatedPlayers) element.state]);
