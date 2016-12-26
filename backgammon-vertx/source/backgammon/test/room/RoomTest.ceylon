@@ -20,11 +20,13 @@ import ceylon.test {
 }
 
 class RoomTest() {
+	value initialPlayerBalance = 1000;
+	value matchBet = 10;
 	value tableCount = 3;
 	value messageList = ArrayList<RoomMessage>();
-	value room = Room("test1", tableCount, 10, messageList.add);
+	value room = Room("test1", tableCount, 10, matchBet, messageList.add);
 	
-	function makePlayerInfo(String id) => PlayerInfo(id, id);
+	function makePlayerInfo(String id) => PlayerInfo(id, id, initialPlayerBalance);
 	
 	test
 	shared void newRoomHasNoPlayer() {
@@ -50,7 +52,7 @@ class RoomTest() {
 		assert (room.playerListDeltaSize == 1);
 		value result = room.createPlayerListDelta();
 		assert (room.playerListDeltaSize == 0);
-		assert (result.newPlayers == [PlayerState("player1", "player1", PlayerStatistic(), null, null)]);
+		assert (result.newPlayers == [PlayerState("player1", "player1", PlayerStatistic(initialPlayerBalance), null, null)]);
 		assert (result.updatedPlayers.empty);
 		assert (result.oldPlayers.empty);
 	}
@@ -79,8 +81,8 @@ class RoomTest() {
 		assert (room.playerListDeltaSize == 2);
 		value result = room.createPlayerListDelta();
 		assert (room.playerListDeltaSize == 0);
-		assert (result.newPlayers == [PlayerState("player1", "player1", PlayerStatistic(), null, null)]);
-		assert (result.oldPlayers == [PlayerState("player1", "player1", PlayerStatistic(), null, null)]);
+		assert (result.newPlayers == [PlayerState("player1", "player1", PlayerStatistic(initialPlayerBalance), null, null)]);
+		assert (result.oldPlayers == [PlayerState("player1", "player1", PlayerStatistic(initialPlayerBalance), null, null)]);
 		assert (result.updatedPlayers.empty);
 	}
 	

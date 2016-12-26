@@ -18,6 +18,7 @@ shared class Match(shared Player player1, shared Player player2, Table table, An
 	value creationTime = now();
 	shared MatchId id = MatchId(table.id, creationTime);
 	shared TableId tableId = table.id;
+	shared Integer bet = table.matchBet;
 
 	shared MatchState state = MatchState(id, player1.info, player2.info);
 
@@ -46,13 +47,13 @@ shared class Match(shared Player player1, shared Player player2, Table table, An
 	}
 
 	shared Boolean markReady(PlayerId playerId) {
-		if (exists player = findPlayer(playerId)) {
-			if (player.canAcceptMatch(id) && state.markReady(playerId)) {
-				messageBroadcaster(AcceptedMatchMessage(playerId, id));
-				return true;
-			} else {
-				return false;
+		if (exists player = findPlayer(playerId), player.isInMatch(id), state.markReady(playerId)) {
+			if (gameStarted) {
+				player1.placeBet(bet);
+				player2.placeBet(bet);
 			}
+			messageBroadcaster(AcceptedMatchMessage(playerId, id));
+			return true;
 		} else {
 			return false;
 		}

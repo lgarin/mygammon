@@ -1,6 +1,7 @@
 import backgammon.server.room {
 	Player,
-	Table
+	Table,
+	Match
 }
 import backgammon.shared {
 	RoomMessage,
@@ -21,11 +22,13 @@ import ceylon.time {
 
 class PlayerTest() {
 	
+	value matchBet = 10;
+	value initialBalance = 1000;
 	value messageList = ArrayList<RoomMessage>();
 	
-	value table = Table(1, RoomId("room"), messageList.add);
+	value table = Table(1, RoomId("room"), matchBet, messageList.add);
 	
-	function makePlayer(String id) => Player(PlayerInfo(id, id));
+	function makePlayer(String id, Integer balance = initialBalance) => Player(PlayerInfo(id, id, balance));
 	
 	value player = makePlayer("player");
 	
@@ -35,7 +38,7 @@ class PlayerTest() {
 		assert (!player.match exists);
 		assert (!player.isPlaying());
 		assert (player.isInactiveSince(now()));
-		assert (player.statistic == PlayerStatistic(0, 0, 0));
+		assert (player.statistic == PlayerStatistic(initialBalance, 0, 0, 0));
 	}
 	
 	test
@@ -56,15 +59,39 @@ class PlayerTest() {
 		player.joinTable(table);
 		value result = player.leaveTable(table.id);
 		assert (result);
+		assert (!player.isAtTable(table.id));
+	}
+	
+	function startMatch() {
+		table.sitPlayer(player);
+		value opponent = makePlayer("opponent");
+		table.sitPlayer(opponent);
+		value match = table.newMatch();
+		assert (exists match);
+		return match;
 	}
 	
 	test
 	shared void leaveTableWithMatch() {
-		table.sitPlayer(player);
-		value opponent = makePlayer("opponent");
-		table.sitPlayer(opponent);
+		startMatch();
 		value result = player.leaveTable(table.id);
 		assert (result);
+		assert (!player.isAtTable(table.id));
+	}
+	
+	function startGame() {
+		value match = startMatch();
+		match.markReady(match.player1.id);
+		match.markReady(match.player2.id);
+		return match;
+	}
+	
+	test
+	shared void leaveTableWithGame() {
+		startGame();
+		value result = player.leaveTable(table.id);
+		assert (!result);
+		assert (player.isAtTable(table.id));
 	}
 	
 	test
@@ -75,68 +102,56 @@ class PlayerTest() {
 	
 	test
 	shared void notPlayingWithoutMatch() {
-		table.sitPlayer(player);
+		player.joinTable(table);
 		value result = player.isPlaying();
 		assert (!result);
 	}
 	
 	test
-	shared void notPlayingWithUnstartedMatch() {
-		table.sitPlayer(player);
-		value opponent = makePlayer("opponent");
-		table.sitPlayer(opponent);
+	shared void notPlayingWithUnstartedGame() {
+		startMatch();
 		value result = player.isPlaying();
 		assert (!result);
 	}
 	
 	test
 	shared void playingWithGame() {
-		table.sitPlayer(player);
-		value opponent = makePlayer("opponent");
-		table.sitPlayer(opponent);
-		value match = table.newMatch();
-		assert (exists match);
-		match.markReady(player.id);
-		match.markReady(opponent.id);
+		startGame();
 		value result = player.isPlaying();
 		assert (result);
 	}
-
+	
 	test
 	shared void joinNewMatch() {
-		table.sitPlayer(player);
-		value opponent = makePlayer("opponent");
-		table.sitPlayer(opponent);
-		value match = table.newMatch();
-		assert (exists match);
-		value result = player.canAcceptMatch(match.id);
-		assert (result);
-		assert (player.statistic == PlayerStatistic(0, 0, 0));
+		value match = startMatch();
+		assert (player.isInMatch(match.id));
+		assert (player.statistic == PlayerStatistic(initialBalance, 0, 0, 0));
 	}
 	
 	test
-	shared void joinStartedMatch() {
-		value other = makePlayer("other");
-		table.sitPlayer(other);
-		value opponent = makePlayer("opponent");
-		table.sitPlayer(opponent);
-		value match = table.newMatch();
-		assert (exists match);
-		match.markReady(other.id);
-		match.markReady(opponent.id);
-		value result = player.canAcceptMatch(match.id);
+	shared void cannotJoinMatchWithUnsufficiantBalance() {
+		value player = makePlayer("player0", table.matchBet - 1);
+		player.joinTable(table);
+		value match = Match(player, makePlayer("other"), table, messageList.add);
+		value result = player.joinMatch(match);
 		assert (!result);
+	}
+	
+	test
+	shared void placeBetDecreasesBalance() {
+		player.placeBet(100);
+		assert (player.statistic == PlayerStatistic(initialBalance - 100, 0, 0, 0));
 	}
 	
 	test
 	shared void increaseScore() {
 		player.increaseScore(100);
-		assert (player.statistic == PlayerStatistic(0, 1, 100));
+		assert (player.statistic == PlayerStatistic(initialBalance, 0, 1, 100));
 	}
 	
 	test
 	shared void increasePlayedGame() {
 		player.increasePlayedGame();
-		assert (player.statistic == PlayerStatistic(1, 0, 0));
+		assert (player.statistic == PlayerStatistic(initialBalance, 1, 0, 0));
 	}
 }

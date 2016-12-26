@@ -9,7 +9,7 @@ import ceylon.json {
 	parse
 }
 
-shared final class PlayerInfo(shared String id, shared String name, shared String? pictureUrl = null, shared String? iconUrl = null) extends Object() {
+shared final class PlayerInfo(shared String id, shared String name, shared Integer balance, shared String? pictureUrl = null, shared String? iconUrl = null) extends Object() {
 	shared JsonObject toJson() => JsonObject {"id" -> id, "name" -> name, "pictureUrl" -> pictureUrl, "iconUrl" -> iconUrl};
 	shared String toBase64() => base64StringStandard.encode(utf8.encode(toJson().string));
 	shared PlayerId playerId => PlayerId(id);
@@ -26,11 +26,11 @@ shared final class PlayerInfo(shared String id, shared String name, shared Strin
 	shared actual Integer hash => id.hash;
 
 	string => toJson().string;
-	shared PlayerState toInitialPlayerState() => PlayerState(id, name, PlayerStatistic(), null, null, pictureUrl, iconUrl);
+	shared PlayerState toInitialPlayerState() => PlayerState(id, name, PlayerStatistic(balance), null, null, pictureUrl, iconUrl);
 }
 
 shared PlayerInfo parsePlayerInfo(JsonObject json) {
-	return PlayerInfo(json.getString("id"), json.getString("name"), json.getStringOrNull("pictureUrl"), json.getStringOrNull("iconUrl"));
+	return PlayerInfo(json.getString("id"), json.getString("name"), json.getInteger("balance"), json.getStringOrNull("pictureUrl"), json.getStringOrNull("iconUrl"));
 }
 
 shared PlayerInfo? parseNullablePlayerInfo(JsonObject? json) => if (exists json) then parsePlayerInfo(json) else null;

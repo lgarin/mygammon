@@ -21,9 +21,10 @@ import ceylon.test {
 class TableTest() {
 
 	value messageList = ArrayList<TableMessage>();
-	value table = Table(1, RoomId("room"), messageList.add);
+	value matchBet = 10;
+	value table = Table(1, RoomId("room"), matchBet, messageList.add);
 	
-	function makePlayer(String id) => Player(PlayerInfo(id, id));
+	function makePlayer(String id, Integer balance = 1000) => Player(PlayerInfo(id, id, balance));
 	
 	test
 	shared void newTableIsFree() {
@@ -40,6 +41,12 @@ class TableTest() {
 		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 1);
 		assert (table.queueSize == 1);
 		assert (!table.newMatch() exists);
+	}
+	
+	test
+	shared void sitPlayerWithUnsufficiantBalance() {
+		value result = table.sitPlayer(makePlayer("player1", 0));
+		assert (!result);
 	}
 	
 	test

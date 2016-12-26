@@ -20,7 +20,7 @@ import ceylon.time {
 	Instant
 }
 
-final shared class Room(shared String roomId, shared Integer tableCountLimit, shared Integer playerCountLimit, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+final shared class Room(shared String roomId, shared Integer tableCountLimit, shared Integer playerCountLimit, shared Integer matchBet, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared RoomId id = RoomId(roomId);
 	
@@ -35,7 +35,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	variable Integer _maxTableCount = 0;
 	value tableList = ArrayList<Table>(tableCountLimit);
 	for (i in 0:tableCountLimit) {
-		tableList.add(Table(i + 1, id, messageBroadcaster));
+		tableList.add(Table(i + 1, id, matchBet, messageBroadcaster));
 	}
 	
 	variable Integer _createdMatchCount = 0;
@@ -81,14 +81,14 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	}
 
 	function openTable(Player player) {
-		if (exists table = tableList.find((table) => table.queueSize == 0), table.sitPlayer(player)) {
+		if (exists table = tableList.find((table) => table.queueSize == 0 && table.sitPlayer(player))) {
 			return table;
 		}
 		return null;
 	}
 	
 	function sitPlayer(Player player) {
-		if (exists table = tableList.find((table) => table.queueSize == 1), table.sitPlayer(player)) {
+		if (exists table = tableList.find((table) => table.queueSize == 1 && table.sitPlayer(player))) {
 			createMatch(table);
 			return table;
 		}

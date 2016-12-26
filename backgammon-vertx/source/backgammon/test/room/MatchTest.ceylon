@@ -17,11 +17,12 @@ import ceylon.test {
 
 class MatchTest() {
 	
-	function makePlayer(String id) => Player(PlayerInfo(id, id));
+	function makePlayer(String id) => Player(PlayerInfo(id, id, 1000));
 	
 	value messageList = ArrayList<RoomMessage>();
 	
-	value table = Table(1, RoomId("room"), messageList.add);
+	value matchBet = 10;
+	value table = Table(1, RoomId("room"), matchBet, messageList.add);
 	value player1 = makePlayer("player1");
 	table.sitPlayer(player1);
 	value player2 = makePlayer("player2");

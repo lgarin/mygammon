@@ -24,7 +24,7 @@ import io.vertx.ceylon.web {
 	Router
 }
 
-final class GameRoomRouterFactory(Vertx vertx, String roomId) {
+final class GameRoomRouterFactory(Vertx vertx, String roomId, Integer initialPlayerBalance) {
 	
 	value eventBus = GameRoomEventBus(vertx);
 	value googleProfileClient = GoogleProfileClient(vertx);
@@ -45,7 +45,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 		value context = GameRoomRoutingContext(routingContext);
 		void handler(GoogleUserInfo? userInfo) {
 			if (exists userInfo) {
-				value playerInfo = PlayerInfo(userInfo.userId, userInfo.displayName, userInfo.pictureUrl, userInfo.iconUrl);
+				value playerInfo = PlayerInfo(userInfo.userId, userInfo.displayName, initialPlayerBalance, userInfo.pictureUrl, userInfo.iconUrl);
 				completeLogin(routingContext, playerInfo);
 			} else {
 				context.clearUser();
