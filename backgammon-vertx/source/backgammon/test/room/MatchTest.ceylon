@@ -22,12 +22,13 @@ class MatchTest() {
 	value messageList = ArrayList<RoomMessage>();
 	
 	value matchBet = 10;
+	value matchPot = 18;
 	value table = Table(1, RoomId("room"), matchBet, messageList.add);
 	value player1 = makePlayer("player1");
 	table.sitPlayer(player1);
 	value player2 = makePlayer("player2");
 	table.sitPlayer(player2);
-	value match = table.newMatch();
+	value match = table.newMatch(matchPot);
 	assert (exists match);
 	
 	test

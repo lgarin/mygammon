@@ -22,9 +22,10 @@ import ceylon.test {
 class RoomTest() {
 	value initialPlayerBalance = 1000;
 	value matchBet = 10;
+	value matchPot = 18;
 	value tableCount = 3;
 	value messageList = ArrayList<RoomMessage>();
-	value room = Room("test1", tableCount, 10, matchBet, messageList.add);
+	value room = Room("test1", tableCount, 10, matchBet, matchPot, messageList.add);
 	
 	function makePlayerInfo(String id) => PlayerInfo(id, id, initialPlayerBalance);
 	

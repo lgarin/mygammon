@@ -12,7 +12,8 @@ import backgammon.shared {
 }
 import ceylon.json {
 
-	Object
+	Object,
+	Array
 }
 class RoomGui(Document document) extends BoardGui(document) {
 	
@@ -58,9 +59,9 @@ class RoomGui(Document document) extends BoardGui(document) {
 		}
 	}
 	
-	shared void showPlayerList(String data) {
+	shared void showPlayerList(Array data) {
 		dynamic {
-			jQuery("#player-list tbody").loadTemplate(jQuery("#player-row-template"), JSON.parse(data));
+			jQuery("#player-list tbody").loadTemplate(jQuery("#player-row-template"), JSON.parse(data.string));
 		}
 	}
 	

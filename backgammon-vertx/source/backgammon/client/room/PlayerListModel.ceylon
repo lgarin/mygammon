@@ -35,7 +35,7 @@ class PlayerListModel(String hiddenClass) {
 		} else {
 			buttonClass = hiddenClass;
 		}
-		return Object {"id" -> state.id, "name" -> state.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.iconUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage};
+		return Object {"id" -> state.id, "name" -> state.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.iconUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "balance" -> state.statistic.balance};
 	}
 	
 	shared TableId? findTable(PlayerId playerId) {
@@ -48,13 +48,7 @@ class PlayerListModel(String hiddenClass) {
 	
 	shared PlayerState? findPlayer(PlayerId playerId) => playerMap[playerId];
 	
- 	shared String toTemplateData(Boolean hideButtons) {
-		if (playerMap.empty) {
-			return Object().string;
-		} else {
-			return Array(playerMap.items.map(toRowData(hideButtons))).string;
-		}
-	}
+ 	shared Array toTemplateData(Boolean hideButtons) => Array(playerMap.items.map(toRowData(hideButtons)));
 	
 	shared Boolean empty => playerMap.empty;
 	

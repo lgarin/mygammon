@@ -22,6 +22,7 @@ class TableTest() {
 
 	value messageList = ArrayList<TableMessage>();
 	value matchBet = 10;
+	value matchPot = 18;
 	value table = Table(1, RoomId("room"), matchBet, messageList.add);
 	
 	function makePlayer(String id, Integer balance = 1000) => Player(PlayerInfo(id, id, balance));
@@ -30,7 +31,7 @@ class TableTest() {
 	shared void newTableIsFree() {
 		assert (table.queueSize == 0);
 		assert (table.queueState == []);
-		assert (!table.newMatch() exists);
+		assert (!table.newMatch(matchPot) exists);
 		assert (!table.matchState exists);
 	}
 	
@@ -40,7 +41,7 @@ class TableTest() {
 		assert (result);
 		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 1);
 		assert (table.queueSize == 1);
-		assert (!table.newMatch() exists);
+		assert (!table.newMatch(matchPot) exists);
 	}
 	
 	test
@@ -57,7 +58,7 @@ class TableTest() {
 		assert (!result);
 		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 1);
 		assert (table.queueSize == 1);
-		assert (!table.newMatch() exists);
+		assert (!table.newMatch(matchPot) exists);
 	}
 	
 	test
@@ -68,7 +69,7 @@ class TableTest() {
 		assert (result2);
 		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 2);
 		assert (table.queueSize == 2);
-		assert (table.newMatch() exists);
+		assert (table.newMatch(matchPot) exists);
 		assert (messageList.count((TableMessage element) => element is CreatedMatchMessage) == 1);
 		assert (exists state = table.matchState, !state.gameStarted && !state.gameEnded);
 	}
@@ -88,7 +89,7 @@ class TableTest() {
 	shared void createNewMatch() {
 		table.sitPlayer(makePlayer("player1"));
 		table.sitPlayer(makePlayer("player2"));
-		value match = table.newMatch();
+		value match = table.newMatch(matchPot);
 		assert (exists match);
 		assert (messageList.count((TableMessage element) => element is CreatedMatchMessage) == 1);
 		assert (exists state = table.matchState, !state.gameStarted && !state.gameEnded);
@@ -117,7 +118,7 @@ class TableTest() {
 	shared void removePlayerInMatch() {
 		table.sitPlayer(makePlayer("player1"));
 		table.sitPlayer(makePlayer("player2"));
-		value match = table.newMatch();
+		value match = table.newMatch(matchPot);
 		assert (exists match);
 		value result = table.removePlayer(match.player1);
 		assert (result);

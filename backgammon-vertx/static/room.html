@@ -70,9 +70,15 @@
 		<nav class="navbar navbar-inverse">
 			<div class="container-fluid">
 				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#menu" aria-expanded="false">
+				        <span class="sr-only">Toggle navigation</span>
+				        <span class="icon-bar"></span>
+				        <span class="icon-bar"></span>
+				        <span class="icon-bar"></span>
+				    </button>
 					<a class="navbar-brand" href="http://mygammon.com/index.php">MyGammon</a>
 				</div>
-				<div class="collapse navbar-collapse">
+				<div class="collapse navbar-collapse" id="menu">
 					<ul class="nav navbar-nav">
 						<li id="home" class="active btn btn-default navbar-btn">
 							<span class="glyphicon glyphicon-home"></span>
@@ -92,6 +98,11 @@
 						</li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
+						<li id="status" class="btn hidden">
+							<p class="navbar-text">
+								<span id="currentUser"></span>&nbsp;<span id="currentBalance" class="badge"></span>
+							</p>
+						</li>
 						<li id="exit" class="btn">
 							<a>
 								<span class="glyphicon glyphicon-off"></span>
@@ -115,10 +126,11 @@
 					<table id="player-list" class="table">
 						<thead>
 							<tr>
-								<th class="col-md-9">Name</th>
+								<th class="col-md-8">Name</th>
 								<th class="col-md-1" style="min-width: 100px">Table</th>
 								<th class="col-md-1" style="min-width: 100px">Score</th>
 								<th class="col-md-1" style="min-width: 100px">Win&nbsp;%</th>
+								<th class="col-md-1" style="min-width: 100px">Chips</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -278,6 +290,7 @@
 					<button data-class="buttonClass" type="button" class="player-row-button btn btn-default btn-xs" data-id="id">View</i></button>
 				<td data-content="score"></td>
 				<td data-content="win"></td>
+				<td data-content="balance"></td>
 			</tr>
 		</script>
 		

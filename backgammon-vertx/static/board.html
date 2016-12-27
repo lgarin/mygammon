@@ -88,46 +88,57 @@
 
   <body>
   	<nav class="navbar navbar-inverse">
-			<div class="container-fluid">
-				<div class="navbar-header">
-					<a class="navbar-brand" href="http://mygammon.com/index.php">MyGammon</a>
-				</div>
-				<div class="collapse navbar-collapse">
-					<ul class="nav navbar-nav">
-						<li id="home" class="btn btn-default navbar-btn">
-							<span class="glyphicon glyphicon-home"></span>
-							Room
-						</li>
-						<li id="play" class="active btn btn-default navbar-btn">
-							<span class="glyphicon glyphicon-triangle-right"></span>
-							Game
-						</li>
-						<li id="join" class="btn btn-default navbar-btn hidden">
-							<span class="glyphicon glyphicon-plus-sign"></span>
-							Join table
-						</li>
-						<li id="leave" class="btn btn-default navbar-btn hidden">
-							<span class="glyphicon glyphicon-minus-sign"></span>
-							Leave table
-						</li>
-					</ul>
-					<ul class="nav navbar-nav navbar-right">
-						<li id="exit" class="btn">
-							<a>
-								<span class="glyphicon glyphicon-off"></span>
-								Logout
-							</a>
-						</li>
-						<li id="start" class="btn hidden">
-							<a>
-								<span class="glyphicon glyphicon-log-in"></span>
-								Login
-							</a>
-						</li>
-					</ul>
-				</div>
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#menu" aria-expanded="false">
+				        <span class="sr-only">Toggle navigation</span>
+				        <span class="icon-bar"></span>
+				        <span class="icon-bar"></span>
+				        <span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="http://mygammon.com/index.php">MyGammon</a>
 			</div>
-		</nav>
+			<div class="collapse navbar-collapse" id="menu">
+				<ul class="nav navbar-nav">
+					<li id="home" class="btn btn-default navbar-btn">
+						<span class="glyphicon glyphicon-home"></span>
+						Room
+					</li>
+					<li id="play" class="active btn btn-default navbar-btn">
+						<span class="glyphicon glyphicon-triangle-right"></span>
+						Game
+					</li>
+					<li id="join" class="btn btn-default navbar-btn hidden">
+						<span class="glyphicon glyphicon-plus-sign"></span>
+						Join table
+					</li>
+					<li id="leave" class="btn btn-default navbar-btn hidden">
+						<span class="glyphicon glyphicon-minus-sign"></span>
+						Leave table
+					</li>
+				</ul>
+				<ul class="nav navbar-nav navbar-right">
+					<li id="status" class="btn hidden">
+						<p class="navbar-text">
+							<span id="currentUser"></span>&nbsp;<span id="currentBalance" class="badge"></span>
+						</p>
+					</li>
+					<li id="exit" class="btn">
+						<a>
+							<span class="glyphicon glyphicon-off"></span>
+							Logout
+						</a>
+					</li>
+					<li id="start" class="btn hidden">
+						<a>
+							<span class="glyphicon glyphicon-log-in"></span>
+							Login
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
   
     <div id="gui">
       <div id="game-board">

@@ -10,7 +10,7 @@ import ceylon.json {
 }
 
 shared final class PlayerInfo(shared String id, shared String name, shared Integer balance, shared String? pictureUrl = null, shared String? iconUrl = null) extends Object() {
-	shared JsonObject toJson() => JsonObject {"id" -> id, "name" -> name, "pictureUrl" -> pictureUrl, "iconUrl" -> iconUrl};
+	shared JsonObject toJson() => JsonObject {"id" -> id, "name" -> name, "balance" -> balance, "pictureUrl" -> pictureUrl, "iconUrl" -> iconUrl};
 	shared String toBase64() => base64StringStandard.encode(utf8.encode(toJson().string));
 	shared PlayerId playerId => PlayerId(id);
 	

@@ -20,7 +20,7 @@ import ceylon.time {
 	Instant
 }
 
-final shared class Room(shared String roomId, shared Integer tableCountLimit, shared Integer playerCountLimit, shared Integer matchBet, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+final shared class Room(shared String roomId, shared Integer tableCountLimit, shared Integer playerCountLimit, shared Integer matchBet, shared Integer matchPot, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared RoomId id = RoomId(roomId);
 	
@@ -71,7 +71,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	}
 	
 	shared Boolean createMatch(Table table) {
-		if (exists match = table.newMatch()) {
+		if (exists match = table.newMatch(matchPot)) {
 			_createdMatchCount++;
 			matchMap.put(match.id, match);
 			return true;

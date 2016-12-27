@@ -25,6 +25,9 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	shared String exitButtonId = "exit";
 	shared String homeButtonId = "home";
 	shared String startButtonId = "start";
+	shared String statusTextId = "status";
+	shared String statusUserId = "currentUser";
+	shared String statusBalanceId = "currentBalance";
 	
 	shared void hideUndoButton() {
 		addClass(undoButtonId, hiddenClass);
@@ -86,6 +89,20 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	
 	shared void showStartButton() {
 		removeClass(startButtonId, hiddenClass);
+	}
+	
+	shared void showStatusText(String user, Integer balance) {
+		if (exists statusUserText = document.getElementById(statusUserId)) {
+			statusUserText.innerHTML = user;
+		}
+		if (exists statusBalanceText = document.getElementById(statusBalanceId)) {
+			statusBalanceText.innerHTML = balance.string;
+		}
+		removeClass(statusTextId, hiddenClass);
+	}
+	
+	shared void hideStatusText() {
+		addClass(statusTextId, hiddenClass);
 	}
 
 	shared void showCurrentPlayer(CheckerColor? currentColor) {
@@ -158,6 +175,7 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	
 	shared default void showBeginState(PlayerInfo playerInfo) {
 		showExitButton();
+		showStatusText(playerInfo.name, playerInfo.balance);
 		hideStartButton();
 		showEmptyGame();
 	}

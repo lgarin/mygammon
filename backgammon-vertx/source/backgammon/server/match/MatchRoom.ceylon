@@ -46,7 +46,7 @@ import ceylon.time {
 shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander) {
 	
 	value lock = ObtainableLock(); 
-	value room = Room(configuration.roomId, configuration.maxTableCount, configuration.maxPlayerCount, configuration.matchBet, messageBroadcaster);
+	value room = Room(configuration.roomId, configuration.maxTableCount, configuration.maxPlayerCount, configuration.matchBet, configuration.matchPot, messageBroadcaster);
 	variable Instant lastNotification = Instant(0);
 	
 	function findRoom(RoomId roomId) => room.id == roomId then room else null;

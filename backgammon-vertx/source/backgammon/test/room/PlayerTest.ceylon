@@ -23,6 +23,7 @@ import ceylon.time {
 class PlayerTest() {
 	
 	value matchBet = 10;
+	value matchPot = 18;
 	value initialBalance = 1000;
 	value messageList = ArrayList<RoomMessage>();
 	
@@ -66,7 +67,7 @@ class PlayerTest() {
 		table.sitPlayer(player);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
-		value match = table.newMatch();
+		value match = table.newMatch(matchPot);
 		assert (exists match);
 		return match;
 	}
@@ -132,7 +133,7 @@ class PlayerTest() {
 	shared void cannotJoinMatchWithUnsufficiantBalance() {
 		value player = makePlayer("player0", table.matchBet - 1);
 		player.joinTable(table);
-		value match = Match(player, makePlayer("other"), table, messageList.add);
+		value match = Match(player, makePlayer("other"), table, matchPot, messageList.add);
 		value result = player.joinMatch(match);
 		assert (!result);
 	}

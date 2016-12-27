@@ -13,14 +13,14 @@ import ceylon.time {
 	now
 }
 
-shared class Match(shared Player player1, shared Player player2, Table table, Anything(OutboundMatchMessage) messageBroadcaster) {
+shared class Match(shared Player player1, shared Player player2, Table table, Integer matchPot, Anything(OutboundMatchMessage) messageBroadcaster) {
 	
 	value creationTime = now();
 	shared MatchId id = MatchId(table.id, creationTime);
 	shared TableId tableId = table.id;
 	shared Integer bet = table.matchBet;
 
-	shared MatchState state = MatchState(id, player1.info, player2.info);
+	shared MatchState state = MatchState(id, player1.info, player2.info, matchPot);
 
 	shared Boolean gameStarted => state.gameStarted;
 	shared Boolean gameEnded => state.gameEnded;
