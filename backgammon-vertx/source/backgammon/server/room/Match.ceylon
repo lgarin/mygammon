@@ -52,7 +52,7 @@ shared class Match(shared Player player1, shared Player player2, Table table, In
 				player1.placeBet(bet);
 				player2.placeBet(bet);
 			}
-			messageBroadcaster(AcceptedMatchMessage(playerId, id));
+			messageBroadcaster(AcceptedMatchMessage(playerId, id, bet));
 			return true;
 		} else {
 			return false;
@@ -70,7 +70,7 @@ shared class Match(shared Player player1, shared Player player2, Table table, In
 		player1.increasePlayedGame();
 		player2.increasePlayedGame();
 		if (exists winner = findPlayer(winnerId)) {
-			winner.increaseScore(score);
+			winner.increaseWonGame(score, matchPot);
 		}
 	}
 	

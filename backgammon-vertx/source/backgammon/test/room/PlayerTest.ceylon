@@ -145,9 +145,9 @@ class PlayerTest() {
 	}
 	
 	test
-	shared void increaseScore() {
-		player.increaseScore(100);
-		assert (player.statistic == PlayerStatistic(initialBalance, 0, 1, 100));
+	shared void increaseWonGame() {
+		player.increaseWonGame(100, 10);
+		assert (player.statistic == PlayerStatistic(initialBalance + 10, 0, 1, 100));
 	}
 	
 	test

@@ -262,6 +262,31 @@ body {
     opacity: 1;
 }
 
+.pot {
+ 	position: absolute;
+    padding: 5px;
+    width: 101px;
+    min-width: 101px;
+    height: 111px;
+    min-height: 111px;
+    word-wrap: break-word;
+    font-size: 20px;
+    text-shadow: #000000 0px 0px 3px;
+    color: #FFFFFF;
+    opacity: 0.8;
+}
+
+.pot-icon {
+	display: block;
+    margin-left: auto;
+    margin-right: auto
+}
+
+.pot-amount {
+	width: 100%;
+	text-align: center
+}
+
 .player {
     position: absolute;
     padding: 5px;

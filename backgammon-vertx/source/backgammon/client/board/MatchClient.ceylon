@@ -59,8 +59,9 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 		showMatchEndMessage(leaverId, winnerId, player2Color);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		if (playerId == winnerId) {
+		if (playerId == winnerId, exists winner = match.playerInfo(winnerId)) {
 			gui.showDialog("dialog-won", {"game-score" -> score.string});
+			gui.showStatusText(winner.name, winner.balance + match.pot);
 		} else if (exists looserId = match.opponentId(winnerId), playerId == looserId) {
 			gui.showDialog("dialog-lost");
 		}
@@ -87,13 +88,13 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 	}
 	
 	void showAccept(AcceptedMatchMessage message) {
-		match.markReady(message.playerId);
 		if (exists color = match.playerColor(message.playerId)) {
 			gui.showPlayerMessage(color, gui.readyTextKey, false);
 		}
-		if (message.playerId == playerId) {
+		if (message.playerId == playerId, exists player = match.playerInfo(playerId)) {
 			gui.showCurrentPlayer(null);
 			gui.hideSubmitButton();
+			gui.showStatusText(player.name, player.balance - message.matchBet);
 		}
 	}
 	
@@ -101,6 +102,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 		gui.showEmptyGame();
 		gui.showPlayerInfo(player1Color, match.player1.name, match.player1.pictureUrl);
 		gui.showPlayerInfo(player2Color, match.player2.name, match.player2.pictureUrl);
+		gui.showMatchPot(match.pot);
 		if (match.gameEnded, exists leaverId = match.leaverId, exists winnerId = match.winnerId) {
 			showMatchEnd(leaverId, winnerId, match.score);
 		} else if (match.gameStarted) {
@@ -122,11 +124,13 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 		
 		switch (message)
 		case (is AcceptedMatchMessage) {
+			match.markReady(message.playerId);
 			showAccept(message);
 			return true;
 		}
 		case (is MatchEndedMessage) {
 			_gameClient = null;
+			match.end(message.playerId, message.winnerId, message.score);
 			showMatchEnd(message.playerId, message.winnerId, message.score);
 			return true;
 		}

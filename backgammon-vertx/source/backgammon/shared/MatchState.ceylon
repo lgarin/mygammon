@@ -53,6 +53,16 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 		}
 	}
 	
+	shared PlayerInfo? playerInfo(PlayerId playerId) {
+		if (playerId == player1Id) {
+			return player1;
+		} else if (playerId == player2Id) {
+			return player2;
+		} else {
+			return null;
+		}
+	}
+	
 	shared Boolean markReady(PlayerId playerId) {
 		if (gameStarted || gameEnded) {
 			return false;

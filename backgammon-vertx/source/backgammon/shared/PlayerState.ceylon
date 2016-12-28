@@ -7,7 +7,7 @@ shared final class PlayerStatistic(shared Integer balance, shared Integer played
 	shared JsonObject toJson() => JsonObject {"balance" -> balance, "playedGames" -> playedGames, "wonGames" -> wonGames, "score" -> score};
 	shared PlayerStatistic increaseGameCount() => PlayerStatistic(balance, playedGames + 1, wonGames, score);
 	shared PlayerStatistic increaseWinCount(Integer winScore) => PlayerStatistic(balance, playedGames, wonGames + 1, score + winScore);
-	shared PlayerStatistic placeBet(Integer bet) => PlayerStatistic(balance - bet, playedGames, wonGames, score);
+	shared PlayerStatistic updateBalance(Integer delta) => PlayerStatistic(balance + delta, playedGames, wonGames, score);
 	
 	string => toJson().string;
 	shared actual Boolean equals(Object that) {

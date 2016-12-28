@@ -191,9 +191,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			if (match.gameStarted) {
 				gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
 			}
-			return AcceptedMatchMessage(message.playerId, message.matchId, true);
+			return AcceptedMatchMessage(message.playerId, message.matchId, configuration.matchBet, true);
 		} else {
-			return AcceptedMatchMessage(message.playerId, message.matchId, false);
+			return AcceptedMatchMessage(message.playerId, message.matchId, configuration.matchBet, false);
 		}
 	}
 	

@@ -28,6 +28,8 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	shared String statusTextId = "status";
 	shared String statusUserId = "currentUser";
 	shared String statusBalanceId = "currentBalance";
+	shared String matchPotId = "matchPot";
+	shared String matchPotAmountId = "matchPotAmount";
 	
 	shared void hideUndoButton() {
 		addClass(undoButtonId, hiddenClass);
@@ -103,6 +105,17 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	
 	shared void hideStatusText() {
 		addClass(statusTextId, hiddenClass);
+	}
+	
+	shared void showMatchPot(Integer matchPot) {
+		removeClass(matchPotId, hiddenClass);
+		if (exists matchPotAmountText = document.getElementById(matchPotAmountId)) {
+			matchPotAmountText.innerHTML = matchPot.string;
+		}
+	}
+	
+	shared void hideMatchPot() {
+		addClass(matchPotId, hiddenClass);
 	}
 
 	shared void showCurrentPlayer(CheckerColor? currentColor) {

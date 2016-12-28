@@ -91,12 +91,12 @@ final shared class Player(shared PlayerInfo info) {
 		_statistic = _statistic.increaseGameCount();
 	}
 	
-	shared void increaseScore(Integer score) {
-		_statistic = _statistic.increaseWinCount(score);
+	shared void increaseWonGame(Integer score, Integer pot) {
+		_statistic = _statistic.increaseWinCount(score).updateBalance(pot);
 	}
 	
 	shared void placeBet(Integer bet) {
-		_statistic = _statistic.placeBet(bet);
+		_statistic = _statistic.updateBalance(-bet);
 	}
 
 	shared Boolean isPlaying() {

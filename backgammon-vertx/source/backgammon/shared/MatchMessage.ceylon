@@ -13,12 +13,12 @@ shared sealed interface OutboundMatchMessage of AcceptedMatchMessage | MatchEnde
 
 shared sealed interface InboundMatchMessage of AcceptMatchMessage | EndMatchMessage satisfies MatchMessage {}
 
-shared final class AcceptedMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
-	toJson() => toExtendedJson({"success" -> success});
-	shared AcceptedMatchMessage withError() => AcceptedMatchMessage(playerId, matchId, false);
+shared final class AcceptedMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared Integer matchBet, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
+	toJson() => toExtendedJson({"matchBet" -> matchBet, "success" -> success});
+	shared AcceptedMatchMessage withError() => AcceptedMatchMessage(playerId, matchId, matchBet, false);
 }
 shared AcceptedMatchMessage parseAcceptedMatchMessage(Object json) {
-	return AcceptedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), json.getBoolean("success"));
+	return AcceptedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), json.getInteger("matchBet"), json.getBoolean("success"));
 }
 
 shared final class MatchEndedMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId, shared Integer score, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {

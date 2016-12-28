@@ -12,7 +12,9 @@ import backgammon.shared {
 	EnterRoomMessage,
 	FoundMatchTableMessage,
 	LeaveRoomMessage,
-	RoomActionResponseMessage
+	RoomActionResponseMessage,
+	PlayerStateRequestMessage,
+	PlayerStateMessage
 }
 
 import io.vertx.ceylon.core {
@@ -86,7 +88,21 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId, Integer initialPla
 	}
 	
 	void handleTable(RoutingContext routingContext) {
-		routingContext.reroute("static/board.html");
+		value context = GameRoomRoutingContext(routingContext);
+		if (exists playerId = context.getCurrentPlayerId(false), exists roomId = context.getRequestRoomId(false)) {
+			eventBus.sendInboundMessage(PlayerStateRequestMessage(playerId, roomId), void (Throwable|PlayerStateMessage result) {
+				if (is Throwable result) {
+					routingContext.fail(result);
+				} else if (exists state = result.state) {
+					context.setCurrentPlayerInfo(state.toPlayerInfo());
+					routingContext.reroute("static/board.html");
+				} else {
+					routingContext.fail(503);
+				}
+			});
+		} else {
+			context.failWithUnauthorized();
+		}
 	}
 	
 	void handleLogout(RoutingContext routingContext) {
