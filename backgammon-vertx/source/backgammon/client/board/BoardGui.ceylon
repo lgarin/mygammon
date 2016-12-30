@@ -1,19 +1,16 @@
-import backgammon.shared.game {
-
-	black,
-	CheckerColor,
-	white
-}
-import backgammon.client.browser {
-
-	Document
-}
 import backgammon.client {
 	GameGui
 }
+import backgammon.client.browser {
+	Document
+}
 import backgammon.shared {
-
-	PlayerInfo
+	PlayerState
+}
+import backgammon.shared.game {
+	black,
+	CheckerColor,
+	white
 }
 shared class BoardGui(Document document) extends GameGui(document) {
 	
@@ -186,9 +183,9 @@ shared class BoardGui(Document document) extends GameGui(document) {
 		hideAllCheckers();
 	}
 	
-	shared default void showBeginState(PlayerInfo playerInfo) {
+	shared default void showBeginState(PlayerState playerState) {
 		showExitButton();
-		showStatusText(playerInfo.name, 0);
+		showStatusText(playerState.info.name, playerState.statistic.balance);
 		hideStartButton();
 		showEmptyGame();
 	}

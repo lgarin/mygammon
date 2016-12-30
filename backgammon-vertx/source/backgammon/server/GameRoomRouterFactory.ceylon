@@ -96,7 +96,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 				googleProfileClient.logout(routingContext, void (Boolean success) {
 					if (success) {
 						context.clearUser();
-						context.sendRedirect("/start");
+						context.sendRedirect("http://mygammon.com");
 					}
 				});
 			});

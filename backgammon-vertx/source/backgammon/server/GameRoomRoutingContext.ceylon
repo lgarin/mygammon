@@ -23,10 +23,10 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 	shared void setCurrentPlayerInfo(PlayerInfo playerInfo) {
 		if (exists session = rc.session()) {
 			session.put("playerInfo", playerInfo);
-			if (exists cookie = rc.getCookie("playerInfo")) {
-				cookie.setValue(playerInfo.toBase64());
+			if (exists cookie = rc.getCookie("playerId")) {
+				cookie.setValue(playerInfo.id);
 			} else {
-				rc.addCookie(cookieFactory.cookie("playerInfo", playerInfo.toBase64()));
+				rc.addCookie(cookieFactory.cookie("playerId", playerInfo.id));
 			}
 		}
 	}
@@ -44,7 +44,7 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 	
 	shared PlayerId? getCurrentPlayerId(Boolean withFailure = true) {
 		if (exists playerInfo = getCurrentPlayerInfo()) {
-			return PlayerId(playerInfo.id);
+			return playerInfo.playerId;
 		} else {
 			if (withFailure) {
 				failWithUnauthorized();

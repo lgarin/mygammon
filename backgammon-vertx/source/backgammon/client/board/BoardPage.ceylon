@@ -9,39 +9,24 @@ import backgammon.client.browser {
 import backgammon.shared {
 	RoomResponseMessage,
 	LeaveTableMessage,
-	EndMatchMessage,
-	formatRoomMessage,
-	parseOutboundTableMessage,
-	InboundGameMessage,
-	MakeMoveMessage,
-	parseOutboundMatchMessage,
 	OutboundGameMessage,
-	PlayerBeginMessage,
-	GameStateRequestMessage,
 	TableId,
-	InboundMatchMessage,
-	parseOutboundGameMessage,
 	OutboundMatchMessage,
 	MatchEndedMessage,
-	InboundTableMessage,
 	TableStateRequestMessage,
-	UndoMovesMessage,
 	OutboundTableMessage,
-	StartGameMessage,
-	EndGameMessage,
 	CreatedMatchMessage,
-	AcceptMatchMessage,
 	TableStateResponseMessage,
-	EndTurnMessage,
 	JoinTableMessage,
-	PlayerInfo,
 	JoinedTableMessage,
-	LeftTableMessage
+	LeftTableMessage,
+	PlayerStateRequestMessage,
+	OutboundRoomMessage,
+	PlayerStateMessage,
+	PlayerState,
+	RoomId
 }
 
-import ceylon.json {
-	Object
-}
 import ceylon.regex {
 	regex
 }
@@ -68,7 +53,7 @@ shared class BoardPage() extends BasePage() {
 		return tableId;
 	}
 	
-	function isPreview() => window.location.href.endsWith("view");
+	isBoardPreview() => window.location.href.endsWith("view");
 	
 	void logout() {
 		gameEventClient?.close();
@@ -188,7 +173,26 @@ shared class BoardPage() extends BasePage() {
 		return false;
 	}
 	
-	function handleTableMessage(OutboundTableMessage message) {
+	shared actual Boolean handleRoomMessage(OutboundRoomMessage message) {
+		
+		if (!message.success) {
+			logout();
+			return true;
+		}
+		
+		if (is PlayerStateMessage message) {
+			if (exists state = message.state, exists currentTableId = extractTableId()) {
+				login(state, currentTableId, isBoardPreview());
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	shared actual Boolean handleTableMessage(OutboundTableMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
 			logout();
@@ -202,7 +206,7 @@ shared class BoardPage() extends BasePage() {
 				gui.showLeaveButton();
 			} else {
 				gui.hideLeaveButton();
-				if (isPreview()) {
+				if (isBoardPreview()) {
 					gui.showJoinButton();
 				}
 			}
@@ -211,20 +215,20 @@ shared class BoardPage() extends BasePage() {
 			gui.showLeaveButton();
 		} else if (is LeftTableMessage message, message.playerId == currentPlayerId) {
 			gui.hideLeaveButton();
-			if (isPreview()) {
+			if (isBoardPreview()) {
 				gui.showJoinButton();
 			}
 		}
 		
 		if (is TableStateResponseMessage message, exists currentMatch = message.match) {
-			if (currentMatch.hasPlayer(currentPlayerId) && isPreview()) {
+			if (currentMatch.hasPlayer(currentPlayerId) && isBoardPreview()) {
 				window.location.\iassign("/room/``message.tableId.roomId``/table/``message.tableId.table``/play");
 			} else {
 				// TODO some changes may occur on the state between the response and the registration
 				gameEventClient = EventBusClient("OutboundGameMessage-``currentMatch.id``", onServerMessage, onServerError);
 			}
 		} else if (is CreatedMatchMessage message) {
-			if (message.hasPlayer(currentPlayerId) && isPreview()) {
+			if (message.hasPlayer(currentPlayerId) && isBoardPreview()) {
 				window.location.\iassign("/room/``message.tableId.roomId``/table/``message.tableId.table``/play");
 			} else {
 				gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
@@ -238,7 +242,7 @@ shared class BoardPage() extends BasePage() {
 		}
 	}
 	
-	function handleMatchMessage(OutboundMatchMessage message) {
+	shared actual Boolean handleMatchMessage(OutboundMatchMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
 			return false;
@@ -246,7 +250,7 @@ shared class BoardPage() extends BasePage() {
 		
 		if (is MatchEndedMessage message) {
 			gameEventClient?.close();
-			if (!isPreview()) {
+			if (!isBoardPreview()) {
 				tableEventClient?.close();
 			}
 		}
@@ -258,7 +262,7 @@ shared class BoardPage() extends BasePage() {
 		}
 	}
 	
-	function handleGameMessage(OutboundGameMessage message) {
+	shared actual Boolean handleGameMessage(OutboundGameMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
 			return false;
@@ -271,73 +275,17 @@ shared class BoardPage() extends BasePage() {
 		}
 	}
 	
-	shared actual Boolean handleServerMessage(String typeName, Object json) {
-
-		if (exists message = parseOutboundTableMessage(typeName, json)) {
-			return handleTableMessage(message);
-		} else if (exists message = parseOutboundMatchMessage(typeName, json)) {
-			return handleMatchMessage(message);
-		} else if (exists message = parseOutboundGameMessage(typeName, json)) {
-			return handleGameMessage(message);
-		} else {
-			onServerError("Unsupported message type: ``typeName``");
-			return true;
-		}
-	}
-
-	void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage message) {
-		print(formatRoomMessage(message));
-		switch (message)
-		case (is AcceptMatchMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");
-		}
-		case (is StartGameMessage) {
-			// ignore
-		}
-		case (is EndMatchMessage) {
-			// ignore
-		}
-		case (is PlayerBeginMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/begin");
-		}
-		case (is MakeMoveMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/move/``message.sourcePosition``/``message.targetPosition``");
-		}
-		case (is UndoMovesMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/undomoves");
-		}
-		case (is EndTurnMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/endturn");
-		}
-		case (is EndGameMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/endgame");
-		}
-		case (is GameStateRequestMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/state");
-		}
-		case (is JoinTableMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/join");
-		}
-		case (is LeaveTableMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/leave");
-		}
-		case (is TableStateRequestMessage) {
-			value suffix = isPreview() then "currentstate" else "playerstate"; 
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/``suffix``");
-		}
-	}
-	
-	void login(PlayerInfo playerInfo, TableId tableId, Boolean viewTable) {
-		print(playerInfo.toJson());
+	void login(PlayerState playerState, TableId tableId, Boolean viewTable) {
+		print(playerState.toJson());
 		tableClient = TableClient(currentPlayerId, tableId, gui, viewTable, gameCommander);
 		tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
 		gameCommander(TableStateRequestMessage(currentPlayerId, tableId, viewTable));
-		gui.showBeginState(playerInfo);
+		gui.showBeginState(playerState);
 	}
 	
 	shared void run() {
-		if (exists tableId = extractTableId(), exists playerInfo = extractPlayerInfo()) {
-			login(playerInfo, tableId, isPreview());
+		if (exists currentTableId = extractTableId(), exists currentPlayerId = extractPlayerId()) {
+			roomCommander(PlayerStateRequestMessage(currentPlayerId, RoomId(currentTableId.roomId)));
 		} else {
 			logout();
 		}

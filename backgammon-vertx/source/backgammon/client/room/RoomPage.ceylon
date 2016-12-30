@@ -11,12 +11,8 @@ import backgammon.client.browser {
 }
 import backgammon.shared {
 	RoomId,
-	parseOutboundRoomMessage,
 	OutboundRoomMessage,
 	PlayerListMessage,
-	parseOutboundGameMessage,
-	parseOutboundTableMessage,
-	parseOutboundMatchMessage,
 	MatchEndedMessage,
 	OutboundMatchMessage,
 	RoomResponseMessage,
@@ -25,39 +21,20 @@ import backgammon.shared {
 	OutboundGameMessage,
 	TableStateRequestMessage,
 	PlayerId,
-	InboundTableMessage,
-	InboundGameMessage,
-	InboundMatchMessage,
-	UndoMovesMessage,
 	LeaveTableMessage,
-	EndMatchMessage,
-	formatRoomMessage,
-	StartGameMessage,
-	EndGameMessage,
-	AcceptMatchMessage,
-	MakeMoveMessage,
-	EndTurnMessage,
-	PlayerBeginMessage,
-	GameStateRequestMessage,
 	RoomStateRequestMessage,
-	InboundRoomMessage,
-	EnterRoomMessage,
-	LeaveRoomMessage,
-	FindMatchTableMessage,
 	FindEmptyTableMessage,
 	FoundEmptyTableMessage,
 	TableId,
-	PlayerInfo,
 	JoinTableMessage,
 	PlayerStateRequestMessage,
 	CreatedMatchMessage,
 	JoinedTableMessage,
-	LeftTableMessage
+	LeftTableMessage,
+	PlayerState,
+	PlayerStateMessage
 }
 
-import ceylon.json {
-	Object
-}
 import ceylon.regex {
 	regex
 }
@@ -82,6 +59,8 @@ shared class RoomPage() extends BasePage() {
 		}
 		return roomId;
 	}
+	
+	isBoardPreview() => false;
 
 	shared Boolean onButton(HTMLElement target) {
 		
@@ -119,41 +98,7 @@ shared class RoomPage() extends BasePage() {
 			return false;
 		}
 	}
-	
-	void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage message) {
-		print(formatRoomMessage(message));
-		switch (message)
-		case (is AcceptMatchMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");
-		}
-		case (is StartGameMessage) {
-		}
-		case (is EndMatchMessage) {
-		}
-		case (is PlayerBeginMessage) {
-		}
-		case (is MakeMoveMessage) {
-		}
-		case (is UndoMovesMessage) {
-		}
-		case (is EndTurnMessage) {
-		}
-		case (is EndGameMessage) {
-		}
-		case (is GameStateRequestMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/state");
-		}
-		case (is LeaveTableMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/leave");
-		}
-		case (is TableStateRequestMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/currentstate");
-		}
-		case (is JoinTableMessage) {
-			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/join");
-		}
-	}
-	
+
 	function showTable(TableId newTableId) {
 		gui.showTableInfo(newTableId, playerList.findPlayer(currentPlayerId));
 		
@@ -256,9 +201,8 @@ shared class RoomPage() extends BasePage() {
 
 		window.location.\iassign("/logout");
 	}
-
 	
-	function handleRoomMessage(OutboundRoomMessage message) {
+	shared actual Boolean handleRoomMessage(OutboundRoomMessage message) {
 		
 		if (!message.success) {
 			logout();
@@ -281,12 +225,19 @@ shared class RoomPage() extends BasePage() {
 			} else {
 				return false;
 			}
+		} else if (is PlayerStateMessage message) {
+			if (exists state = message.state) {
+				login(state, message.roomId);
+				return true;
+			} else {
+				return false;
+			}
 		} else {
 			return false;
 		}
 	}
 	
-	function handleTableMessage(OutboundTableMessage message) {
+	shared actual Boolean handleTableMessage(OutboundTableMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
 			return false;
@@ -319,7 +270,7 @@ shared class RoomPage() extends BasePage() {
 		}
 	}
 	
-	function handleMatchMessage(OutboundMatchMessage message) {
+	shared actual Boolean handleMatchMessage(OutboundMatchMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
 			return false;
@@ -337,7 +288,7 @@ shared class RoomPage() extends BasePage() {
 		}
 	}
 	
-	function handleGameMessage(OutboundGameMessage message) {
+	shared actual Boolean handleGameMessage(OutboundGameMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
 			return false;
@@ -349,51 +300,17 @@ shared class RoomPage() extends BasePage() {
 			return false;
 		}
 	}
-		
-	shared actual Boolean handleServerMessage(String typeName, Object json)  {
-		
-		if (exists message = parseOutboundRoomMessage(typeName, json)) {
-			return handleRoomMessage(message);
-		} else if (exists message = parseOutboundTableMessage(typeName, json)) {
-			return handleTableMessage(message);
-		} else if (exists message = parseOutboundMatchMessage(typeName, json)) {
-			return handleMatchMessage(message);
-		} else if (exists message = parseOutboundGameMessage(typeName, json)) {
-			return handleGameMessage(message);
-		} else {
-			onServerError("Unsupported message type: ``typeName``");
-			return true;
-		}
-	}
-
-	void roomCommander(InboundRoomMessage message) {
-		switch(message)
-		case (is RoomStateRequestMessage) {
-			makeApiRequest("/api/room/``message.roomId``/listplayer");
-		}
-		case (is FindEmptyTableMessage) {
-			makeApiRequest("/api/room/``message.roomId``/opentable");
-		}
-		case (is EnterRoomMessage) {}
-		case (is LeaveRoomMessage) {
-			makeApiRequest("/api/room/``message.roomId``/leave");
-		}
-		case (is PlayerStateRequestMessage) {
-			makeApiRequest("/api/room/``message.roomId``/player/``message.playerId``/state");
-		}
-		case (is FindMatchTableMessage) {}
-	}
-
-	void login(PlayerInfo currentPlayerInfo, RoomId currentRoomId) {
-		print(currentPlayerInfo.toJson());
+	
+	void login(PlayerState currentPlayerState, RoomId currentRoomId) {
+		print(currentPlayerState.toJson());
 		roomEventClient = EventBusClient("OutboundRoomMessage-``currentRoomId``", onServerMessage, onServerError);
-		roomCommander(RoomStateRequestMessage(PlayerId(currentPlayerInfo.id), currentRoomId));
-		gui.showBeginState(currentPlayerInfo);
+		roomCommander(RoomStateRequestMessage(currentPlayerState.playerId, currentRoomId));
+		gui.showBeginState(currentPlayerState);
 	}
 	
 	shared void run() {
-		if (exists currentRoomId = extractRoomId(), exists currentPlayerInfo = extractPlayerInfo()) {
-			login(currentPlayerInfo, currentRoomId);
+		if (exists currentRoomId = extractRoomId(), exists currentPlayerId = extractPlayerId()) {
+			roomCommander(PlayerStateRequestMessage(currentPlayerId, currentRoomId));
 		} else {
 			logout();
 		}

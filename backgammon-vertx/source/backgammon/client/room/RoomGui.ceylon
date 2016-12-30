@@ -5,13 +5,11 @@ import backgammon.client.browser {
 	Document
 }
 import backgammon.shared {
-
-	PlayerInfo,
 	TableId,
 	PlayerState
 }
-import ceylon.json {
 
+import ceylon.json {
 	Object,
 	Array
 }
@@ -71,8 +69,8 @@ class RoomGui(Document document) extends BoardGui(document) {
 		}
 	}
 
-	shared actual void showBeginState(PlayerInfo playerInfo) {
-		super.showBeginState(playerInfo);
+	shared actual void showBeginState(PlayerState playerState) {
+		super.showBeginState(playerState);
 		showPlayButton();
 		hideTablePreview();
 	}
