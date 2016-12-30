@@ -28,13 +28,13 @@ shared LeftTableMessage parseLeftTableMessage(Object json) {
 	return LeftTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), json.getBoolean("success"));
 }
 
-shared final class CreatedMatchMessage(shared actual PlayerId playerId, shared MatchId matchId, shared PlayerInfo player1, shared PlayerInfo player2, shared Integer pot) satisfies OutboundTableMessage {
+shared final class CreatedMatchMessage(shared actual PlayerId playerId, shared MatchId matchId, shared PlayerInfo player1, shared PlayerInfo player2, shared MatchBalance balance) satisfies OutboundTableMessage {
 	tableId => matchId.tableId;
-	toJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "pot" -> pot};
+	toJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "balance" -> balance.toJson()};
 	shared Boolean hasPlayer(PlayerId otherPlayerId) => otherPlayerId == player1.playerId || otherPlayerId == player2.playerId;
 }
 shared CreatedMatchMessage parseCreatedMatchMessage(Object json) {
-	return CreatedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), json.getInteger("pot"));
+	return CreatedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), parseMatchBalance(json.getObject("balance")));
 }
 
 shared final class JoinTableMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies InboundTableMessage {}

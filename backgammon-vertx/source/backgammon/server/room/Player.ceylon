@@ -13,7 +13,7 @@ import ceylon.time {
 	now
 }
 
-final shared class Player(shared PlayerInfo info) {
+final shared class Player(shared PlayerInfo info, Integer initialBalance) {
 	
 	variable Table? _table = null;
 	variable Match? _previousMatch = null;
@@ -24,11 +24,11 @@ final shared class Player(shared PlayerInfo info) {
 	shared Match? match => _match;
 	shared PlayerId id = PlayerId(info.id);
 	
-	variable PlayerStatistic _statistic = PlayerStatistic(info.balance, 0, 0, 0);
+	variable PlayerStatistic _statistic = PlayerStatistic(initialBalance);
 	
 	shared PlayerStatistic statistic => _statistic;
 	shared Integer balance => _statistic.balance;
-	shared PlayerState state => PlayerState(info.id, info.name, _statistic, table?.id, match?.id, info.pictureUrl, info.iconUrl);
+	shared PlayerState state => PlayerState(info, _statistic, table?.id, match?.id);
 
 	shared Boolean isAtTable(TableId tableId) => table?.id?.equals(tableId) else false;
 	
@@ -79,7 +79,7 @@ final shared class Player(shared PlayerInfo info) {
 			return false;
 		} else if (!isAtTable(currentMatch.id.tableId)) {
 			return false;
-		} else if (balance < currentMatch.bet) {
+		} else if (balance < currentMatch.playerBet) {
 			return false;
 		} else {
 			_match = currentMatch;

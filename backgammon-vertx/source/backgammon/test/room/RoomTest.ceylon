@@ -1,6 +1,8 @@
 import backgammon.server.room {
 	Room,
-	Player
+	Player,
+	RoomSize,
+	MatchBet
 }
 import backgammon.shared {
 	JoinedTableMessage,
@@ -21,13 +23,12 @@ import ceylon.test {
 
 class RoomTest() {
 	value initialPlayerBalance = 1000;
-	value matchBet = 10;
-	value matchPot = 18;
-	value tableCount = 3;
+	value matchBet = MatchBet(10, 18);
+	value roomSize = RoomSize(3, 10);
 	value messageList = ArrayList<RoomMessage>();
-	value room = Room("test1", tableCount, 10, matchBet, matchPot, messageList.add);
+	value room = Room("test1", roomSize, matchBet, messageList.add);
 	
-	function makePlayerInfo(String id) => PlayerInfo(id, id, initialPlayerBalance);
+	function makePlayerInfo(String id) => PlayerInfo(id, id);
 	
 	test
 	shared void newRoomHasNoPlayer() {
@@ -37,38 +38,38 @@ class RoomTest() {
 
 	test
 	shared void newRoomHasOnlyFreeTables() {
-		assert (room.freeTableCount == tableCount);
+		assert (room.freeTableCount == roomSize.tableCount);
 	}
 	
 	test
 	shared void addNewPlayer() {
-		value result = room.definePlayer(makePlayerInfo("player1"));
+		value result = room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
 		assert (result exists);
 		assert (room.playerCount == 1);
 	}
 	
 	test
 	shared void createDeltaForNewPlayer() {
-		room.definePlayer(makePlayerInfo("player1"));
+		room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
 		assert (room.playerListDeltaSize == 1);
 		value result = room.createPlayerListDelta();
 		assert (room.playerListDeltaSize == 0);
-		assert (result.newPlayers == [PlayerState("player1", "player1", PlayerStatistic(initialPlayerBalance), null, null)]);
+		assert (result.newPlayers == [PlayerState(makePlayerInfo("player1"), PlayerStatistic(initialPlayerBalance), null, null)]);
 		assert (result.updatedPlayers.empty);
 		assert (result.oldPlayers.empty);
 	}
 	
 	test
 	shared void addSamePlayerIdTwice() {
-		room.definePlayer(makePlayerInfo("player1"));
-		value result = room.definePlayer(makePlayerInfo("player1"));
+		room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
+		value result = room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
 		assert (result exists);
 		assert (room.playerCount == 1);
 	}
 	
 	test
 	shared void removeExistingPlayer() {
-		value player = room.definePlayer(makePlayerInfo("player1"));
+		value player = room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
 		assert (exists player);
 		room.removePlayer(player);
 		assert (!room.findPlayer(player.id) exists);
@@ -76,27 +77,27 @@ class RoomTest() {
 	
 	test
 	shared void createDeltaForOldPlayer() {
-		value player = room.definePlayer(makePlayerInfo("player1"));
+		value player = room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
 		assert (exists player);
 		room.removePlayer(player);
 		assert (room.playerListDeltaSize == 2);
 		value result = room.createPlayerListDelta();
 		assert (room.playerListDeltaSize == 0);
-		assert (result.newPlayers == [PlayerState("player1", "player1", PlayerStatistic(initialPlayerBalance), null, null)]);
-		assert (result.oldPlayers == [PlayerState("player1", "player1", PlayerStatistic(initialPlayerBalance), null, null)]);
+		assert (result.newPlayers == [PlayerState(player.info, PlayerStatistic(initialPlayerBalance), null, null)]);
+		assert (result.oldPlayers == [PlayerState(player.info, PlayerStatistic(initialPlayerBalance), null, null)]);
 		assert (result.updatedPlayers.empty);
 	}
 	
 	test
 	shared void removeNonExistingPlayer() {
-		value player = Player(makePlayerInfo("player1"));
+		value player = Player(makePlayerInfo("player1"), initialPlayerBalance);
 		room.removePlayer(player);
 		assert (!room.findPlayer(player.id) exists);
 	}
 	
 	test
 	shared void sitPlayerWithoutOpponent() {
-		value player = room.definePlayer(makePlayerInfo("player1"));
+		value player = room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
 		assert (exists player);
 		value result = room.findMatchTable(player);
 		assert (result exists);
@@ -106,9 +107,9 @@ class RoomTest() {
 	
 	test
 	shared void sitPlayerWithOpponent() {
-		value player1 = room.definePlayer(makePlayerInfo("player1"));
+		value player1 = room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
 		assert (exists player1);
-		value player2 = room.definePlayer(makePlayerInfo("player2"));
+		value player2 = room.definePlayer(makePlayerInfo("player2"), initialPlayerBalance);
 		assert (exists player2);
 		value result1 = room.findMatchTable(player1);
 		assert (result1 exists);
@@ -120,7 +121,7 @@ class RoomTest() {
 	
 	test
 	shared void openNewTable() {
-		value player = room.definePlayer(makePlayerInfo("player1"));
+		value player = room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
 		assert (exists player);
 		value result = room.findEmptyTable(player);
 		assert (exists result);
@@ -131,13 +132,13 @@ class RoomTest() {
 	
 	test
 	shared void openNewTableWithoutEmptyTable() {
-		for (i in 1..tableCount) {
-			value player = room.definePlayer(makePlayerInfo("player``i``"));
+		for (i in 1..roomSize.tableCount) {
+			value player = room.definePlayer(makePlayerInfo("player``i``"), initialPlayerBalance);
 			assert (exists player);
 			value result = room.findEmptyTable(player);
 			assert (exists result);
 		}
-		value player = room.definePlayer(makePlayerInfo("playerN"));
+		value player = room.definePlayer(makePlayerInfo("playerN"), initialPlayerBalance);
 		assert (exists player);
 		value result = room.findEmptyTable(player);
 		assert (!result exists);
@@ -145,9 +146,9 @@ class RoomTest() {
 	
 	test
 	shared void createMatch() {
-		value player1 = room.definePlayer(makePlayerInfo("player1"));
+		value player1 = room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
 		assert (exists player1);
-		value player2 = room.definePlayer(makePlayerInfo("player2"));
+		value player2 = room.definePlayer(makePlayerInfo("player2"), initialPlayerBalance);
 		assert (exists player2);
 		value table = room.findTable(TableId(room.roomId, 1));
 		assert (exists table);
@@ -161,7 +162,7 @@ class RoomTest() {
 	
 	test
 	shared void createMatchWithoutOpponent() {
-		value player1 = room.definePlayer(makePlayerInfo("player1"));
+		value player1 = room.definePlayer(makePlayerInfo("player1"), initialPlayerBalance);
 		assert (exists player1);
 		value table = room.findTable(TableId(room.roomId, 1));
 		assert (exists table);

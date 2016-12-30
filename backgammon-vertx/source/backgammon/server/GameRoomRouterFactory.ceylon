@@ -12,9 +12,7 @@ import backgammon.shared {
 	EnterRoomMessage,
 	FoundMatchTableMessage,
 	LeaveRoomMessage,
-	RoomActionResponseMessage,
-	PlayerStateRequestMessage,
-	PlayerStateMessage
+	RoomActionResponseMessage
 }
 
 import io.vertx.ceylon.core {
@@ -26,7 +24,7 @@ import io.vertx.ceylon.web {
 	Router
 }
 
-final class GameRoomRouterFactory(Vertx vertx, String roomId, Integer initialPlayerBalance) {
+final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 	
 	value eventBus = GameRoomEventBus(vertx);
 	value googleProfileClient = GoogleProfileClient(vertx);
@@ -47,7 +45,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId, Integer initialPla
 		value context = GameRoomRoutingContext(routingContext);
 		void handler(GoogleUserInfo? userInfo) {
 			if (exists userInfo) {
-				value playerInfo = PlayerInfo(userInfo.userId, userInfo.displayName, initialPlayerBalance, userInfo.pictureUrl, userInfo.iconUrl);
+				value playerInfo = PlayerInfo(userInfo.userId, userInfo.displayName, userInfo.pictureUrl, userInfo.iconUrl);
 				completeLogin(routingContext, playerInfo);
 			} else {
 				context.clearUser();
@@ -88,21 +86,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId, Integer initialPla
 	}
 	
 	void handleTable(RoutingContext routingContext) {
-		value context = GameRoomRoutingContext(routingContext);
-		if (exists playerId = context.getCurrentPlayerId(false), exists roomId = context.getRequestRoomId(false)) {
-			eventBus.sendInboundMessage(PlayerStateRequestMessage(playerId, roomId), void (Throwable|PlayerStateMessage result) {
-				if (is Throwable result) {
-					routingContext.fail(result);
-				} else if (exists state = result.state) {
-					context.setCurrentPlayerInfo(state.toPlayerInfo());
-					routingContext.reroute("static/board.html");
-				} else {
-					routingContext.fail(503);
-				}
-			});
-		} else {
-			context.failWithUnauthorized();
-		}
+		routingContext.reroute("static/board.html");
 	}
 	
 	void handleLogout(RoutingContext routingContext) {

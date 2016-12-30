@@ -6,7 +6,8 @@ import backgammon.shared {
 	AcceptedMatchMessage,
 	OutboundMatchMessage,
 	systemPlayerId,
-	TableId
+	TableId,
+	MatchBalance
 }
 
 import ceylon.time {
@@ -18,9 +19,10 @@ shared class Match(shared Player player1, shared Player player2, Table table, In
 	value creationTime = now();
 	shared MatchId id = MatchId(table.id, creationTime);
 	shared TableId tableId = table.id;
-	shared Integer bet = table.matchBet;
+	shared Integer playerBet = table.playerBet;
 
-	shared MatchState state = MatchState(id, player1.info, player2.info, matchPot);
+	shared MatchBalance balance = MatchBalance(playerBet, matchPot, player1.balance, player2.balance);
+	shared MatchState state = MatchState(id, player1.info, player2.info, balance);
 
 	shared Boolean gameStarted => state.gameStarted;
 	shared Boolean gameEnded => state.gameEnded;
@@ -47,12 +49,12 @@ shared class Match(shared Player player1, shared Player player2, Table table, In
 	}
 
 	shared Boolean markReady(PlayerId playerId) {
-		if (exists player = findPlayer(playerId), player.isInMatch(id), state.markReady(playerId)) {
+		if (exists player = findPlayer(playerId), player.isInMatch(id), player.balance >= playerBet, state.markReady(playerId)) {
+			messageBroadcaster(AcceptedMatchMessage(playerId, id));
 			if (gameStarted) {
-				player1.placeBet(bet);
-				player2.placeBet(bet);
+				player1.placeBet(playerBet);
+				player2.placeBet(playerBet);
 			}
-			messageBroadcaster(AcceptedMatchMessage(playerId, id, bet));
 			return true;
 		} else {
 			return false;

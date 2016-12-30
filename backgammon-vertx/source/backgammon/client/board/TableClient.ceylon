@@ -55,7 +55,7 @@ shared final class TableClient(shared PlayerId playerId, shared TableId tableId,
 
 		switch (message)
 		case (is CreatedMatchMessage) {
-			value match = MatchState(message.matchId, message.player1, message.player2, message.pot);
+			value match = MatchState(message.matchId, message.player1, message.player2, message.balance);
 			matchClient = MatchClient(playerId, match, gui, messageBroadcaster);
 			followNextMatch = !message.hasPlayer(playerId);
 			return true;

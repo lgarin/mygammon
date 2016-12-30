@@ -188,7 +188,7 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	
 	shared default void showBeginState(PlayerInfo playerInfo) {
 		showExitButton();
-		showStatusText(playerInfo.name, playerInfo.balance);
+		showStatusText(playerInfo.name, 0);
 		hideStartButton();
 		showEmptyGame();
 	}

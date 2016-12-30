@@ -19,7 +19,7 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 	shared Integer getValue(CheckerColor color) {
 		switch (color)
 		case (black) {
-			return firstValue;  // TODO black is first player
+			return firstValue;
 		}
 		case (white) {
 			return secondValue;

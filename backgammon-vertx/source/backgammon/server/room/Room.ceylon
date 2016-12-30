@@ -20,7 +20,7 @@ import ceylon.time {
 	Instant
 }
 
-final shared class Room(shared String roomId, shared Integer tableCountLimit, shared Integer playerCountLimit, shared Integer matchBet, shared Integer matchPot, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+final shared class Room(shared String roomId, shared RoomSize maxSize, shared MatchBet matchBet, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared RoomId id = RoomId(roomId);
 	
@@ -28,14 +28,14 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	variable Integer _maxPlayerCount = 0;
 	value playerMap = HashMap<PlayerId, Player>(unlinked);
 	
-	value newPlayers = ArrayList<Player>(playerCountLimit);
+	value newPlayers = ArrayList<Player>(maxSize.playerCount);
 	value updatedPlayers = HashSet<Player>(unlinked);
-	value oldPlayers = ArrayList<Player>(playerCountLimit);
+	value oldPlayers = ArrayList<Player>(maxSize.playerCount);
 	
 	variable Integer _maxTableCount = 0;
-	value tableList = ArrayList<Table>(tableCountLimit);
-	for (i in 0:tableCountLimit) {
-		tableList.add(Table(i + 1, id, matchBet, messageBroadcaster));
+	value tableList = ArrayList<Table>(maxSize.tableCount);
+	for (i in 0:maxSize.tableCount) {
+		tableList.add(Table(i + 1, id, matchBet.playerBet, messageBroadcaster));
 	}
 	
 	variable Integer _createdMatchCount = 0;
@@ -63,7 +63,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	
 	shared Integer freeTableCount => tableList.count((table) => table.queueSize == 0);
 	shared Integer maxTableCount {
-		value busyTableCount = tableCountLimit - freeTableCount;
+		value busyTableCount = maxSize.tableCount - freeTableCount;
 		if (_maxTableCount < busyTableCount) {
 			_maxTableCount = busyTableCount;
 		}
@@ -71,7 +71,7 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 	}
 	
 	shared Boolean createMatch(Table table) {
-		if (exists match = table.newMatch(matchPot)) {
+		if (exists match = table.newMatch(matchBet.matchPot)) {
 			_createdMatchCount++;
 			matchMap.put(match.id, match);
 			return true;
@@ -117,13 +117,13 @@ final shared class Room(shared String roomId, shared Integer tableCountLimit, sh
 		return result;
 	}
 	
-	shared Player? definePlayer(PlayerInfo info) {
+	shared Player? definePlayer(PlayerInfo info, Integer initialBalance) {
 		if (exists player = findPlayer(PlayerId(info.id))) {
 			return player;
-		} else if (playerMap.size >= playerCountLimit) {
+		} else if (playerMap.size >= maxSize.playerCount) {
 			return null;
 		} else {
-			value player = Player(info);
+			value player = Player(info, initialBalance);
 			playerMap.put(player.id, player);
 			newPlayers.add(player);
 			_createdPlayerCount++;

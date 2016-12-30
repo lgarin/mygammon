@@ -3,7 +3,8 @@ import backgammon.shared {
 	PlayerListMessage,
 	TableId,
 	PlayerId,
-	PlayerInfo
+	PlayerInfo,
+	PlayerStatistic
 }
 
 import ceylon.collection {
@@ -35,7 +36,7 @@ class PlayerListModel(String hiddenClass) {
 		} else {
 			buttonClass = hiddenClass;
 		}
-		return Object {"id" -> state.id, "name" -> state.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.iconUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "balance" -> state.statistic.balance};
+		return Object {"id" -> state.info.id, "name" -> state.info.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.info.iconUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "balance" -> state.statistic.balance};
 	}
 	
 	shared TableId? findTable(PlayerId playerId) {
@@ -54,7 +55,7 @@ class PlayerListModel(String hiddenClass) {
 	
 	shared void updatePlayer(PlayerInfo? playerInfo) {
 		if (exists playerInfo, !playerMap.defines(playerInfo.playerId)) {
-			playerMap.put(playerInfo.playerId, playerInfo.toInitialPlayerState()); 
+			playerMap.put(playerInfo.playerId, PlayerState(playerInfo, PlayerStatistic(0), null, null)); 
 		}
 	}
 	

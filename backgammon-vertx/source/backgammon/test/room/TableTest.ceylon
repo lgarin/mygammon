@@ -25,7 +25,7 @@ class TableTest() {
 	value matchPot = 18;
 	value table = Table(1, RoomId("room"), matchBet, messageList.add);
 	
-	function makePlayer(String id, Integer balance = 1000) => Player(PlayerInfo(id, id, balance));
+	function makePlayer(String id, Integer initialBalance = matchBet) => Player(PlayerInfo(id, id), initialBalance);
 	
 	test
 	shared void newTableIsFree() {
@@ -46,7 +46,7 @@ class TableTest() {
 	
 	test
 	shared void sitPlayerWithUnsufficiantBalance() {
-		value result = table.sitPlayer(makePlayer("player1", 0));
+		value result = table.sitPlayer(makePlayer("player1", matchBet - 1));
 		assert (!result);
 	}
 	

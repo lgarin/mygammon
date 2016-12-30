@@ -46,13 +46,13 @@ import ceylon.time {
 shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander) {
 	
 	value lock = ObtainableLock(); 
-	value room = Room(configuration.roomId, configuration.maxTableCount, configuration.maxPlayerCount, configuration.matchBet, configuration.matchPot, messageBroadcaster);
+	value room = Room(configuration.roomId, configuration.roomSize, configuration.matchBet, messageBroadcaster);
 	variable Instant lastNotification = Instant(0);
 	
 	function findRoom(RoomId roomId) => room.id == roomId then room else null;
 	
 	function enterRoom(EnterRoomMessage message) {
-		if (exists room = findRoom(message.roomId), exists player = room.definePlayer(message.playerInfo)) {
+		if (exists room = findRoom(message.roomId), exists player = room.definePlayer(message.playerInfo, configuration.initialPlayerBalance)) {
 			player.markActive();
 			return RoomActionResponseMessage(message.playerId, message.roomId, true);
 		} else {
@@ -186,14 +186,14 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	function acceptMatch(AcceptMatchMessage message) {
 		if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), exists player = room.findPlayer(message.playerId), match.markReady(message.playerId)) {
 			player.markActive();
-			room.registerPlayerChange(match.player1);
-			room.registerPlayerChange(match.player2);
 			if (match.gameStarted) {
+				room.registerPlayerChange(match.player1);
+				room.registerPlayerChange(match.player2);
 				gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
 			}
-			return AcceptedMatchMessage(message.playerId, message.matchId, configuration.matchBet, true);
+			return AcceptedMatchMessage(message.playerId, message.matchId, true);
 		} else {
-			return AcceptedMatchMessage(message.playerId, message.matchId, configuration.matchBet, false);
+			return AcceptedMatchMessage(message.playerId, message.matchId, false);
 		}
 	}
 	
@@ -234,7 +234,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				maxPlayerCount = room.maxPlayerCount;
 				totalPlayerCount = room.createdPlayerCount;
 				freeTableCount = freeTableCount;
-				busyTableCount = room.tableCountLimit - freeTableCount;
+				busyTableCount = room.maxSize.tableCount - freeTableCount;
 				maxTableCount = room.maxTableCount;
 				activeMatchCount = room.matchCount;
 				maxMatchCount = room.maxMatchCount;

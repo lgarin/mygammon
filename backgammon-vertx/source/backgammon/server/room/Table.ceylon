@@ -16,7 +16,7 @@ import ceylon.collection {
 	HashMap
 }
 
-final shared class Table(shared Integer index, shared RoomId roomId, shared Integer matchBet, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+final shared class Table(shared Integer index, shared RoomId roomId, shared Integer playerBet, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared TableId id = TableId(roomId.string, index);
 	
@@ -33,7 +33,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, shared Inte
 		value currentMatch = Match(player1, player2, this, matchPot, messageBroadcaster);
 		if (player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch)) {
 			_match = currentMatch;
-			messageBroadcaster(CreatedMatchMessage(player2.id, currentMatch.id, player1.info, player2.info, matchPot));
+			messageBroadcaster(CreatedMatchMessage(player2.id, currentMatch.id, player1.info, player2.info, currentMatch.balance));
 			return true;
 		} else {
 			return false;
@@ -53,7 +53,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, shared Inte
 	}
 	
 	shared Boolean sitPlayer(Player player) {
-		if (player.balance < matchBet) {
+		if (player.balance < playerBet) {
 			return false;
 		} else if (playerQueue.defines(player.id)) {
 			return false;

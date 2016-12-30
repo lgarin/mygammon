@@ -23,7 +23,11 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 	shared void setCurrentPlayerInfo(PlayerInfo playerInfo) {
 		if (exists session = rc.session()) {
 			session.put("playerInfo", playerInfo);
-			rc.addCookie(cookieFactory.cookie("playerInfo", playerInfo.toBase64()));
+			if (exists cookie = rc.getCookie("playerInfo")) {
+				cookie.setValue(playerInfo.toBase64());
+			} else {
+				rc.addCookie(cookieFactory.cookie("playerInfo", playerInfo.toBase64()));
+			}
 		}
 	}
 	
@@ -31,11 +35,11 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 		rc.session()?.destroy();
 		rc.user()?.clearCache();
 		rc.clearUser();
-		if (exists cookie = rc.cookies().find((cookie) => cookie.getName() == "playerInfo")) {
-			rc.addCookie(cookie.setMaxAge(0));
+		if (exists cookie = rc.getCookie("playerInfo")) {
+			cookie.setMaxAge(0);
 		}
 	}
-	
+
 	shared PlayerInfo? getCurrentPlayerInfo() => rc.session()?.get<PlayerInfo>("playerInfo");
 	
 	shared PlayerId? getCurrentPlayerId(Boolean withFailure = true) {

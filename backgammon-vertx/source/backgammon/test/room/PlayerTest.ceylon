@@ -29,7 +29,7 @@ class PlayerTest() {
 	
 	value table = Table(1, RoomId("room"), matchBet, messageList.add);
 	
-	function makePlayer(String id, Integer balance = initialBalance) => Player(PlayerInfo(id, id, balance));
+	function makePlayer(String id) => Player(PlayerInfo(id, id), initialBalance);
 	
 	value player = makePlayer("player");
 	
@@ -131,7 +131,8 @@ class PlayerTest() {
 	
 	test
 	shared void cannotJoinMatchWithUnsufficiantBalance() {
-		value player = makePlayer("player0", table.matchBet - 1);
+		value player = makePlayer("player0");
+		player.placeBet(initialBalance);
 		player.joinTable(table);
 		value match = Match(player, makePlayer("other"), table, matchPot, messageList.add);
 		value result = player.joinMatch(match);

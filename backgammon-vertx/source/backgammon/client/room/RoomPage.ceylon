@@ -303,7 +303,7 @@ shared class RoomPage() extends BasePage() {
 				gui.showDialog("dialog-accept");
 			}
 		} else if (is JoinedTableMessage message, exists playerInfo = message.playerInfo) {
-			playerList.updatePlayer(message.playerInfo);
+			playerList.updatePlayer(message.playerInfo); // TODO need?
 			playerList.updateTable(message.playerId, message.tableId);
 		} else if (is LeftTableMessage message) {
 			playerList.updateTable(message.playerId, null);

@@ -17,7 +17,7 @@ import ceylon.test {
 
 class MatchTest() {
 	
-	function makePlayer(String id) => Player(PlayerInfo(id, id, 1000));
+	function makePlayer(String id) => Player(PlayerInfo(id, id), 100);
 	
 	value messageList = ArrayList<RoomMessage>();
 	

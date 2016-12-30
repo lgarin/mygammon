@@ -34,36 +34,37 @@ shared final class PlayerStatistic(shared Integer balance, shared Integer played
 
 shared PlayerStatistic parsePlayerStatistic(JsonObject json) => PlayerStatistic(json.getInteger("balance"), json.getInteger("playedGames"), json.getInteger("wonGames"), json.getInteger("score"));
 
-shared final class PlayerState(shared String id, shared String name, shared PlayerStatistic statistic, shared TableId? tableId, shared MatchId? matchId, shared String? pictureUrl = null, shared String? iconUrl = null) extends Object() {
-	shared JsonObject toJson() => JsonObject {"id" -> id, "name" -> name, "statistic" -> statistic.toJson(), "tableId" -> tableId?.toJson(), "matchId" -> matchId?.toJson(), "pictureUrl" -> pictureUrl, "iconUrl" -> iconUrl};
-	shared PlayerId playerId => PlayerId(id);
-	shared PlayerInfo toPlayerInfo() => PlayerInfo(id, name, statistic.balance, pictureUrl, iconUrl);
+shared final class PlayerState(shared PlayerInfo info, shared PlayerStatistic statistic, shared TableId? tableId, shared MatchId? matchId) extends Object() {
+	shared JsonObject toJson() => JsonObject {"info" -> info.toJson(), "statistic" -> statistic.toJson(), "tableId" -> tableId?.toJson(), "matchId" -> matchId?.toJson()};
+	shared PlayerId playerId => info.playerId;
 	shared Boolean isAtTable(TableId otherTableId) => if (exists tableId) then tableId == otherTableId else false;
 	shared Boolean isPlayingAtTable(TableId otherTableId) => matchId exists && isAtTable(otherTableId);
-	shared PlayerState withTable(TableId? tableId) => PlayerState(id, name, statistic, tableId, matchId, pictureUrl, iconUrl);
+	shared PlayerState withTable(TableId? tableId) => PlayerState(info, statistic, tableId, matchId);
 	
 	string => toJson().string;
-	
+
+	function equalsOrBothNull(Object? object1, Object? object2) {
+		if (exists object1, exists object2) {
+			return object1 == object2;
+		} else {
+			return object1 exists == object2 exists;
+		}
+	}
+
 	shared actual Boolean equals(Object that) {
 		if (is PlayerState that) {
-			return id==that.id && 
-				name==that.name && 
-				statistic==that.statistic;
-		}
-		else {
+			return info==that.info && 
+				statistic==that.statistic &&
+				equalsOrBothNull(tableId, that.tableId) &&
+				equalsOrBothNull(matchId, that.matchId);
+		} else {
 			return false;
 		}
 	}
 	
-	shared actual Integer hash {
-		variable value hash = 1;
-		hash = 31*hash + id.hash;
-		hash = 31*hash + name.hash;
-		hash = 31*hash + statistic.hash;
-		return hash;
-	}
+	hash => info.hash;
 }
 
-shared PlayerState parsePlayerState(JsonObject json) => PlayerState(json.getString("id"), json.getString("name"), parsePlayerStatistic(json.getObject("statistic")), parseNullableTableId(json.getObjectOrNull("tableId")), parseNullableMatchId(json.getObjectOrNull("matchId")), json.getStringOrNull("pictureUrl"), json.getStringOrNull("iconUrl"));
+shared PlayerState parsePlayerState(JsonObject json) => PlayerState(parsePlayerInfo(json.getObject("info")), parsePlayerStatistic(json.getObject("statistic")), parseNullableTableId(json.getObjectOrNull("tableId")), parseNullableMatchId(json.getObjectOrNull("matchId")));
 
 shared PlayerState? parseNullablePlayerState(JsonObject? json) => if (exists json) then parsePlayerState(json) else null;
