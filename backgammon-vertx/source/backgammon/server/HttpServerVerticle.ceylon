@@ -60,15 +60,16 @@ final class HttpServerVerticle() extends Verticle() {
 	}
 	
 	void startRoom(RoomConfiguration roomConfig) {
-		value eventBus = GameRoomEventBus(vertx);
+		value repoEventBus = PlayerRepositoryEventBus(vertx);
+		value roomEventBus = GameRoomEventBus(vertx);
 
-		value matchRoom = MatchRoom(roomConfig, eventBus.publishOutboundMessage, eventBus.queueInboundMessage);
-		eventBus.registerInboundRoomMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processRoomMessage);
-		eventBus.registerInboundTableMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processTableMessage);
-		eventBus.registerInboundMatchMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processMatchMessage);
+		value matchRoom = MatchRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage, repoEventBus.queueInputMessage);
+		roomEventBus.registerInboundRoomMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processRoomMessage);
+		roomEventBus.registerInboundTableMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processTableMessage);
+		roomEventBus.registerInboundMatchMessageConsumer(roomConfig.roomId, roomConfig.roomThreadCount, matchRoom.processMatchMessage);
 		
-		value gameRoom = GameRoom(roomConfig, eventBus.publishOutboundMessage, eventBus.queueInboundMessage);
-		eventBus.registerInboundGameMessageConsumer(roomConfig.roomId, roomConfig.gameThreadCount, gameRoom.processGameMessage);
+		value gameRoom = GameRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage);
+		roomEventBus.registerInboundGameMessageConsumer(roomConfig.roomId, roomConfig.gameThreadCount, gameRoom.processGameMessage);
 		
 		vertx.setPeriodic(roomConfig.serverAdditionalTimeout.milliseconds / 2, void (Integer val) {
 			value currentTime = now();

@@ -1,8 +1,9 @@
 import ceylon.json {
 	Object
 }
-import io.vertx.ceylon.auth.common {
-	User
+
+import io.vertx.ceylon.core {
+	Vertx
 }
 import io.vertx.ceylon.core.buffer {
 	Buffer
@@ -15,16 +16,13 @@ import io.vertx.ceylon.core.http {
 import io.vertx.ceylon.web {
 	RoutingContext
 }
-import io.vertx.ceylon.core {
-	Vertx
-}
 
-final class GoogleUserInfo(Object json, User? token) {
+final class GoogleUserInfo(Object json) {
 	shared String displayName = json.getString("displayName");
 	// TODO use regex instead of replace
 	shared String pictureUrl = json.getObject("image").getString("url").replace("sz=50", "sz=100");
 	shared String iconUrl = json.getObject("image").getString("url").replace("sz=50", "sz=25");
-	shared String userId => if (exists token) then token.principal().getString("access_token") else json.getString("id");
+	shared String userId => json.getString("id");
 }
 
 final class GoogleProfileClient(Vertx vertx) {
@@ -67,7 +65,7 @@ final class GoogleProfileClient(Vertx vertx) {
 				token = token.principal().getString("access_token");
 				void bodyHandler(Buffer? body) {
 					if (exists body) {
-						handler(GoogleUserInfo(body.toJsonObject(), token));
+						handler(GoogleUserInfo(body.toJsonObject()));
 					} else {
 						handler(null);
 					}
