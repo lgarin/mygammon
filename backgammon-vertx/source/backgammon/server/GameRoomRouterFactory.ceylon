@@ -24,7 +24,7 @@ import io.vertx.ceylon.web {
 	Router
 }
 
-final class GameRoomRouterFactory(Vertx vertx, String roomId) {
+final class GameRoomRouterFactory(Vertx vertx, String roomId, String homeUrl) {
 	
 	value eventBus = GameRoomEventBus(vertx);
 	value googleProfileClient = GoogleProfileClient(vertx);
@@ -96,7 +96,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId) {
 				googleProfileClient.logout(routingContext, void (Boolean success) {
 					if (success) {
 						context.clearUser();
-						context.sendRedirect("http://mygammon.com"); // TODO use config
+						context.sendRedirect(homeUrl);
 					}
 				});
 			});
