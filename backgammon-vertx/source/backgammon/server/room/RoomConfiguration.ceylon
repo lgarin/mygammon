@@ -12,8 +12,8 @@ import ceylon.time {
 shared final class RoomConfiguration(Object? json) extends GameConfiguration(json) {
 	shared String roomId = json?.getStringOrNull("roomId") else "test";
 	shared Integer initialPlayerBalance = json?.getIntegerOrNull("initialPlayerBalance") else 1000;
-	shared Integer playerBet = json?.getIntegerOrNull("playerBet") else 11;
-	shared Integer matchPot = json?.getIntegerOrNull("matchPot") else 20;
+	shared Integer playerBet = json?.getIntegerOrNull("playerBet") else 110;
+	shared Integer matchPot = json?.getIntegerOrNull("matchPot") else 200;
 	shared Integer maxTableCount = json?.getIntegerOrNull("maxTableCount") else 10;
 	shared Integer maxPlayerCount = json?.getIntegerOrNull("maxPlayerCount") else 100;
 	shared Integer roomThreadCount = json?.getIntegerOrNull("roomThreadCount") else 2;

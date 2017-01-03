@@ -41,9 +41,10 @@ final class HttpServerVerticle() extends Verticle() {
 		router.route("/client/*").handler(staticHandler.create("client").handle);
 		router.mountSubRouter("/eventbus", GameRoomEventBus(vertx).createEventBusRouter());
 		
+		router.mountSubRouter("/api", GameRoomRestApi(vertx).createRouter());
+		
 		router.mountSubRouter("/", authRouterFactory.createGoogleLoginRouter());
 		router.mountSubRouter("/", GameRoomRouterFactory(vertx, roomConfig.roomId).createRouter());
-		router.mountSubRouter("/api", GameRoomRestApi(vertx).createRouter());
 		
 		vertx.createHttpServer().requestHandler(router.accept).listen(roomConfig.port);
 		

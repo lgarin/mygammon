@@ -92,7 +92,7 @@ abstract shared class BasePage() {
 	}
 	
 	shared void makeApiRequest(String url) {
-		value request = newXMLHttpRequest();	
+		value request = newXMLHttpRequest();
 		request.open("GET", url, true);
 		request.send();
 		request.onload = void (Event event) {

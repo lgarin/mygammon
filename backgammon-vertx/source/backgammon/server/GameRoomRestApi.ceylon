@@ -137,7 +137,7 @@ final class GameRoomRestApi(Vertx vertx) {
 	
 	void handlePlayerStateRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
-		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getRequestPlayerId()) {
+		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getRequestPlayerId(), context.getCurrentPlayerId() exists) {
 			forwardResponse(context, PlayerStateRequestMessage(playerId, roomId));
 		}
 	}

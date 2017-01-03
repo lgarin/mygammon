@@ -19,12 +19,12 @@ import io.vertx.ceylon.core {
 	Vertx
 }
 
-final class GoogleUserInfo(Object json, User token) {
+final class GoogleUserInfo(Object json, User? token) {
 	shared String displayName = json.getString("displayName");
 	// TODO use regex instead of replace
 	shared String pictureUrl = json.getObject("image").getString("url").replace("sz=50", "sz=100");
 	shared String iconUrl = json.getObject("image").getString("url").replace("sz=50", "sz=25");
-	shared String userId => token.principal().getString("access_token");
+	shared String userId => if (exists token) then token.principal().getString("access_token") else json.getString("id");
 }
 
 final class GoogleProfileClient(Vertx vertx) {
@@ -45,24 +45,34 @@ final class GoogleProfileClient(Vertx vertx) {
 		return _httpClient else (_httpClient = createHttpClient());
 	}
 	
+	void makeRestCall(String url, String token, void bodyHandler(Buffer? body)) {
+		value request = httpClient.getAbs(url);
+		request.headers().add("Authorization", "Bearer ``token``");
+		request.handler {
+			void handler(HttpClientResponse res) {
+				if (res.statusCode() == 200) {
+					res.bodyHandler(bodyHandler);
+				} else {
+					bodyHandler(null);
+				}
+			}
+		};
+		request.end();
+	}
+	
 	shared void fetchUserInfo(RoutingContext context, void handler(GoogleUserInfo? userInfo)) {
 		if (exists token = context.user()) {
-			value request = httpClient.getAbs("https://www.googleapis.com/plus/v1/people/me?fields=displayName%2Cimage%2Furl&key=``googleApiKey``");
-			request.headers().add("Authorization", "Bearer " + token.principal().getString("access_token"));
-			request.handler {
-				void handler(HttpClientResponse res) {
-					if (res.statusCode() == 200) {
-						res.bodyHandler {
-							void bodyHandler(Buffer body) {
-								handler(GoogleUserInfo(body.toJsonObject(), token));
-							}
-						};
+			makeRestCall {
+				url = "https://www.googleapis.com/plus/v1/people/me?fields=displayName%2Cimage%2Furl%2Cid&key=``googleApiKey``";
+				token = token.principal().getString("access_token");
+				void bodyHandler(Buffer? body) {
+					if (exists body) {
+						handler(GoogleUserInfo(body.toJsonObject(), token));
 					} else {
 						handler(null);
 					}
 				}
 			};
-			request.end();
 		} else {
 			handler(null);
 		}
@@ -70,17 +80,17 @@ final class GoogleProfileClient(Vertx vertx) {
 	
 	shared void logout(RoutingContext context, void handler(Boolean success)) {
 		if (exists token = context.user()) {
-			value request = httpClient.getAbs("https://accounts.google.com/o/oauth2/revoke?token=``token.principal().getString("access_token")``");
-			request.handler {
-				void handler(HttpClientResponse res) {
-					if (res.statusCode() == 200) {
+			makeRestCall {
+				url = "https://accounts.google.com/o/oauth2/revoke?token=``token.principal().getString("access_token")``";
+				token = token.principal().getString("access_token");
+				void bodyHandler(Buffer? body) {
+					if (exists body) {
 						handler(true);
 					} else {
 						handler(false);
 					}
 				}
 			};
-			request.end();
 		} else {
 			handler(false);
 		}

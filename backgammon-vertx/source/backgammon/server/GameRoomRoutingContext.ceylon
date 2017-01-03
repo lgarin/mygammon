@@ -137,6 +137,7 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 			value response = json.string;
 			rc.response().headers().add("Content-Length", response.size.string);
 			rc.response().headers().add("Content-Type", "application/json");
+			rc.response().headers().add("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
 			rc.response().write(response).end();
 		}
 	}
