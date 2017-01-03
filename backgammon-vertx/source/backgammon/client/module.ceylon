@@ -1,5 +1,5 @@
 native("js")
-module backgammon.client "1.2.1" {
-	shared import backgammon.shared "1.2.1";
+module backgammon.client "1.2.2" {
+	shared import backgammon.shared "1.2.2";
 	import ceylon.regex "1.2.2";
 }
