@@ -22,6 +22,7 @@ shared final class RoomConfiguration(Object? json) extends GameConfiguration(jso
 	shared Integer maxPlayerMessageRate = json?.getIntegerOrNull("maxPlayerMessageRate") else 10;
 	shared String hostname = json?.getStringOrNull("hostname") else "localhost";
 	shared Integer port = json?.getIntegerOrNull("port") else 8080;
+	shared String repositoryFile = json?.getStringOrNull("repositoryFile") else "resources/player-repository.json";
 	shared Duration userSessionTimeout => Duration(playerInactiveTimeout.milliseconds + serverAdditionalTimeout.milliseconds);
 	shared RoomSize roomSize => RoomSize(maxTableCount, maxPlayerCount);
 	shared MatchBet matchBet => MatchBet(playerBet, matchPot);

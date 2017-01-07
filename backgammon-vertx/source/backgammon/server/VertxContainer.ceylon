@@ -34,7 +34,7 @@ import ceylon.time {
 
 	Duration
 }
-class VertxContainer(Module mod, String configFile, Duration startupShutdownTimeout = Duration(30 * 1000)) {
+final class VertxContainer(Module mod, String configFile, Duration startupShutdownTimeout = Duration(30 * 1000)) {
 	value log = logger(mod);
 	value container = vertxFactory.vertx();
 	

@@ -69,5 +69,5 @@ shared void run() {
 	System.setProperty("log4j.configurationFile", "resource/log4j2.properties");
 	System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.Log4j2LogDelegateFactory");
 	addLogWriter(logWriter);
-	runVerticles(`module`, [`GameRoomVerticle`, `HttpServerVerticle`, `JsonRepositoryVerticle`]);
+	runVerticles(`module`, [`HttpServerVerticle`, `JsonRepositoryVerticle`, `GameRoomVerticle`]);
 }

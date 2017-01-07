@@ -45,7 +45,7 @@ final class HttpServerVerticle() extends Verticle() {
 		
 		server = vertx.createHttpServer().requestHandler(router.accept).listen(roomConfig.port);
 		
-		log.info("Started http://``roomConfig.hostname``:``roomConfig.port``");
+		log.info("Started webserver : http://``roomConfig.hostname``:``roomConfig.port``");
 	}
 	
 	shared actual void stop() {
@@ -53,6 +53,6 @@ final class HttpServerVerticle() extends Verticle() {
 		if (exists currentServer = server) {
 			currentServer.close();
 		}
-		log.info("Stopped http://``roomConfig.hostname``:``roomConfig.port``");
+		log.info("Stopped webserver : http://``roomConfig.hostname``:``roomConfig.port``");
 	}
 }

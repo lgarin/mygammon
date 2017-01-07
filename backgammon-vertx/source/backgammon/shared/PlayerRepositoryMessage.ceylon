@@ -32,11 +32,13 @@ shared final class PlayerStatisticStoreMessage(shared actual PlayerId key, Playe
 	shared actual Object payload => Object { "info" -> info.toJson(), "stat" -> statistic.toJson() };
 }
 PlayerStatisticStoreMessage parsePlayerStatisticStoreMessage(Object json) {
+	// TODO this is wrong
 	return PlayerStatisticStoreMessage(parsePlayerId(json.getString("key")), parsePlayerInfo(json.getObject("info")), parsePlayerStatistic(json.getObject("stat")));
 }
 
 shared final class PlayerStatisticRetrieveMessage(shared actual PlayerId key) satisfies PlayerRepositoryRetrieveMessage {}
 PlayerStatisticRetrieveMessage parsePlayerStatisticRetrieveMessage(Object json) {
+	// TODO this is wrong
 	return PlayerStatisticRetrieveMessage(parsePlayerId(json.getString("key")));
 }
 
@@ -44,6 +46,7 @@ shared final class PlayerStatisticOutputMessage(shared actual PlayerId key, Play
 	shared actual Object payload => Object { "info" -> info.toJson(), "stat" -> statistic.toJson() };
 }
 PlayerStatisticOutputMessage parsePlayerStatisticOutputMessage(Object json) {
+	// TODO this is wrong
 	return PlayerStatisticOutputMessage(parsePlayerId(json.getString("key")), parsePlayerInfo(json.getObject("info")), parsePlayerStatistic(json.getObject("stat")));
 }
 
@@ -57,7 +60,7 @@ shared PlayerRepositoryInputMessage? parsePlayerRepositoryInputMessage(Object js
 		if (typeName == `class PlayerStatisticStoreMessage`.name) {
 			return parsePlayerStatisticStoreMessage(json.getObject(typeName));
 		} else if (typeName == `class PlayerStatisticRetrieveMessage`.name) {
-				return parsePlayerStatisticRetrieveMessage(json.getObject(typeName));
+			return parsePlayerStatisticRetrieveMessage(json.getObject(typeName));
 		} else {
 			return null;
 		}

@@ -30,8 +30,8 @@ final class PlayerRepositoryEventBus(Vertx vertx) {
 		vertx.runOnContext(() => sendInboundMessage(message, noop));
 	}
 
-	shared void registerConsumer(String address, PlayerRepositoryOutputMessage process(PlayerRepositoryInputMessage request)) {
-		eventBus.registerConsumer(address, function (Object msg) {
+	shared void registerConsumer(PlayerRepositoryOutputMessage process(PlayerRepositoryInputMessage request)) {
+		eventBus.registerConsumer("PlayerRepositoryMessage", function (Object msg) {
 			if (exists request = parsePlayerRepositoryInputMessage(msg)) {
 				value response = formatPlayerRepositoryMessage(process(request));
 				logger(`package`).info(response.string);

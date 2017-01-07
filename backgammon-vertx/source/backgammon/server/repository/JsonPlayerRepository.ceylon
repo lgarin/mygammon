@@ -6,9 +6,10 @@ import backgammon.shared {
 import ceylon.file {
 	File,
 	current,
-	lines
+	lines,
+	Path
 }
-shared final class JsonPlayerRepository(File file) {
+shared final class JsonPlayerRepository() {
 	String? readWholeFile(String path) {
 		if (is File configFile = current.childPath(path).resource) {
 			return lines(configFile).reduce((String partial, String element) => partial + element);
@@ -21,11 +22,11 @@ shared final class JsonPlayerRepository(File file) {
 		return nothing;
 	}
 	
-	shared void readData() {
+	shared void readData(String filepath) {
 		
 	}
 	
-	shared void writeData() {
+	shared void writeData(String filepath) {
 		
 	}
 }

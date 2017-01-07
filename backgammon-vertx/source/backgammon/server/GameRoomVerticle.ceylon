@@ -52,11 +52,11 @@ class GameRoomVerticle() extends Verticle() {
 			handleStatistic(matchRoom, gameRoom);
 		});
 		
-		log.info("Started room ``roomConfig.roomId``");
+		log.info("Started room : ``roomConfig.roomId``");
 	}
 	
 	shared actual void stop() {
 		value roomConfig = RoomConfiguration(config);
-		log.info("Stopped room ``roomConfig.roomId``");
+		log.info("Stopped room : ``roomConfig.roomId``");
 	}
 }
