@@ -32,14 +32,10 @@ final class PlayerRepositoryEventBus(Vertx vertx) {
 
 	shared void registerConsumer(String address, PlayerRepositoryOutputMessage process(PlayerRepositoryInputMessage request)) {
 		eventBus.registerConsumer(address, function (Object msg) {
-			if (exists typeName = msg.keys.first) {
-				if (is PlayerRepositoryInputMessage request = parsePlayerRepositoryInputMessage(typeName, msg.getObject(typeName))) {
-					value response = formatPlayerRepositoryMessage(process(request));
-					logger(`package`).info(response.string);
-					return response;
-				} else {
-					throw Exception("Invalid request type: ``typeName``");
-				}
+			if (exists request = parsePlayerRepositoryInputMessage(msg)) {
+				value response = formatPlayerRepositoryMessage(process(request));
+				logger(`package`).info(response.string);
+				return response;
 			} else {
 				throw Exception("Invalid request: ``msg``");
 			}

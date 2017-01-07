@@ -17,14 +17,14 @@ shared final class JoinedTableMessage(shared actual PlayerId playerId, shared ac
 	shared actual Boolean success => playerInfo exists;
 	toJson() => toExtendedJson {"playerInfo" -> playerInfo?.toJson()};
 }
-shared JoinedTableMessage parseJoinedTableMessage(Object json) {
+JoinedTableMessage parseJoinedTableMessage(Object json) {
 	return JoinedTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), parseNullablePlayerInfo(json.getObjectOrNull("playerInfo")));
 }
 
 shared final class LeftTableMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared actual Boolean success = true) satisfies OutboundTableMessage & RoomResponseMessage {
 	toJson() => toExtendedJson {"success" -> success};
 }
-shared LeftTableMessage parseLeftTableMessage(Object json) {
+LeftTableMessage parseLeftTableMessage(Object json) {
 	return LeftTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), json.getBoolean("success"));
 }
 
@@ -33,26 +33,24 @@ shared final class CreatedMatchMessage(shared actual PlayerId playerId, shared M
 	toJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "player1" -> player1.toJson(), "player2" -> player2.toJson(), "balance" -> balance.toJson()};
 	shared Boolean hasPlayer(PlayerId otherPlayerId) => otherPlayerId == player1.playerId || otherPlayerId == player2.playerId;
 }
-shared CreatedMatchMessage parseCreatedMatchMessage(Object json) {
+CreatedMatchMessage parseCreatedMatchMessage(Object json) {
 	return CreatedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), parseMatchBalance(json.getObject("balance")));
 }
 
 shared final class JoinTableMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies InboundTableMessage {}
-
-shared JoinTableMessage parseJoinTableMessage(Object json) {
+JoinTableMessage parseJoinTableMessage(Object json) {
 	return JoinTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
 }
 
 shared final class LeaveTableMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies InboundTableMessage {}
-shared LeaveTableMessage parseLeaveTableMessage(Object json) {
+LeaveTableMessage parseLeaveTableMessage(Object json) {
 	return LeaveTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
 }
 
 shared final class TableStateRequestMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared Boolean current) satisfies InboundTableMessage {
 	toJson() => toExtendedJson {"current" -> current};
 }
-
-shared TableStateRequestMessage parseTableStateRequestMessage(Object json) {
+TableStateRequestMessage parseTableStateRequestMessage(Object json) {
 	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), json.getBoolean("current"));
 }
 
@@ -62,31 +60,39 @@ shared final class TableStateResponseMessage(shared actual PlayerId playerId, sh
 	shared Boolean isPlayerInQueue(PlayerId playerId) => playerQueue.any((item) => item.id == playerId.id);
 	
 }
-shared TableStateResponseMessage parseTableStateResponseMessage(Object json) {
+TableStateResponseMessage parseTableStateResponseMessage(Object json) {
 	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), parseNullableMatchState(json.getObjectOrNull("match")), json.getArray("playerQueue").narrow<Object>().collect(parsePlayerInfo), json.getBoolean("success"));
 }
 
-shared OutboundTableMessage? parseOutboundTableMessage(String typeName, Object json) {
-	if (typeName == `class JoinedTableMessage`.name) {
-		return parseJoinedTableMessage(json);
-	} else if (typeName == `class LeftTableMessage`.name) {
-		return parseLeftTableMessage(json);
-	} else if (typeName == `class CreatedMatchMessage`.name) {
-		return parseCreatedMatchMessage(json);
-	} else if (typeName == `class TableStateResponseMessage`.name) {
-		return parseTableStateResponseMessage(json);
+shared OutboundTableMessage? parseOutboundTableMessage(Object json) {
+	if (exists typeName = json.keys.first) {
+		if (typeName == `class JoinedTableMessage`.name) {
+			return parseJoinedTableMessage(json.getObject(typeName));
+		} else if (typeName == `class LeftTableMessage`.name) {
+			return parseLeftTableMessage(json.getObject(typeName));
+		} else if (typeName == `class CreatedMatchMessage`.name) {
+			return parseCreatedMatchMessage(json.getObject(typeName));
+		} else if (typeName == `class TableStateResponseMessage`.name) {
+			return parseTableStateResponseMessage(json.getObject(typeName));
+		} else {
+			return null;
+		}
 	} else {
 		return null;
 	}
 }
 
-shared InboundTableMessage? parseInboundTableMessage(String typeName, Object json) {
-	if (typeName == `class LeaveTableMessage`.name) {
-		return parseLeaveTableMessage(json);
-	} else if (typeName == `class JoinTableMessage`.name) {
-		return parseJoinTableMessage(json);
-	} else if (typeName == `class TableStateRequestMessage`.name) {
-		return parseTableStateRequestMessage(json);
+shared InboundTableMessage? parseInboundTableMessage(Object json) {
+	if (exists typeName = json.keys.first) {
+		if (typeName == `class LeaveTableMessage`.name) {
+			return parseLeaveTableMessage(json.getObject(typeName));
+		} else if (typeName == `class JoinTableMessage`.name) {
+			return parseJoinTableMessage(json.getObject(typeName));
+		} else if (typeName == `class TableStateRequestMessage`.name) {
+			return parseTableStateRequestMessage(json.getObject(typeName));
+		} else {
+			return null;
+		}
 	} else {
 		return null;
 	}

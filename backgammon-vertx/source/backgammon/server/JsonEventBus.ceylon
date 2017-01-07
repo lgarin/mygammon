@@ -26,17 +26,13 @@ import io.vertx.ceylon.web.handler.sockjs {
 
 final class JsonEventBus(Vertx vertx) {
 	
-	shared void sendMessage<OutboundMessage>(Object message, String address, Anything parseOutboundMessage(String typeName, Object json), void responseHandler(Throwable|OutboundMessage response)) {
+	shared void sendMessage<OutboundMessage>(Object message, String address, Anything parseOutboundMessage(Object json), void responseHandler(Throwable|OutboundMessage response)) {
 		logger(`package`).info(message.string);
 		vertx.eventBus().send(address, message, void (Throwable|Message<Object> result) {
 			if (is Throwable result) {
 				responseHandler(result);
-			} else if (exists body = result.body(), exists typeName = body.keys.first) {
-				if (is OutboundMessage response = parseOutboundMessage(typeName, body.getObject(typeName))) {
-					responseHandler(response);
-				} else {
-					responseHandler(Exception("Invalid response type: ``typeName``"));
-				}
+			} else if (exists body = result.body(), is OutboundMessage response = parseOutboundMessage(body)) {
+				responseHandler(response);
 			} else {
 				responseHandler(Exception("Invalid response: ``result``"));
 			}

@@ -76,16 +76,12 @@ final class GameRoomEventBus(Vertx vertx) {
 		}
 	}
 
-	void registerParallelRoomMessageCosumer<in InboundMessage, out OutboundMessage>(WorkerExecutor executor, String address, InboundMessage? parse(String typeName, Object json), OutboundMessage process(InboundMessage request)) given OutboundMessage satisfies RoomMessage given InboundMessage satisfies RoomMessage {
+	void registerParallelRoomMessageCosumer<in InboundMessage, out OutboundMessage>(WorkerExecutor executor, String address, InboundMessage? parse(Object json), OutboundMessage process(InboundMessage request)) given OutboundMessage satisfies RoomMessage given InboundMessage satisfies RoomMessage {
 		eventBus.registerParallelConsumer(executor, address, function (Object msg) {
-			if (exists typeName = msg.keys.first) {
-				if (is InboundMessage request = parse(typeName, msg.getObject(typeName))) {
-					value response = formatRoomMessage(process(request));
-					logger(`package`).info(response.string);
-					return response;
-				} else {
-					throw Exception("Invalid request type: ``typeName``");
-				}
+			if (is InboundMessage request = parse(msg)) {
+				value response = formatRoomMessage(process(request));
+				logger(`package`).info(response.string);
+				return response;
 			} else {
 				throw Exception("Invalid request: ``msg``");
 			}

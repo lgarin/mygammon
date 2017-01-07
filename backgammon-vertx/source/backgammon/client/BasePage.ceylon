@@ -58,26 +58,25 @@ abstract shared class BasePage() {
 	shared formal Boolean handleMatchMessage(OutboundMatchMessage message);
 	shared formal Boolean handleGameMessage(OutboundGameMessage message);
 	
-	function handleServerMessage(String typeName, Object json)  {
+	function handleServerMessage(Object json)  {
 		
-		if (exists message = parseOutboundRoomMessage(typeName, json)) {
+		if (exists message = parseOutboundRoomMessage(json)) {
 			return handleRoomMessage(message);
-		} else if (exists message = parseOutboundTableMessage(typeName, json)) {
+		} else if (exists message = parseOutboundTableMessage(json)) {
 			return handleTableMessage(message);
-		} else if (exists message = parseOutboundMatchMessage(typeName, json)) {
+		} else if (exists message = parseOutboundMatchMessage(json)) {
 			return handleMatchMessage(message);
-		} else if (exists message = parseOutboundGameMessage(typeName, json)) {
+		} else if (exists message = parseOutboundGameMessage(json)) {
 			return handleGameMessage(message);
 		} else {
-			onServerError("Unsupported message type: ``typeName``");
-			return true;
+			return false;
 		}
 	}
 	
 	shared void onServerMessage(String messageString) {
 		print(messageString);
-		if (is Object json = parse(messageString), exists typeName = json.keys.first) {
-			if (!handleServerMessage(typeName, json.getObject(typeName))) {
+		if (is Object json = parse(messageString)) {
+			if (!handleServerMessage(json)) {
 				onServerError("Cannot handle message: ``json.pretty``");
 			}
 		} else {
