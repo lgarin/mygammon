@@ -1,1 +1,1 @@
-package backgammon.server.repository;
+shared package backgammon.server.repository;

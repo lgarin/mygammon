@@ -16,13 +16,13 @@ shared sealed interface PlayerRepositoryInputMessage of PlayerRepositoryStoreMes
 
 shared sealed interface PlayerRepositoryStoreMessage of PlayerStatisticStoreMessage satisfies PlayerRepositoryInputMessage {}
 
-shared sealed interface PlayerRepositoryRetrieveMessage satisfies PlayerRepositoryInputMessage {
+shared sealed interface PlayerRepositoryRetrieveMessage of PlayerStatisticRetrieveMessage satisfies PlayerRepositoryInputMessage {
 	toJson() => Object{ "key" -> key.toJson() };
 }
 
 shared sealed interface PlayerRepositoryOutputMessage satisfies PlayerRepositoryMessage {}
 
-shared final class PlayerStatisticStoreMessage(PlayerInfo info, PlayerStatistic statistic) satisfies PlayerRepositoryStoreMessage {
+shared final class PlayerStatisticStoreMessage(shared PlayerInfo info, shared PlayerStatistic statistic) satisfies PlayerRepositoryStoreMessage {
 	key => info.playerId;
 	toJson() => Object{ "key" -> key.toJson(), "info" -> info.toJson(), "stat" -> statistic.toJson() };
 }
@@ -35,7 +35,7 @@ PlayerStatisticRetrieveMessage parsePlayerStatisticRetrieveMessage(Object json) 
 	return PlayerStatisticRetrieveMessage(parsePlayerId(json.getString("key")));
 }
 
-shared final class PlayerStatisticOutputMessage(shared actual PlayerId key, PlayerStatistic statistic) satisfies PlayerRepositoryOutputMessage {
+shared final class PlayerStatisticOutputMessage(shared actual PlayerId key, shared PlayerStatistic statistic) satisfies PlayerRepositoryOutputMessage {
 	toJson() => Object{ "key" -> key.toJson(), "stat" -> statistic.toJson() };
 }
 PlayerStatisticOutputMessage parsePlayerStatisticOutputMessage(Object json) {
