@@ -14,42 +14,33 @@ shared sealed interface PlayerRepositoryMessage of PlayerRepositoryInputMessage 
 
 shared sealed interface PlayerRepositoryInputMessage of PlayerRepositoryStoreMessage | PlayerRepositoryRetrieveMessage satisfies PlayerRepositoryMessage {}
 
-shared sealed interface PlayerRepositoryStoreMessage of PlayerStatisticStoreMessage satisfies PlayerRepositoryInputMessage {
-	shared formal Object payload;
-	shared actual Object toJson() => Object{ key.string -> payload };
-}
+shared sealed interface PlayerRepositoryStoreMessage of PlayerStatisticStoreMessage satisfies PlayerRepositoryInputMessage {}
 
 shared sealed interface PlayerRepositoryRetrieveMessage satisfies PlayerRepositoryInputMessage {
-	shared actual Object toJson() => Object{ key.string -> null };
+	toJson() => Object{ "key" -> key.toJson() };
 }
 
-shared sealed interface PlayerRepositoryOutputMessage satisfies PlayerRepositoryMessage {
-	shared formal Object? payload;
-	shared actual Object toJson() => Object{ key.string -> payload };
-}
+shared sealed interface PlayerRepositoryOutputMessage satisfies PlayerRepositoryMessage {}
 
-shared final class PlayerStatisticStoreMessage(shared actual PlayerId key, PlayerInfo info, PlayerStatistic statistic) satisfies PlayerRepositoryStoreMessage {
-	shared actual Object payload => Object { "info" -> info.toJson(), "stat" -> statistic.toJson() };
+shared final class PlayerStatisticStoreMessage(PlayerInfo info, PlayerStatistic statistic) satisfies PlayerRepositoryStoreMessage {
+	key => info.playerId;
+	toJson() => Object{ "key" -> key.toJson(), "info" -> info.toJson(), "stat" -> statistic.toJson() };
 }
 PlayerStatisticStoreMessage parsePlayerStatisticStoreMessage(Object json) {
-	// TODO this is wrong
-	return PlayerStatisticStoreMessage(parsePlayerId(json.getString("key")), parsePlayerInfo(json.getObject("info")), parsePlayerStatistic(json.getObject("stat")));
+	return PlayerStatisticStoreMessage(parsePlayerInfo(json.getObject("info")), parsePlayerStatistic(json.getObject("stat")));
 }
 
 shared final class PlayerStatisticRetrieveMessage(shared actual PlayerId key) satisfies PlayerRepositoryRetrieveMessage {}
 PlayerStatisticRetrieveMessage parsePlayerStatisticRetrieveMessage(Object json) {
-	// TODO this is wrong
 	return PlayerStatisticRetrieveMessage(parsePlayerId(json.getString("key")));
 }
 
-shared final class PlayerStatisticOutputMessage(shared actual PlayerId key, PlayerInfo info, PlayerStatistic statistic) satisfies PlayerRepositoryOutputMessage {
-	shared actual Object payload => Object { "info" -> info.toJson(), "stat" -> statistic.toJson() };
+shared final class PlayerStatisticOutputMessage(shared actual PlayerId key, PlayerStatistic statistic) satisfies PlayerRepositoryOutputMessage {
+	toJson() => Object{ "key" -> key.toJson(), "stat" -> statistic.toJson() };
 }
 PlayerStatisticOutputMessage parsePlayerStatisticOutputMessage(Object json) {
-	// TODO this is wrong
-	return PlayerStatisticOutputMessage(parsePlayerId(json.getString("key")), parsePlayerInfo(json.getObject("info")), parsePlayerStatistic(json.getObject("stat")));
+	return PlayerStatisticOutputMessage(parsePlayerId(json.getString("key")), parsePlayerStatistic(json.getObject("stat")));
 }
-
 
 shared Object formatPlayerRepositoryMessage(PlayerRepositoryMessage message) {
 	return Object({type(message).declaration.name -> message.toJson()});

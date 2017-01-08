@@ -76,7 +76,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	
 	void handlePlayerChange(Player player) {
 		room.registerPlayerChange(player);
-		playerRepository(PlayerStatisticStoreMessage(player.id, player.info, player.statistic));
+		playerRepository(PlayerStatisticStoreMessage(player.info, player.statistic));
 	}
 	
 	function findMatchTable(FindMatchTableMessage message) {
