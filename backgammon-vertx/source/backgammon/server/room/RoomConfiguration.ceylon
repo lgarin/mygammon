@@ -22,7 +22,9 @@ shared final class RoomConfiguration(Object? json) extends GameConfiguration(jso
 	shared Integer maxPlayerMessageRate = json?.getIntegerOrNull("maxPlayerMessageRate") else 10;
 	shared String hostname = json?.getStringOrNull("hostname") else "localhost";
 	shared Integer port = json?.getIntegerOrNull("port") else 8080;
-	shared String repositoryFile = json?.getStringOrNull("repositoryFile") else "resources/player-repository.json";
+	shared String repositoryFile = json?.getStringOrNull("repositoryFile") else "resource/player-repository.json";
+	shared Duration balanceIncreaseDelay = Duration(json?.getIntegerOrNull("balanceIncreaseDelay") else 24 * 60 * 60 * 1000);
+	shared Integer balanceIncreaseAmount = json?.getIntegerOrNull("balanceIncreaseAmount") else initialPlayerBalance / 2;
 	shared Duration userSessionTimeout => Duration(playerInactiveTimeout.milliseconds + serverAdditionalTimeout.milliseconds);
 	shared RoomSize roomSize => RoomSize(maxTableCount, maxPlayerCount);
 	shared MatchBet matchBet => MatchBet(playerBet, matchPot);

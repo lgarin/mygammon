@@ -8,7 +8,8 @@ import backgammon.shared {
 	TableMessage,
 	LeftTableMessage,
 	JoinedTableMessage,
-	RoomId
+	RoomId,
+	PlayerStatistic
 }
 
 import ceylon.collection {
@@ -25,7 +26,7 @@ class TableTest() {
 	value matchPot = 18;
 	value table = Table(1, RoomId("room"), matchBet, messageList.add);
 	
-	function makePlayer(String id, Integer initialBalance = matchBet) => Player(PlayerInfo(id, id), initialBalance);
+	function makePlayer(String id, Integer initialBalance = matchBet) => Player(PlayerInfo(id, id), PlayerStatistic(initialBalance));
 	
 	test
 	shared void newTableIsFree() {

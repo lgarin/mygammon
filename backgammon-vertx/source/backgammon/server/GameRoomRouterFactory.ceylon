@@ -12,7 +12,10 @@ import backgammon.shared {
 	EnterRoomMessage,
 	FoundMatchTableMessage,
 	LeaveRoomMessage,
-	RoomActionResponseMessage
+	RoomActionResponseMessage,
+	PlayerStatistic,
+	PlayerStatisticOutputMessage,
+	PlayerLoginMessage
 }
 
 import io.vertx.ceylon.core {
@@ -26,19 +29,32 @@ import io.vertx.ceylon.web {
 
 final class GameRoomRouterFactory(Vertx vertx, String roomId, String homeUrl) {
 	
-	value eventBus = GameRoomEventBus(vertx);
+	value roomEventBus = GameRoomEventBus(vertx);
+	value repoEventBus = PlayerRosterEventBus(vertx);
 	value googleProfileClient = GoogleProfileClient(vertx);
 	
-	void completeLogin(RoutingContext routingContext, PlayerInfo playerInfo) {
+	void enterRoom(RoutingContext routingContext, PlayerInfo playerInfo, PlayerStatistic playerStat) {
 		value context = GameRoomRoutingContext(routingContext);
-		context.setCurrentPlayerInfo(playerInfo);
-		eventBus.sendInboundMessage(EnterRoomMessage(PlayerId(playerInfo.id), RoomId(roomId), playerInfo), void (Throwable|RoomActionResponseMessage result) {
+		roomEventBus.sendInboundMessage(EnterRoomMessage(playerInfo.playerId, RoomId(roomId), playerInfo, playerStat), void (Throwable|RoomActionResponseMessage result) {
 			if (is Throwable result) {
 				routingContext.fail(result);
 			} else {
 				context.sendRedirect("/room/``roomId``");
 			}
 		});
+	}
+	
+	void completeLogin(RoutingContext routingContext, PlayerInfo playerInfo) {
+		value context = GameRoomRoutingContext(routingContext);
+		context.setCurrentPlayerInfo(playerInfo);
+		repoEventBus.sendInboundMessage(PlayerLoginMessage(playerInfo), void (Throwable|PlayerStatisticOutputMessage result) {
+			if (is Throwable result) {
+				routingContext.fail(result);
+			} else {
+				enterRoom(routingContext, playerInfo, result.statistic);
+			}
+		});
+		
 	}
 	
 	void fetchUserInfo(RoutingContext routingContext) {
@@ -71,7 +87,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId, String homeUrl) {
 	void handlePlay(RoutingContext routingContext) {
 		value context = GameRoomRoutingContext(routingContext);
 		if (exists playerId = context.getCurrentPlayerId(false), exists roomId = context.getRequestRoomId(false)) {
-			eventBus.sendInboundMessage(FindMatchTableMessage(playerId, roomId), void (Throwable|FoundMatchTableMessage result) {
+			roomEventBus.sendInboundMessage(FindMatchTableMessage(playerId, roomId), void (Throwable|FoundMatchTableMessage result) {
 				if (is Throwable result) {
 					routingContext.fail(result);
 				} else if (exists table = result.table) {
@@ -92,7 +108,7 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId, String homeUrl) {
 	void handleLogout(RoutingContext routingContext) {
 		value context = GameRoomRoutingContext(routingContext);
 		if (exists playerInfo = context.getCurrentPlayerId(false)) {
-			eventBus.sendInboundMessage(LeaveRoomMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Anything response) {
+			roomEventBus.sendInboundMessage(LeaveRoomMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Anything response) {
 				googleProfileClient.logout(routingContext, void (Boolean success) {
 					if (success) {
 						context.clearUser();

@@ -34,11 +34,11 @@ shared sealed interface OutboundRoomMessage of RoomActionResponseMessage | Found
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success };
 }
 
-shared final class EnterRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared PlayerInfo playerInfo) satisfies InboundRoomMessage {
-	toJson() => toExtendedJson {"playerInfo" -> playerInfo.toJson()};
+shared final class EnterRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared PlayerInfo playerInfo, shared PlayerStatistic playerStatistic) satisfies InboundRoomMessage {
+	toJson() => toExtendedJson {"playerInfo" -> playerInfo.toJson(), "playerStatistic" -> playerStatistic.toJson()};
 }
 EnterRoomMessage parseEnterRoomMessage(Object json) {
-	return EnterRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), parsePlayerInfo(json.getObject("playerInfo")));
+	return EnterRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("playerStatistic")));
 }
 
 shared final class LeaveRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}

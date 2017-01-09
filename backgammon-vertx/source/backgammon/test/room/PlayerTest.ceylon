@@ -29,7 +29,7 @@ class PlayerTest() {
 	
 	value table = Table(1, RoomId("room"), matchBet, messageList.add);
 	
-	function makePlayer(String id) => Player(PlayerInfo(id, id), initialBalance);
+	function makePlayer(String id) => Player(PlayerInfo(id, id), PlayerStatistic(initialBalance));
 	
 	value player = makePlayer("player");
 	

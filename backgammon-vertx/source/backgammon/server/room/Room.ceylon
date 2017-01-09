@@ -7,7 +7,8 @@ import backgammon.shared {
 	TableId,
 	MatchId,
 	PlayerListMessage,
-	PlayerState
+	PlayerState,
+	PlayerStatistic
 }
 
 import ceylon.collection {
@@ -117,13 +118,13 @@ final shared class Room(shared String roomId, shared RoomSize maxSize, shared Ma
 		return result;
 	}
 	
-	shared Player? definePlayer(PlayerInfo info, Integer initialBalance) {
+	shared Player? definePlayer(PlayerInfo info, PlayerStatistic statistic) {
 		if (exists player = findPlayer(PlayerId(info.id))) {
 			return player;
 		} else if (playerMap.size >= maxSize.playerCount) {
 			return null;
 		} else {
-			value player = Player(info, initialBalance);
+			value player = Player(info, statistic);
 			playerMap.put(player.id, player);
 			newPlayers.add(player);
 			_createdPlayerCount++;

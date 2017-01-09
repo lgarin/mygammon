@@ -13,7 +13,7 @@ import ceylon.time {
 	now
 }
 
-final shared class Player(shared PlayerInfo info, Integer initialBalance) {
+final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatistic) {
 	
 	variable Table? _table = null;
 	variable Match? _previousMatch = null;
@@ -24,7 +24,7 @@ final shared class Player(shared PlayerInfo info, Integer initialBalance) {
 	shared Match? match => _match;
 	shared PlayerId id = PlayerId(info.id);
 	
-	variable PlayerStatistic _statistic = PlayerStatistic(initialBalance);
+	variable PlayerStatistic _statistic = initialStatistic;
 	
 	shared PlayerStatistic statistic => _statistic;
 	shared Integer balance => _statistic.balance;

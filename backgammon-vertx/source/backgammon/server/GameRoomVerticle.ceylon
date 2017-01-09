@@ -33,7 +33,7 @@ class GameRoomVerticle() extends Verticle() {
 
 	shared actual void start() {
 		value roomConfig = RoomConfiguration(config);
-		value repoEventBus = PlayerRepositoryEventBus(vertx);
+		value repoEventBus = PlayerRosterEventBus(vertx);
 		value roomEventBus = GameRoomEventBus(vertx);
 		
 		value matchRoom = MatchRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage, repoEventBus.queueInputMessage);

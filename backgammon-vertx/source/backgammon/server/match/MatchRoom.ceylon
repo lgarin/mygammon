@@ -38,15 +38,15 @@ import backgammon.shared {
 	PlayerStateRequestMessage,
 	PlayerStateMessage,
 	RoomActionResponseMessage,
-	PlayerRepositoryInputMessage,
-	PlayerStatisticStoreMessage
+	PlayerRosterInboundMessage,
+	PlayerStatisticUpdateMessage
 }
 
 import ceylon.time {
 	Instant
 }
 
-shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander, Anything(PlayerRepositoryInputMessage) playerRepository) {
+shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander, Anything(PlayerRosterInboundMessage) playerRepository) {
 	
 	value lock = ObtainableLock(); 
 	value room = Room(configuration.roomId, configuration.roomSize, configuration.matchBet, messageBroadcaster);
@@ -55,7 +55,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	function findRoom(RoomId roomId) => room.id == roomId then room else null;
 	
 	function enterRoom(EnterRoomMessage message) {
-		if (exists room = findRoom(message.roomId), exists player = room.definePlayer(message.playerInfo, configuration.initialPlayerBalance)) {
+		if (exists room = findRoom(message.roomId), exists player = room.definePlayer(message.playerInfo, message.playerStatistic)) {
 			player.markActive();
 			return RoomActionResponseMessage(message.playerId, message.roomId, true);
 		} else {
@@ -76,7 +76,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	
 	void handlePlayerChange(Player player) {
 		room.registerPlayerChange(player);
-		playerRepository(PlayerStatisticStoreMessage(player.info, player.statistic));
+		playerRepository(PlayerStatisticUpdateMessage(player.info, player.statistic));
 	}
 	
 	function findMatchTable(FindMatchTableMessage message) {

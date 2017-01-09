@@ -5,7 +5,8 @@ import backgammon.server.room {
 import backgammon.shared {
 	RoomMessage,
 	RoomId,
-	PlayerInfo
+	PlayerInfo,
+	PlayerStatistic
 }
 
 import ceylon.collection {
@@ -17,7 +18,7 @@ import ceylon.test {
 
 class MatchTest() {
 	
-	function makePlayer(String id) => Player(PlayerInfo(id, id), 100);
+	function makePlayer(String id) => Player(PlayerInfo(id, id), PlayerStatistic(100));
 	
 	value messageList = ArrayList<RoomMessage>();
 	
