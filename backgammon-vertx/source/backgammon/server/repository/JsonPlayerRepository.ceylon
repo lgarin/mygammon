@@ -1,3 +1,6 @@
+import backgammon.server.util {
+	ObtainableLock
+}
 import backgammon.shared {
 	PlayerRepositoryInputMessage,
 	PlayerRepositoryOutputMessage,
@@ -5,8 +8,6 @@ import backgammon.shared {
 	PlayerStatistic,
 	parsePlayerStatistic,
 	parsePlayerId,
-	PlayerRepositoryRetrieveMessage,
-	PlayerRepositoryStoreMessage,
 	PlayerStatisticStoreMessage,
 	PlayerStatisticRetrieveMessage,
 	PlayerStatisticOutputMessage
@@ -27,10 +28,6 @@ import ceylon.json {
 	Array,
 	parse
 }
-import backgammon.server.util {
-
-	ObtainableLock
-}
 shared final class JsonPlayerRepository() {
 	
 	
@@ -47,19 +44,27 @@ shared final class JsonPlayerRepository() {
 		}
 	}
 	
-	function processPlayerStatisticStoreMessage(PlayerStatisticStoreMessage message) {
+	function storePlayerStatistic(PlayerStatisticStoreMessage message) {
 		statisticMap.put(message.key, [PlayerIdAndName(message.info.id, message.info.name), message.statistic]);
 		return PlayerStatisticOutputMessage(message.key, message.statistic);
+	}
+	
+	function retrievePlayerStatistic(PlayerStatisticRetrieveMessage message) {
+		if (exists record = statisticMap[message.key]) {
+			return PlayerStatisticOutputMessage(message.key, record[1]);
+		} else {
+			return PlayerStatisticOutputMessage(message.key, null);
+		}
 	}
 	
 	shared PlayerRepositoryOutputMessage processInputMessage(PlayerRepositoryInputMessage message) {
 		try (lock) {
 			switch (message)
 			case (is PlayerStatisticStoreMessage) {
-				return processPlayerStatisticStoreMessage(message);
+				return storePlayerStatistic(message);
 			}
 			case (is PlayerStatisticRetrieveMessage) {
-				return nothing;
+				return retrievePlayerStatistic(message);
 			}
 		}
 	}

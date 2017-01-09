@@ -34,6 +34,8 @@ shared final class PlayerStatistic(shared Integer balance, shared Integer played
 
 shared PlayerStatistic parsePlayerStatistic(JsonObject json) => PlayerStatistic(json.getInteger("balance"), json.getInteger("playedGames"), json.getInteger("wonGames"), json.getInteger("score"));
 
+shared PlayerStatistic? parseNullablePlayerStatistic(JsonObject? json) => if (exists json) then parsePlayerStatistic(json) else null;
+
 shared final class PlayerState(shared PlayerInfo info, shared PlayerStatistic statistic, shared TableId? tableId, shared MatchId? matchId) extends Object() {
 	shared JsonObject toJson() => JsonObject {"info" -> info.toJson(), "statistic" -> statistic.toJson(), "tableId" -> tableId?.toJson(), "matchId" -> matchId?.toJson()};
 	shared PlayerId playerId => info.playerId;

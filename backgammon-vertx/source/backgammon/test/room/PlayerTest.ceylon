@@ -44,8 +44,9 @@ class PlayerTest() {
 	
 	test
 	shared void markPlayerActiveUpdatesActivity() {
+		value currentTimestamp = now();
 		player.markActive();
-		assert (!player.isInactiveSince(now()));
+		assert (!player.isInactiveSince(currentTimestamp));
 	}
 
 	test

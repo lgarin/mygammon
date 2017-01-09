@@ -35,11 +35,11 @@ PlayerStatisticRetrieveMessage parsePlayerStatisticRetrieveMessage(Object json) 
 	return PlayerStatisticRetrieveMessage(parsePlayerId(json.getString("key")));
 }
 
-shared final class PlayerStatisticOutputMessage(shared actual PlayerId key, shared PlayerStatistic statistic) satisfies PlayerRepositoryOutputMessage {
-	toJson() => Object{ "key" -> key.toJson(), "stat" -> statistic.toJson() };
+shared final class PlayerStatisticOutputMessage(shared actual PlayerId key, shared PlayerStatistic? statistic) satisfies PlayerRepositoryOutputMessage {
+	toJson() => Object{ "key" -> key.toJson(), "stat" -> statistic?.toJson() };
 }
 PlayerStatisticOutputMessage parsePlayerStatisticOutputMessage(Object json) {
-	return PlayerStatisticOutputMessage(parsePlayerId(json.getString("key")), parsePlayerStatistic(json.getObject("stat")));
+	return PlayerStatisticOutputMessage(parsePlayerId(json.getString("key")), parseNullablePlayerStatistic(json.getObject("stat")));
 }
 
 shared Object formatPlayerRepositoryMessage(PlayerRepositoryMessage message) {
