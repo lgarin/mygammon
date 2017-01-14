@@ -62,6 +62,17 @@
 	                    }]
 	                });
 	            	window.setInterval(function() { return room.onTimer(); }, 100);
+	            	$("#player-list tbody").on("click", ".player-row", function() { 
+	            		$(this).tooltip({
+	            			items: ".player-row",
+    				 		content: function () { return $(this).data("html-tooltip"); },
+    				 		close: function( event, ui ) { 
+    				 			var me = this;
+                				ui.tooltip.on("remove", function() {$(me).tooltip("destroy"); });
+          					}
+      					});
+      					$(this).tooltip("open");
+      				});
 				}
 			);
 		</script>
@@ -129,8 +140,7 @@
 								<th class="col-md-8">Name</th>
 								<th class="col-md-1" style="min-width: 100px">Table</th>
 								<th class="col-md-1" style="min-width: 100px">Score</th>
-								<th class="col-md-1" style="min-width: 100px">Win&nbsp;%</th>
-								<th class="col-md-1" style="min-width: 100px">Chips</th>
+								<th class="col-md-1 hidden-xs" style="min-width: 100px">Win&nbsp;%</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -138,36 +148,36 @@
 					</table>
 				</div> <!-- end of player list -->
 				<div id="table-preview" class="col-sm-6 hidden">
-				
-					<div id="whitePlayer" class="player">
-						 <div>
-				        	<label id="whitePlayerName"></label>
-				         </div>
-						 <div class="player-picture">
-				         	<img id="whitePlayerImage" src="/static/images/unknown.png"/>
-				         	<span class="white-small-checker"></span>
-				         </div>
-				         <div>
-				         	<span class="glyphicon player-busy" id="whitePlayerActivity"></span>
-				         	<label id="whitePlayerTimer">Loading...</label>
-				         </div>
-				    </div> <!-- end of white player -->
-				    
-				    <div id="blackPlayer" class="player">
-				         <div>
-				        	<label id="blackPlayerName"></label>
-				         </div>
-				         <div class="player-picture">
-				         	<img id="blackPlayerImage" src="/static/images/unknown.png"/>
-				         	<span class="black-small-checker"></span>
-				         </div>
-				         <div>
-				         	<span class="glyphicon player-busy" id="blackPlayerActivity"></span>
-				         	<label id="blackPlayerTimer">Loading...</label>
-				         </div>
-			        </div>  <!-- end of black player -->
-				
-					<div id="game-board">
+					<div class="row">
+						<div id="whitePlayer" class="player">
+							 <div>
+					        	<label id="whitePlayerName"></label>
+					         </div>
+							 <div class="player-picture">
+					         	<img id="whitePlayerImage" src="/static/images/unknown.png"/>
+					         	<span class="white-small-checker"></span>
+					         </div>
+					         <div>
+					         	<span class="glyphicon player-busy" id="whitePlayerActivity"></span>
+					         	<label id="whitePlayerTimer">Loading...</label>
+					         </div>
+					    </div> <!-- end of white player -->
+					    
+					    <div id="blackPlayer" class="player">
+					         <div>
+					        	<label id="blackPlayerName"></label>
+					         </div>
+					         <div class="player-picture">
+					         	<img id="blackPlayerImage" src="/static/images/unknown.png"/>
+					         	<span class="black-small-checker"></span>
+					         </div>
+					         <div>
+					         	<span class="glyphicon player-busy" id="blackPlayerActivity"></span>
+					         	<label id="blackPlayerTimer">Loading...</label>
+					         </div>
+				        </div>  <!-- end of black player -->
+					</div>
+					<div id="game-board" class="row">
 				        <div id="whiteDiceNr1" class="dice white-1 hidden"></div>
 				        <div id="whiteDiceNr2" class="dice white-1 hidden"></div>
 				        <div id="whiteDiceNr3" class="dice white-1 hidden"></div>
@@ -264,7 +274,7 @@
 			        
 			       </div><!-- end of game board -->
 			       
-			       <div id="table-info" style="position:absolute;top:510px;left:12px;width:420px">
+			       <div id="table-info" class="row">
 			       		
 			       </div>
 			       
@@ -281,7 +291,7 @@
 		</script>
 
 		<script type="text/html" id="player-row-template">
-			<tr class="player-row">
+			<tr class="player-row" data-html-tooltip="test <b>tooltip</b>">
 				<td>
 					<img data-src="iconUrl" style=""></img>
 					<span style="margin-left:10px" data-content="name"></span>
@@ -289,8 +299,7 @@
 				<td>
 					<button data-class="buttonClass" type="button" class="player-row-button btn btn-default btn-xs" data-id="id">View</i></button>
 				<td data-content="score"></td>
-				<td data-content="win"></td>
-				<td data-content="balance"></td>
+				<td class="hidden-xs" data-content="win"></td>
 			</tr>
 		</script>
 		
