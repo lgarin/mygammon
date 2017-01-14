@@ -2,7 +2,8 @@ import backgammon.server.room {
 	RoomConfiguration
 }
 import backgammon.server.util {
-	ObtainableLock
+	ObtainableLock,
+	JsonFile
 }
 import backgammon.shared {
 	PlayerRosterInboundMessage,
@@ -18,17 +19,9 @@ import backgammon.shared {
 import ceylon.collection {
 	HashMap
 }
-import ceylon.file {
-	File,
-	current,
-	lines,
-	Nil,
-	Writer
-}
 import ceylon.json {
 	Object,
-	Array,
-	parse
+	Array
 }
 import ceylon.time {
 	now,
@@ -38,15 +31,7 @@ shared final class JsonPlayerRoster(RoomConfiguration config) {
 	
 	value statisticMap = HashMap<PlayerId, PlayerRosterRecord>();
 	value lock = ObtainableLock();
-	
-	function readWholeFile(String path) {
-		if (is File file = current.childPath(path).resource) {
-			return lines(file).reduce((String partial, String element) => partial + element);
-		} else {
-			return null;
-		}
-	}
-	
+
 	function storeRecord(PlayerRosterRecord record) {
 		statisticMap.put(record.id, record);
 		return PlayerStatisticOutputMessage(record.id, record.stat);
@@ -103,45 +88,16 @@ shared final class JsonPlayerRoster(RoomConfiguration config) {
 	shared Integer readData(String filepath) {
 		try (lock) {
 			statisticMap.clear();
-			if (exists content = readWholeFile(filepath)) {
-				assert (is Array data = parse(content));
+			if (is Array data = JsonFile(filepath).readContent()) {
 				statisticMap.putAll(data.narrow<Object>().map(makeRosterEntry));
 			}
 			return statisticMap.size;
 		}
 	}
 	
-	function createWriter(String filepath) {
-		switch (file = current.childPath(filepath).resource)
-		case (is File) {
-			return file.Overwriter();
-		}
-		case (is Nil) {
-			return file.createFile().Overwriter();
-		}
-		else {
-			throw Exception("Path ``filepath`` does not denote a file");
-		}
-	}
-	
-	void writeStatisticMap(Writer writer) {
-		writer.writeLine("[");
-		for (record in statisticMap.items) {
-			writer.write(record.toJson().string);
-			writer.writeLine(",");
-		}
-		writer.writeLine("]");
-	}
-	
 	shared Integer writeData(String filepath) {
 		try (lock) {
-			// TODO use try with resources
-			value writer = createWriter(filepath);
-			try {
-				writeStatisticMap(writer);
-			} finally {
-				writer.close();
-			}
+			JsonFile(filepath).writeArray(statisticMap.items.map((i) => i.toJson()));
 			return statisticMap.size;
 		}
 	}

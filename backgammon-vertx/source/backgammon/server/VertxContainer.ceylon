@@ -1,11 +1,9 @@
-import ceylon.file {
-	current,
-	File,
-	lines
+import backgammon.server.util {
+	JsonFile
 }
+
 import ceylon.json {
-	Object,
-	parse
+	JsonObject=Object
 }
 import ceylon.language.meta.declaration {
 	Module
@@ -15,6 +13,9 @@ import ceylon.language.meta.model {
 }
 import ceylon.logging {
 	logger
+}
+import ceylon.time {
+	Duration
 }
 
 import io.vertx.ceylon.core {
@@ -30,29 +31,14 @@ import java.util.concurrent {
 import java.util.concurrent.atomic {
 	AtomicInteger
 }
-import ceylon.time {
-
-	Duration
-}
 final class VertxContainer(Module mod, String configFile, Duration startupShutdownTimeout = Duration(30 * 1000)) {
 	value log = logger(mod);
 	value container = vertxFactory.vertx();
 	
-	function readWholeFile(String path) {
-		if (is File configFile = current.childPath(path).resource) {
-			return lines(configFile).reduce((String partial, String element) => partial + element);
-		} else {
-			return null;
-		}
-	}
-	
 	function parseConfiguration() {
-		if (exists fileContent = readWholeFile(configFile)) {
-			if (is Object result = parse(fileContent)) {
-				return result;
-			} else {
-				return null;
-			}
+		value file = JsonFile(configFile);
+		if (is JsonObject result = file.readContent()) {
+			return result;
 		} else {
 			return null;
 		}

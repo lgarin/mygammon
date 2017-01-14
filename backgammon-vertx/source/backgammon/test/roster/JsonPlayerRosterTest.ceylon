@@ -41,19 +41,19 @@ class JsonPlayerRepositoryTest() {
 	
 	test
 	shared void readEmptyFile() {
-		value result = roster.readData("source/backgammon/test/repository/empty-file.json");
+		value result = roster.readData("source/backgammon/test/roster/empty-file.json");
 		assert (result == 0);
 	}
 	
 	test
 	shared void readNonExistingFile() {
-		value result = roster.readData("source/backgammon/test/repository/xxxx-file.json");
+		value result = roster.readData("source/backgammon/test/roster/xxxx-file.json");
 		assert (result == 0);
 	}
 	
 	test
 	shared void readExistingFile() {
-		value result = roster.readData("source/backgammon/test/repository/player-file.json");
+		value result = roster.readData("source/backgammon/test/roster/player-file.json");
 		assert (result == 1);
 	}
 	
@@ -98,22 +98,20 @@ class JsonPlayerRepositoryTest() {
 	test
 	shared void retrieveExistingPlayer() {
 		value info = PlayerInfo("123", "test");
-		value stat = PlayerStatistic(100, 1, 1, 10);
 		roster.processInputMessage(PlayerLoginMessage(info));
 		value id = PlayerId("123");
 		value result = roster.processInputMessage(PlayerLoginMessage(info));
 		assert (is PlayerStatisticOutputMessage result);
 		assert (result.playerId == id);
-		assert (result.statistic == PlayerStatistic(100, 1, 1, 10));
+		assert (result.statistic == PlayerStatistic(config.initialPlayerBalance + config.balanceIncreaseAmount));
 	}
 	
 	test
 	shared void retrieveNonExistingPlayer() {
 		value info = PlayerInfo("123", "test");
-		value id = PlayerId("124");
 		value result = roster.processInputMessage(PlayerLoginMessage(info));
 		assert (is PlayerStatisticOutputMessage result);
-		assert (result.playerId == id);
+		assert (result.playerId == info.playerId);
 		assert (result.statistic == PlayerStatistic(config.initialPlayerBalance));
 	}
 }
