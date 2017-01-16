@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge"></meta>
-		<meta name="viewport" content="width=device-width, initial-scale=1"></meta>
+		<meta name="viewport" content="width=800"></meta>
 		
 		<title>MyGammon</title>
 	
@@ -62,16 +62,16 @@
 	                    }]
 	                });
 	            	window.setInterval(function() { return room.onTimer(); }, 100);
-	            	$("#player-list tbody").on("click", ".player-row", function() { 
-	            		$(this).tooltip({
-	            			items: ".player-row",
-    				 		content: function () { return $(this).data("html-tooltip"); },
-    				 		close: function( event, ui ) { 
-    				 			var me = this;
-                				ui.tooltip.on("remove", function() {$(me).tooltip("destroy"); });
-          					}
-      					});
-      					$(this).tooltip("open");
+	            	$("#player-list tbody").on("click", ".player-row", function() {
+	            		var trigger = $(this);
+	            		var dialog = $(this).find(".dialog-statistic").dialog({
+	            			autoOpen: false,
+	                    	modal: true,
+	            			close: function () { $(this).dialog("destroy"); },
+	            			position: { my: "center", at: "left bottom", of: trigger },
+	            			buttons: { "Close": function() { $(this).dialog("close") } }
+	            		});
+	            		dialog.dialog("open");
       				});
 				}
 			);
@@ -133,21 +133,21 @@
 
 		<div id="gui" class="container-fluid">
 			<div class="row content">
-				<div class="col-sm-6 sidenav">
+				<div class="col-md-6 sidenav">
 					<table id="player-list" class="table">
 						<thead>
 							<tr>
-								<th class="col-md-8">Name</th>
-								<th class="col-md-1" style="min-width: 100px">Table</th>
-								<th class="col-md-1" style="min-width: 100px">Score</th>
-								<th class="col-md-1 hidden-xs" style="min-width: 100px">Win&nbsp;%</th>
+								<th class="col-xs-8">Name</th>
+								<th class="col-xs-1">Table</th>
+								<th class="col-xs-1">Score</th>
+								<th class="col-xs-1 hidden-md hidden-xs">Win&nbsp;%</th>
 							</tr>
 						</thead>
 						<tbody>
 						</tbody>
 					</table>
 				</div> <!-- end of player list -->
-				<div id="table-preview" class="col-sm-6 hidden">
+				<div id="table-preview" class="col-md-6 hidden">
 					<div class="row">
 						<div id="whitePlayer" class="player">
 							 <div>
@@ -291,15 +291,37 @@
 		</script>
 
 		<script type="text/html" id="player-row-template">
-			<tr class="player-row" data-html-tooltip="test <b>tooltip</b>">
+			<tr class="player-row">
 				<td>
-					<img data-src="iconUrl" style=""></img>
-					<span style="margin-left:10px" data-content="name"></span>
+					<img data-src="iconUrl"></img>
+					<a style="margin-left:10px" data-content="name" href="#"></a>
 				</td>
 				<td>
 					<button data-class="buttonClass" type="button" class="player-row-button btn btn-default btn-xs" data-id="id">View</i></button>
 				<td data-content="score"></td>
-				<td class="hidden-xs" data-content="win"></td>
+				<td class="hidden-md hidden-xs" data-content="win"></td>
+				<td class="dialog-statistic" title="Statistic" style="display: none">
+					<table>
+						<tr>
+							<td class="col-xs-3"><img data-src="pictureUrl"></td>
+							<td class="col-xs-9"><h2 data-content="name"></h2></td>
+						</tr>
+					</table>
+					<table>
+						<tr>
+							<td class="col-xs-6"><b>Score</b></td>
+							<td class="col-xs-6" data-content="score"></td>
+						</tr>
+						<tr>
+							<td class="col-xs-6"><b>Win&nbsp;%</b></td>
+							<td class="col-xs-6" data-content="win"></td>
+						</tr>
+						<tr>
+							<td class="col-xs-6"><b>Games</b></td>
+							<td class="col-xs-6" data-content="games"></td>
+						</tr>
+					</table>
+				</td>
 			</tr>
 		</script>
 		
