@@ -44,9 +44,13 @@ final shared class JsonFile(String filepath) {
 	
 	void writeJsonArray(Writer writer, {Object*} items) {
 		writer.writeLine("[");
+		variable Boolean first = true;
 		for (item in items) {
+			if (!first) {
+				writer.writeLine(",");
+				first = false;
+			}
 			writer.write(item.string);
-			writer.writeLine(",");
 		}
 		writer.writeLine("]");
 	}

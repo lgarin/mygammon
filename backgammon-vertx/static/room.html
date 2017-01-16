@@ -62,7 +62,7 @@
 	                    }]
 	                });
 	            	window.setInterval(function() { return room.onTimer(); }, 100);
-	            	$("#player-list tbody").on("click", ".player-row", function() {
+	            	$("#player-list tbody").on("click", ".player-row .player-name", function() {
 	            		var trigger = $(this);
 	            		var dialog = $(this).find(".dialog-statistic").dialog({
 	            			autoOpen: false,
@@ -292,36 +292,36 @@
 
 		<script type="text/html" id="player-row-template">
 			<tr class="player-row">
-				<td>
+				<td class="player-name">
 					<img data-src="iconUrl"></img>
 					<a style="margin-left:10px" data-content="name" href="#"></a>
+					<div class="dialog-statistic" title="Statistic" style="display: none">
+						<table>
+							<tr>
+								<td class="col-xs-3"><img data-src="pictureUrl"></td>
+								<td class="col-xs-9"><h2 data-content="name"></h2></td>
+							</tr>
+						</table>
+						<table>
+							<tr>
+								<td class="col-xs-6"><b>Score</b></td>
+								<td class="col-xs-6" data-content="score"></td>
+							</tr>
+							<tr>
+								<td class="col-xs-6"><b>Win&nbsp;%</b></td>
+								<td class="col-xs-6" data-content="win"></td>
+							</tr>
+							<tr>
+								<td class="col-xs-6"><b>Games</b></td>
+								<td class="col-xs-6" data-content="games"></td>
+							</tr>
+						</table>
+					</div>
 				</td>
 				<td>
 					<button data-class="buttonClass" type="button" class="player-row-button btn btn-default btn-xs" data-id="id">View</i></button>
 				<td data-content="score"></td>
 				<td class="hidden-md hidden-xs" data-content="win"></td>
-				<td class="dialog-statistic" title="Statistic" style="display: none">
-					<table>
-						<tr>
-							<td class="col-xs-3"><img data-src="pictureUrl"></td>
-							<td class="col-xs-9"><h2 data-content="name"></h2></td>
-						</tr>
-					</table>
-					<table>
-						<tr>
-							<td class="col-xs-6"><b>Score</b></td>
-							<td class="col-xs-6" data-content="score"></td>
-						</tr>
-						<tr>
-							<td class="col-xs-6"><b>Win&nbsp;%</b></td>
-							<td class="col-xs-6" data-content="win"></td>
-						</tr>
-						<tr>
-							<td class="col-xs-6"><b>Games</b></td>
-							<td class="col-xs-6" data-content="games"></td>
-						</tr>
-					</table>
-				</td>
 			</tr>
 		</script>
 		
