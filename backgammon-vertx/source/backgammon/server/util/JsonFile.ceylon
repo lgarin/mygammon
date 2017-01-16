@@ -48,9 +48,9 @@ final shared class JsonFile(String filepath) {
 		for (item in items) {
 			if (!first) {
 				writer.writeLine(",");
-				first = false;
 			}
 			writer.write(item.string);
+			first = false;
 		}
 		writer.writeLine("]");
 	}
