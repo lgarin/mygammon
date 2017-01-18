@@ -103,7 +103,7 @@ class JsonPlayerRosterTest() {
 		value result = roster.processInputMessage(PlayerLoginMessage(info));
 		assert (is PlayerStatisticOutputMessage result);
 		assert (result.playerId == id);
-		assert (result.statistic == PlayerStatistic(config.initialPlayerBalance + config.balanceIncreaseAmount));
+		assert (result.statistic == PlayerStatistic(config.initialPlayerBalance));
 	}
 	
 	test

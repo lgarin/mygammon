@@ -16,9 +16,9 @@ shared final class GameState() extends Object() {
 	shared variable Boolean whiteReady = false;
 	shared variable Duration? remainingTime = null;
 	
-	shared variable {Integer*} blackCheckerCounts = {};
-	shared variable {Integer*} whiteCheckerCounts = {};
-	shared variable {GameMoveInfo*} currentMoves = {};
+	shared variable [Integer*] blackCheckerCounts = [];
+	shared variable [Integer*] whiteCheckerCounts = [];
+	shared variable [GameMoveInfo*] currentMoves = [];
 	
 	shared JsonObject toJson() {
 		value result = JsonObject();
@@ -89,8 +89,8 @@ shared GameState parseGameState(JsonObject json) {
 	result.blackReady = json.getBoolean("blackReady");
 	result.whiteReady = json.getBoolean("whiteReady");
 	result.remainingTime = json.getIntegerOrNull("remainingTime") exists then Duration(json.getInteger("remainingTime")) else null;
-	result.blackCheckerCounts = json.getArray("blackCheckerCounts").narrow<Integer>();
-	result.whiteCheckerCounts = json.getArray("whiteCheckerCounts").narrow<Integer>();
+	result.blackCheckerCounts = json.getArray("blackCheckerCounts").narrow<Integer>().sequence();
+	result.whiteCheckerCounts = json.getArray("whiteCheckerCounts").narrow<Integer>().sequence();
 	result.currentMoves = json.getArray("currentMoves").narrow<JsonObject>().collect((element) => parseGameMove(element));
 	return result;
 }

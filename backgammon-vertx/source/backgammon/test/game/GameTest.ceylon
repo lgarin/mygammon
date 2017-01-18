@@ -96,8 +96,8 @@ class GameTest() {
 	test
 	shared void computeBestMoveSequenceFromGraveyard() {
 		value state = GameState();
-		state.blackCheckerCounts = {1, 0};
-		state.whiteCheckerCounts = {0, 0, 1};
+		state.blackCheckerCounts = [1, 0];
+		state.whiteCheckerCounts = [0, 0, 1];
 		game.state = state;
 		
 		value sequence = game.computeBestMoveSequence(black, DiceRoll(2, 1), 0, 3);
@@ -110,8 +110,8 @@ class GameTest() {
 	test
 	shared void computeBestMoveSequenceFromMidpoint() {
 		value state = GameState();
-		state.blackCheckerCounts = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-		state.whiteCheckerCounts = {};
+		state.blackCheckerCounts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+		state.whiteCheckerCounts = [];
 		game.state = state;
 		
 		value sequence = game.computeBestMoveSequence(black, DiceRoll(4, 5), 12, 16);
