@@ -26,7 +26,7 @@ import java.lang {
 	System
 }
 
-class JsonPlayerRepositoryTest() {
+class JsonPlayerRosterTest() {
 	
 	value config = RoomConfiguration(null);
 	value roster = JsonPlayerRoster(config);

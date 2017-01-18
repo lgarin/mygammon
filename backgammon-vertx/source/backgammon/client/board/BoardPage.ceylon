@@ -146,6 +146,7 @@ shared class BoardPage() extends BasePage() {
 		if (exists currentTableClient = tableClient) {
 			gui.hideLeaveButton();
 			gameCommander(LeaveTableMessage(currentPlayerId, currentTableClient.tableId));
+			window.location.\iassign("/room/``currentTableClient.tableId.roomId``");
 			return true;
 		} else {
 			return false;

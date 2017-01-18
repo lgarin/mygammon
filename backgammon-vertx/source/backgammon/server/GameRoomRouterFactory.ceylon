@@ -116,6 +116,8 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId, String homeUrl) {
 					}
 				});
 			});
+		} else {
+			context.sendRedirect(homeUrl);
 		}
 	}
 

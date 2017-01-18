@@ -54,7 +54,7 @@ shared final class JsonPlayerRoster(RoomConfiguration config) {
 	function loginPlayer(PlayerLoginMessage message) {
 		if (exists oldRecord = statisticMap[message.playerId]) {
 			value timestamp = now();
-			if (oldRecord.login.mustCredit(timestamp, config.balanceIncreaseDelay)) {
+			if (oldRecord.login.mustCredit(timestamp)) {
 				value record = PlayerRosterRecord(oldRecord.id, oldRecord.login.renew(timestamp, config.balanceIncreaseDelay), oldRecord.stat.updateBalance(config.balanceIncreaseAmount));
 				return storeRecord(record);
 			} else {

@@ -36,7 +36,7 @@ class PlayerListModel(String hiddenClass) {
 		} else {
 			buttonClass = hiddenClass;
 		}
-		return Object {"id" -> state.info.id, "name" -> state.info.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.info.iconUrl, "pictureUrl" -> state.info.pictureUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "games" -> state.statistic.playedGames, "balance" -> state.statistic.balance};
+		return Object {"id" -> state.info.id, "name" -> state.info.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.info.iconUrl, "pictureUrl" -> state.info.pictureUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "lost" -> state.statistic.lostPercentage, "games" -> state.statistic.playedGames, "balance" -> state.statistic.balance};
 	}
 	
 	shared TableId? findTable(PlayerId playerId) {
@@ -47,9 +47,11 @@ class PlayerListModel(String hiddenClass) {
 		}
 	}
 	
+	function comparePlayer(PlayerState first, PlayerState second) => first.statistic.score.compare(second.statistic.score);
+	
 	shared PlayerState? findPlayer(PlayerId playerId) => playerMap[playerId];
 	
- 	shared Array toTemplateData(Boolean hideButtons) => Array(playerMap.items.map(toRowData(hideButtons)));
+ 	shared Array toTemplateData(Boolean hideButtons) => Array(playerMap.items.sort(comparePlayer).map(toRowData(hideButtons)));
 	
 	shared Boolean empty => playerMap.empty;
 	

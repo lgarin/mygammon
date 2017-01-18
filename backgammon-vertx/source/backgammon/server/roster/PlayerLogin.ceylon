@@ -24,10 +24,10 @@ final class PlayerLogin(shared String name, shared Integer count, shared Instant
 		return name.hash;
 	}
 	
-	shared Boolean mustCredit(Instant timestamp, Duration balanceIncreaseDelay) => timestamp.plus(balanceIncreaseDelay) >= nextCredit;
+	shared Boolean mustCredit(Instant timestamp) => timestamp >= nextCredit;
 	
 	shared PlayerLogin renew(Instant timestamp, Duration balanceIncreaseDelay) {
-		if (mustCredit(timestamp, balanceIncreaseDelay)) {
+		if (mustCredit(timestamp)) {
 			return PlayerLogin(name, count + 1, timestamp, timestamp.plus(balanceIncreaseDelay));
 		} else {
 			return PlayerLogin(name, count + 1, timestamp, nextCredit);

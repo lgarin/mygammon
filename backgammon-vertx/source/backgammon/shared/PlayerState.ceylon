@@ -4,6 +4,7 @@ import ceylon.json {
 
 shared final class PlayerStatistic(shared Integer balance, shared Integer playedGames = 0, shared Integer wonGames = 0, shared Integer score = 0) extends Object() {
 	shared Integer winPercentage => if (playedGames > 0) then 100 * wonGames / playedGames else 0;
+	shared Integer lostPercentage => if (playedGames > 0) then 100 * (playedGames - wonGames) / playedGames else 0;
 	shared JsonObject toJson() => JsonObject {"balance" -> balance, "playedGames" -> playedGames, "wonGames" -> wonGames, "score" -> score};
 	shared PlayerStatistic increaseGameCount() => PlayerStatistic(balance, playedGames + 1, wonGames, score);
 	shared PlayerStatistic increaseWinCount(Integer winScore) => PlayerStatistic(balance, playedGames, wonGames + 1, score + winScore);

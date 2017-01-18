@@ -46,11 +46,12 @@ final shared class JsonFile(String filepath) {
 		writer.writeLine("[");
 		variable Boolean first = true;
 		for (item in items) {
-			if (!first) {
+			if (first) {
+				first = false;
+			} else {
 				writer.writeLine(",");
 			}
 			writer.write(item.string);
-			first = false;
 		}
 		writer.writeLine("]");
 	}
