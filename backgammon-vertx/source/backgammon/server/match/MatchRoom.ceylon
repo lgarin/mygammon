@@ -39,7 +39,8 @@ import backgammon.shared {
 	PlayerStateMessage,
 	RoomActionResponseMessage,
 	PlayerRosterInboundMessage,
-	PlayerStatisticUpdateMessage
+	PlayerStatisticUpdateMessage,
+	systemPlayerId
 }
 
 import ceylon.time {
@@ -207,6 +208,12 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	
 	function endMatch(EndMatchMessage message) {
 		if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score)) {
+			if (message.isNormalWin) {
+				match.player1.markActive();
+				match.player2.markActive();
+			} else if (message.isSurrenderWin, exists winner = match.findPlayer(message.winnerId)) {
+				winner.markActive();
+			}
 			handlePlayerChange(match.player1);
 			handlePlayerChange(match.player2);
 			return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, room.removeMatch(match));

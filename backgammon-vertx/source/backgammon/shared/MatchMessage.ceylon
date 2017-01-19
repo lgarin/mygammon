@@ -39,6 +39,9 @@ AcceptMatchMessage parseAcceptMatchMessage(Object json) {
 
 shared final class EndMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId, shared Integer score) satisfies InboundMatchMessage {
 	toJson() => toExtendedJson({"winnerId" -> winnerId.toJson(), "score" -> score});
+	
+	shared Boolean isNormalWin => playerId != systemPlayerId && playerId == winnerId;
+	shared Boolean isSurrenderWin => playerId != systemPlayerId && playerId != winnerId;
 }
 EndMatchMessage parseEndMatchMessage(Object json) {
 	return EndMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("winnerId")), json.getInteger("score"));
