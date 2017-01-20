@@ -1,12 +1,7 @@
 import ceylon.json {
-
 	JsonObject=Object
 }
 shared final class MatchBalance(shared Integer playerBet, shared Integer matchPot, shared Integer player1Balance, shared Integer player2Balance) extends Object() {
-	
-	function balanceDelta(Boolean bet, Boolean winner) => (if (winner) then matchPot else 0) - (if (bet) then playerBet else 0);
-	shared Integer currentPlayer1Balance(Boolean bet, Boolean winner) => player1Balance + balanceDelta(bet, winner);
-	shared Integer currentPlayer2Balance(Boolean bet, Boolean winner) => player2Balance + balanceDelta(bet, winner);
 	
 	shared actual Boolean equals(Object that) {
 		if (is MatchBalance that) {

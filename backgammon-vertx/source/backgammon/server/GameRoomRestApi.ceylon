@@ -11,7 +11,6 @@ import backgammon.shared {
 	RoomMessage,
 	PlayerBeginMessage,
 	EndTurnMessage,
-	EndGameMessage,
 	UndoMovesMessage,
 	MakeMoveMessage,
 	RoomStateRequestMessage,
@@ -20,6 +19,7 @@ import backgammon.shared {
 	LeaveRoomMessage,
 	PlayerStateRequestMessage
 }
+
 import io.vertx.ceylon.core {
 	Vertx
 }
@@ -105,15 +105,7 @@ final class GameRoomRestApi(Vertx vertx) {
 			forwardResponse(context, EndTurnMessage(matchId, playerId));
 		}
 	}
-	
-	// TODO not used
-	void handlEndGameRequest(RoutingContext rc) {
-		value context = GameRoomRoutingContext(rc);
-		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
-			forwardResponse(context, EndGameMessage(matchId, playerId));
-		}
-	}
-	
+
 	void handlePlayerListRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getCurrentPlayerId()) {
@@ -157,7 +149,6 @@ final class GameRoomRestApi(Vertx vertx) {
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/move/:sourcePosition/:targetPosition").handler(handlMakeMoveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/undomoves").handler(handlUndoMovesRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handlEndTurnRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endgame").handler(handlEndGameRequest);
 		restApi.get("/room/:roomId/player/:playerId/state").handler(handlePlayerStateRequest);
 		return restApi;
 	}

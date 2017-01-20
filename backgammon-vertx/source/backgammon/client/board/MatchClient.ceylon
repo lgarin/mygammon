@@ -54,20 +54,25 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 	}
 	
 	void showMatchEnd(PlayerId leaverId, PlayerId winnerId, Integer score) {
+		gui.showMatchPot(match.currentPot);
 		gui.showCurrentPlayer(null);
 		showMatchEndMessage(leaverId, winnerId, player1Color);
 		showMatchEndMessage(leaverId, winnerId, player2Color);
 		gui.hideSubmitButton();
 		gui.hideUndoButton();
-		if (playerId == winnerId, exists [winner,balance] = match.playerInfoWithCurrentBalance(winnerId)) {
+		if (playerId == winnerId) {
 			gui.showDialog("dialog-won", {"game-score" -> score.string});
-			gui.showStatusText(winner.name, balance);
 		} else if (exists looserId = match.opponentId(winnerId), playerId == looserId) {
 			gui.showDialog("dialog-lost");
+		}
+		
+		if (exists [player,balance] = match.playerInfoWithCurrentBalance(playerId)){
+			gui.showStatusText(player.name, balance);
 		}
 	}
 	
 	void showMatchBegin(MatchState match) {
+		gui.showMatchPot(match.currentPot);
 		gui.showPlayerMessage(player1Color, match.player1Ready then gui.readyTextKey else gui.beginTexKey, !match.player1Ready);
 		gui.showPlayerMessage(player2Color, match.player2Ready then gui.readyTextKey else gui.beginTexKey, !match.player2Ready);
 		gui.showCurrentPlayer(match.playerColor(playerId));
@@ -80,6 +85,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 	}
 	
 	void showResumingGame() {
+		gui.showMatchPot(match.currentPot);
 		gui.showCurrentPlayer(null);
 		gui.showPlayerMessage(player1Color, gui.loadingTextKey, true);
 		gui.showPlayerMessage(player2Color, gui.loadingTextKey, true);
@@ -88,12 +94,14 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 	}
 	
 	void showAccept(AcceptedMatchMessage message) {
+		gui.showMatchPot(match.currentPot);
 		if (exists color = match.playerColor(message.playerId)) {
 			gui.showPlayerMessage(color, gui.readyTextKey, false);
 		}
 		if (message.playerId == playerId, exists [player,balance] = match.playerInfoWithCurrentBalance(playerId)) {
 			gui.showCurrentPlayer(null);
 			gui.hideSubmitButton();
+			gui.hideUndoButton();
 			gui.showStatusText(player.name, balance);
 		}
 	}
@@ -102,7 +110,6 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 		gui.showEmptyGame();
 		gui.showPlayerInfo(player1Color, match.player1.name, match.player1.pictureUrl);
 		gui.showPlayerInfo(player2Color, match.player2.name, match.player2.pictureUrl);
-		gui.showMatchPot(match.balance.matchPot);
 		if (match.gameEnded, exists leaverId = match.leaverId, exists winnerId = match.winnerId) {
 			showMatchEnd(leaverId, winnerId, match.score);
 		} else if (match.gameStarted) {
@@ -166,6 +173,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 			return currentGameClient.handleSubmitEvent();
 		} else if (match.mustStartMatch(playerId)) {
 			gui.hideSubmitButton();
+			gui.hideUndoButton();
 			messageBroadcaster(AcceptMatchMessage(playerId, matchId));
 			return true;
 		} else {

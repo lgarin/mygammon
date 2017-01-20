@@ -1,4 +1,3 @@
-suppressWarnings("missingImportPrefix")
 native("jvm")
 module backgammon.server "1.2.5" {
 	shared import java.base "8";

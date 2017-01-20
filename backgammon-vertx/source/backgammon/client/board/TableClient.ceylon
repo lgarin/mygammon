@@ -125,7 +125,7 @@ shared final class TableClient(shared PlayerId playerId, shared TableId tableId,
 			return false;
 		}
 	}
-	
+
 	shared GameClient? gameClient => matchClient?.gameClient;
 	
 	shared Boolean playerIsInMatch => matchClient?.playerIsInMatch else false;

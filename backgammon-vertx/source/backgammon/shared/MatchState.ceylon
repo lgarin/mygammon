@@ -1,7 +1,9 @@
 import backgammon.shared.game {
 	CheckerColor,
 	player2Color,
-	player1Color
+	player1Color,
+	black,
+	white
 }
 
 import ceylon.json {
@@ -53,12 +55,45 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 		}
 	}
 	
+	Boolean isReady(CheckerColor color) {
+		switch (color)
+		case (black) {
+			return player1Ready; 
+		}
+		case (white) {
+			return player2Ready;
+		}
+	}
+	
+	Integer balanceDelta(CheckerColor color) {
+		variable Integer delta = 0;
+		if (isReady(color)) {
+			delta -= balance.playerBet;
+		}
+		if (exists winner = winnerColor, winner == color) {
+			delta += balance.matchPot;
+		} else if (gameEnded && !winnerColor exists) {
+			delta += balance.matchPot / 2;
+		}
+		return delta;
+	}
+	
+	shared Integer currentPot {
+		if (player1Ready && player2Ready) {
+			return balance.matchPot; 
+		} else if (player1Ready || player2Ready) {
+			return balance.matchPot / 2;
+		} else {
+			return 0;
+		}
+	}
+
 	shared [PlayerInfo,Integer]? playerInfoWithCurrentBalance(PlayerId playerId) {
-		// TODO cleanup
+
 		if (playerId == player1Id) {
-			return [player1, balance.currentPlayer1Balance(player1Ready, (winnerId else systemPlayerId) == player1Id)];
+			return [player1, balance.player1Balance + balanceDelta(player1Color)];
 		} else if (playerId == player2Id) {
-			return [player2, balance.currentPlayer2Balance(player2Ready, (winnerId else systemPlayerId) == player2Id)];
+			return [player2, balance.player2Balance + balanceDelta(player2Color)];
 		} else {
 			return null;
 		}

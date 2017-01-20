@@ -39,8 +39,7 @@ import backgammon.shared {
 	PlayerStateMessage,
 	RoomActionResponseMessage,
 	PlayerRosterInboundMessage,
-	PlayerStatisticUpdateMessage,
-	systemPlayerId
+	PlayerStatisticUpdateMessage
 }
 
 import ceylon.time {

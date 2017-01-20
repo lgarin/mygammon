@@ -73,6 +73,9 @@ shared class Match(shared Player player1, shared Player player2, Table table, In
 		player2.increasePlayedGame();
 		if (exists winner = findPlayer(winnerId)) {
 			winner.increaseWonGame(score, matchPot);
+		} else {
+			player1.placeBet(-matchPot / 2);
+			player2.placeBet(-matchPot / 2);
 		}
 	}
 	
