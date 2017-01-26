@@ -81,16 +81,11 @@
     min-height: 25px;
     background-image: url("../images/checkers.png");
     background-size: 25px 50px;
-    cursor: pointer;
 }
 
 .checker.selected {
   background-image: url("../images/checkers_active.png");
   background-size: 25px 50px;
-}
-
-.checker:hover {
-  opacity: 0.85;
 }
 
 .checker-white {
