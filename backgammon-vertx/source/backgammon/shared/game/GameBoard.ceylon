@@ -160,8 +160,8 @@ shared final class GameBoard() {
 		return outsideRange(color).any((element) => hasChecker(element, color));
 	}
 	
-	shared Integer countCheckersInPlay(CheckerColor color) {
-		return playRange(color).fold(0)((partial, position) => countCheckers(position, color) + partial);
+	shared Integer score(CheckerColor color) {
+		return playRange(color).fold(0)((partial, position) => distance(position, homePosition(color)) * countCheckers(position, color) + partial);
 	}
 	
 	shared Boolean moveChecker(CheckerColor color, Integer sourcePosition, Integer targetPosition) {

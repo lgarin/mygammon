@@ -325,7 +325,7 @@ shared class Game() {
 	shared Boolean ended => nextTimeout.millisecondsOfEpoch == 0;
 	
 	shared Integer score {
-		return (board.countCheckersInPlay(black) - board.countCheckersInPlay(white)).magnitude;
+		return (board.score(black) - board.score(white)).magnitude;
 	}
 	
 	shared [Integer*] checkerCounts(CheckerColor color) => board.checkerCounts(color);

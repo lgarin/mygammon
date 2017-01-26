@@ -9,7 +9,8 @@ import backgammon.shared.game {
 	GameBoard,
 	boardPointCount,
 	black,
-	blackGraveyardPosition
+	blackGraveyardPosition,
+	CheckerColor
 }
 
 class GameBoardTest() {
@@ -190,5 +191,43 @@ class GameBoardTest() {
 		assert (board.targetRange(black, 2, 26).empty);
 		assert (board.targetRange(white, 24, -1).empty);
 		assert (board.targetRange(white, 24, 26).empty);
+	}
+	
+	test
+	shared void scoreWithEmptyBoard() {
+		assert (0 == board.score(black));
+		assert (0 == board.score(white));
+	}
+	
+	test
+	shared void scoreWithHomeCheckers() {
+		board.putNewCheckers(blackHomePosition, black, 2);
+		board.putNewCheckers(whiteHomePosition, white, 5);
+		assert (0 == board.score(black));
+		assert (0 == board.score(white));
+	}
+	
+	test
+	shared void scoreWithGraveyardCheckers() {
+		board.putNewCheckers(blackGraveyardPosition, black, 2);
+		board.putNewCheckers(whiteGraveyardPosition, white, 5);
+		assert (2 * (boardPointCount-1) == board.score(black));
+		assert (5 * (boardPointCount-1) == board.score(white));
+	}
+	
+	void addCheckers(CheckerColor color, Integer relativePosition, Integer checkerCount) {
+		assert (board.putNewCheckers(board.homePosition(color) - relativePosition * board.directionSign(color), color, checkerCount));
+	}
+	
+	test
+	shared void scoreWithDistributedCheckers() {
+		addCheckers(black, 2, 1);
+		addCheckers(black, 3, 2);
+		addCheckers(black, 6, 1);
+		addCheckers(white, 2, 1);
+		addCheckers(white, 3, 2);
+		addCheckers(white, 6, 1);
+		assert (14 == board.score(black));
+		assert (14 == board.score(white));
 	}
 }
