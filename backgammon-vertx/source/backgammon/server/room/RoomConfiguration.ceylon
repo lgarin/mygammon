@@ -10,7 +10,7 @@ import ceylon.time {
 }
 
 shared final class RoomConfiguration(Object? json) extends GameConfiguration(json) {
-	shared String homeUrl = json?.getStringOrNull("homeUrl") else "http://mygammon.com";
+	shared String homeUrl = json?.getStringOrNull("homeUrl") else "/start";
 	shared String roomId = json?.getStringOrNull("roomId") else "test";
 	shared Integer initialPlayerBalance = json?.getIntegerOrNull("initialPlayerBalance") else 1000;
 	shared Integer playerBet = json?.getIntegerOrNull("playerBet") else 110;
