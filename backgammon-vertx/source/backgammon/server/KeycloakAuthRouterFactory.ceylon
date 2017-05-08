@@ -1,5 +1,12 @@
+import backgammon.server.util {
+	JsonFile
+}
+
+import ceylon.json {
+	Object
+}
+
 import io.vertx.ceylon.auth.oauth2 {
-	OAuth2ClientOptions,
 	OAuth2Auth,
 	oAuth2Auth
 }
@@ -7,34 +14,31 @@ import io.vertx.ceylon.core {
 	Vertx
 }
 import io.vertx.ceylon.web {
-	Route,
 	routerFactory=router,
-	Router
+	Router,
+	Route
 }
 import io.vertx.ceylon.web.handler {
-	cookieHandler,
 	userSessionHandler,
-	sessionHandler
+	cookieHandler,
+	sessionHandler,
+	oAuth2AuthHandler
 }
 import io.vertx.ceylon.web.sstore {
 	localSessionStore
 }
 
-final class GoogleAuthRouterFactory(Vertx vertx, String hostname, Integer port) {
+final class KeycloakAuthRouterFactory(Vertx vertx, String hostname, Integer port) {
 		
 		variable OAuth2Auth? _oauth2 = null;
 		variable Route? callbackRoute = null;
 		
 		function createOAuth2() {
-			// Set the client credentials and the OAuth2 server
-			value credentials = OAuth2ClientOptions {
-				clientID = "890469788366-oangelno01k4ui5bvn2an4i217t8fjcf.apps.googleusercontent.com";
-				clientSecret = "iLxAJ94s3d3kftW8DgbVU6H8";
-				site = "https://accounts.google.com";
-				tokenPath = "https://www.googleapis.com/oauth2/v3/token";
-				authorizationPath = "/o/oauth2/auth";
-			};
-			return oAuth2Auth.create(vertx, "AUTH_CODE", credentials);
+			if (is Object config = JsonFile("resource/keycloak.json").readContent()) {
+				return oAuth2Auth.createKeycloak(vertx, "CLIENT", config);
+			} else {
+				throw Exception("Cannot parse resource/keycloak.json");
+			}
 		}
 		
 		value oauth2 {
@@ -53,8 +57,8 @@ final class GoogleAuthRouterFactory(Vertx vertx, String hostname, Integer port) 
 			return userSessionHandler.create(oauth2);
 		}
 
-		function createGoogleAuthHandler() {
-			value authHandler = GoogleAuthHandler(oauth2, "http://``hostname``:``port``");
+		function createAuthHandler() {
+			value authHandler = oAuth2AuthHandler.create(oauth2, "http://``hostname``:``port``");
 			if (exists currentCallbackRoute = callbackRoute) {
 				authHandler.setupCallback(currentCallbackRoute);
 			}
@@ -70,9 +74,9 @@ final class GoogleAuthRouterFactory(Vertx vertx, String hostname, Integer port) 
 			return router;
 		}
 		
-		shared Router createGoogleLoginRouter() {
+		shared Router createLoginRouter() {
 			value router = routerFactory.router(vertx);
-			router.route().handler(createGoogleAuthHandler().handle);
+			router.route().handler(createAuthHandler().handle);
 			return router;
 		}
 }

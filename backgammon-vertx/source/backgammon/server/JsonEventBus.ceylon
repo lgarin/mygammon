@@ -28,7 +28,7 @@ final class JsonEventBus(Vertx vertx) {
 	
 	shared void sendMessage<OutboundMessage>(Object message, String address, Anything parseOutboundMessage(Object json), void responseHandler(Throwable|OutboundMessage response)) {
 		logger(`package`).info(message.string);
-		vertx.eventBus().send(address, message, void (Throwable|Message<Object> result) {
+		vertx.eventBus().send(address, message, void (Throwable|Message<Object?> result) {
 			if (is Throwable result) {
 				responseHandler(result);
 			} else if (exists body = result.body(), is OutboundMessage response = parseOutboundMessage(body)) {
@@ -40,10 +40,10 @@ final class JsonEventBus(Vertx vertx) {
 	}
 	
 	shared void registerParallelConsumer(WorkerExecutor executor, String address, Object process(Object msg)) {
-		vertx.eventBus().consumer(address, void (Message<Object> message) {
+		vertx.eventBus().consumer(address, void (Message<Object?> message) {
 			if (exists body = message.body()) {
 				executor.executeBlocking(
-					void (Future<Object> result) {
+					void (Future<Object?> result) {
 						result.complete(process(body));
 					},
 					void (Throwable|Object|Null result) {
@@ -61,7 +61,7 @@ final class JsonEventBus(Vertx vertx) {
 	}
 	
 	shared void registerConsumer(String address, Object process(Object msg)) {
-		vertx.eventBus().consumer(address, void (Message<Object> message) {
+		vertx.eventBus().consumer(address, void (Message<Object?> message) {
 			if (exists body = message.body()) {
 				try { 
 					value result = process(body);

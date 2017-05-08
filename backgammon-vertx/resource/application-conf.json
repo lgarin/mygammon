@@ -5,7 +5,7 @@
 	"roomThreadCount": 2,
 	"gameThreadCount": 4,
 	"hostname": "localhost",
-	"port": 8080,
+	"port": 8081,
 	"maxTurnDuration": 60000,
 	"serverAdditionalTimeout": 1000,
 	"playerInactiveTimeout": 600000,

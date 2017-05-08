@@ -1,11 +1,14 @@
 [compiler]
 source=source
 resource=resource
+suppresswarning=deprecation
 
 [defaults]
 flatclasspath=true
 encoding=Cp1252
-autoexportmavendependencies=false
+autoexportmavendependencies=true
+overrides=overrides.xml
+fullyexportmavendependencies=false
 
 [repository "MAVEN"]
 url=aether:C:\\Dev\\maven\\settings.xml

@@ -26,7 +26,7 @@ final class HttpServerVerticle() extends Verticle() {
 	
 	shared actual void start() {
 		value roomConfig = RoomConfiguration(config);
-		value authRouterFactory = GoogleAuthRouterFactory(vertx, roomConfig.hostname, roomConfig.port);
+		value authRouterFactory = KeycloakAuthRouterFactory(vertx, roomConfig.hostname, roomConfig.port);
 		value router = routerFactory.router(vertx);
 		
 		
@@ -40,7 +40,7 @@ final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/eventbus", GameRoomEventBus(vertx).createEventBusRouter());
 		router.mountSubRouter("/api", GameRoomRestApi(vertx).createRouter());
 		
-		router.mountSubRouter("/", authRouterFactory.createGoogleLoginRouter());
+		router.mountSubRouter("/", authRouterFactory.createLoginRouter());
 		router.mountSubRouter("/", GameRoomRouterFactory(vertx, roomConfig.roomId, roomConfig.homeUrl).createRouter());
 		
 		server = vertx.createHttpServer().requestHandler(router.accept).listen(roomConfig.port);
