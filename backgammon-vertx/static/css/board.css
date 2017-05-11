@@ -341,6 +341,35 @@ body {
 	height: 0px;
 }
 
+.player-level {
+    position: absolute;
+    width: 75px;
+    min-width: 75px;
+    height: 45px;
+    min-height: 45px;
+    background-image: url("../images/levels.png");
+}
+
+.level-1 {
+    background-position: -75px 0px;
+}
+
+.level-2 {
+    background-position: -150px 0px;
+}
+
+.level-3 {
+    background-position: -225px 0px;
+}
+
+.level-4 {
+    background-position: -300px 0px;
+}
+
+.level-5 {
+    background-position: -375px 0px;
+}
+
 .white-small-checker {
 	position:relative;
 	bottom:30px;

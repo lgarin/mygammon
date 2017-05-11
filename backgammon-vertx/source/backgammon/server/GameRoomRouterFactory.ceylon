@@ -1,8 +1,9 @@
 import backgammon.server {
 	GameRoomRoutingContext,
-	GameRoomEventBus,
-	GoogleUserInfo,
-	GoogleProfileClient
+	GameRoomEventBus
+}
+import backgammon.server.room {
+	RoomConfiguration
 }
 import backgammon.shared {
 	FindMatchTableMessage,
@@ -27,19 +28,19 @@ import io.vertx.ceylon.web {
 	Router
 }
 
-final class GameRoomRouterFactory(Vertx vertx, String roomId, String homeUrl) {
+final class GameRoomRouterFactory(Vertx vertx, RoomConfiguration roomConfig) {
 	
 	value roomEventBus = GameRoomEventBus(vertx);
 	value repoEventBus = PlayerRosterEventBus(vertx);
-	value googleProfileClient = GoogleProfileClient(vertx);
+	value authClient = KeycloakAuthClient(vertx, roomConfig);
 	
 	void enterRoom(RoutingContext routingContext, PlayerInfo playerInfo, PlayerStatistic playerStat) {
 		value context = GameRoomRoutingContext(routingContext);
-		roomEventBus.sendInboundMessage(EnterRoomMessage(playerInfo.playerId, RoomId(roomId), playerInfo, playerStat), void (Throwable|RoomActionResponseMessage result) {
+		roomEventBus.sendInboundMessage(EnterRoomMessage(playerInfo.playerId, RoomId(roomConfig.roomId), playerInfo, playerStat), void (Throwable|RoomActionResponseMessage result) {
 			if (is Throwable result) {
 				routingContext.fail(result);
 			} else {
-				context.sendRedirect("/room/``roomId``");
+				context.sendRedirect("/room/``roomConfig.roomId``");
 			}
 		});
 	}
@@ -51,24 +52,24 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId, String homeUrl) {
 			if (is Throwable result) {
 				routingContext.fail(result);
 			} else {
-				enterRoom(routingContext, playerInfo, result.statistic);
+				value playerLevel = result.statistic.computeLevel(roomConfig.scoreLevels);
+				enterRoom(routingContext, playerInfo.withLevel(playerLevel), result.statistic);
 			}
 		});
-		
 	}
 	
 	void fetchUserInfo(RoutingContext routingContext) {
 		value context = GameRoomRoutingContext(routingContext);
-		void handler(GoogleUserInfo? userInfo) {
+		void handler(KeycloakUserInfo? userInfo) {
 			if (exists userInfo) {
-				value playerInfo = PlayerInfo(userInfo.userId, userInfo.displayName, userInfo.pictureUrl, userInfo.iconUrl);
+				value playerInfo = PlayerInfo(userInfo.userId, userInfo.displayName);
 				completeLogin(routingContext, playerInfo);
 			} else {
 				context.clearUser();
 				context.fail(Exception("No info returned for current user"));
 			}
 		}
-		googleProfileClient.fetchUserInfo(routingContext, handler);
+		authClient.fetchUserInfo(routingContext, handler);
 	}
 	
 	void handleStart(RoutingContext routingContext) {
@@ -108,16 +109,16 @@ final class GameRoomRouterFactory(Vertx vertx, String roomId, String homeUrl) {
 	void handleLogout(RoutingContext routingContext) {
 		value context = GameRoomRoutingContext(routingContext);
 		if (exists playerInfo = context.getCurrentPlayerId(false)) {
-			roomEventBus.sendInboundMessage(LeaveRoomMessage(PlayerId(playerInfo.id), RoomId(roomId)), void (Anything response) {
-				googleProfileClient.logout(routingContext, void (Boolean success) {
+			roomEventBus.sendInboundMessage(LeaveRoomMessage(PlayerId(playerInfo.id), RoomId(roomConfig.roomId)), void (Anything response) {
+				authClient.logout(routingContext, void (Boolean success) {
 					if (success) {
 						context.clearUser();
-						context.sendRedirect(homeUrl);
+						context.sendRedirect(roomConfig.homeUrl);
 					}
 				});
 			});
 		} else {
-			context.sendRedirect(homeUrl);
+			context.sendRedirect(roomConfig.homeUrl);
 		}
 	}
 

@@ -1,39 +1,45 @@
-import ceylon.json {
-	Object
-}
-
 import io.vertx.ceylon.core {
+
 	Vertx
 }
 import io.vertx.ceylon.core.buffer {
+
 	Buffer
 }
-import io.vertx.ceylon.core.http {
-	HttpClient,
-	HttpClientResponse,
-	HttpClientOptions
-}
 import io.vertx.ceylon.web {
+
 	RoutingContext
 }
+import io.vertx.ceylon.core.http {
 
-final class GoogleUserInfo(Object json) {
-	shared String displayName = json.getString("displayName");
-	// TODO use regex instead of replace
-	shared String pictureUrl = json.getObject("image").getString("url").replace("sz=50", "sz=100");
-	shared String iconUrl = json.getObject("image").getString("url").replace("sz=50", "sz=25");
-	shared String userId => json.getString("id");
+	HttpClientResponse,
+	HttpClientOptions,
+	HttpClient
+}
+import backgammon.server.room {
+
+	RoomConfiguration
+}
+import ceylon.json {
+
+	Object
 }
 
-final class GoogleProfileClient(Vertx vertx) {
-	
-	value googleApiKey = "AIzaSyBCs5hbaFFCdz2fs8hc53s7XRLJXwhIq-4";
-	
+final class KeycloakUserInfo(Object json) {
+	shared String displayName = json.getString("username");
+	shared String userId => json.getString("sub");
+}
+
+
+final class KeycloakAuthClient(Vertx vertx, RoomConfiguration configuration) {
+
+	value baseUrl = "``configuration.keycloakUrl``/realms/``configuration.keycloakRealm``/protocol/openid-connect";
+
 	variable HttpClient? _httpClient = null;
 	
 	function createHttpClient() {
 		value options = HttpClientOptions {
-			ssl = true;
+			ssl = false;
 			trustAll =  true;
 		};
 		return vertx.createHttpClient(options);
@@ -58,14 +64,14 @@ final class GoogleProfileClient(Vertx vertx) {
 		request.end();
 	}
 	
-	shared void fetchUserInfo(RoutingContext context, void handler(GoogleUserInfo? userInfo)) {
+	shared void fetchUserInfo(RoutingContext context, void handler(KeycloakUserInfo? userInfo)) {
 		if (exists token = context.user()) {
 			makeRestCall {
-				url = "https://www.googleapis.com/plus/v1/people/me?fields=displayName%2Cimage%2Furl%2Cid&key=``googleApiKey``";
+				url = "``baseUrl``/userinfo";
 				token = token.principal().getString("access_token");
 				void bodyHandler(Buffer? body) {
 					if (exists body) {
-						handler(GoogleUserInfo(body.toJsonObject()));
+						handler(KeycloakUserInfo(body.toJsonObject()));
 					} else {
 						handler(null);
 					}
@@ -79,7 +85,7 @@ final class GoogleProfileClient(Vertx vertx) {
 	shared void logout(RoutingContext context, void handler(Boolean success)) {
 		if (exists token = context.user()) {
 			makeRestCall {
-				url = "https://accounts.google.com/o/oauth2/revoke?token=``token.principal().getString("access_token")``";
+				url = "``baseUrl``/logout";
 				token = token.principal().getString("access_token");
 				void bodyHandler(Buffer? body) {
 					if (exists body) {
@@ -93,4 +99,5 @@ final class GoogleProfileClient(Vertx vertx) {
 			handler(false);
 		}
 	}
+
 }

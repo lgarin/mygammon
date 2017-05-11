@@ -10,6 +10,8 @@ import ceylon.time {
 }
 
 shared final class RoomConfiguration(Object? json) extends GameConfiguration(json) {
+	shared String keycloakRealm = json?.getStringOrNull("keycloakRealm") else "mygammon";
+	shared String keycloakUrl = json?.getStringOrNull("keycloakUrl") else "http://localhost:8080/auth"; 
 	shared String homeUrl = json?.getStringOrNull("homeUrl") else "/start";
 	shared String roomId = json?.getStringOrNull("roomId") else "test";
 	shared Integer initialPlayerBalance = json?.getIntegerOrNull("initialPlayerBalance") else 1000;
@@ -26,6 +28,7 @@ shared final class RoomConfiguration(Object? json) extends GameConfiguration(jso
 	shared String repositoryFile = json?.getStringOrNull("repositoryFile") else "resource/player-roster.json";
 	shared Duration balanceIncreaseDelay = Duration(json?.getIntegerOrNull("balanceIncreaseDelay") else 24 * 60 * 60 * 1000);
 	shared Integer balanceIncreaseAmount = json?.getIntegerOrNull("balanceIncreaseAmount") else initialPlayerBalance / 2;
+	shared [Integer*] scoreLevels = (json?.getArrayOrNull("scoreLevels") else [100, 1000, 10000, 10000]).narrow<Integer>().sequence();
 	shared Duration userSessionTimeout => Duration(playerInactiveTimeout.milliseconds + serverAdditionalTimeout.milliseconds);
 	shared RoomSize roomSize => RoomSize(maxTableCount, maxPlayerCount);
 	shared MatchBet matchBet => MatchBet(playerBet, matchPot);

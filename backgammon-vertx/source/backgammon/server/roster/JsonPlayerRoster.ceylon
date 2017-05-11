@@ -34,6 +34,7 @@ shared final class JsonPlayerRoster(RoomConfiguration config) {
 
 	function storeRecord(PlayerRosterRecord record) {
 		statisticMap.put(record.id, record);
+		// TODO store record in database
 		return PlayerStatisticOutputMessage(record.id, record.stat);
 	}
 	
@@ -52,6 +53,7 @@ shared final class JsonPlayerRoster(RoomConfiguration config) {
 	}
 
 	function loginPlayer(PlayerLoginMessage message) {
+		// TODO read record from database
 		if (exists oldRecord = statisticMap[message.playerId]) {
 			value timestamp = now();
 			if (oldRecord.login.mustCredit(timestamp)) {

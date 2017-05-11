@@ -31,6 +31,8 @@ shared final class PlayerStatistic(shared Integer balance, shared Integer played
 		hash = 31*hash + score;
 		return hash;
 	}
+	
+	shared Integer computeLevel(Integer[] scoreLevels) => (scoreLevels.indexed.find((index -> limit) => score < limit) else (scoreLevels.size -> 0)).key;
 }
 
 shared PlayerStatistic parsePlayerStatistic(JsonObject json) => PlayerStatistic(json.getInteger("balance"), json.getInteger("playedGames"), json.getInteger("wonGames"), json.getInteger("score"));

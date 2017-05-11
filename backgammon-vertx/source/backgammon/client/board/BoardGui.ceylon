@@ -131,18 +131,14 @@ shared class BoardGui(Document document) extends GameGui(document) {
 		}
 	}
 	
-	shared void showPlayerInfo(CheckerColor color, String? name, String? pictureUrl) {
+	shared void showPlayerInfo(CheckerColor color, String? name, Integer? level) {
 		if (exists playerLabel = document.getElementById("``color``PlayerName")) {
 			playerLabel.innerHTML = name else defaultPlayerName;
 		}
-		if (exists playerImage = document.getElementById("``color``PlayerImage")) {
-			if (exists pictureUrl) {
-				playerImage.setAttribute("src", pictureUrl);
-				playerImage.classList.remove("player-unknown");
-			} else {
-				playerImage.setAttribute("src", "");
-				playerImage.classList.add("player-unknown");
-			}
+		if (exists playerLevel = level) {
+			setClass("``color``PlayerLevel", "player-level", "level-``playerLevel``");
+		} else {
+			setClass("``color``PlayerLevel", hiddenClass);
 		}
 	}
 	

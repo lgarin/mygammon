@@ -73,29 +73,23 @@ a#kc-current-locale-link::after {
 
 #kc-logo {
     width: 100%;
+		height: 200px;
 }
 
 #kc-logo-wrapper {
+		position: absolute;
+    top: 50px;
+    right: 50px;
     background-image: url("../img/Fotolia_100444370_Subscription_Monthly_M.jpg");
     background-repeat: no-repeat;
-		background-size: 50% 50%;
-    height: 72px;
-    width: 72px;
+		background-size: 100% 100%;
+    height: 138px;
+    width: 138px;
 		opacity: 0.8;
 }
 
-div.kc-logo-text {
-    background-image: url("../img/keycloak-logo-text.png");
-    background-repeat: no-repeat;
-    width: 250px;
-    height: 38px;
-}
-
-div.kc-logo-text span {
-    display: none;
-}
-
 #kc-container-wrapper {
+		padding-top: 40px;
 		background-color: rgba(255, 255, 255, 0.8);
 }
 
@@ -262,12 +256,6 @@ ol#kc-totp-settings li:first-of-type {
         width: 100%;
     }
 
-    #kc-logo-wrapper {
-        position: absolute;
-        top: 50px;
-        right: 50px;
-    }
-
     .login-pf .container {
         padding-right: 80px;
     }
@@ -281,14 +269,7 @@ ol#kc-totp-settings li:first-of-type {
     }
 }
 
-@media (max-width: 767px) {
-
-    #kc-logo-wrapper {
-        background-position: center;
-        width: 200px;
-				height: 200px;
-        margin: 20px 0;
-    }
+@media (max-width: 768px) {
 
     #kc-header {
         padding-left: 15px;
@@ -329,15 +310,24 @@ ol#kc-totp-settings li:first-of-type {
     }
 }
 
-@media (min-height: 646px) {
+@media (min-height: 768px) {
     #kc-container-wrapper {
         bottom: 12%;
     }
+		
+		#kc-container-wrapper {
+        position: absolute;
+        width: 100%;
+    }
 }
 
-@media (max-height: 645px) {
+@media (max-height: 768px) {
+		#kc-logo-wrapper {
+			top: 20px;
+		}
+	
     #kc-container-wrapper {
-        padding-top: 50px;
-        top: 20%;
+        padding-top: 10px;
+        bottom: 12%;
     }
 }

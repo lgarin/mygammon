@@ -47,19 +47,6 @@ shared class GameGui(Document document) extends BaseGui(document) {
 		return "``minutes``:``formatSeconds(seconds)``";
 	}
 	
-	shared void showDiceValues(CheckerColor color, Integer? value1, Integer? value2) {
-		if (exists value1) {
-			setClass("``color``DiceNr1", "dice", "``color``-``value1``");
-		} else {
-			addClass("``color``DiceNr1", "hidden");
-		}
-		if (exists value2) {
-			setClass("``color``DiceNr2", "dice", "``color``-``value2``");
-		} else {
-			addClass("``color``DiceNr2", "hidden");
-		}
-	}
-	
 	void showDice(CheckerColor color, Integer index, String diceClass, Integer? diceValue) {
 		if (exists diceValue) {
 			setClass("``color``DiceNr``index+1``", diceClass, "``color``-``diceValue``");
@@ -81,10 +68,9 @@ shared class GameGui(Document document) extends BaseGui(document) {
 	}
 	
 	shared void hideAllDices(CheckerColor color) {
-		showActiveDice(color, 0, null);
-		showActiveDice(color, 1, null);
-		showActiveDice(color, 2, null);
-		showActiveDice(color, 3, null);
+		for (i in 0..3) {
+			showActiveDice(color, i, null);
+		}
 	}
 	
 	function getDomIdUsingPoint(GameBoard board, CheckerColor color, Integer point) {

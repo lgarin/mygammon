@@ -2,8 +2,8 @@ import ceylon.json {
 	JsonObject=Object
 }
 
-shared final class PlayerInfo(shared String id, shared String name, shared String? pictureUrl = null, shared String? iconUrl = null) extends Object() {
-	shared JsonObject toJson() => JsonObject {"id" -> id, "name" -> name, "pictureUrl" -> pictureUrl, "iconUrl" -> iconUrl};
+shared final class PlayerInfo(shared String id, shared String name, shared Integer? level = null) extends Object() {
+	shared JsonObject toJson() => JsonObject {"id" -> id, "name" -> name, "level" -> level};
 	shared PlayerId playerId => PlayerId(id);
 	
 	function equalsOrBothNull(Object? object1, Object? object2) {
@@ -18,8 +18,7 @@ shared final class PlayerInfo(shared String id, shared String name, shared Strin
 		if (is PlayerInfo that) {
 			return id==that.id && 
 				name==that.name && 
-				equalsOrBothNull(pictureUrl, that.pictureUrl) &&
-				equalsOrBothNull(iconUrl, that.iconUrl);
+				equalsOrBothNull(level, that.level);
 		}
 		else {
 			return false;
@@ -30,10 +29,12 @@ shared final class PlayerInfo(shared String id, shared String name, shared Strin
 	shared actual Integer hash => id.hash;
 
 	string => toJson().string;
+	
+	shared PlayerInfo withLevel(Integer level) => PlayerInfo(id, name, level);
 }
 
 shared PlayerInfo parsePlayerInfo(JsonObject json) {
-	return PlayerInfo(json.getString("id"), json.getString("name"), json.getStringOrNull("pictureUrl"), json.getStringOrNull("iconUrl"));
+	return PlayerInfo(json.getString("id"), json.getString("name"), json.getIntegerOrNull("level"));
 }
 
 shared PlayerInfo? parseNullablePlayerInfo(JsonObject? json) => if (exists json) then parsePlayerInfo(json) else null;

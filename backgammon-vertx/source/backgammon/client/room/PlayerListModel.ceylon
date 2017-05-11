@@ -36,7 +36,7 @@ class PlayerListModel(String hiddenClass) {
 		} else {
 			buttonClass = hiddenClass;
 		}
-		return Object {"id" -> state.info.id, "name" -> state.info.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "iconUrl" -> state.info.iconUrl, "pictureUrl" -> state.info.pictureUrl, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "lost" -> state.statistic.lostPercentage, "games" -> state.statistic.playedGames, "balance" -> state.statistic.balance};
+		return Object {"id" -> state.info.id, "name" -> state.info.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "pictureUrl" -> state.info.level, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "lost" -> state.statistic.lostPercentage, "games" -> state.statistic.playedGames, "balance" -> state.statistic.balance};
 	}
 	
 	shared TableId? findTable(PlayerId playerId) {

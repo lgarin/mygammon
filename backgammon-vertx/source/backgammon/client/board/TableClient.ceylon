@@ -30,7 +30,7 @@ shared final class TableClient(shared PlayerId playerId, shared TableId tableId,
 	
 	void showJoinedState(PlayerInfo playerInfo) {
 		gui.showEmptyGame();
-		gui.showPlayerInfo(player1Color, playerInfo.name, playerInfo.pictureUrl);
+		gui.showPlayerInfo(player1Color, playerInfo.name, playerInfo.level);
 		gui.showPlayerMessage(player1Color, gui.joinedTextKey, false);
 		gui.showPlayerInfo(player2Color, null, null);
 		gui.showPlayerMessage(player2Color, gui.waitingTextKey, true);

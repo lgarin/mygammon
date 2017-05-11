@@ -31,7 +31,6 @@ final class HttpServerVerticle() extends Verticle() {
 		
 		
 		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(roomConfig.userSessionTimeout.milliseconds));
-		//router.route().handler(loggerHandler.create().handle);		
 		
 		router.route("/logs/*").handler(staticHandler.create("logs").setCachingEnabled(false).setDirectoryListing(true).handle);
 		router.route("/static/*").handler(staticHandler.create("static").handle);
@@ -41,7 +40,7 @@ final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/api", GameRoomRestApi(vertx).createRouter());
 		
 		router.mountSubRouter("/", authRouterFactory.createLoginRouter());
-		router.mountSubRouter("/", GameRoomRouterFactory(vertx, roomConfig.roomId, roomConfig.homeUrl).createRouter());
+		router.mountSubRouter("/", GameRoomRouterFactory(vertx, roomConfig).createRouter());
 		
 		server = vertx.createHttpServer().requestHandler(router.accept).listen(roomConfig.port);
 		

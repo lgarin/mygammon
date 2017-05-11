@@ -27,6 +27,7 @@ final class PlayerRosterEventBus(Vertx vertx) {
 	}
 	
 	shared void queueInputMessage(PlayerRosterInboundMessage message) {
+		// TODO use a persistent queue
 		vertx.runOnContext(() => sendInboundMessage(message, noop));
 	}
 

@@ -151,7 +151,9 @@
 					<div class="row">
 						<div id="whitePlayer" class="player">
 							 <div>
+					         	<span id="whitePlayerLevel" class="player-level level-1"></span>
 					        	<label id="whitePlayerName"></label>
+					        	<span class="white-small-checker"></span>
 					         </div>
 							 <div class="player-picture">
 					         	<img id="whitePlayerImage" src="/static/images/unknown.png"/>
@@ -165,7 +167,9 @@
 					    
 					    <div id="blackPlayer" class="player">
 					         <div>
+					         	<span id="blackPlayerLevel" class="player-level level-1"></span>
 					        	<label id="blackPlayerName"></label>
+					        	<span class="black-small-checker"></span>
 					         </div>
 					         <div class="player-picture">
 					         	<img id="blackPlayerImage" src="/static/images/unknown.png"/>
@@ -293,7 +297,7 @@
 		<script type="text/html" id="player-row-template">
 			<tr class="player-row">
 				<td class="player-name">
-					<img data-src="iconUrl"></img>
+					<img data-src="pictureUrl"></img>
 					<a style="margin-left:10px" data-content="name" href="#"></a>
 					<div class="dialog-statistic" title="Statistic" style="display: none">
 						<table>
