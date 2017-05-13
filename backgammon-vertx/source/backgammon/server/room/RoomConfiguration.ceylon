@@ -9,6 +9,7 @@ import ceylon.time {
 	Duration
 }
 
+// TODO create ServerConfiguration subclass
 shared final class RoomConfiguration(Object? json) extends GameConfiguration(json) {
 	shared String keycloakRealm = json?.getStringOrNull("keycloakRealm") else "mygammon";
 	shared String keycloakUrl = json?.getStringOrNull("keycloakUrl") else "http://localhost:8080/auth"; 

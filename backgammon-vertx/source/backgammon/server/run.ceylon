@@ -68,6 +68,7 @@ void runVerticles(Module mod, [Class<Verticle,[]>*] verticleClasses) {
 shared void run() {
 	System.setProperty("log4j.configurationFile", "resource/log4j2.properties");
 	System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.Log4j2LogDelegateFactory");
+	System.setProperty("org.jboss.logging.provider", "log4j2");
 	addLogWriter(logWriter);
-	runVerticles(`module`, [`HttpServerVerticle`, `JsonRepositoryVerticle`, `GameRoomVerticle`]);
+	runVerticles(`module`, [`HttpServerVerticle`, `JsonRepositoryVerticle`, `GameRoomVerticle`, `BrokerVerticle`]);
 }

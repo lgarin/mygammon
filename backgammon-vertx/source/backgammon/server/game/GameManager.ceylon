@@ -337,5 +337,9 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	shared Boolean ended => game.ended;
+	shared Boolean ended {
+		try (lock) {
+		 	return game.ended;
+		 }
+	}
 }
