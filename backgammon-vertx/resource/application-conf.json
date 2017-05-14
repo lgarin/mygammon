@@ -2,7 +2,6 @@
 	"roomId": "test",
 	"maxTableCount": 10,
 	"maxPlayerCount": 100,
-	"roomThreadCount": 2,
 	"gameThreadCount": 4,
 	"hostname": "localhost",
 	"port": 8081,

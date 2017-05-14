@@ -21,7 +21,6 @@ shared final class RoomConfiguration(Object? json) extends GameConfiguration(jso
 	shared Integer bonusScorePercentage = json?.getIntegerOrNull("bonusScorePercentage") else 5;
 	shared Integer maxTableCount = json?.getIntegerOrNull("maxTableCount") else 10;
 	shared Integer maxPlayerCount = json?.getIntegerOrNull("maxPlayerCount") else 100;
-	shared Integer roomThreadCount = json?.getIntegerOrNull("roomThreadCount") else 2;
 	shared Integer gameThreadCount = json?.getIntegerOrNull("gameThreadCount") else 4;
 	shared Integer maxPlayerMessageRate = json?.getIntegerOrNull("maxPlayerMessageRate") else 10;
 	shared String hostname = json?.getStringOrNull("hostname") else "localhost";

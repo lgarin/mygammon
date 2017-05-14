@@ -72,8 +72,8 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	}
 	
 	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
-		if (exists manager = getGameManager(message)) {
-			return manager.processGameMessage(message);
+		if (exists game = getGameManager(message)) {
+			return game.processGameMessage(message);
 		} else {
 			// TODO cannot determine color
 			return GameActionResponseMessage(message.matchId, message.playerId, black, false);

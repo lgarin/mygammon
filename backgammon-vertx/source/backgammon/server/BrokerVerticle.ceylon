@@ -9,12 +9,6 @@ import io.vertx.ceylon.core {
 import org.apache.activemq.artemis.core.server.embedded {
 	EmbeddedActiveMQ
 }
-import backgammon.server.broker {
-
-	BrokerClient
-}
-
-import ceylon.json { Object }
 
 final class BrokerVerticle() extends Verticle() {
 	value log = logger(`package`);
@@ -30,10 +24,6 @@ final class BrokerVerticle() extends Verticle() {
 		} else {
 			throw Exception("Cannot find broker.xml configuration");
 		}
-		value client = BrokerClient();
-		value sender = client.createSender("queue1");
-		vertx.setPeriodic(1000, (Integer a) => sender.send(Object({"test" -> "Test"})));
-		client.createConsumer("queue1", (Object json) => log.info(json.string));
 	}
 	
 	shared actual void stop() {

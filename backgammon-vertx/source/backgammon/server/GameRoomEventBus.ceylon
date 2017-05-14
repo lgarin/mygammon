@@ -76,6 +76,30 @@ final class GameRoomEventBus(Vertx vertx) {
 		}
 	}
 
+	void registerRoomMessageConsumer<in InboundMessage, out OutboundMessage>(String address, InboundMessage? parse(Object json), OutboundMessage process(InboundMessage request)) given OutboundMessage satisfies RoomMessage given InboundMessage satisfies RoomMessage {
+		eventBus.registerConsumer(address, function (Object msg) {
+			if (is InboundMessage request = parse(msg)) {
+				value response = formatRoomMessage(process(request));
+				logger(`package`).info(response.string);
+				return response;
+			} else {
+				throw Exception("Invalid request: ``msg``");
+			}
+		});
+	}
+
+	shared void registerInboundRoomMessageConsumer(String roomId, OutboundRoomMessage process(InboundRoomMessage request)) {
+		registerRoomMessageConsumer("InboundRoomMessage-``roomId``", parseInboundRoomMessage, process);
+	}
+	
+	shared void registerInboundTableMessageConsumer(String roomId, OutboundTableMessage process(InboundTableMessage request)) {
+		registerRoomMessageConsumer("InboundTableMessage-``roomId``", parseInboundTableMessage, process);
+	}
+	
+	shared void registerInboundMatchMessageConsumer(String roomId, OutboundMatchMessage process(InboundMatchMessage request)) {
+		registerRoomMessageConsumer("InboundMatchMessage-``roomId``", parseInboundMatchMessage, process);
+	}
+	
 	void registerParallelRoomMessageConsumer<in InboundMessage, out OutboundMessage>(WorkerExecutor executor, String address, InboundMessage? parse(Object json), OutboundMessage process(InboundMessage request)) given OutboundMessage satisfies RoomMessage given InboundMessage satisfies RoomMessage {
 		eventBus.registerParallelConsumer(executor, address, function (Object msg) {
 			if (is InboundMessage request = parse(msg)) {
@@ -86,21 +110,6 @@ final class GameRoomEventBus(Vertx vertx) {
 				throw Exception("Invalid request: ``msg``");
 			}
 		});
-	}
-	
-	shared void registerInboundRoomMessageConsumer(String roomId, Integer threadCount, OutboundRoomMessage process(InboundRoomMessage request)) {
-		value executor = vertx.createSharedWorkerExecutor("room-thread-``roomId``", threadCount);
-		registerParallelRoomMessageConsumer(executor, "InboundRoomMessage-``roomId``", parseInboundRoomMessage, process);
-	}
-	
-	shared void registerInboundTableMessageConsumer(String roomId, Integer threadCount, OutboundTableMessage process(InboundTableMessage request)) {
-		value executor = vertx.createSharedWorkerExecutor("room-thread-``roomId``", threadCount);
-		registerParallelRoomMessageConsumer(executor, "InboundTableMessage-``roomId``", parseInboundTableMessage, process);
-	}
-	
-	shared void registerInboundMatchMessageConsumer(String roomId, Integer threadCount, OutboundMatchMessage process(InboundMatchMessage request)) {
-		value executor = vertx.createSharedWorkerExecutor("room-thread-``roomId``", threadCount);
-		registerParallelRoomMessageConsumer(executor, "InboundMatchMessage-``roomId``", parseInboundMatchMessage, process);
 	}
 	
 	shared void registerInboundGameMessageConsumer(String roomId, Integer threadCount, OutboundGameMessage process(InboundGameMessage request)) {

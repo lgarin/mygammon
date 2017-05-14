@@ -1,9 +1,20 @@
+import backgammon.server.util {
+	ObtainableLock
+}
+
 import ceylon.interop.java {
 	javaClass
 }
 import ceylon.json {
 	Object,
 	parse
+}
+import ceylon.logging {
+	logger
+}
+
+import java.util.concurrent {
+	Executors
 }
 
 import org.apache.activemq.artemis.api.core {
@@ -18,14 +29,23 @@ import org.apache.activemq.artemis.api.core.client {
 import org.apache.activemq.artemis.core.remoting.impl.invm {
 	InVMConnectorFactory
 }
-import ceylon.logging {
-
-	logger
-}
 
 shared final class BrokerClient() satisfies Destroyable  {
 	value connectorFactoryName = javaClass<InVMConnectorFactory>().canonicalName;
 	value serverLocator = ActiveMQClient.createServerLocatorWithoutHA(TransportConfiguration(connectorFactoryName));
+	
+	// TODO revisit with ceylon 1.3.3
+	/*
+	value threadCounter = AtomicInteger();
+	 
+	function threadFactory(Runnable runnable) {
+	 return Thread(runnable, "broker-client-``threadCounter.incrementAndGet()``");
+	}
+	 
+	serverLocator.setThreadPools(Executors.newSingleThreadExecutor(threadFactory), Executors.newSingleThreadScheduledExecutor(threadFactory));
+	*/
+	serverLocator.setThreadPools(Executors.newSingleThreadExecutor(), Executors.newSingleThreadScheduledExecutor());
+	
 	value sessionFactory = serverLocator.createSessionFactory();
 	
 	shared BrokerSender createSender(String queueName) {
@@ -46,13 +66,15 @@ shared final class BrokerClient() satisfies Destroyable  {
 }
 
 shared final class BrokerSender(ClientSession session, String queueName) satisfies Destroyable  {
-	
+	value lock = ObtainableLock(); 
 	value producer = session.createProducer(SimpleString(queueName));
 	
 	shared void send(Object json) {
-		value queueMessage = session.createMessage(true);
-		queueMessage.bodyBuffer.writeString(json.string);
-		producer.send(queueMessage);
+		try (lock) {
+			value queueMessage = session.createMessage(true);
+			queueMessage.bodyBuffer.writeString(json.string);
+			producer.send(queueMessage);
+		}
 	}
 	
 	shared actual void destroy(Throwable? error) {
@@ -61,10 +83,11 @@ shared final class BrokerSender(ClientSession session, String queueName) satisfi
 }
 
 shared final class BrokerConsumer(ClientSession session, String queueName, void consume(Object json)) satisfies Destroyable  {
+	value lock = ObtainableLock(); 
 	value consumer = session.createConsumer(SimpleString(queueName));
 	
 	void handleMessage(ClientMessage message) {
-		try {
+		try (lock) {
 			value body = message.bodyBuffer.readString();
 			if (is Object json = parse(body)) {
 				consume(json);
