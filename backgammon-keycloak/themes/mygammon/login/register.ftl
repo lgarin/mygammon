@@ -19,13 +19,22 @@
                 </div>
             </div>
           </#if>
-
+					
             <div class="${properties.kcFormGroupClass!} ${messagesPerField.printIfExists('email',properties.kcFormGroupErrorClass!)}">
                 <div class="${properties.kcLabelWrapperClass!}">
                     <label for="email" class="${properties.kcLabelClass!}">${msg("email")}</label>
                 </div>
                 <div class="${properties.kcInputWrapperClass!}">
-                    <input type="text" id="email" class="${properties.kcInputClass!}" name="email" value="${(register.formData.email!'')?html}" />
+                    <input type="email" id="email" class="${properties.kcInputClass!}" name="email" value="${(register.formData.email!'')?html}" />
+                </div>
+            </div>
+						
+						<div class="${properties.kcFormGroupClass!} ${messagesPerField.printIfExists('birthdate',properties.kcFormGroupErrorClass!)}">
+                <div class="${properties.kcLabelWrapperClass!}">
+                    <label for="birthdate" class="${properties.kcLabelClass!}">${msg("birthdate")}</label>
+                </div>
+                <div class="${properties.kcInputWrapperClass!}">
+                    <input type="date" id="birthdate" class="${properties.kcInputClass!}" name="birthdate" value="${(register.formData.birthdate!'')?html}" />
                 </div>
             </div>
 
@@ -51,8 +60,10 @@
 
             <#if recaptchaRequired??>
             <div class="form-group">
+								<div class="${properties.kcLabelWrapperClass!}">
+								</div>
                 <div class="${properties.kcInputWrapperClass!}">
-                    <div class="g-recaptcha" data-size="compact" data-sitekey="${recaptchaSiteKey}"></div>
+                    <div class="g-recaptcha" data-size="normal" data-sitekey="${recaptchaSiteKey}"></div>
                 </div>
             </div>
             </#if>

@@ -1,5 +1,5 @@
 .login-pf body {
-    background: #0f0f0f url("../img/Fotolia_78753360_Subscription_Monthly_XL.jpg") top left no-repeat;
+    background: #0f0f0f url("../img/background.jpg") top left no-repeat;
     background-size: cover;
 }
 
@@ -80,7 +80,7 @@ a#kc-current-locale-link::after {
 		position: absolute;
     top: 50px;
     right: 50px;
-    background-image: url("../img/Fotolia_100444370_Subscription_Monthly_M.jpg");
+    background-image: url("../img/logo.jpg");
     background-repeat: no-repeat;
 		background-size: 100% 100%;
     height: 138px;
@@ -330,4 +330,22 @@ ol#kc-totp-settings li:first-of-type {
         padding-top: 10px;
         bottom: 12%;
     }
+}
+
+.checkbox-checked {
+		background-image: url("../img/checked_checkbox.png");
+    background-repeat: no-repeat;
+		background-size: 100% 100%;
+    height: 26px;
+    width: 26px;
+		cursor: pointer;
+}
+
+.checkbox-unchecked {
+		background-image: url("../img/unchecked_checkbox.png");
+		background-repeat: no-repeat;
+		background-size: 100% 100%;
+		height: 26px;
+		width: 26px;
+		cursor: pointer;
 }
