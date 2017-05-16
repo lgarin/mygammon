@@ -1,0 +1,6 @@
+{
+    "themes": [{
+        "name" : "mygammon",
+        "types": [ "login" ]
+    }]
+}

@@ -1,6 +1,5 @@
 package backgammon.keycloak;
 
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,30 +19,22 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.UserModel.RequiredAction;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.validation.Validation;
 
-public class RegistrationBirthdate implements FormAction, FormActionFactory {
+public class RegistrationEmail implements FormAction, FormActionFactory {
 	
 	public static final String PROVIDER_ID = "registration-profile-action";
-	
-	public static final String FIELD_BIRTHDATE = "birthdate";
-	public static final String MISSING_BIRTHDATE = "missingBirthdateMessage";
-	public static final String INVALID_BIRTHDATE = "invalidBirthdateMessage";
-	public static final String AGE_REQUIEREMENT = "minimumAgeMessage";
-	
-	public static final int MINIMUM_AGE = 18;
-	
-	private BirthdateCheck birthdateCheck = new BirthdateCheck();
 			  
 	 public FormAction create(KeycloakSession session) {
 	        return this;
 	    }
 
 	    public String getDisplayType() {
-	        return "Birthdate Validation";
+	        return "Email Validation";
 	    }
 
 		public void init(Scope config) {
@@ -57,7 +48,7 @@ public class RegistrationBirthdate implements FormAction, FormActionFactory {
 		}
 
 		public String getReferenceCategory() {
-			return "Birthdate";
+			return "Email";
 		}
 
 		public boolean isConfigurable() {
@@ -76,7 +67,7 @@ public class RegistrationBirthdate implements FormAction, FormActionFactory {
 		}
 
 		public String getHelpText() {
-			return "Validate birthdate and email";
+			return "Validate email";
 		}
 
 		public List<ProviderConfigProperty> getConfigProperties() {
@@ -102,18 +93,6 @@ public class RegistrationBirthdate implements FormAction, FormActionFactory {
         	errors.add(new FormMessage(RegistrationPage.FIELD_EMAIL, Messages.MISSING_EMAIL));
         }
 
-        if (Validation.isBlank(formData.getFirst((FIELD_BIRTHDATE)))) {
-            errors.add(new FormMessage(FIELD_BIRTHDATE, MISSING_BIRTHDATE));
-        }
-        
-        try {
-        	if (!birthdateCheck.hasMinimumAge(formData.getFirst(FIELD_BIRTHDATE), MINIMUM_AGE)) {
-        		errors.add(new FormMessage(FIELD_BIRTHDATE, AGE_REQUIEREMENT));
-        	}
-        } catch (DateTimeParseException e) {
-        	errors.add(new FormMessage(FIELD_BIRTHDATE, INVALID_BIRTHDATE));
-        }
-        
         if (errors.size() > 0) {
             context.error(Errors.INVALID_REGISTRATION);
             context.validationError(formData, errors);
@@ -124,8 +103,8 @@ public class RegistrationBirthdate implements FormAction, FormActionFactory {
 
 	public void success(FormContext context) {
 		UserModel user = context.getUser();
-        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        user.setSingleAttribute(FIELD_BIRTHDATE, birthdateCheck.reformat(formData.getFirst(FIELD_BIRTHDATE)));
+        user.addRequiredAction(RequiredAction.TERMS_AND_CONDITIONS);
+        user.addRequiredAction(RequiredAction.UPDATE_PROFILE);
 	}
 
 	public boolean requiresUser() {

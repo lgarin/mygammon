@@ -69,7 +69,7 @@
 							<outputDirectory>C:/Dev/wildfly-10.1.0.Final/themes/mygammon</outputDirectory>
 							<resources>
 								<resource>
-									<directory>themes/mygammon</directory>
+									<directory>src/main/resources/theme/mygammon</directory>
 									<filtering>false</filtering>
 								</resource>
 							</resources>

@@ -29,15 +29,6 @@
                 </div>
             </div>
 						
-						<div class="${properties.kcFormGroupClass!} ${messagesPerField.printIfExists('birthdate',properties.kcFormGroupErrorClass!)}">
-                <div class="${properties.kcLabelWrapperClass!}">
-                    <label for="birthdate" class="${properties.kcLabelClass!}">${msg("birthdate")}</label>
-                </div>
-                <div class="${properties.kcInputWrapperClass!}">
-                    <input type="date" id="birthdate" class="${properties.kcInputClass!}" name="birthdate" value="${(register.formData.birthdate!'')?html}" />
-                </div>
-            </div>
-
             <#if passwordRequired>
             <div class="${properties.kcFormGroupClass!} ${messagesPerField.printIfExists('password',properties.kcFormGroupErrorClass!)}">
                 <div class="${properties.kcLabelWrapperClass!}">
