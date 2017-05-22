@@ -2,9 +2,6 @@ import backgammon.server.util {
 	ObtainableLock
 }
 
-import ceylon.interop.java {
-	javaClass
-}
 import ceylon.json {
 	Object,
 	parse
@@ -18,7 +15,6 @@ import java.util.concurrent {
 }
 
 import org.apache.activemq.artemis.api.core {
-	TransportConfiguration,
 	SimpleString
 }
 import org.apache.activemq.artemis.api.core.client {
@@ -26,13 +22,13 @@ import org.apache.activemq.artemis.api.core.client {
 	ClientMessage,
 	ClientSession
 }
-import org.apache.activemq.artemis.core.remoting.impl.invm {
-	InVMConnectorFactory
+
+import backgammon.server {
+	ServerConfiguration
 }
 
-shared final class BrokerClient() satisfies Destroyable  {
-	value connectorFactoryName = javaClass<InVMConnectorFactory>().canonicalName;
-	value serverLocator = ActiveMQClient.createServerLocatorWithoutHA(TransportConfiguration(connectorFactoryName));
+shared final class BrokerClient(ServerConfiguration config) satisfies Destroyable  {
+	value serverLocator = ActiveMQClient.createServerLocator(config.brokerUrl);
 	
 	// TODO revisit with ceylon 1.3.3
 	/*

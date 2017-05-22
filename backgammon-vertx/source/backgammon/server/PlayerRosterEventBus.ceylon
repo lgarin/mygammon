@@ -20,14 +20,26 @@ import io.vertx.ceylon.core {
 final class PlayerRosterEventBus(Vertx vertx) {
 	
 	value eventBus = JsonEventBus(vertx);
-
+	
 	shared void sendInboundMessage<OutputMessage>(PlayerRosterInboundMessage message, void responseHandler(Throwable|OutputMessage response)) given OutputMessage satisfies PlayerRosterOutboundMessage {
 		value formattedMessage = formatPlayerRosterMessage(message); 
 		eventBus.sendMessage(formattedMessage, "PlayerRosterMessage", parsePlayerRosterOutboundMessage, responseHandler);
 	}
+	/*
+	function forwardMessage(Object json) {
+		value message = parsePlayerRosterInboundMessage(json);
+		if (exists message) {
+			sendInboundMessage(message, noop);
+		}
+		throw Exception("Invalid PlayerRosterInboundMessage");
+	}
 	
+	value brokerSender = brokerClient.createSender("test");
+	value brokerReceiver = brokerClient.createConsumer("test", forwardMessage)
+	*/
 	shared void queueInputMessage(PlayerRosterInboundMessage message) {
 		// TODO use a persistent queue
+		//brokerSender.send(message.toJson());
 		vertx.runOnContext(() => sendInboundMessage(message, noop));
 	}
 

@@ -2,9 +2,6 @@ import backgammon.server {
 	GameRoomRoutingContext,
 	GameRoomEventBus
 }
-import backgammon.server.room {
-	RoomConfiguration
-}
 import backgammon.shared {
 	FindMatchTableMessage,
 	PlayerInfo,
@@ -28,19 +25,19 @@ import io.vertx.ceylon.web {
 	Router
 }
 
-final class GameRoomRouterFactory(Vertx vertx, RoomConfiguration roomConfig) {
+final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig) {
 	
 	value roomEventBus = GameRoomEventBus(vertx);
 	value repoEventBus = PlayerRosterEventBus(vertx);
-	value authClient = KeycloakAuthClient(vertx, roomConfig);
+	value authClient = KeycloakAuthClient(vertx, serverConfig);
 	
 	void enterRoom(RoutingContext routingContext, PlayerInfo playerInfo, PlayerStatistic playerStat) {
 		value context = GameRoomRoutingContext(routingContext);
-		roomEventBus.sendInboundMessage(EnterRoomMessage(playerInfo.playerId, RoomId(roomConfig.roomId), playerInfo, playerStat), void (Throwable|RoomActionResponseMessage result) {
+		roomEventBus.sendInboundMessage(EnterRoomMessage(playerInfo.playerId, RoomId(serverConfig.roomId), playerInfo, playerStat), void (Throwable|RoomActionResponseMessage result) {
 			if (is Throwable result) {
 				routingContext.fail(result);
 			} else {
-				context.sendRedirect("/room/``roomConfig.roomId``");
+				context.sendRedirect("/room/``serverConfig.roomId``");
 			}
 		});
 	}
@@ -52,7 +49,7 @@ final class GameRoomRouterFactory(Vertx vertx, RoomConfiguration roomConfig) {
 			if (is Throwable result) {
 				routingContext.fail(result);
 			} else {
-				value playerLevel = result.statistic.computeLevel(roomConfig.scoreLevels);
+				value playerLevel = result.statistic.computeLevel(serverConfig.scoreLevels);
 				enterRoom(routingContext, playerInfo.withLevel(playerLevel), result.statistic);
 			}
 		});
@@ -109,16 +106,16 @@ final class GameRoomRouterFactory(Vertx vertx, RoomConfiguration roomConfig) {
 	void handleLogout(RoutingContext routingContext) {
 		value context = GameRoomRoutingContext(routingContext);
 		if (exists playerInfo = context.getCurrentPlayerId(false)) {
-			roomEventBus.sendInboundMessage(LeaveRoomMessage(PlayerId(playerInfo.id), RoomId(roomConfig.roomId)), void (Anything response) {
+			roomEventBus.sendInboundMessage(LeaveRoomMessage(PlayerId(playerInfo.id), RoomId(serverConfig.roomId)), void (Anything response) {
 				authClient.logout(routingContext, void (Boolean success) {
 					if (success) {
 						context.clearUser();
-						context.sendRedirect(roomConfig.homeUrl);
+						context.sendRedirect(serverConfig.homeUrl);
 					}
 				});
 			});
 		} else {
-			context.sendRedirect(roomConfig.homeUrl);
+			context.sendRedirect(serverConfig.homeUrl);
 		}
 	}
 

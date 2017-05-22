@@ -2,11 +2,12 @@
 source=source
 resource=resource
 suppresswarning=deprecation
+no-osgi=true
 
 [defaults]
 flatclasspath=true
 encoding=Cp1252
-autoexportmavendependencies=true
+autoexportmavendependencies=false
 overrides=overrides.xml
 fullyexportmavendependencies=false
 

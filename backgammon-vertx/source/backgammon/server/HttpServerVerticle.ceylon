@@ -1,7 +1,3 @@
-import backgammon.server.room {
-	RoomConfiguration
-}
-
 import ceylon.logging {
 	logger
 }
@@ -25,12 +21,11 @@ final class HttpServerVerticle() extends Verticle() {
 	variable HttpServer? server = null;
 	
 	shared actual void start() {
-		value roomConfig = RoomConfiguration(config);
-		//value authRouterFactory = KeycloakAuthRouterFactory(vertx, roomConfig.hostname, roomConfig.port);
+		value serverConfig = ServerConfiguration(config);
+		//value authRouterFactory = KeycloakAuthRouterFactory(vertx, serverConfig.hostname, serverConfig.port);
 		value router = routerFactory.router(vertx);
 		
-		
-		//router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(roomConfig.userSessionTimeout.milliseconds));
+		//router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(serverConfig.userSessionTimeout.milliseconds));
 		
 		router.route("/logs/*").handler(staticHandler.create("logs").setCachingEnabled(false).setDirectoryListing(true).handle);
 		router.route("/static/*").handler(staticHandler.create("static").handle);
@@ -40,18 +35,18 @@ final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/api", GameRoomRestApi(vertx).createRouter());
 		
 		//router.mountSubRouter("/", authRouterFactory.createLoginRouter());
-		router.mountSubRouter("/", GameRoomRouterFactory(vertx, roomConfig).createRouter());
+		router.mountSubRouter("/", GameRoomRouterFactory(vertx, serverConfig).createRouter());
 		
-		server = vertx.createHttpServer().requestHandler(router.accept).listen(roomConfig.port);
+		server = vertx.createHttpServer().requestHandler(router.accept).listen(serverConfig.port);
 		
-		log.info("Started webserver : http://``roomConfig.hostname``:``roomConfig.port``");
+		log.info("Started webserver : http://``serverConfig.hostname``:``serverConfig.port``");
 	}
 	
 	shared actual void stop() {
-		value roomConfig = RoomConfiguration(config);
+		value serverConfig = ServerConfiguration(config);
 		if (exists currentServer = server) {
 			currentServer.close();
 		}
-		log.info("Stopped webserver : http://``roomConfig.hostname``:``roomConfig.port``");
+		log.info("Stopped webserver : http://``serverConfig.hostname``:``serverConfig.port``");
 	}
 }

@@ -1,9 +1,6 @@
 import backgammon.server.roster {
 	JsonPlayerRoster
 }
-import backgammon.server.room {
-	RoomConfiguration
-}
 
 import ceylon.logging {
 	logger
@@ -18,22 +15,22 @@ final class JsonRepositoryVerticle() extends Verticle() {
 	value log = logger(`package`);
 	
 	shared actual void start() {
-		value roomConfig = RoomConfiguration(config);
-		value repository = JsonPlayerRoster(roomConfig);
-		repository.readData(roomConfig.repositoryFile);
+		value serverConfig = ServerConfiguration(config);
+		value repository = JsonPlayerRoster(serverConfig);
+		repository.readData(serverConfig.repositoryFile);
 		_playerRepository = repository;
 		value repoEventBus = PlayerRosterEventBus(vertx);
 		repoEventBus.registerConsumer(repository.processInputMessage);
-		log.info("Started repository : ``roomConfig.repositoryFile``");
+		log.info("Started repository : ``serverConfig.repositoryFile``");
 		log.info(repository.statistic.string);
 	}
 	
 	shared actual void stop() {
-		value roomConfig = RoomConfiguration(config);
+		value serverConfig = ServerConfiguration(config);
 		if (exists repository = _playerRepository) {
-			repository.writeData(roomConfig.repositoryFile);
+			repository.writeData(serverConfig.repositoryFile);
 			log.info(repository.statistic.string);
 		}
-		log.info("Stopped repository : ``roomConfig.repositoryFile``");
+		log.info("Stopped repository : ``serverConfig.repositoryFile``");
 	}
 }

@@ -1,28 +1,20 @@
-import io.vertx.ceylon.core {
+import ceylon.json {
+	Object
+}
 
+import io.vertx.ceylon.core {
 	Vertx
 }
 import io.vertx.ceylon.core.buffer {
-
 	Buffer
 }
-import io.vertx.ceylon.web {
-
-	RoutingContext
-}
 import io.vertx.ceylon.core.http {
-
 	HttpClientResponse,
 	HttpClientOptions,
 	HttpClient
 }
-import backgammon.server.room {
-
-	RoomConfiguration
-}
-import ceylon.json {
-
-	Object
+import io.vertx.ceylon.web {
+	RoutingContext
 }
 
 final class KeycloakUserInfo(Object json) {
@@ -31,7 +23,7 @@ final class KeycloakUserInfo(Object json) {
 }
 
 
-final class KeycloakAuthClient(Vertx vertx, RoomConfiguration configuration) {
+final class KeycloakAuthClient(Vertx vertx, ServerConfiguration configuration) {
 
 	value baseUrl = "``configuration.keycloakUrl``/realms/``configuration.keycloakRealm``/protocol/openid-connect";
 
