@@ -57,7 +57,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, shared Inte
 			return false;
 		} else if (playerQueue.defines(player.id)) {
 			return false;
-		} else if (player.joinTable(this)) {
+		} else if (player.joinTable(id)) {
 			messageBroadcaster(JoinedTableMessage(player.id, id, player.info));
 			playerQueue.put(player.id, player);
 			return true;

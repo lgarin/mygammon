@@ -35,7 +35,7 @@ class PlayerTest() {
 	
 	test
 	shared void checkNewPlayer() {
-		assert (!player.table exists);
+		assert (!player.tableId exists);
 		assert (!player.match exists);
 		assert (!player.isPlaying());
 		assert (player.isInactiveSince(now()));
@@ -51,14 +51,14 @@ class PlayerTest() {
 
 	test
 	shared void joinChoosenTable() {
-		value result = player.joinTable(table);
+		value result = player.joinTable(table.id);
 		assert (result);
 		assert (player.isAtTable(table.id));
 	}
 	
 	test
 	shared void leaveTableWithoutMatch() {
-		player.joinTable(table);
+		player.joinTable(table.id);
 		value result = player.leaveTable(table.id);
 		assert (result);
 		assert (!player.isAtTable(table.id));
@@ -104,7 +104,7 @@ class PlayerTest() {
 	
 	test
 	shared void notPlayingWithoutMatch() {
-		player.joinTable(table);
+		player.joinTable(table.id);
 		value result = player.isPlaying();
 		assert (!result);
 	}
@@ -134,7 +134,7 @@ class PlayerTest() {
 	shared void cannotJoinMatchWithUnsufficiantBalance() {
 		value player = makePlayer("player0");
 		player.placeBet(initialBalance);
-		player.joinTable(table);
+		player.joinTable(table.id);
 		value match = Match(player, makePlayer("other"), table, matchPot, messageList.add);
 		value result = player.joinMatch(match);
 		assert (!result);

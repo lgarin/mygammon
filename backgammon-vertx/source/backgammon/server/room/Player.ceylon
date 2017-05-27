@@ -15,12 +15,12 @@ import ceylon.time {
 
 final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatistic) {
 	
-	variable Table? _table = null;
+	variable TableId? _tableId = null;
 	variable Match? _previousMatch = null;
 	variable Match? _match = null;
 	variable Instant lastActivity = Instant(0);
 
-	shared Table? table => _table;
+	shared TableId? tableId => _tableId;
 	shared Match? match => _match;
 	shared PlayerId id = PlayerId(info.id);
 	
@@ -28,9 +28,9 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 	
 	shared PlayerStatistic statistic => _statistic;
 	shared Integer balance => _statistic.balance;
-	shared PlayerState state => PlayerState(info, _statistic, table?.id, match?.id);
+	shared PlayerState state => PlayerState(info, _statistic, _tableId, match?.id);
 
-	shared Boolean isAtTable(TableId tableId) => table?.id?.equals(tableId) else false;
+	shared Boolean isAtTable(TableId tableId) => _tableId?.equals(tableId) else false;
 	
 	shared Boolean isInMatch(MatchId matchId) => match?.id?.equals(matchId) else false;
 	
@@ -40,13 +40,13 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 		} else if (!isAtTable(tableId)) {
 			return false;
 		} else {
-			_table = null;
+			_tableId = null;
 			return true;
 		}
 	}
 	
 	void unregisterOldMatch(Match currentMatch) {
-		if (exists currentTable = table, currentTable.id == currentMatch.tableId) {
+		if (exists currentTableId = _tableId, currentTableId == currentMatch.tableId) {
 			_previousMatch = null;
 		} else {
 			_previousMatch = currentMatch;
@@ -54,18 +54,18 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 		_match = null;
 	}
 
-	shared Boolean joinTable(Table newTable) {
+	shared Boolean joinTable(TableId newTableId) {
 		if (isPlaying()) {
 			return false;
-		} else if (exists currentTable = table) {
-			if (currentTable.id == newTable.id) {
+		} else if (exists currentTableId = _tableId) {
+			if (currentTableId == newTableId) {
 				return true;
-			} if (!leaveTable(currentTable.id)) {
+			} if (!leaveTable(currentTableId)) {
 				return false;
 			}
 		}
 		
-		_table = newTable;
+		_tableId = newTableId;
 		if (exists currentMatch = _match) {
 			unregisterOldMatch(currentMatch);
 		}

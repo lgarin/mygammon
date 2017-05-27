@@ -170,6 +170,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			if (message.current) {
 				return TableStateResponseMessage(message.playerId, message.tableId, table.matchState, table.queueState, true);
 			} else {
+				// TODO replace with a MatchStateRequestMessage
 				return TableStateResponseMessage(message.playerId, message.tableId, player.findRecentMatchState(table.id), table.queueState, true);
 			}
 		} else {

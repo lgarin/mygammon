@@ -97,7 +97,7 @@ final shared class Room(shared String roomId, shared RoomSize maxSize, shared Ma
 	}
 	
 	shared Boolean removePlayer(Player player) {
-		if (exists table = player.table) {
+		if (exists tableId = player.tableId, exists table = findTable(tableId)) {
 			updatedPlayers.add(player);
 			table.removePlayer(player);
 			createMatch(table);
@@ -139,9 +139,9 @@ final shared class Room(shared String roomId, shared RoomSize maxSize, shared Ma
 	}
 	
 	shared Table? findMatchTable(Player player) {
-		if (exists table = player.table) {
+		if (exists tableId = player.tableId, exists table = findTable(tableId)) {
 			return table;
-		} else if (!player.table exists) {
+		} else if (!player.tableId exists) {
 			return sitPlayer(player);
 		} else {
 			return null;
@@ -149,7 +149,7 @@ final shared class Room(shared String roomId, shared RoomSize maxSize, shared Ma
 	}
 	
 	shared Table? findEmptyTable(Player player) {
-		if (exists table = player.table) {
+		if (exists tableId = player.tableId, exists table = findTable(tableId)) {
 			if (player.isPlaying()) {
 				return null;
 			} else if (table.queueSize == 1) {
@@ -159,7 +159,7 @@ final shared class Room(shared String roomId, shared RoomSize maxSize, shared Ma
 			} else {
 				return null;
 			}
-		} else if (!player.table exists) {
+		} else if (!player.tableId exists) {
 			return openTable(player);
 		} else {
 			return null;
