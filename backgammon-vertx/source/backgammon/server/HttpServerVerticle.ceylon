@@ -22,10 +22,10 @@ final class HttpServerVerticle() extends Verticle() {
 	
 	shared actual void start() {
 		value serverConfig = ServerConfiguration(config);
-		//value authRouterFactory = KeycloakAuthRouterFactory(vertx, serverConfig.hostname, serverConfig.port);
+		value authRouterFactory = KeycloakAuthRouterFactory(vertx, serverConfig.hostname, serverConfig.port);
 		value router = routerFactory.router(vertx);
 		
-		//router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(serverConfig.userSessionTimeout.milliseconds));
+		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(serverConfig.userSessionTimeout.milliseconds));
 		
 		router.route("/logs/*").handler(staticHandler.create("logs").setCachingEnabled(false).setDirectoryListing(true).handle);
 		router.route("/static/*").handler(staticHandler.create("static").handle);
@@ -34,7 +34,7 @@ final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/eventbus", GameRoomEventBus(vertx).createEventBusRouter());
 		router.mountSubRouter("/api", GameRoomRestApi(vertx).createRouter());
 		
-		//router.mountSubRouter("/", authRouterFactory.createLoginRouter());
+		router.mountSubRouter("/", authRouterFactory.createLoginRouter());
 		router.mountSubRouter("/", GameRoomRouterFactory(vertx, serverConfig).createRouter());
 		
 		server = vertx.createHttpServer().requestHandler(router.accept).listen(serverConfig.port);
