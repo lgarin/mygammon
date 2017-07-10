@@ -35,7 +35,7 @@ final class KeycloakAuthRouterFactory(Vertx vertx, String hostname, Integer port
 		
 		function createOAuth2() {
 			if (is Object config = JsonFile("resource/keycloak.json").readContent()) {
-				return oAuth2Auth.createKeycloak(vertx, "CLIENT", config);
+				return oAuth2Auth.createKeycloak(vertx, "AUTH_CODE", config);
 			} else {
 				throw Exception("Cannot parse resource/keycloak.json");
 			}
@@ -62,7 +62,7 @@ final class KeycloakAuthRouterFactory(Vertx vertx, String hostname, Integer port
 			if (exists currentCallbackRoute = callbackRoute) {
 				authHandler.setupCallback(currentCallbackRoute);
 			}
-			return authHandler.addAuthority("profile");
+			return authHandler.addAuthority("openid");
 		}
 		
 		shared Router createUserSessionRouter(Integer sessionTimeout) {

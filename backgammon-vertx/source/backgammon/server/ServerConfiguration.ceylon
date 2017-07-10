@@ -10,7 +10,7 @@ import ceylon.time {
 	Duration
 }
 shared final class ServerConfiguration(Object? json) extends RoomConfiguration(json) {
-	shared String keycloakRealm = json?.getStringOrNull("keycloakRealm") else "mygammon";
+	shared String keycloakRealm = json?.getStringOrNull("keycloakRealm") else "MyGammon";
 	shared String keycloakUrl = json?.getStringOrNull("keycloakUrl") else "http://localhost:8080/auth";
 	
 	shared String neo4jUrl = json?.getStringOrNull("neo4jUrl") else "bolt://localhost:7687";

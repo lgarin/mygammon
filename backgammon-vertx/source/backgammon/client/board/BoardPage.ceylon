@@ -4,7 +4,8 @@ import backgammon.client {
 }
 import backgammon.client.browser {
 	HTMLElement,
-	window
+	window,
+	document
 }
 import backgammon.shared {
 	RoomResponseMessage,
@@ -27,15 +28,12 @@ import backgammon.shared {
 	RoomId
 }
 
-import ceylon.regex {
-	regex
-}
 import ceylon.time {
 	now
 }
 shared class BoardPage() extends BasePage() {
 	variable TableId? tableId = null;
-	value gui = BoardGui(window.document);
+	value gui = BoardGui(document);
 	variable TableClient? tableClient = null;
 	variable String? draggedElementStyle = null;
 	variable EventBusClient? tableEventClient = null;
@@ -43,8 +41,8 @@ shared class BoardPage() extends BasePage() {
 	
 	function extractTableId() {
 		if (!tableId exists) {
-			value match = regex("/room/(\\w+)/table/(\\d+)").find(window.location.href);
-			if (exists match, exists roomId = match.groups[0], exists table = match.groups[1]) {
+			value url = window.location.href;
+			if (exists roomId = splitString(url, "/room/", "/table/"), exists table = splitString(url, "/table/")) {
 				if (exists tableIndex = parseInteger(table)) {
 					tableId = TableId(roomId, tableIndex);
 				} 

@@ -4,5 +4,8 @@
   "ssl-required": "none",
   "resource": "game",
   "public-client": true,
-  "use-resource-role-mappings": true
+  "use-resource-role-mappings": true,
+  "credentials": {
+  	"secret": "3a52730b-feb8-4114-a2bd-fa0db43d5f2c"
+  }
 }

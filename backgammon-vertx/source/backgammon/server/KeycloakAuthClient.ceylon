@@ -18,7 +18,7 @@ import io.vertx.ceylon.web {
 }
 
 final class KeycloakUserInfo(Object json) {
-	shared String displayName = json.getString("username");
+	shared String displayName = json.getString("preferred_username");
 	shared String userId => json.getString("sub");
 }
 

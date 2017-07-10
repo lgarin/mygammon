@@ -3,7 +3,7 @@ shared dynamic Window {
     
     //shared formal WindowProxy window;
     //shared formal WindowProxy self;
-    shared formal Document document;
+    //shared formal Document document;
     shared formal variable String name;
     shared formal Location location;
     //shared formal History history;

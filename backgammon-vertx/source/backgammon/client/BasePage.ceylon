@@ -1,7 +1,8 @@
 import backgammon.client.browser {
-	Event,
 	window,
-	newXMLHttpRequest
+	document,
+	newXMLHttpRequest,
+	Event
 }
 import backgammon.shared {
 	systemPlayerId,
@@ -43,12 +44,10 @@ import ceylon.json {
 	Object,
 	parse
 }
-import ceylon.regex {
-	regex
-}
 import ceylon.time {
 	now
 }
+
 abstract shared class BasePage() {
 	
 	variable PlayerId? playerId = null;
@@ -73,6 +72,17 @@ abstract shared class BasePage() {
 		}
 	}
 	
+	shared String? splitString(String input, String lowerDelimiter, String? upperDelimiter = null) {
+		value lowerPosition = input.firstInclusion(lowerDelimiter);
+		if (exists lowerPosition) {
+			value upperPosition =  if (exists upperDelimiter) then input.firstInclusion(upperDelimiter, lowerPosition + lowerDelimiter.size) else input.size;
+			if (exists upperPosition) {
+				return input.substring(lowerPosition + lowerDelimiter.size, upperPosition);
+			}
+		}
+		return null;
+	}
+	
 	shared void onServerMessage(String messageString) {
 		print(messageString);
 		if (is Object json = parse(messageString)) {
@@ -92,6 +102,7 @@ abstract shared class BasePage() {
 	
 	shared void makeApiRequest(String url) {
 		value request = newXMLHttpRequest();
+		print(url);
 		request.open("GET", url, true);
 		request.send();
 		request.onload = void (Event event) {
@@ -107,8 +118,9 @@ abstract shared class BasePage() {
 	
 	shared PlayerId? extractPlayerId() {
 		if (!playerId exists) {
-			value match = regex("playerId=([^\\;\\s]+)").find(window.document.cookie);
-			if (exists match, exists id = match.groups[0]) {
+			if (exists id = splitString(document.cookie, "playerId=", "; ")) {
+				playerId = PlayerId(id);
+			} else if (exists id = splitString(document.cookie, "playerId=")) {
 				playerId = PlayerId(id);
 			}
 		}

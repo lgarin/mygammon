@@ -182,6 +182,11 @@ shared interface DocumentReadyState {
 
 //shared Document document => window.document;
 
+shared Document document {
+	dynamic {
+		return eval("document");
+	}
+}
 
 // to disambiguate document.open
 /*
