@@ -50,7 +50,9 @@ shared class RoomPage() extends BasePage() {
 	
 	function extractRoomId() {
 		if (!roomId exists) {
-			if (exists id = splitString(window.location.href, "/room/")) {
+			if (exists id = splitString(window.location.href, "/room/", "#")) {
+				roomId = RoomId(id);
+			} else if (exists id = splitString(window.location.href, "/room/")) {
 				roomId = RoomId(id);
 			}
 		}

@@ -155,10 +155,6 @@
 					        	<label id="whitePlayerName"></label>
 					        	<span class="white-small-checker"></span>
 					         </div>
-							 <div class="player-picture">
-					         	<img id="whitePlayerImage" src="/static/images/unknown.png"/>
-					         	<span class="white-small-checker"></span>
-					         </div>
 					         <div>
 					         	<span class="glyphicon player-busy" id="whitePlayerActivity"></span>
 					         	<label id="whitePlayerTimer">Loading...</label>
@@ -170,10 +166,6 @@
 					         	<span id="blackPlayerLevel" class="player-level level-1"></span>
 					        	<label id="blackPlayerName"></label>
 					        	<span class="black-small-checker"></span>
-					         </div>
-					         <div class="player-picture">
-					         	<img id="blackPlayerImage" src="/static/images/unknown.png"/>
-					         	<span class="black-small-checker"></span>
 					         </div>
 					         <div>
 					         	<span class="glyphicon player-busy" id="blackPlayerActivity"></span>
@@ -297,13 +289,13 @@
 		<script type="text/html" id="player-row-template">
 			<tr class="player-row">
 				<td class="player-name">
-					<img data-src="pictureUrl"></img>
+					<span data-class="levelClass"></span>
 					<a style="margin-left:10px" data-content="name" href="#"></a>
 					<div class="dialog-statistic" title="Statistic" style="display: none">
 						<table>
 							<tr>
-								<td class="col-xs-3"><img data-src="pictureUrl"></td>
-								<td class="col-xs-9"><h2 data-content="name"></h2></td>
+								<td class="col-xs-3"><span data-class="levelClass"></span></td>
+								<td class="col-xs-9"><h3 data-content="name"></h3></td>
 							</tr>
 						</table>
 						<table>

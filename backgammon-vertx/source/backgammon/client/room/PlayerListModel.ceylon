@@ -36,7 +36,8 @@ class PlayerListModel(String hiddenClass) {
 		} else {
 			buttonClass = hiddenClass;
 		}
-		return Object {"id" -> state.info.id, "name" -> state.info.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "pictureUrl" -> state.info.level, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "lost" -> state.statistic.lostPercentage, "games" -> state.statistic.playedGames, "balance" -> state.statistic.balance};
+		value levelClass = if (exists level = state.info.level) then "player-level level-``level``" else "hidden";
+		return Object {"id" -> state.info.id, "name" -> state.info.name, "buttonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "levelClass" -> levelClass, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "lost" -> state.statistic.lostPercentage, "games" -> state.statistic.playedGames, "balance" -> state.statistic.balance};
 	}
 	
 	shared TableId? findTable(PlayerId playerId) {

@@ -204,22 +204,6 @@
 
 }
 
-.player-picture {
-	 margin-top: 10px;
-	 margin-bottom: 25px;
-	 padding:5px;
-	 height:105px;
-	 width:105px;
-}
-
-.player-unknown {
-	padding: 100px 100px 0px 0px;
-	background-image: url("../images/unknown.png");
-	background-size:auto;
-	width:0px;
-	height: 0px;
-}
-
 .player-busy::before {
 	content: "\231b";
 }
@@ -229,30 +213,61 @@
 }
 
 .white-small-checker {
-	position:relative;
-	bottom:30px;
-	left: 20px;
-    display: inline-block;
-    width: 50px;
-    min-width: 50px;
-    height: 50px;
-    min-height: 50px;
+	display: inline-block;
+    width: 25px;
+    min-width: 25px;
+    height: 25px;
+    min-height: 25px;
     background-image: url("../images/checkers.png");
     background-size: 100% 200%;
     margin-bottom: -6px;
 }
 
 .black-small-checker {    
-	position:relative;
-	bottom:30px;
-	left: 20px;
     display: inline-block;
-    width: 50px;
-    min-width: 50px;
-    height: 50px;
-    min-height: 50px;
+    width: 25px;
+    min-width: 25px;
+    height: 25px;
+    min-height: 25px;
     background-image: url("../images/checkers.png");
     background-size: 100% 200%;
-    background-position: 0px 50px;
+    background-position: 0px 25px;
     margin-bottom: -6px;
 }
+
+.player-level {
+    display: inline-block;
+    width: 37px;
+    min-width: 37px;
+    height: 22px;
+    min-height: 22px;
+    background-image: url("../images/levels.png");
+    background-size: 222px 22px;
+    margin-bottom: -6px;
+}
+
+.level-0 {
+    background-position: 0px 0px;
+}
+
+
+.level-1 {
+    background-position: -37px 0px;
+}
+
+.level-2 {
+    background-position: -74px 0px;
+}
+
+.level-3 {
+    background-position: -111px 0px;
+}
+
+.level-4 {
+    background-position: -148px 0px;
+}
+
+.level-5 {
+    background-position: -185px 0px;
+}
+

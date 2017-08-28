@@ -42,7 +42,7 @@ shared class BoardPage() extends BasePage() {
 	function extractTableId() {
 		if (!tableId exists) {
 			value url = window.location.href;
-			if (exists roomId = splitString(url, "/room/", "/table/"), exists table = splitString(url, "/table/")) {
+			if (exists roomId = splitString(url, "/room/", "/table/"), exists table = splitString(url, "/table/", "/") else splitString(url, "/table/")) {
 				if (exists tableIndex = parseInteger(table)) {
 					tableId = TableId(roomId, tableIndex);
 				} 

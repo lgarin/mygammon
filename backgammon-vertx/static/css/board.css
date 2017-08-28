@@ -342,7 +342,7 @@ body {
 }
 
 .player-level {
-    position: absolute;
+    display: inline-block;
     width: 75px;
     min-width: 75px;
     height: 45px;
@@ -350,30 +350,31 @@ body {
     background-image: url("../images/levels.png");
 }
 
-.level-1 {
+.level-0 {
     background-position: -75px 0px;
 }
 
-.level-2 {
+.level-1 {
     background-position: -150px 0px;
 }
 
-.level-3 {
+.level-2 {
     background-position: -225px 0px;
 }
 
-.level-4 {
+.level-3 {
     background-position: -300px 0px;
 }
 
-.level-5 {
+.level-4 {
     background-position: -375px 0px;
 }
 
+.level-5 {
+    background-position: -450px 0px;
+}
+
 .white-small-checker {
-	position:relative;
-	bottom:30px;
-	left: 20px;
     display: inline-block;
     width: 50px;
     min-width: 50px;
@@ -385,9 +386,6 @@ body {
 }
 
 .black-small-checker {    
-	position:relative;
-	bottom:30px;
-	left: 20px;
     display: inline-block;
     width: 50px;
     min-width: 50px;

@@ -71,7 +71,7 @@ shared dynamic NonElementParentNode {
 }
 
 shared dynamic ParentNode {
-	shared formal HTMLCollection children;
+	//shared formal HTMLCollection children;
 	shared formal Element? firstElementChild;
 	shared formal Element? lastElementChild;
 	shared formal Integer childElementCount;
