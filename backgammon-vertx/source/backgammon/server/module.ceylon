@@ -2,6 +2,7 @@ native("jvm")
 module backgammon.server "2.0.0" {
 	shared import java.base "8";
 	shared import maven:"org.apache.logging.log4j:log4j-api" "2.8.2";
+	shared import maven:"org.apache.logging.log4j:log4j-core" "2.8.2";
 	import maven:"org.apache.activemq:artemis-commons" "2.0.0";
 	import maven:"org.apache.activemq:artemis-core-client" "2.0.0";
 	import maven:"org.neo4j.driver:neo4j-java-driver" "1.3.0";
