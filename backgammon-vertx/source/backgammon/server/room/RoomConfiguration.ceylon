@@ -23,7 +23,7 @@ shared class RoomConfiguration(Object? json) extends GameConfiguration(json) {
 	shared Integer maxPlayerMessageRate = json?.getIntegerOrNull("maxPlayerMessageRate") else 10;
 	shared Duration balanceIncreaseDelay = Duration(json?.getIntegerOrNull("balanceIncreaseDelay") else 24 * 60 * 60 * 1000);
 	shared Integer balanceIncreaseAmount = json?.getIntegerOrNull("balanceIncreaseAmount") else initialPlayerBalance / 2;
-	shared [Integer*] scoreLevels = (json?.getArrayOrNull("scoreLevels") else [100, 1000, 10000, 10000]).narrow<Integer>().sequence();
+	shared [Integer*] scoreLevels = (json?.getArrayOrNull("scoreLevels") else [100, 250, 500, 1000, 2000, 5000]).narrow<Integer>().sequence();
 	shared RoomSize roomSize => RoomSize(maxTableCount, maxPlayerCount);
 	shared MatchBet matchBet => MatchBet(playerBet, matchPot);
 }

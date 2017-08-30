@@ -206,10 +206,12 @@
 
 .player-busy::before {
 	content: "\231b";
+	margin-left: 10px;
 }
 
 .player-ready::before {
 	content: "\e013";
+	margin-left: 10px;
 }
 
 .white-small-checker {
@@ -221,6 +223,7 @@
     background-image: url("../images/checkers.png");
     background-size: 100% 200%;
     margin-bottom: -6px;
+    margin-left: 6px;
 }
 
 .black-small-checker {    
@@ -233,6 +236,7 @@
     background-size: 100% 200%;
     background-position: 0px 25px;
     margin-bottom: -6px;
+    margin-left: 6px;
 }
 
 .player-level {

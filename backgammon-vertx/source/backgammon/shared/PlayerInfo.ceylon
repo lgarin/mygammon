@@ -30,7 +30,7 @@ shared final class PlayerInfo(shared String id, shared String name, shared Integ
 
 	string => toJson().string;
 	
-	shared PlayerInfo withLevel(Integer level) => PlayerInfo(id, name, level);
+	shared PlayerInfo withLevel(Integer? level) => PlayerInfo(id, name, level);
 }
 
 shared PlayerInfo parsePlayerInfo(JsonObject json) {
