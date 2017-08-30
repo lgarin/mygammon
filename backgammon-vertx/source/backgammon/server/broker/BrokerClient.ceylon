@@ -26,12 +26,19 @@ import org.apache.activemq.artemis.api.core.client {
 import backgammon.server {
 	ServerConfiguration
 }
+import java.util.concurrent.atomic {
+
+	AtomicInteger
+}
+import java.lang {
+
+	Runnable,
+	Thread
+}
 
 shared final class BrokerClient(ServerConfiguration config) satisfies Destroyable  {
 	value serverLocator = ActiveMQClient.createServerLocator(config.brokerUrl);
 	
-	// TODO revisit with ceylon 1.3.3
-	/*
 	value threadCounter = AtomicInteger();
 	 
 	function threadFactory(Runnable runnable) {
@@ -39,8 +46,6 @@ shared final class BrokerClient(ServerConfiguration config) satisfies Destroyabl
 	}
 	 
 	serverLocator.setThreadPools(Executors.newSingleThreadExecutor(threadFactory), Executors.newSingleThreadScheduledExecutor(threadFactory));
-	*/
-	serverLocator.setThreadPools(Executors.newSingleThreadExecutor(), Executors.newSingleThreadScheduledExecutor());
 	
 	value sessionFactory = serverLocator.createSessionFactory();
 	
