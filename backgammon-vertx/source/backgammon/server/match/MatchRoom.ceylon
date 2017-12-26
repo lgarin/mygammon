@@ -245,15 +245,14 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	
 	shared MatchRoomStatistic statistic {
 		try (lock) {
-			value freeTableCount = room.freeTableCount;
 			return MatchRoomStatistic {
 				roomId = room.id;
 				activePlayerCount = room.playerCount;
 				maxPlayerCount = room.maxPlayerCount;
 				totalPlayerCount = room.createdPlayerCount;
-				freeTableCount = freeTableCount;
-				busyTableCount = room.maxSize.tableCount - freeTableCount;
+				busyTableCount = room.busyTableCount;
 				maxTableCount = room.maxTableCount;
+				totalTableCount = room.createdTableCount;
 				activeMatchCount = room.matchCount;
 				maxMatchCount = room.maxMatchCount;
 				totalMatchCount = room.createdMatchCount;

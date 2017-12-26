@@ -1,7 +1,23 @@
 <overrides>
 	<set module="ceylon.json" version="1.3.3"/>
 	<set module="ceylon.collection" version="1.3.3"/>
-	<artifact groupId="org.apache.logging.log4j" artifactId="log4j-api" version="2.8.2">
-		<add groupId="org.apache.logging.log4j" artifactId="log4j-core" version="2.8.2"/>
-	</artifact>
+	<add groupId="org.apache.logging.log4j" artifactId="log4j-core" version="2.8.2"/>
+
+    <module module="io.vertx.lang.ceylon" version="3.5.0.Beta1">
+    	<remove module="io.vertx.vertx-core"/>
+    	<remove module="com.redhat.ceylon.compiler.java"/>
+    	<remove module="com.redhat.ceylon.tool.provider"/>
+	</module>
+    <module module="io.vertx.ceylon.core" version="3.5.0.Beta1">
+    	<remove module="io.vertx.vertx-core"/>
+	</module>
+    <module module="io.vertx.ceylon.web" version="3.5.0.Beta1">
+    	<remove module="io.vertx.vertx-web"/>
+	</module>
+	<module module="io.vertx.ceylon.auth.common" version="3.5.0.Beta1">
+    	<remove module="io.vertx.vertx-auth-common"/>
+	</module>
+	<module module="io.vertx.ceylon.auth.oauth2" version="3.5.0.Beta1">
+    	<remove module="io.vertx.vertx-auth-oauth2"/>
+	</module>
 </overrides>

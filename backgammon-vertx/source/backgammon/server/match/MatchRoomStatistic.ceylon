@@ -4,12 +4,12 @@ import backgammon.shared {
 
 shared final class MatchRoomStatistic(
 		shared RoomId roomId,
-		shared Integer activePlayerCount, shared Integer maxPlayerCount, shared Integer totalPlayerCount,
-		shared Integer freeTableCount, shared Integer maxTableCount, shared Integer busyTableCount, 
-		shared Integer activeMatchCount, shared Integer maxMatchCount, shared Integer totalMatchCount) {
+		shared Integer activePlayerCount = 0, shared Integer maxPlayerCount = 0, shared Integer totalPlayerCount =  0,
+		shared Integer busyTableCount = 0, shared Integer maxTableCount = 0, shared Integer totalTableCount = 0, 
+		shared Integer activeMatchCount = 0, shared Integer maxMatchCount = 0, shared Integer totalMatchCount = 0) {
 	
 	value players = "players:``activePlayerCount``/``maxPlayerCount``/``totalPlayerCount``";
-	value tables = "tables:``busyTableCount``/``maxTableCount``/``busyTableCount + freeTableCount``";
+	value tables = "tables:``busyTableCount``/``maxTableCount``/``totalTableCount``";
 	value matches = "matches:``activeMatchCount``/``maxMatchCount``/``totalMatchCount``";
 	
 	string = "``players`` ``tables`` ``matches``";

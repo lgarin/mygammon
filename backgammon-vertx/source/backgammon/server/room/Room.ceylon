@@ -21,7 +21,7 @@ import ceylon.time {
 	Instant
 }
 
-final shared class Room(shared String roomId, shared RoomSize maxSize, shared MatchBet matchBet, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
+final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet matchBet, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
 	shared RoomId id = RoomId(roomId);
 	
@@ -41,40 +41,34 @@ final shared class Room(shared String roomId, shared RoomSize maxSize, shared Ma
 	
 	variable Integer _createdMatchCount = 0;
 	variable Integer _maxMatchCount = 0;
-	value matchMap = HashMap<MatchId, Match>(unlinked);
+	value matchMap = HashMap<MatchId, Match>(unlinked); // TODO remove and use the tableList or playerMap
 	
 	shared Integer createdMatchCount => _createdMatchCount;
 	shared Integer matchCount => matchMap.size;
-	shared Integer maxMatchCount {
-		if (_maxMatchCount < matchCount) {
-			_maxMatchCount = matchCount;
-		}
-		return _maxMatchCount;
-	}
+	shared Integer maxMatchCount => _maxMatchCount;
 	
 	shared Integer createdPlayerCount => _createdPlayerCount;
 	shared Integer playerCount => playerMap.size;
-	shared Integer maxPlayerCount {
-		if (_maxPlayerCount < playerCount) {
-			_maxPlayerCount = playerCount;
-		}
-		return _maxPlayerCount;
-	}
+	shared Integer maxPlayerCount=> _maxPlayerCount;
 	shared Integer busyPlayerCount => playerMap.count((element) => element.item.isPlaying());
 	
-	shared Integer freeTableCount => tableList.count((table) => table.queueSize == 0);
-	shared Integer maxTableCount {
-		value busyTableCount = maxSize.tableCount - freeTableCount;
-		if (_maxTableCount < busyTableCount) {
-			_maxTableCount = busyTableCount;
-		}
-		return _maxTableCount;
+	shared Integer createdTableCount => tableList.size;
+	shared Integer busyTableCount => tableList.count((table) => table.queueSize > 0);
+	shared Integer maxTableCount => _maxTableCount;
+	
+	void updateTableCount() {
+		_maxTableCount = max([_maxTableCount, busyTableCount]);
+	}
+	
+	void updateMatchCount() {
+		_createdMatchCount++;
+		_maxMatchCount = max([_maxMatchCount, matchMap.size]);
 	}
 	
 	shared Boolean createMatch(Table table) {
 		if (exists match = table.newMatch(matchBet.matchPot)) {
-			_createdMatchCount++;
 			matchMap.put(match.id, match);
+			updateMatchCount();
 			return true;
 		} else {
 			return false;
@@ -83,6 +77,7 @@ final shared class Room(shared String roomId, shared RoomSize maxSize, shared Ma
 
 	function openTable(Player player) {
 		if (exists table = tableList.find((table) => table.queueSize == 0 && table.sitPlayer(player))) {
+			updateTableCount();
 			return table;
 		}
 		return null;
@@ -91,6 +86,7 @@ final shared class Room(shared String roomId, shared RoomSize maxSize, shared Ma
 	function sitPlayer(Player player) {
 		if (exists table = tableList.find((table) => table.queueSize == 1 && table.sitPlayer(player))) {
 			createMatch(table);
+			updateTableCount();
 			return table;
 		}
 		return openTable(player);
@@ -118,6 +114,11 @@ final shared class Room(shared String roomId, shared RoomSize maxSize, shared Ma
 		return result;
 	}
 	
+	void updatePlayerCount() {
+		_createdPlayerCount++;
+		_maxPlayerCount = max([_maxPlayerCount, playerMap.size]);
+	}
+	
 	shared Player? definePlayer(PlayerInfo info, PlayerStatistic statistic) {
 		if (exists player = findPlayer(PlayerId(info.id))) {
 			return player;
@@ -127,7 +128,7 @@ final shared class Room(shared String roomId, shared RoomSize maxSize, shared Ma
 			value player = Player(info, statistic);
 			playerMap.put(player.id, player);
 			newPlayers.add(player);
-			_createdPlayerCount++;
+			updatePlayerCount();
 			return player;
 		}
 	}

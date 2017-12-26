@@ -38,7 +38,7 @@ class RoomTest() {
 
 	test
 	shared void newRoomHasOnlyFreeTables() {
-		assert (room.freeTableCount == roomSize.tableCount);
+		assert (room.busyTableCount == 0);
 	}
 	
 	test

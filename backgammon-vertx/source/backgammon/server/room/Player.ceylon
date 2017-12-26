@@ -82,6 +82,7 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 		} else if (balance < currentMatch.playerBet) {
 			return false;
 		} else {
+			_previousMatch = _match;
 			_match = currentMatch;
 			return true;
 		}
