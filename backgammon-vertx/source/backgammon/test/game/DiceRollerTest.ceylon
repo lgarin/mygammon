@@ -18,10 +18,4 @@ class DiceRollerTest() {
 		assert (roll.secondValue <= 6);
 		assert (roll.secondValue >= 1);
 	}
-	
-	test
-	shared void rollUntilNotPair() {
-		value roll = diceRoller.rollUntilNotPair();
-		assert (!roll.isPair);
-	}
 }

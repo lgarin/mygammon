@@ -34,7 +34,7 @@ import io.vertx.ceylon.web {
 	Router
 }
 
-final class GameRoomEventBus(Vertx vertx) {
+final shared class GameRoomEventBus(Vertx vertx) {
 
 	value eventBus = JsonEventBus(vertx);
 

@@ -1,6 +1,5 @@
 import backgammon.server {
-	GameRoomRoutingContext,
-	GameRoomEventBus
+	GameRoomRoutingContext
 }
 import backgammon.shared {
 	FindMatchTableMessage,
@@ -24,12 +23,22 @@ import io.vertx.ceylon.web {
 	RoutingContext,
 	Router
 }
+import backgammon.server.remote {
+
+	KeycloakAuthClient,
+	KeycloakUserInfo
+}
+import backgammon.server.bus {
+
+	GameRoomEventBus,
+	PlayerRosterEventBus
+}
 
 final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig) {
 	
 	value roomEventBus = GameRoomEventBus(vertx);
 	value repoEventBus = PlayerRosterEventBus(vertx);
-	value authClient = KeycloakAuthClient(vertx, serverConfig);
+	value authClient = KeycloakAuthClient(vertx, serverConfig.keycloakLoginUrl);
 	
 	void enterRoom(RoutingContext routingContext, PlayerInfo playerInfo, PlayerStatistic playerStat) {
 		value context = GameRoomRoutingContext(routingContext);

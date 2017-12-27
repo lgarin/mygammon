@@ -1,7 +1,6 @@
 import ceylon.json {
 	Object
 }
-
 import io.vertx.ceylon.core {
 	Vertx
 }
@@ -16,16 +15,18 @@ import io.vertx.ceylon.core.http {
 import io.vertx.ceylon.web {
 	RoutingContext
 }
+import ceylon.logging {
+	logger
+}
 
-final class KeycloakUserInfo(Object json) {
+final shared class KeycloakUserInfo(Object json) {
 	shared String displayName = json.getString("preferred_username");
 	shared String userId => json.getString("sub");
 }
 
 
-final class KeycloakAuthClient(Vertx vertx, ServerConfiguration configuration) {
-
-	value baseUrl = "``configuration.keycloakUrl``/realms/``configuration.keycloakRealm``/protocol/openid-connect";
+final shared class KeycloakAuthClient(Vertx vertx, String baseUrl) {
+	value log = logger(`package`);
 
 	variable HttpClient? _httpClient = null;
 	
@@ -49,6 +50,7 @@ final class KeycloakAuthClient(Vertx vertx, ServerConfiguration configuration) {
 				if (res.statusCode() == 200) {
 					res.bodyHandler(bodyHandler);
 				} else {
+					log.warn("GET to ``url`` returned ``res.statusCode()`` : ``res.statusMessage()``");
 					bodyHandler(null);
 				}
 			}

@@ -9,6 +9,10 @@ import ceylon.logging {
 import io.vertx.ceylon.core {
 	Verticle
 }
+import backgammon.server.bus {
+
+	PlayerRosterEventBus
+}
 final class JsonRepositoryVerticle() extends Verticle() {
 	
 	variable JsonPlayerRoster? _playerRepository = null;

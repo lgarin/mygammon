@@ -14,6 +14,10 @@ import io.vertx.ceylon.web {
 import io.vertx.ceylon.web.handler {
 	staticHandler
 }
+import backgammon.server.bus {
+
+	GameRoomEventBus
+}
 
 final class HttpServerVerticle() extends Verticle() {
 	

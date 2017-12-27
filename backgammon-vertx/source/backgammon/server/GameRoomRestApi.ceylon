@@ -28,6 +28,10 @@ import io.vertx.ceylon.web {
 	Router,
 	RoutingContext
 }
+import backgammon.server.bus {
+
+	GameRoomEventBus
+}
 
 final class GameRoomRestApi(Vertx vertx) {
 	

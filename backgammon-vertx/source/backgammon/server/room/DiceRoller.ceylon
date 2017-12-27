@@ -15,13 +15,4 @@ shared final class DiceRoller() {
 	Integer rollOne() => lazyRandom.nextInt(5) + 1;
 	
 	shared DiceRoll roll() => DiceRoll(rollOne(), rollOne());
-	
-	shared DiceRoll rollUntilNotPair() {
-		while (true) {
-			value currentRoll = roll();
-			if (!currentRoll.isPair) {
-				return currentRoll;
-			}
-		}
-	}
 }

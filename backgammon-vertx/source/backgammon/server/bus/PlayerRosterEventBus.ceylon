@@ -17,7 +17,7 @@ import io.vertx.ceylon.core {
 	Vertx
 }
 
-final class PlayerRosterEventBus(Vertx vertx) {
+final shared class PlayerRosterEventBus(Vertx vertx) {
 	
 	value eventBus = JsonEventBus(vertx);
 	
