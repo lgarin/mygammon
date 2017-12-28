@@ -1,6 +1,7 @@
 import ceylon.json {
 	Object
 }
+
 import io.vertx.ceylon.core {
 	Vertx
 }
@@ -15,9 +16,6 @@ import io.vertx.ceylon.core.http {
 import io.vertx.ceylon.web {
 	RoutingContext
 }
-import ceylon.logging {
-	logger
-}
 
 final shared class KeycloakUserInfo(Object json) {
 	shared String displayName = json.getString("preferred_username");
@@ -26,7 +24,6 @@ final shared class KeycloakUserInfo(Object json) {
 
 
 final shared class KeycloakAuthClient(Vertx vertx, String baseUrl) {
-	value log = logger(`package`);
 
 	variable HttpClient? _httpClient = null;
 	
@@ -42,7 +39,7 @@ final shared class KeycloakAuthClient(Vertx vertx, String baseUrl) {
 		return _httpClient else (_httpClient = createHttpClient());
 	}
 	
-	void makeRestCall(String url, String token, void bodyHandler(Buffer? body)) {
+	void makeRestCall(String url, String token, void bodyHandler(Buffer|Exception body)) {
 		value request = httpClient.getAbs(url);
 		request.headers().add("Authorization", "Bearer ``token``");
 		request.handler {
@@ -50,47 +47,46 @@ final shared class KeycloakAuthClient(Vertx vertx, String baseUrl) {
 				if (res.statusCode() == 200) {
 					res.bodyHandler(bodyHandler);
 				} else {
-					log.warn("GET to ``url`` returned ``res.statusCode()`` : ``res.statusMessage()``");
-					bodyHandler(null);
+					bodyHandler(Exception("GET to ``url`` returned ``res.statusCode()`` : ``res.statusMessage()``"));
 				}
 			}
 		};
 		request.end();
 	}
 	
-	shared void fetchUserInfo(RoutingContext context, void handler(KeycloakUserInfo? userInfo)) {
+	shared void fetchUserInfo(RoutingContext context, void handler(KeycloakUserInfo|Exception result)) {
 		if (exists token = context.user()) {
 			makeRestCall {
 				url = "``baseUrl``/userinfo";
 				token = token.principal().getString("access_token");
-				void bodyHandler(Buffer? body) {
-					if (exists body) {
-						handler(KeycloakUserInfo(body.toJsonObject()));
+				void bodyHandler(Buffer|Exception result) {
+					if (is Buffer result) {
+						handler(KeycloakUserInfo(result.toJsonObject()));
 					} else {
-						handler(null);
+						handler(result);
 					}
 				}
 			};
 		} else {
-			handler(null);
+			handler(Exception("No login token available"));
 		}
 	}
 	
-	shared void logout(RoutingContext context, void handler(Boolean success)) {
+	shared void logout(RoutingContext context, void handler(Exception? error)) {
 		if (exists token = context.user()) {
 			makeRestCall {
 				url = "``baseUrl``/logout";
 				token = token.principal().getString("access_token");
-				void bodyHandler(Buffer? body) {
-					if (exists body) {
-						handler(true);
+				void bodyHandler(Buffer|Exception result) {
+					if (is Buffer result) {
+						handler(null);
 					} else {
-						handler(false);
+						handler(result);
 					}
 				}
 			};
 		} else {
-			handler(false);
+			handler(Exception("No login token available"));
 		}
 	}
 

@@ -1,3 +1,7 @@
+import backgammon.server.bus {
+	GameRoomEventBus,
+	PlayerRosterEventBus
+}
 import backgammon.server.game {
 	GameRoom
 }
@@ -18,19 +22,6 @@ import ceylon.time {
 import io.vertx.ceylon.core {
 	Verticle
 }
-import backgammon.server.remote {
-
-	ElasticSearchClient
-}
-import ceylon.json {
-
-	JsonObject
-}
-import backgammon.server.bus {
-
-	GameRoomEventBus,
-	PlayerRosterEventBus
-}
 
 class GameRoomVerticle() extends Verticle() {
 	
@@ -46,10 +37,9 @@ class GameRoomVerticle() extends Verticle() {
 	}
 
 	shared actual void start() {
-		value roomConfig = RoomConfiguration(config);
-		value repoEventBus = PlayerRosterEventBus(vertx);
+		value roomConfig = ServerConfiguration(config);
+		value repoEventBus = PlayerRosterEventBus(vertx, roomConfig);
 		value roomEventBus = GameRoomEventBus(vertx);
-		value eventStore = ElasticSearchClient(vertx, roomConfig.elasticIndexUrl);
 		
 		value matchRoom = MatchRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage, repoEventBus.queueInputMessage);
 		roomEventBus.registerInboundRoomMessageConsumer(roomConfig.roomId, matchRoom.processRoomMessage);
@@ -58,16 +48,6 @@ class GameRoomVerticle() extends Verticle() {
 		
 		value gameRoom = GameRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage);
 		roomEventBus.registerInboundGameMessageConsumer(roomConfig.roomId, roomConfig.gameThreadCount, gameRoom.processGameMessage);
-		
-		variable Integer counter = 0;
-		eventStore.processAllDocuments("statistic-``roomConfig.roomId``", 1000, noop, (nextId) {
-			 counter = nextId else 0;
-			 print(counter);
-			 vertx.setPeriodic(1000, (val) {
-			 	value currentTime = now();
-			 	eventStore.insertDocument("statistic-``roomConfig.roomId``", ++counter, JsonObject {"time" -> currentTime.millisecondsOfEpoch, "activeMatchCount" -> matchRoom.statistic.activeMatchCount}, (r) => print(r));
-			 });
-		});
 		
 		vertx.setPeriodic(roomConfig.serverAdditionalTimeout.milliseconds / 2, void (Integer val) {
 			value currentTime = now();

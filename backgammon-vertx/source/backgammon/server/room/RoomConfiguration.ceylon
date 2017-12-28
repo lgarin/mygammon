@@ -25,6 +25,4 @@ shared class RoomConfiguration(Object? json) extends GameConfiguration(json) {
 	shared [Integer*] scoreLevels = (json?.getArrayOrNull("scoreLevels") else [100, 250, 500, 1000, 2000, 5000]).narrow<Integer>().sequence();
 	shared RoomSize roomSize => RoomSize(maxTableCount, maxPlayerCount);
 	shared MatchBet matchBet => MatchBet(playerBet, matchPot);
-	
-	shared String elasticIndexUrl =  json?.getStringOrNull("elasticIndexUrl") else "http://localhost:9200/backgammon";
 }

@@ -2,8 +2,7 @@ import backgammon.server.room {
 	RoomConfiguration
 }
 import backgammon.server.util {
-	ObtainableLock,
-	JsonFile
+	ObtainableLock
 }
 import backgammon.shared {
 	PlayerRosterInboundMessage,
@@ -19,22 +18,17 @@ import backgammon.shared {
 import ceylon.collection {
 	HashMap
 }
-import ceylon.json {
-	Object,
-	Array
-}
 import ceylon.time {
 	now,
 	Instant
 }
-shared final class JsonPlayerRoster(RoomConfiguration config) {
+shared final class PlayerRoster(RoomConfiguration config) {
 	
 	value statisticMap = HashMap<PlayerId, PlayerRosterRecord>();
 	value lock = ObtainableLock();
 
 	function storeRecord(PlayerRosterRecord record) {
 		statisticMap.put(record.id, record);
-		// TODO store record in database
 		return PlayerStatisticOutputMessage(record.id, record.stat);
 	}
 	
@@ -53,7 +47,6 @@ shared final class JsonPlayerRoster(RoomConfiguration config) {
 	}
 
 	function loginPlayer(PlayerLoginMessage message) {
-		// TODO read record from database
 		if (exists oldRecord = statisticMap[message.playerId]) {
 			value timestamp = now();
 			if (oldRecord.login.mustCredit(timestamp)) {
@@ -81,29 +74,7 @@ shared final class JsonPlayerRoster(RoomConfiguration config) {
 			}
 		}
 	}
-	
-	function makeRosterEntry(Object json) {
-		value record = parsePlayerRosterRecord(json);
-		return record.id -> record;
-	}
-	
-	shared Integer readData(String filepath) {
-		try (lock) {
-			statisticMap.clear();
-			if (is Array data = JsonFile(filepath).readContent()) {
-				statisticMap.putAll(data.narrow<Object>().map(makeRosterEntry));
-			}
-			return statisticMap.size;
-		}
-	}
-	
-	shared Integer writeData(String filepath) {
-		try (lock) {
-			JsonFile(filepath).writeArray(statisticMap.items.map((i) => i.toJson()));
-			return statisticMap.size;
-		}
-	}
-	
+
 	shared PlayerRepositoryStatistic statistic {
 		try (lock) {
 			variable Integer gameCount = 0;

@@ -37,7 +37,7 @@ import backgammon.server.bus {
 final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig) {
 	
 	value roomEventBus = GameRoomEventBus(vertx);
-	value repoEventBus = PlayerRosterEventBus(vertx);
+	value repoEventBus = PlayerRosterEventBus(vertx, serverConfig);
 	value authClient = KeycloakAuthClient(vertx, serverConfig.keycloakLoginUrl);
 	
 	void enterRoom(RoutingContext routingContext, PlayerInfo playerInfo, PlayerStatistic playerStat) {
@@ -66,13 +66,13 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 	
 	void fetchUserInfo(RoutingContext routingContext) {
 		value context = GameRoomRoutingContext(routingContext);
-		void handler(KeycloakUserInfo? userInfo) {
-			if (exists userInfo) {
-				value playerInfo = PlayerInfo(userInfo.userId, userInfo.displayName);
+		void handler(KeycloakUserInfo|Exception result) {
+			if (is KeycloakUserInfo result) {
+				value playerInfo = PlayerInfo(result.userId, result.displayName);
 				completeLogin(routingContext, playerInfo);
 			} else {
 				context.clearUser();
-				context.fail(Exception("No info returned for current user"));
+				context.fail(result);
 			}
 		}
 		authClient.fetchUserInfo(routingContext, handler);
@@ -116,8 +116,10 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		value context = GameRoomRoutingContext(routingContext);
 		if (exists playerInfo = context.getCurrentPlayerId(false)) {
 			roomEventBus.sendInboundMessage(LeaveRoomMessage(PlayerId(playerInfo.id), RoomId(serverConfig.roomId)), void (Anything response) {
-				authClient.logout(routingContext, void (Boolean success) {
-					if (success) {
+				authClient.logout(routingContext, void (Exception? error) {
+					if (exists error) {
+						context.fail(error);
+					} else {
 						context.clearUser();
 						context.sendRedirect(serverConfig.homeUrl);
 					}
