@@ -37,7 +37,8 @@ import backgammon.shared {
 	OutboundRoomMessage,
 	OutboundTableMessage,
 	OutboundMatchMessage,
-	OutboundGameMessage
+	OutboundGameMessage,
+	QueueRollMessage
 }
 
 import ceylon.json {
@@ -141,6 +142,9 @@ abstract shared class BasePage() {
 			// ignore
 		}
 		case (is EndMatchMessage) {
+			// ignore
+		}
+		case (is QueueRollMessage) {
 			// ignore
 		}
 		case (is PlayerBeginMessage) {

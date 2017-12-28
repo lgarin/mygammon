@@ -1,9 +1,11 @@
-import backgammon.server.room {
-	DiceRoller
-}
+
 
 import ceylon.test {
 	test
+}
+import backgammon.server.dice {
+
+	DiceRoller
 }
 
 class DiceRollerTest() {

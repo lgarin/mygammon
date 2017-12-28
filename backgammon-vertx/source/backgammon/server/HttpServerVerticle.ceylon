@@ -3,7 +3,8 @@ import ceylon.logging {
 }
 
 import io.vertx.ceylon.core {
-	Verticle
+	Verticle,
+	Future
 }
 import io.vertx.ceylon.core.http {
 	HttpServer
@@ -24,7 +25,7 @@ final class HttpServerVerticle() extends Verticle() {
 	value log = logger(`package`);
 	variable HttpServer? server = null;
 	
-	shared actual void start() {
+	shared actual void startAsync(Future<Anything> startFuture) {
 		value serverConfig = ServerConfiguration(config);
 		value authRouterFactory = KeycloakAuthRouterFactory(vertx, serverConfig.hostname, serverConfig.port);
 		value router = routerFactory.router(vertx);
@@ -41,9 +42,15 @@ final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/", authRouterFactory.createLoginRouter());
 		router.mountSubRouter("/", GameRoomRouterFactory(vertx, serverConfig).createRouter());
 		
-		server = vertx.createHttpServer().requestHandler(router.accept).listen(serverConfig.port);
-		
-		log.info("Started webserver : http://``serverConfig.hostname``:``serverConfig.port``");
+		vertx.createHttpServer().requestHandler(router.accept).listen(serverConfig.port, (result) {
+			if (is HttpServer result) {
+				server = result;
+				log.info("Started webserver : http://``serverConfig.hostname``:``serverConfig.port``");
+				startFuture.complete();
+			} else {
+				startFuture.fail(result);
+			}
+		});
 	}
 	
 	shared actual void stop() {

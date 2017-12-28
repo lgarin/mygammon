@@ -15,7 +15,7 @@ import ceylon.time {
 
 shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage satisfies MatchMessage {}
 
-shared interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {}
+shared interface InboundGameMessage of StartGameMessage | QueueRollMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {}
 
 shared interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
 	shared formal CheckerColor playerColor;
@@ -27,6 +27,13 @@ shared final class StartGameMessage(shared actual MatchId matchId, shared actual
 }
 StartGameMessage parseStartGameMessage(Object json) {
 	return StartGameMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parsePlayerId(json.getString("opponentId")));
+}
+
+shared final class QueueRollMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared DiceRoll roll) satisfies InboundGameMessage {
+	toJson() => toExtendedJson({"rollValue1" -> roll.firstValue, "rollValue2" -> roll.secondValue});
+}
+QueueRollMessage parseQueueRollMessage(Object json) {
+	return QueueRollMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), DiceRoll(json.getInteger("rollValue1"), json.getInteger("rollValue2")));
 }
 
 shared final class InitialRollMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared Integer diceValue, shared DiceRoll roll, shared Duration maxDuration) satisfies OutboundGameMessage {

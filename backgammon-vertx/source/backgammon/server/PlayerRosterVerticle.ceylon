@@ -34,7 +34,6 @@ final class PlayerRosterVerticle() extends Verticle() {
 		log.info("Starting player roster");
 		repoEventBus.replayAllEvents(roster.processInputMessage, (result) {
 			if (is Exception result) {
-				log.fatal("Cannot restore player roster state", result);
 				startFuture.fail(result);
 			} else {
 				repoEventBus.registerConsumer(roster.processInputMessage);
