@@ -23,7 +23,7 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 	final class ReplayResult(shared Integer eventCount, shared Integer nextId) {
 	}
 	
-	void processAllDocuments(String type, void process(JsonObject document), void completion(ReplayResult|Exception result), Integer totalCount = 0, variable Integer maxId = 0) {
+	void processAllDocuments(String type, void process(JsonObject document), void completion(ReplayResult|Throwable result), Integer totalCount = 0, variable Integer maxId = 0) {
 		
 		function processPage({<Integer->JsonObject>*} page) {
 			variable value eventCount = 0;
@@ -39,7 +39,7 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 		}
 		
 		eventIndexClient.listDocuments(type, totalCount, replayPageSize, (result) {
-			if (is Exception result) {
+			if (is Throwable result) {
 				completion(result);
 			} else {
 				try {
@@ -88,8 +88,8 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 			});
 		}
 		
-		void storeNextId(ReplayResult|Exception result) {
-			if (is Exception result) {
+		void storeNextId(ReplayResult|Throwable result) {
+			if (is Throwable result) {
 				completion(result);
 			} else {
 				fetchCounter(result);

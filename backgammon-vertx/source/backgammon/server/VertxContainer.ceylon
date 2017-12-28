@@ -1,9 +1,8 @@
 import backgammon.server.util {
 	JsonFile
 }
-
 import ceylon.json {
-	JsonObject=Object
+	JsonObject
 }
 import ceylon.language.meta.declaration {
 	Module
@@ -23,7 +22,6 @@ import io.vertx.ceylon.core {
 	DeploymentOptions,
 	vertxFactory=vertx
 }
-
 import java.util.concurrent {
 	TimeUnit,
 	CountDownLatch
@@ -31,6 +29,7 @@ import java.util.concurrent {
 import java.util.concurrent.atomic {
 	AtomicInteger
 }
+
 final class VertxContainer(Module mod, String configFile, Duration startupShutdownTimeout = Duration(30 * 1000)) {
 	value log = logger(mod);
 	value container = vertxFactory.vertx();

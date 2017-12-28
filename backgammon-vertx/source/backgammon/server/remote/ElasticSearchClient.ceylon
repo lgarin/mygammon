@@ -32,8 +32,9 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 		return _httpClient else (_httpClient = createHttpClient());
 	}
 	
-	void put(String url, JsonObject document, void bodyHandler(Buffer|Exception result)) {
+	void put(String url, JsonObject document, void bodyHandler(Buffer|Throwable result)) {
 		value request = httpClient.putAbs(url);
+		request.exceptionHandler(bodyHandler);
 		request.headers().add("Content-Type", "application/json");
 		request.handler {
 			void handler(HttpClientResponse res) {
@@ -47,8 +48,9 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 		request.end(document.string);
 	}
 	
-	void get(String url, void bodyHandler(Buffer|Exception body)) {
+	void get(String url, void bodyHandler(Buffer|Throwable body)) {
 		value request = httpClient.getAbs(url);
+		request.exceptionHandler(bodyHandler);
 		request.handler {
 			void handler(HttpClientResponse res) {
 				if (res.statusCode() == 200) {
@@ -61,9 +63,9 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 		request.end();
 	}
 	
-	shared void insertDocument(String index, Integer id, JsonObject document, void handleResponse(Exception? result)) {
+	shared void insertDocument(String index, Integer id, JsonObject document, void handleResponse(Throwable? result)) {
 		put("``baseUrl``/``index``/doc/``idPadding+id``/_create", document, (result) {
-			if (is Exception result) {
+			if (is Throwable result) {
 				handleResponse(result);
 			} else {
 				handleResponse(null);
@@ -83,10 +85,10 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 		return response.getObjectOrNull("hits")?.getArrayOrNull("hits")?.flatMap(createIdDocumentEntry) else {};
 	}
 	
-	shared void listDocuments(String index, Integer offset, Integer maxCount, void handleResponse({<Integer->JsonObject>*}|Exception result)) {
+	shared void listDocuments(String index, Integer offset, Integer maxCount, void handleResponse({<Integer->JsonObject>*}|Throwable result)) {
 		value url = "``baseUrl``/``index``/doc/_search?sort=_id&from=``offset``&size=``maxCount``&filter_path=hits.hits._id,hits.hits._source";
 		get(url, (result) {
-			if (is Exception result) {
+			if (is Throwable result) {
 				handleResponse(result);
 			} else {
 				handleResponse(parseHits(result.toJsonObject()));

@@ -1,5 +1,3 @@
-
-
 import backgammon.server.room {
 	RoomConfiguration
 }

@@ -23,7 +23,7 @@ import io.vertx.ceylon.core {
 	Verticle
 }
 
-class GameRoomVerticle() extends Verticle() {
+final class GameRoomVerticle() extends Verticle() {
 	
 	variable String lastStatistic = "";
 	value log = logger(`package`);

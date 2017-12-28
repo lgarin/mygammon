@@ -4,15 +4,12 @@ import backgammon.server.bus {
 import backgammon.server.roster {
 	PlayerRoster
 }
-
 import ceylon.logging {
 	logger
 }
-
 import io.vertx.ceylon.core {
 	Verticle
 }
-
 
 final class PlayerRosterVerticle() extends Verticle() {
 	
@@ -31,11 +28,9 @@ final class PlayerRosterVerticle() extends Verticle() {
 	shared actual void start() {
 		value serverConfig = ServerConfiguration(config);
 		value roster = PlayerRoster(serverConfig);
-		
 		value repoEventBus = PlayerRosterEventBus(vertx, serverConfig);
 		
 		log.info("Starting player roster");
-		
 		repoEventBus.replayAllEvents(roster.processInputMessage, (result) {
 			if (is Exception result) {
 				log.fatal("Cannot restore player roster state", result);
@@ -43,7 +38,7 @@ final class PlayerRosterVerticle() extends Verticle() {
 			} else {
 				repoEventBus.registerConsumer(roster.processInputMessage);
 				
-				vertx.setPeriodic(1000, void (Integer val) {
+				vertx.setPeriodic(serverConfig.rosterStatisticInterval.milliseconds, void (Integer val) {
 					handleStatistic(roster);
 				});
 				

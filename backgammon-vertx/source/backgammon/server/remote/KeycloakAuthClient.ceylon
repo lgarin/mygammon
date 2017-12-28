@@ -39,8 +39,9 @@ final shared class KeycloakAuthClient(Vertx vertx, String baseUrl) {
 		return _httpClient else (_httpClient = createHttpClient());
 	}
 	
-	void makeRestCall(String url, String token, void bodyHandler(Buffer|Exception body)) {
+	void makeRestCall(String url, String token, void bodyHandler(Buffer|Throwable body)) {
 		value request = httpClient.getAbs(url);
+		request.exceptionHandler(bodyHandler);
 		request.headers().add("Authorization", "Bearer ``token``");
 		request.handler {
 			void handler(HttpClientResponse res) {
@@ -54,12 +55,12 @@ final shared class KeycloakAuthClient(Vertx vertx, String baseUrl) {
 		request.end();
 	}
 	
-	shared void fetchUserInfo(RoutingContext context, void handler(KeycloakUserInfo|Exception result)) {
+	shared void fetchUserInfo(RoutingContext context, void handler(KeycloakUserInfo|Throwable result)) {
 		if (exists token = context.user()) {
 			makeRestCall {
 				url = "``baseUrl``/userinfo";
 				token = token.principal().getString("access_token");
-				void bodyHandler(Buffer|Exception result) {
+				void bodyHandler(Buffer|Throwable result) {
 					if (is Buffer result) {
 						handler(KeycloakUserInfo(result.toJsonObject()));
 					} else {
@@ -72,12 +73,12 @@ final shared class KeycloakAuthClient(Vertx vertx, String baseUrl) {
 		}
 	}
 	
-	shared void logout(RoutingContext context, void handler(Exception? error)) {
+	shared void logout(RoutingContext context, void handler(Throwable? error)) {
 		if (exists token = context.user()) {
 			makeRestCall {
 				url = "``baseUrl``/logout";
 				token = token.principal().getString("access_token");
-				void bodyHandler(Buffer|Exception result) {
+				void bodyHandler(Buffer|Throwable result) {
 					if (is Buffer result) {
 						handler(null);
 					} else {

@@ -66,7 +66,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 	
 	void fetchUserInfo(RoutingContext routingContext) {
 		value context = GameRoomRoutingContext(routingContext);
-		void handler(KeycloakUserInfo|Exception result) {
+		void handler(KeycloakUserInfo|Throwable result) {
 			if (is KeycloakUserInfo result) {
 				value playerInfo = PlayerInfo(result.userId, result.displayName);
 				completeLogin(routingContext, playerInfo);
@@ -116,7 +116,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		value context = GameRoomRoutingContext(routingContext);
 		if (exists playerInfo = context.getCurrentPlayerId(false)) {
 			roomEventBus.sendInboundMessage(LeaveRoomMessage(PlayerId(playerInfo.id), RoomId(serverConfig.roomId)), void (Anything response) {
-				authClient.logout(routingContext, void (Exception? error) {
+				authClient.logout(routingContext, void (Throwable? error) {
 					if (exists error) {
 						context.fail(error);
 					} else {
