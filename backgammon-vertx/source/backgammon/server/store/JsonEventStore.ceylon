@@ -96,7 +96,15 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 			}
 		}
 		
-		processAllDocuments(type, parseAndProcess, storeNextId);
+		eventIndexClient.checkIndexExistence(type, (result) {
+			if (is Throwable result) {
+				completion(result);
+			} else if (result) {
+				processAllDocuments(type, parseAndProcess, storeNextId);
+			} else {
+				completion(0);
+			}
+		});
 	}
 	
 	shared void storeEvent(String type, JsonObject event, void handler(Throwable? error)) {

@@ -8,7 +8,8 @@ import ceylon.logging {
 	logger
 }
 import io.vertx.ceylon.core {
-	Verticle
+	Verticle,
+	Future
 }
 
 final class PlayerRosterVerticle() extends Verticle() {
@@ -25,7 +26,7 @@ final class PlayerRosterVerticle() extends Verticle() {
 		}
 	}
 	
-	shared actual void start() {
+	shared actual void startAsync(Future<Anything> startFuture) {
 		value serverConfig = ServerConfiguration(config);
 		value roster = PlayerRoster(serverConfig);
 		value repoEventBus = PlayerRosterEventBus(vertx, serverConfig);
@@ -34,7 +35,7 @@ final class PlayerRosterVerticle() extends Verticle() {
 		repoEventBus.replayAllEvents(roster.processInputMessage, (result) {
 			if (is Exception result) {
 				log.fatal("Cannot restore player roster state", result);
-				// TODO how to handle this?
+				startFuture.fail(result);
 			} else {
 				repoEventBus.registerConsumer(roster.processInputMessage);
 				
@@ -43,6 +44,7 @@ final class PlayerRosterVerticle() extends Verticle() {
 				});
 				
 				log.info("Replayed ``result`` events in player roster");
+				startFuture.complete();
 			}
 		});
 	}
