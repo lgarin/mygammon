@@ -27,8 +27,7 @@ import backgammon.shared {
 	InboundGameMessage,
 	InboundMatchMessage,
 	EndMatchMessage,
-	systemPlayerId,
-	QueueRollMessage
+	systemPlayerId
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -267,10 +266,6 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		case (is GameStateRequestMessage) {
 			return GameStateResponseMessage(matchId, message.playerId, playerColor, game.state);
 		}
-		case (is QueueRollMessage) {
-			// TODO add roll
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, true);
-		}
 	}
 	
 	void doSoftTimeout(Instant currentTime) {
@@ -332,11 +327,6 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 			try (lock) {
 				// TODO cannot determine color
 				return GameStateResponseMessage(matchId, message.playerId, player1Color, game.state);
-			}
-		} else if (is QueueRollMessage message) {
-			try (lock) {
-				// TODO add roll
-				return GameActionResponseMessage(matchId, message.playerId, player1Color, true);
 			}
 		} else if (exists color = toPlayerColor(message.playerId)) {
 			Instant currentTime = now();

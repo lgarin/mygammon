@@ -8,9 +8,11 @@ import java.security {
 
 shared final class DiceRoller() {
 	
-	value random = SecureRandom();
+	variable SecureRandom? random = null;
 	
-	function rollOne() => random.nextInt(5) + 1;
+	value lazyRandom => random else (random = SecureRandom());
+	
+	function rollOne() => lazyRandom.nextInt(5) + 1;
 	
 	shared DiceRoll roll() => DiceRoll(rollOne(), rollOne());
 }
