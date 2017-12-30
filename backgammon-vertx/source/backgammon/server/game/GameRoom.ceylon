@@ -57,7 +57,7 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		}
 	}
 	
-	function getAllGamerMangers() {
+	function getAllGameManagers() {
 		try (lock) {
 			return managerMap.items.clone();
 		}
@@ -79,7 +79,7 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	}
 	
 	shared void periodicCleanup(Instant currentTime) {
-		for (game in getAllGamerMangers()) {
+		for (game in getAllGameManagers()) {
 			if (game.ended) {
 				removeGameManager(game);
 			} else {
