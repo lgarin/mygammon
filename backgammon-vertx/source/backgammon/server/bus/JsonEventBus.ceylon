@@ -26,8 +26,10 @@ import io.vertx.ceylon.web.handler.sockjs {
 
 final class JsonEventBus(Vertx vertx) {
 	
+	value log = logger(`package`);
+	
 	shared void sendMessage<OutboundMessage>(Object message, String address, Anything parseOutboundMessage(Object json), void responseHandler(Throwable|OutboundMessage response)) {
-		logger(`package`).info(message.string);
+		log.info("Req ``message.string``");
 		vertx.eventBus().send(address, message, void (Throwable|Message<Object?> result) {
 			if (is Throwable result) {
 				responseHandler(result);
@@ -48,9 +50,10 @@ final class JsonEventBus(Vertx vertx) {
 					},
 					void (Throwable|Object|Null result) {
 						if (is Throwable result) {
-							logger(`package`).error("Failed processing for ``message.body() else message``", result);
+							log.error("Failed processing for ``message.body() else message``", result);
 							message.fail(500, "Processing error: ``result.message``");
 						} else if (is Object result) {
+							log.info("Reply ``result.string``");
 							message.reply(result);
 						}
 					});
@@ -65,9 +68,10 @@ final class JsonEventBus(Vertx vertx) {
 			if (exists body = message.body()) {
 				try { 
 					value result = process(body);
+					log.info("Res ``result.string``");
 					message.reply(result);
 				} catch (Exception exception) {
-					logger(`package`).error("Failed processing for ``message.body() else message``", exception);
+					log.error("Failed processing for ``message.body() else message``", exception);
 					message.fail(500, "Processing error: ``exception.message``");
 				}
 			} else {
@@ -77,7 +81,7 @@ final class JsonEventBus(Vertx vertx) {
 	}
 	
 	shared void publishMessage(Object message, String address) {
-		logger(`package`).info(message.string);
+		log.info("Pub ``message.string``");
 		vertx.eventBus().publish(address, message);
 	}
 		

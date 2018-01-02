@@ -73,15 +73,7 @@ shared class Game() {
 			return false;
 		}
 	}
-	
-	shared Boolean mustMakeMove(CheckerColor playerColor) {
-		if (exists color = currentColor) {
-			return color == playerColor; 
-		} else {
-			return false;
-		}
-	}
-	
+
 	shared Boolean canUndoMoves(CheckerColor playerColor) {
 		if (exists color = currentColor, color == playerColor) {
 			return !currentMoves.empty && remainingUndo > 0;

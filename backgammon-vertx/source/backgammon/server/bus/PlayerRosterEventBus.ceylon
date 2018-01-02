@@ -1,3 +1,9 @@
+import backgammon.server {
+	ServerConfiguration
+}
+import backgammon.server.store {
+	JsonEventStore
+}
 import backgammon.shared {
 	PlayerRosterOutboundMessage,
 	PlayerRosterInboundMessage,
@@ -9,20 +15,9 @@ import backgammon.shared {
 import ceylon.json {
 	JsonObject
 }
-import ceylon.logging {
-	logger
-}
 
 import io.vertx.ceylon.core {
 	Vertx
-}
-import backgammon.server.store {
-
-	JsonEventStore
-}
-import backgammon.server {
-
-	ServerConfiguration
 }
 
 final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configuration) {
@@ -48,9 +43,7 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 	shared void registerConsumer(PlayerRosterOutboundMessage process(PlayerRosterInboundMessage request)) {
 		eventBus.registerConsumer("PlayerRosterMessage", function (JsonObject msg) {
 			if (exists request = parsePlayerRosterInboundMessage(msg)) {
-				value response = formatPlayerRosterMessage(process(request));
-				logger(`package`).info(response.string);
-				return response;
+				return formatPlayerRosterMessage(process(request));
 			} else {
 				throw Exception("Invalid request: ``msg``");
 			}

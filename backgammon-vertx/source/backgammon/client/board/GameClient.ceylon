@@ -56,7 +56,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
-	variable [MakeMoveMessage|EndTurnMessage|TakeTurnMessage*] nextActions = [];
+	variable [PlayerBeginMessage|MakeMoveMessage|EndTurnMessage|TakeTurnMessage*] nextActions = [];
 	
 	void addDelayedGameMessage(InboundGameMessage message, Duration delay) {
 		delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(message, delay));
@@ -124,7 +124,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		
 		if (!exists playerColor) {
 			gui.showCurrentPlayer(currentColor);
-		} else if (game.mustMakeMove(playerColor)) {
+		} else if (game.isCurrentColor(playerColor)) {
 			gui.showCurrentPlayer(playerColor);
 		} else {
 			gui.showCurrentPlayer(null);
@@ -160,7 +160,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		
 		if (exists color = playerColor, game.mustRollDice(color)) {
 			gui.showSubmitButton(gui.rollTextKey);
-		} else if (exists color = playerColor, game.mustMakeMove(color)) {
+		} else if (exists color = playerColor, game.isCurrentColor(color)) {
 			gui.showSubmitButton();
 		} else {
 			gui.hideSubmitButton();
@@ -200,6 +200,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	function showPlayerReady(PlayerReadyMessage message) {
 		if (game.begin(message.playerColor)) {
 			gui.showPlayerMessage(message.playerColor, gui.readyTextKey, false);
+			nextActions = [PlayerBeginMessage(message.matchId, message.playerId)];
 			return true;
 		} else {
 			return false;
@@ -207,13 +208,17 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	function showTurnStart(StartTurnMessage message) {
+		
+		if (nextActions.narrow<PlayerBeginMessage>().empty) {
+			if (game.isCurrentColor(message.playerColor)) {
+				game.takeTurn(message.playerColor);
+			} else {
+				game.endTurn(message.playerColor.oppositeColor);
+			}
+		}
+		
 		delayedMessage = [];
 		nextActions = [];
-		if (game.isCurrentColor(message.playerColor)) {
-			game.takeTurn(message.playerColor);
-		} else {
-			game.endTurn(message.playerColor.oppositeColor);
-		}
 		
 		if (game.beginTurn(message.playerColor, message.roll, message.maxDuration, message.maxUndo)) {
 			showTurnDices(message.roll, message.playerColor);
@@ -242,7 +247,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	function showPlayedMove(PlayedMoveMessage message) {
 		if (game.moveChecker(message.playerColor, message.sourcePosition, message.targetPosition)) {
 			gui.redrawCheckers(game.board);
-			if (exists color = playerColor, game.canUndoMoves(color), nextActions.narrow<EndTurnMessage>().empty) {
+			if (exists color = playerColor, game.canUndoMoves(color), nextActions.narrow<EndTurnMessage>().empty, nextActions.narrow<TakeTurnMessage>().empty) {
 				gui.showUndoButton();
 			}
 			if (exists roll = game.currentRoll) {
@@ -388,7 +393,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			gui.hideJockerButton();
 			addDelayedGameMessage(PlayerBeginMessage(matchId, playerId), initialRollDelay);
 			return true;
-		} else if (exists color = playerColor, game.mustMakeMove(color)) {
+		} else if (exists color = playerColor, game.isCurrentColor(color)) {
 			gui.hidePossibleMoves();
 			gui.showSelectedChecker(null);
 			gui.hideSubmitButton();
@@ -444,7 +449,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		gui.hidePossibleMoves();
 		if (hasQueuedActions) {
 			return false;
-		} else if (exists color = playerColor, game.mustMakeMove(color), exists roll = game.currentRoll, exists position = gui.getPosition(source)) {
+		} else if (exists color = playerColor, game.isCurrentColor(color), exists roll = game.currentRoll, exists position = gui.getPosition(source)) {
 			value moves = game.computeAllMoves(color, roll, position).keys;
 			if (!moves.empty) {
 				gui.showPossibleMoves(game.board, color, moves.map((element) => element.targetPosition));

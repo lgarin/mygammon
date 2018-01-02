@@ -22,9 +22,6 @@ import backgammon.shared {
 import ceylon.json {
 	Object
 }
-import ceylon.logging {
-	logger
-}
 
 import io.vertx.ceylon.core {
 	WorkerExecutor,
@@ -79,9 +76,7 @@ final shared class GameRoomEventBus(Vertx vertx) {
 	void registerRoomMessageConsumer<in InboundMessage, out OutboundMessage>(String address, InboundMessage? parse(Object json), OutboundMessage process(InboundMessage request)) given OutboundMessage satisfies RoomMessage given InboundMessage satisfies RoomMessage {
 		eventBus.registerConsumer(address, function (Object msg) {
 			if (is InboundMessage request = parse(msg)) {
-				value response = formatRoomMessage(process(request));
-				logger(`package`).info(response.string);
-				return response;
+				return formatRoomMessage(process(request));
 			} else {
 				throw Exception("Invalid request: ``msg``");
 			}
@@ -103,9 +98,7 @@ final shared class GameRoomEventBus(Vertx vertx) {
 	void registerParallelRoomMessageConsumer<in InboundMessage, out OutboundMessage>(WorkerExecutor executor, String address, InboundMessage? parse(Object json), OutboundMessage process(InboundMessage request)) given OutboundMessage satisfies RoomMessage given InboundMessage satisfies RoomMessage {
 		eventBus.registerParallelConsumer(executor, address, function (Object msg) {
 			if (is InboundMessage request = parse(msg)) {
-				value response = formatRoomMessage(process(request));
-				logger(`package`).info(response.string);
-				return response;
+				return formatRoomMessage(process(request));
 			} else {
 				throw Exception("Invalid request: ``msg``");
 			}
@@ -113,7 +106,7 @@ final shared class GameRoomEventBus(Vertx vertx) {
 	}
 	
 	shared void registerInboundGameMessageConsumer(String roomId, Integer threadCount, OutboundGameMessage process(InboundGameMessage request)) {
-		value executor = vertx.createSharedWorkerExecutor("game-thread-``roomId``", threadCount);
+		value executor = vertx.createSharedWorkerExecutor("game-workerthread-``roomId``", threadCount);
 		registerParallelRoomMessageConsumer(executor, "InboundGameMessage-``roomId``", parseInboundGameMessage, process);
 	}
 		

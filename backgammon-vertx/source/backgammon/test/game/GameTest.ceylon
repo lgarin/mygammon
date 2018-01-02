@@ -28,7 +28,6 @@ class GameTest() {
 		assert ([0, 0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0] == game.board.checkerCounts(white));
 		assert (!game.mustRollDice(black));
 		assert (!game.mustRollDice(white));
-		assert (!game.mustMakeMove(black));
 		assert (!game.canUndoMoves(white));
 		assert (!game.canUndoMoves(black));
 		assert (game.remainingTime(now()) is Null);
