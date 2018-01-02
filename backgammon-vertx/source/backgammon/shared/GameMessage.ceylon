@@ -15,7 +15,7 @@ import ceylon.time {
 
 shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage satisfies MatchMessage {}
 
-shared interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {}
+shared interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {}
 
 shared interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
 	shared formal CheckerColor playerColor;
@@ -101,6 +101,11 @@ NotYourTurnMessage parseNotYourTurnMessage(Object json) {
 	return NotYourTurnMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")));
 }
 
+shared final class TakeTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId) satisfies InboundGameMessage {}
+TakeTurnMessage parseTakeTurnMessage(Object json) {
+	return TakeTurnMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")));
+}
+
 shared final class EndTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId) satisfies InboundGameMessage {}
 EndTurnMessage parseEndTurnMessage(Object json) {
 	return EndTurnMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")));
@@ -175,6 +180,8 @@ shared InboundGameMessage? parseInboundGameMessage(Object json) {
 			return parseUndoMovesMessage(json.getObject(typeName));
 		} else if (typeName == `class EndTurnMessage`.name) {
 			return parseEndTurnMessage(json.getObject(typeName));
+		} else if (typeName == `class TakeTurnMessage`.name) {
+			return parseTakeTurnMessage(json.getObject(typeName));
 		} else if (typeName == `class EndGameMessage`.name) {
 			return parseEndGameMessage(json.getObject(typeName));
 		} else if (typeName == `class GameStateRequestMessage`.name) {

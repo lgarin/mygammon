@@ -83,6 +83,8 @@ shared class GameGui(Document document) extends BaseGui(document) {
 		}
 	}
 	
+	function parseInteger(String string) => if (is Integer result = Integer.parse(string)) then result else null;
+	
 	function getPointUsingDomId(String domId) {
 		if (domId == "point-white-graveyard") {
 			return whiteGraveyardPosition;

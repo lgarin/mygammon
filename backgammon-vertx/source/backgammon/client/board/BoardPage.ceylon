@@ -109,6 +109,8 @@ shared class BoardPage() extends BasePage() {
 			return currentTableClient.handleSubmitEvent();
 		} else if (target.id == gui.undoButtonId, exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleUndoEvent();
+		} else if (target.id == gui.jockerButtonId, exists gameClient = tableClient?.gameClient) {
+			return gameClient.handleJockerEvent();
 		} else if (target.id == gui.exitButtonId) {
 			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
 				gui.showDialog("dialog-logout");

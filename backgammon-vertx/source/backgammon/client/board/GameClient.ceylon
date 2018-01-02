@@ -20,7 +20,8 @@ import backgammon.shared {
 	PlayedMoveMessage,
 	NotYourTurnMessage,
 	PlayerBeginMessage,
-	InboundGameMessage
+	InboundGameMessage,
+	TakeTurnMessage
 }
 import backgammon.shared.game {
 	Game,
@@ -55,7 +56,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
-	variable [MakeMoveMessage|EndTurnMessage*] nextActions = [];
+	variable [MakeMoveMessage|EndTurnMessage|TakeTurnMessage*] nextActions = [];
 	
 	void addDelayedGameMessage(InboundGameMessage message, Duration delay) {
 		delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(message, delay));
@@ -170,6 +171,12 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		} else {
 			gui.hideUndoButton();
 		}
+		
+		if (exists color = playerColor, game.canTakeTurn(color)) {
+			gui.showJockerButton();
+		} else {
+			gui.hideJockerButton();
+		}
 	}
 	
 	function showInitialRoll(InitialRollMessage message) {
@@ -202,7 +209,12 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	function showTurnStart(StartTurnMessage message) {
 		delayedMessage = [];
 		nextActions = [];
-		game.endTurn(message.playerColor.oppositeColor);
+		if (game.isCurrentColor(message.playerColor)) {
+			game.takeTurn(message.playerColor);
+		} else {
+			game.endTurn(message.playerColor.oppositeColor);
+		}
+		
 		if (game.beginTurn(message.playerColor, message.roll, message.maxDuration, message.maxUndo)) {
 			showTurnDices(message.roll, message.playerColor);
 			showCurrentTurnMessages(message.playerColor, message.maxDuration);
@@ -214,6 +226,12 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 				gui.showSubmitButton();
 			} else {
 				gui.hideSubmitButton();
+			}
+			
+			if (message.playerId == playerId && game.canTakeTurn(message.playerColor)) {
+				gui.showJockerButton();
+			} else {
+				gui.hideJockerButton();
 			}
 			return true;
 		} else {
@@ -367,12 +385,14 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		if (exists color = playerColor, game.mustRollDice(color)) {
 			gui.showActiveDice(color, 0, game.currentRoll?.getValue(color));
 			gui.hideSubmitButton();
+			gui.hideJockerButton();
 			addDelayedGameMessage(PlayerBeginMessage(matchId, playerId), initialRollDelay);
 			return true;
 		} else if (exists color = playerColor, game.mustMakeMove(color)) {
 			gui.hidePossibleMoves();
 			gui.showSelectedChecker(null);
 			gui.hideSubmitButton();
+			gui.hideJockerButton();
 			gui.hideUndoButton();
 			
 			if (hasQueuedActions) {
@@ -394,6 +414,25 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 			gui.showSelectedChecker(null);
 			gui.hideUndoButton();
 			messageBroadcaster(UndoMovesMessage(matchId, playerId));
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean handleJockerEvent() {
+		if (exists color = playerColor, game.canTakeTurn(color)) {
+			gui.hidePossibleMoves();
+			gui.showSelectedChecker(null);
+			gui.hideJockerButton();
+			gui.hideSubmitButton();
+			gui.hideUndoButton();
+			
+			if (hasQueuedActions) {
+				nextActions = nextActions.withTrailing(TakeTurnMessage(matchId, playerId));
+			} else {
+				messageBroadcaster(TakeTurnMessage(matchId, playerId));
+			}
 			return true;
 		} else {
 			return false;

@@ -17,7 +17,8 @@ import backgammon.shared {
 	FindEmptyTableMessage,
 	JoinTableMessage,
 	LeaveRoomMessage,
-	PlayerStateRequestMessage
+	PlayerStateRequestMessage,
+	TakeTurnMessage
 }
 
 import io.vertx.ceylon.core {
@@ -75,41 +76,48 @@ final class GameRoomRestApi(Vertx vertx) {
 		}
 	}
 	
-	void handlMatchAcceptRequest(RoutingContext rc) {
+	void handleMatchAcceptRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
 			forwardResponse(context, AcceptMatchMessage(playerId, matchId));
 		}
 	}
 	
-	void handlPlayerBeginRequest(RoutingContext rc) {
+	void handlePlayerBeginRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
 			forwardResponse(context, PlayerBeginMessage(matchId, playerId));
 		}
 	}
 	
-	void handlMakeMoveRequest(RoutingContext rc) {
+	void handleMakeMoveRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId(), exists sourcePosition = context.getRequestSourcePosition(), exists targetPosition = context.getRequestTargetPosition()) {
 			forwardResponse(context, MakeMoveMessage(matchId, playerId, sourcePosition, targetPosition));
 		}
 	}
 	
-	void handlUndoMovesRequest(RoutingContext rc) {
+	void handleUndoMovesRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
 			forwardResponse(context, UndoMovesMessage(matchId, playerId));
 		}
 	}
 
-	void handlEndTurnRequest(RoutingContext rc) {
+	void handleEndTurnRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
 			forwardResponse(context, EndTurnMessage(matchId, playerId));
 		}
 	}
-
+	
+	void handleTakeTurnRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
+			forwardResponse(context, TakeTurnMessage(matchId, playerId));
+		}
+	}
+	
 	void handlePlayerListRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getCurrentPlayerId()) {
@@ -148,11 +156,12 @@ final class GameRoomRestApi(Vertx vertx) {
 		restApi.get("/room/:roomId/table/:tableIndex/leave").handler(handleTableLeaveRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/join").handler(handleTableJoinRequest);
 		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/accept").handler(handlMatchAcceptRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/begin").handler(handlPlayerBeginRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/move/:sourcePosition/:targetPosition").handler(handlMakeMoveRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/undomoves").handler(handlUndoMovesRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handlEndTurnRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/accept").handler(handleMatchAcceptRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/begin").handler(handlePlayerBeginRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/move/:sourcePosition/:targetPosition").handler(handleMakeMoveRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/undomoves").handler(handleUndoMovesRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handleEndTurnRequest);
+		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/taketurn").handler(handleTakeTurnRequest);
 		restApi.get("/room/:roomId/player/:playerId/state").handler(handlePlayerStateRequest);
 		return restApi;
 	}

@@ -19,6 +19,7 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	shared String leaveButtonId = "leave";
 	shared String joinButtonId = "join";
 	shared String submitButtonId = "submit";
+	shared String jockerButtonId = "jocker";
 	shared String exitButtonId = "exit";
 	shared String homeButtonId = "home";
 	shared String startButtonId = "start";
@@ -88,6 +89,14 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	
 	shared void showStartButton() {
 		removeClass(startButtonId, hiddenClass);
+	}
+	
+	shared void hideJockerButton() {
+		addClass(jockerButtonId, hiddenClass);
+	}
+	
+	shared void showJockerButton() {
+		removeClass(jockerButtonId, hiddenClass);
 	}
 	
 	shared void showStatusText(String user, Integer balance) {
@@ -170,6 +179,7 @@ shared class BoardGui(Document document) extends GameGui(document) {
 		resetState(white, playerMessage);
 		hideUndoButton();
 		hideSubmitButton();
+		hideJockerButton();
 	}
 	
 	shared void showEmptyGame() {

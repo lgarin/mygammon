@@ -33,6 +33,9 @@ shared class Game() {
 	variable Boolean blackReady = false;
 	variable Boolean whiteReady = false;
 	
+	variable Integer blackJocker = 1;
+	variable Integer whiteJocker = 1;
+	
 	variable Instant nextTimeout = Instant(0);
 	
 	function initialColor(DiceRoll diceRoll) {
@@ -82,6 +85,16 @@ shared class Game() {
 	shared Boolean canUndoMoves(CheckerColor playerColor) {
 		if (exists color = currentColor, color == playerColor) {
 			return !currentMoves.empty && remainingUndo > 0;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean canTakeTurn(CheckerColor playerColor) {
+		if (playerColor == black && blackJocker > 0 && isCurrentColor(playerColor)) {
+			return true;
+		} else if (playerColor == white && whiteJocker > 0 && isCurrentColor(playerColor)) {
+			return true;
 		} else {
 			return false;
 		}
@@ -281,17 +294,33 @@ shared class Game() {
 
 	shared Boolean hasWon(CheckerColor color)=> board.countCheckers(board.homePosition(color), color) == checkerCount;
 	
-	shared Boolean endTurn(CheckerColor color) {
-		if (!isCurrentColor(color)) {
+	function switchTurn(CheckerColor currentColor, CheckerColor nextColor) {
+		if (!isCurrentColor(currentColor)) {
 			return false;
-		} else if (hasWon(color)) {
+		} else if (hasWon(currentColor)) {
 			currentMoves.clear();
 			_currentColor = null;
 			return false;
 		} else {
 			currentMoves.clear();
-			_currentColor = color.oppositeColor;
+			_currentColor = nextColor;
 			return true;
+		}
+	}
+	
+	shared Boolean endTurn(CheckerColor color) {
+		return switchTurn(color, color.oppositeColor);
+	}
+
+	shared Boolean takeTurn(CheckerColor color) {
+		if (color == black && blackJocker > 0 && switchTurn(color, color)) {
+			blackJocker--;
+			return true;
+		} else if (color == white && whiteJocker > 0 && switchTurn(color, color)) {
+			whiteJocker--;
+			return true;
+		} else {
+			return false;
 		}
 	}
 	
@@ -345,6 +374,8 @@ shared class Game() {
 		result.blackReady = blackReady;
 		result.whiteReady = whiteReady;
 		result.remainingTime = remainingTime(now());
+		result.blackJocker = blackJocker;
+		result.whiteJocker = whiteJocker;
 		result.blackCheckerCounts = board.checkerCounts(black);
 		result.whiteCheckerCounts = board.checkerCounts(white);
 		result.currentMoves = currentMoves.sequence();
@@ -362,10 +393,18 @@ shared class Game() {
 		} else {
 			nextTimeout = Instant(0);
 		}
+		blackJocker = state.blackJocker;
+		whiteJocker = state.whiteJocker;
 		board.setCheckerCounts(black, state.blackCheckerCounts);
 		board.setCheckerCounts(white, state.whiteCheckerCounts);
 		currentMoves.clear();
 		currentMoves.addAll(state.currentMoves);
+	}
+	
+	shared Integer remainingJocker(CheckerColor color) {
+		return switch (color)
+			case (black) blackJocker
+			case (white) whiteJocker;
 	}
 }
 

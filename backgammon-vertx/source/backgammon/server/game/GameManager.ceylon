@@ -27,7 +27,8 @@ import backgammon.shared {
 	InboundGameMessage,
 	InboundMatchMessage,
 	EndMatchMessage,
-	systemPlayerId
+	systemPlayerId,
+	TakeTurnMessage
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -146,7 +147,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	function switchTurn() {
+	function beginNextTurn() {
 		value nextColor = game.currentColor;
 		assert (exists nextColor);
 		value roll = diceRoller.roll();
@@ -175,7 +176,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
 		} else if (game.endTurn(playerColor)) {
-			return switchTurn();
+			return beginNextTurn();
 		} else if (game.hasWon(playerColor)) {
 			return endGame(toPlayerId(playerColor), toPlayerId(playerColor));
 		} else {
@@ -241,6 +242,21 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
+	function takeTurn(CheckerColor playerColor) {
+		
+		if (!game.isCurrentColor(playerColor)) {
+			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
+			return false;
+		} else if (game.takeTurn(playerColor)) {
+			return beginNextTurn();
+		} else if (game.hasWon(playerColor)) {
+			return endGame(toPlayerId(playerColor), toPlayerId(playerColor));
+		} else {
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
+			return false;
+		}
+	}
+	
 	function handleMessage(InboundGameMessage message, CheckerColor playerColor) {
 		resetPlayerTimeoutCount(playerColor);
 		
@@ -262,6 +278,9 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 		case (is EndGameMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, surrenderGame(toPlayerId(playerColor), playerColor));
+		}
+		case (is TakeTurnMessage) {
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, takeTurn(playerColor));
 		}
 		case (is GameStateRequestMessage) {
 			return GameStateResponseMessage(matchId, message.playerId, playerColor, game.state);
