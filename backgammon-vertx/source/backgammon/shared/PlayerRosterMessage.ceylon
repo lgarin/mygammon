@@ -5,6 +5,11 @@ import ceylon.language.meta {
 
 	type
 }
+import ceylon.time {
+
+	Instant,
+	now
+}
 
 shared sealed interface PlayerRosterMessage of PlayerRosterInboundMessage | PlayerRosterOutboundMessage {
 	shared formal PlayerId playerId;
@@ -17,20 +22,20 @@ shared sealed interface PlayerRosterInboundMessage of PlayerStatisticUpdateMessa
 
 shared sealed interface PlayerRosterOutboundMessage of PlayerStatisticOutputMessage satisfies PlayerRosterMessage {}
 
-shared final class PlayerStatisticUpdateMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statistic) satisfies PlayerRosterInboundMessage {
+shared final class PlayerStatisticUpdateMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statistic, shared Instant timestamp = now()) satisfies PlayerRosterInboundMessage {
 	playerId = playerInfo.playerId;
-	toJson() => Object{ "playerInfo" -> playerInfo.toJson(), "statistic" -> statistic.toJson() };
+	toJson() => Object { "playerInfo" -> playerInfo.toJson(), "statistic" -> statistic.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch };
 }
 PlayerStatisticUpdateMessage parsePlayerStatisticUpdateMessage(Object json) {
-	return PlayerStatisticUpdateMessage(parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("statistic")));
+	return PlayerStatisticUpdateMessage(parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("statistic")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class PlayerLoginMessage(shared PlayerInfo playerInfo) satisfies PlayerRosterInboundMessage {
+shared final class PlayerLoginMessage(shared PlayerInfo playerInfo, shared Instant timestamp = now()) satisfies PlayerRosterInboundMessage {
 	playerId = playerInfo.playerId;
-	toJson() => Object{ "playerInfo" -> playerInfo.toJson() };
+	toJson() => Object{ "playerInfo" -> playerInfo.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch };
 }
 PlayerLoginMessage parsePlayerLoginMessage(Object json) {
-	return PlayerLoginMessage(parsePlayerInfo(json.getObject("playerInfo")));
+	return PlayerLoginMessage(parsePlayerInfo(json.getObject("playerInfo")), Instant(json.getInteger("timestamp")));
 }
 
 shared final class PlayerStatisticOutputMessage(shared actual PlayerId playerId, shared PlayerStatistic statistic) satisfies PlayerRosterOutboundMessage {

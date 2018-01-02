@@ -2,7 +2,7 @@ import ceylon.json {
 	JsonObject=Object
 }
 
-shared final class PlayerStatistic(shared Integer balance, shared Integer playedGames = 0, shared Integer wonGames = 0, shared Integer score = 0) extends Object() {
+shared final class PlayerStatistic(shared Integer balance = 0, shared Integer playedGames = 0, shared Integer wonGames = 0, shared Integer score = 0) extends Object() satisfies Summable<PlayerStatistic> {
 	shared Integer winPercentage => if (playedGames > 0) then 100 * wonGames / playedGames else 0;
 	shared Integer lostPercentage => if (playedGames > 0) then 100 * (playedGames - wonGames) / playedGames else 0;
 	shared JsonObject toJson() => JsonObject {"balance" -> balance, "playedGames" -> playedGames, "wonGames" -> wonGames, "score" -> score};
@@ -33,6 +33,8 @@ shared final class PlayerStatistic(shared Integer balance, shared Integer played
 	}
 	
 	shared Integer? computeLevel(Integer[] scoreLevels) => scoreLevels.indexed.findLast((index -> limit) => score >= limit)?.key else null;
+	
+	shared actual PlayerStatistic plus(PlayerStatistic other) => PlayerStatistic(balance + other.balance, playedGames + other.playedGames, wonGames + other.wonGames, score + other.score);
 }
 
 shared PlayerStatistic parsePlayerStatistic(JsonObject json) => PlayerStatistic(json.getInteger("balance"), json.getInteger("playedGames"), json.getInteger("wonGames"), json.getInteger("score"));

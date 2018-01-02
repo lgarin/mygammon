@@ -25,9 +25,10 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 	shared PlayerId id = PlayerId(info.id);
 	
 	variable PlayerStatistic _statistic = initialStatistic;
+	variable PlayerStatistic _statisticDelta = PlayerStatistic();
 	
-	shared PlayerStatistic statistic => _statistic;
-	shared Integer balance => _statistic.balance;
+	shared PlayerStatistic statistic => _statistic + _statisticDelta;
+	shared Integer balance => statistic.balance;
 	shared PlayerState state => PlayerState(info, _statistic, _tableId, match?.id);
 
 	shared Boolean isAtTable(TableId tableId) => _tableId?.equals(tableId) else false;
@@ -89,15 +90,15 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 	}
 
 	shared void increasePlayedGame() {
-		_statistic = _statistic.increaseGameCount();
+		_statisticDelta = _statisticDelta.increaseGameCount();
 	}
 	
 	shared void increaseWonGame(Integer score, Integer pot) {
-		_statistic = _statistic.increaseWinCount(score).updateBalance(pot);
+		_statisticDelta = _statisticDelta.increaseWinCount(score).updateBalance(pot);
 	}
 	
 	shared void placeBet(Integer bet) {
-		_statistic = _statistic.updateBalance(-bet);
+		_statisticDelta = _statisticDelta.updateBalance(-bet);
 	}
 
 	shared Boolean isPlaying() {
@@ -122,5 +123,16 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 		} else {
 			return null;
 		}
+	}
+	
+	shared PlayerStatistic? applyStatisticDelta() {
+		value result = _statisticDelta;
+		value initial = PlayerStatistic();
+		if (result == initial) {
+			return null; 
+		}
+		_statistic += result;
+		_statisticDelta = initial;
+		return result;
 	}
 }

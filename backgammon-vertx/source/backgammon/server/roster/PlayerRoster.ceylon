@@ -19,7 +19,6 @@ import ceylon.collection {
 	HashMap
 }
 import ceylon.time {
-	now,
 	Instant
 }
 shared final class PlayerRoster(RoomConfiguration config) {
@@ -37,28 +36,26 @@ shared final class PlayerRoster(RoomConfiguration config) {
 	
 	function updatePlayerStatistic(PlayerStatisticUpdateMessage message) {
 		if (exists oldRecord = statisticMap[message.playerId]) {
-			value record = PlayerRosterRecord(oldRecord.id, oldRecord.login, message.statistic);
+			value record = PlayerRosterRecord(oldRecord.id, oldRecord.login, oldRecord.stat + message.statistic);
 			return storeRecord(record);
 		} else {
-			value timestamp = now();
-			value record = PlayerRosterRecord(message.playerId, initialLogin(message.playerInfo, timestamp), message.statistic);
+			value record = PlayerRosterRecord(message.playerId, initialLogin(message.playerInfo, message.timestamp), message.statistic);
 			return storeRecord(record);
 		}
 	}
 
 	function loginPlayer(PlayerLoginMessage message) {
 		if (exists oldRecord = statisticMap[message.playerId]) {
-			value timestamp = now();
-			if (oldRecord.login.mustCredit(timestamp)) {
-				value record = PlayerRosterRecord(oldRecord.id, oldRecord.login.renew(timestamp, config.balanceIncreaseDelay), oldRecord.stat.updateBalance(config.balanceIncreaseAmount));
+			value newLogin = oldRecord.login.renew(message.timestamp, config.balanceIncreaseDelay);
+			if (oldRecord.login.mustCredit(message.timestamp)) {
+				value record = PlayerRosterRecord(oldRecord.id, newLogin, oldRecord.stat.updateBalance(config.balanceIncreaseAmount));
 				return storeRecord(record);
 			} else {
-				value record = PlayerRosterRecord(oldRecord.id, oldRecord.login.renew(timestamp, config.balanceIncreaseDelay), oldRecord.stat);
+				value record = PlayerRosterRecord(oldRecord.id, newLogin, oldRecord.stat);
 				return storeRecord(record);
 			}
 		} else {
-			value timestamp = now();
-			value record = PlayerRosterRecord(message.playerId, initialLogin(message.playerInfo, timestamp), PlayerStatistic(config.initialPlayerBalance));
+			value record = PlayerRosterRecord(message.playerId, initialLogin(message.playerInfo, message.timestamp), PlayerStatistic(config.initialPlayerBalance));
 			return storeRecord(record);
 		}
 	}
