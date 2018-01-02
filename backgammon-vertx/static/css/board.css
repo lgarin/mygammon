@@ -375,20 +375,24 @@ body {
 }
 
 .white-small-checker {
-	margin-right: 5px;
-	padding: 25px 25px 0px 0px;
-	background-image: url("../images/checkers.png");
-	background-size: 100% 200%;
-	width:25px;
-	height: 25px;
+	display: inline-block;
+    width: 25px;
+    min-width: 25px;
+    height: 25px;
+    min-height: 25px;
+    background-image: url("../images/checkers.png");
+    background-size: 100% 200%;
+    margin-bottom: -6px;
 }
 
 .black-small-checker {    
-    margin-right: 5px;
-	padding: 25px 25px 0px 0px;
+    display: inline-block;
+    width: 25px;
+    min-width: 25px;
+    height: 25px;
+    min-height: 25px;
     background-image: url("../images/checkers.png");
     background-size: 100% 200%;
-    background-position: 0px 50px;
-    width:25px;
-	height: 25px;
+    background-position: 0px 25px;
+    margin-bottom: -6px;
 }
