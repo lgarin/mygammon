@@ -146,7 +146,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 		if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.sitPlayer(player)) {
 			player.markActive();
 			handlePlayerChange(player);
-			room.createMatch(table);
+			room.createMatch(table); // TODO why?
 			return JoinedTableMessage(message.playerId, message.tableId, player.info);
 		} else {
 			return JoinedTableMessage(message.playerId, message.tableId, null);
@@ -196,7 +196,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	}
 	
 	function acceptMatch(AcceptMatchMessage message) {
-		if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), exists player = room.findPlayer(message.playerId), match.markReady(message.playerId)) {
+		if (exists room = findRoom(message.roomId), exists match = room.findCurrentMatch(message.matchId), exists player = room.findPlayer(message.playerId), match.markReady(message.playerId)) {
 			player.markActive();
 			if (match.gameStarted) {
 				handlePlayerChange(match.player1);
@@ -212,7 +212,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	function endMatch(EndMatchMessage message) {
 		function bonusScore(Match match) => configuration.bonusScorePercentage * (match.player1.statistic.score - match.player2.statistic.score).magnitude / 100;
 		
-		if (exists room = findRoom(message.roomId), exists match = room.findMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score + bonusScore(match))) {
+		if (exists room = findRoom(message.roomId), exists match = room.findCurrentMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score + bonusScore(match))) {
 			if (message.isNormalWin) {
 				match.player1.markActive();
 				match.player2.markActive();
@@ -221,7 +221,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			}
 			handlePlayerChange(match.player1);
 			handlePlayerChange(match.player2);
-			return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, room.removeMatch(match));
+			return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, true);
 		} else {
 			return MatchEndedMessage(message.playerId, message.matchId, message.winnerId, message.score, false);
 		}

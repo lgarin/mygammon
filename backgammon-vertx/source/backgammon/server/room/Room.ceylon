@@ -41,10 +41,9 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 	
 	variable Integer _createdMatchCount = 0;
 	variable Integer _maxMatchCount = 0;
-	value matchMap = HashMap<MatchId, Match>(unlinked); // TODO remove and use the tableList or playerMap
 	
 	shared Integer createdMatchCount => _createdMatchCount;
-	shared Integer matchCount => matchMap.size;
+	shared Integer matchCount => tableList.count((element) => element.match exists);
 	shared Integer maxMatchCount => _maxMatchCount;
 	
 	shared Integer createdPlayerCount => _createdPlayerCount;
@@ -62,12 +61,11 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 	
 	void updateMatchCount() {
 		_createdMatchCount++;
-		_maxMatchCount = max([_maxMatchCount, matchMap.size]);
+		_maxMatchCount = max([_maxMatchCount, matchCount]);
 	}
 	
 	shared Boolean createMatch(Table table) {
 		if (exists match = table.newMatch(matchBet.matchPot)) {
-			matchMap.put(match.id, match);
 			updateMatchCount();
 			return true;
 		} else {
@@ -174,18 +172,9 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 			return null;
 		}
 	}
-	
-	shared Boolean removeMatch(Match match) {
-		if (!match.gameEnded) {
-			return false;
-		} else if (exists table = findTable(match.tableId)) {
-			createMatch(table);
-		}
-		return matchMap.remove(match.id) exists;
-	}
-	
-	shared Match? findMatch(MatchId matchId) {
-		return matchMap[matchId];
+
+	shared Match? findCurrentMatch(MatchId matchId) {
+		return findTable(matchId.tableId)?.match;
 	}
 
 	shared Player? findPlayer(PlayerId playerId) =>  playerMap[playerId];

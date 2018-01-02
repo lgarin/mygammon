@@ -21,6 +21,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, shared Inte
 	shared TableId id = TableId(roomId.string, index);
 	
 	variable Match? _match = null;
+	shared Match? match => _match;
 	shared MatchState? matchState => _match?.state;
 	
 	value playerQueue = HashMap<PlayerId, Player>(linked);

@@ -17,12 +17,13 @@ shared sealed interface PlayerRosterMessage of PlayerRosterInboundMessage | Play
 	string => toJson().string;
 }
 
-shared sealed interface PlayerRosterInboundMessage of PlayerStatisticUpdateMessage | PlayerLoginMessage satisfies PlayerRosterMessage {}
-
+shared sealed interface PlayerRosterInboundMessage of PlayerStatisticUpdateMessage | PlayerLoginMessage satisfies PlayerRosterMessage {
+	shared formal Instant timestamp;
+}
 
 shared sealed interface PlayerRosterOutboundMessage of PlayerStatisticOutputMessage satisfies PlayerRosterMessage {}
 
-shared final class PlayerStatisticUpdateMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statistic, shared Instant timestamp = now()) satisfies PlayerRosterInboundMessage {
+shared final class PlayerStatisticUpdateMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statistic, shared actual Instant timestamp = now()) satisfies PlayerRosterInboundMessage {
 	playerId = playerInfo.playerId;
 	toJson() => Object { "playerInfo" -> playerInfo.toJson(), "statistic" -> statistic.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch };
 }
@@ -30,7 +31,7 @@ PlayerStatisticUpdateMessage parsePlayerStatisticUpdateMessage(Object json) {
 	return PlayerStatisticUpdateMessage(parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("statistic")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class PlayerLoginMessage(shared PlayerInfo playerInfo, shared Instant timestamp = now()) satisfies PlayerRosterInboundMessage {
+shared final class PlayerLoginMessage(shared PlayerInfo playerInfo, shared actual Instant timestamp = now()) satisfies PlayerRosterInboundMessage {
 	playerId = playerInfo.playerId;
 	toJson() => Object{ "playerInfo" -> playerInfo.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch };
 }

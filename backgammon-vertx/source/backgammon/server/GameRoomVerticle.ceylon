@@ -38,10 +38,10 @@ final class GameRoomVerticle() extends Verticle() {
 
 	shared actual void start() {
 		value roomConfig = ServerConfiguration(config);
-		value repoEventBus = PlayerRosterEventBus(vertx, roomConfig);
+		value rosterEventBus = PlayerRosterEventBus(vertx, roomConfig);
 		value roomEventBus = GameRoomEventBus(vertx);
 		
-		value matchRoom = MatchRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage, repoEventBus.queueInputMessage);
+		value matchRoom = MatchRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage, rosterEventBus.queueInputMessage);
 		roomEventBus.registerInboundRoomMessageConsumer(roomConfig.roomId, matchRoom.processRoomMessage);
 		roomEventBus.registerInboundTableMessageConsumer(roomConfig.roomId, matchRoom.processTableMessage);
 		roomEventBus.registerInboundMatchMessageConsumer(roomConfig.roomId, matchRoom.processMatchMessage);
