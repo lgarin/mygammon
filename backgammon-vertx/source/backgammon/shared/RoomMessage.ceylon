@@ -8,6 +8,11 @@ import ceylon.language.meta {
 
 	type
 }
+import ceylon.time {
+
+	Instant,
+	now
+}
 
 shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage | TableMessage {
 	shared formal PlayerId playerId;
@@ -24,7 +29,10 @@ shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage 
 	string => toJson().string;
 }
 
-shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage | FindEmptyTableMessage | RoomStateRequestMessage | PlayerStateRequestMessage satisfies RoomMessage {}
+shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage | FindEmptyTableMessage | RoomStateRequestMessage | PlayerStateRequestMessage satisfies RoomMessage {
+	shared formal Instant timestamp;
+	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
+}
 
 shared sealed interface RoomResponseMessage {
 	shared formal Boolean success;
@@ -34,36 +42,36 @@ shared sealed interface OutboundRoomMessage of RoomActionResponseMessage | Found
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success };
 }
 
-shared final class EnterRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared PlayerInfo playerInfo, shared PlayerStatistic playerStatistic) satisfies InboundRoomMessage {
+shared final class EnterRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared PlayerInfo playerInfo, shared PlayerStatistic playerStatistic, shared actual Instant timestamp = now()) satisfies InboundRoomMessage {
 	toJson() => toExtendedJson {"playerInfo" -> playerInfo.toJson(), "playerStatistic" -> playerStatistic.toJson()};
 }
 EnterRoomMessage parseEnterRoomMessage(Object json) {
-	return EnterRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("playerStatistic")));
+	return EnterRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("playerStatistic")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class LeaveRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
+shared final class LeaveRoomMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Instant timestamp = now()) satisfies InboundRoomMessage {}
 LeaveRoomMessage parseLeaveRoomMessage(Object json) {
-	return LeaveRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
+	return LeaveRoomMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class FindMatchTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
+shared final class FindMatchTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Instant timestamp = now()) satisfies InboundRoomMessage {}
 FindMatchTableMessage parseFindMatchTableMessage(Object json) {
-	return FindMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
+	return FindMatchTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class FindEmptyTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
+shared final class FindEmptyTableMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Instant timestamp = now()) satisfies InboundRoomMessage {}
 FindEmptyTableMessage parseFindEmptyTableMessage(Object json) {
-	return FindEmptyTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
+	return FindEmptyTableMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class RoomStateRequestMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
+shared final class RoomStateRequestMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Instant timestamp = now()) satisfies InboundRoomMessage {}
 RoomStateRequestMessage parseRoomStateRequestMessage(Object json) {
-	return RoomStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
+	return RoomStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class PlayerStateRequestMessage(shared actual PlayerId playerId, shared actual RoomId roomId) satisfies InboundRoomMessage {}
+shared final class PlayerStateRequestMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Instant timestamp = now()) satisfies InboundRoomMessage {}
 PlayerStateRequestMessage parsePlayerStateRequestMessage(Object json) {
-	return PlayerStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")));
+	return PlayerStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), Instant(json.getInteger("timestamp")));
 }
 
 shared final class RoomActionResponseMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Boolean success) satisfies OutboundRoomMessage {}

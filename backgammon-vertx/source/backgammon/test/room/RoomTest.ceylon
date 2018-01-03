@@ -20,8 +20,13 @@ import ceylon.collection {
 import ceylon.test {
 	test
 }
+import ceylon.time {
+
+	Instant
+}
 
 class RoomTest() {
+	value timestamp = Instant(0);
 	value initialPlayerBalance = 1000;
 	value matchBet = MatchBet(10, 18);
 	value roomSize = RoomSize(3, 10);
@@ -71,7 +76,7 @@ class RoomTest() {
 	shared void removeExistingPlayer() {
 		value player = room.definePlayer(makePlayerInfo("player1"), PlayerStatistic(initialPlayerBalance));
 		assert (exists player);
-		room.removePlayer(player);
+		room.removePlayer(player, timestamp);
 		assert (!room.findPlayer(player.id) exists);
 	}
 	
@@ -79,7 +84,7 @@ class RoomTest() {
 	shared void createDeltaForOldPlayer() {
 		value player = room.definePlayer(makePlayerInfo("player1"), PlayerStatistic(initialPlayerBalance));
 		assert (exists player);
-		room.removePlayer(player);
+		room.removePlayer(player, timestamp);
 		assert (room.playerListDeltaSize == 2);
 		value result = room.createPlayerListDelta();
 		assert (room.playerListDeltaSize == 0);
@@ -91,7 +96,7 @@ class RoomTest() {
 	test
 	shared void removeNonExistingPlayer() {
 		value player = Player(makePlayerInfo("player1"), PlayerStatistic(initialPlayerBalance));
-		room.removePlayer(player);
+		room.removePlayer(player, timestamp);
 		assert (!room.findPlayer(player.id) exists);
 	}
 	
@@ -99,7 +104,7 @@ class RoomTest() {
 	shared void sitPlayerWithoutOpponent() {
 		value player = room.definePlayer(makePlayerInfo("player1"), PlayerStatistic(initialPlayerBalance));
 		assert (exists player);
-		value result = room.findMatchTable(player);
+		value result = room.findMatchTable(player, timestamp);
 		assert (result exists);
 		assert (messageList.count((element) => element is JoinedTableMessage) == 1);
 		assert (messageList.count((element) => element is CreatedMatchMessage) == 0);
@@ -111,9 +116,9 @@ class RoomTest() {
 		assert (exists player1);
 		value player2 = room.definePlayer(makePlayerInfo("player2"), PlayerStatistic(initialPlayerBalance));
 		assert (exists player2);
-		value result1 = room.findMatchTable(player1);
+		value result1 = room.findMatchTable(player1, timestamp);
 		assert (result1 exists);
-		value result2 = room.findMatchTable(player2);
+		value result2 = room.findMatchTable(player2, timestamp);
 		assert (result2 exists);
 		assert (messageList.count((element) => element is JoinedTableMessage) == 2);
 		assert (messageList.count((element) => element is CreatedMatchMessage) == 1);
@@ -154,7 +159,7 @@ class RoomTest() {
 		assert (exists table);
 		table.sitPlayer(player1);
 		table.sitPlayer(player2);
-		value result = room.createMatch(table);
+		value result = room.createMatch(table, timestamp);
 		assert (result);
 		assert (player1.match exists);
 		assert (player2.match exists);
@@ -167,7 +172,7 @@ class RoomTest() {
 		value table = room.findTable(TableId(room.roomId, 1));
 		assert (exists table);
 		table.sitPlayer(player1);
-		value result = room.createMatch(table);
+		value result = room.createMatch(table, timestamp);
 		assert (!result);
 	}
 }

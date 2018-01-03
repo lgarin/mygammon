@@ -9,8 +9,7 @@ import backgammon.shared {
 }
 
 import ceylon.time {
-	Instant,
-	now
+	Instant
 }
 
 final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatistic) {
@@ -109,8 +108,8 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 		}
 	}
 	
-	shared void markActive() {
-		lastActivity = now();
+	shared void markActive(Instant timestamp) {
+		lastActivity = timestamp;
 	}
 
 	shared Boolean isInactiveSince(Instant timeoutTime) => lastActivity < timeoutTime;

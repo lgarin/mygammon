@@ -15,6 +15,10 @@ import ceylon.collection {
 import ceylon.test {
 	test
 }
+import ceylon.time {
+
+	Instant
+}
 
 class MatchTest() {
 	
@@ -22,6 +26,7 @@ class MatchTest() {
 	
 	value messageList = ArrayList<RoomMessage>();
 	
+	value timestamp = Instant(0);
 	value matchBet = 10;
 	value matchPot = 18;
 	value table = Table(1, RoomId("room"), matchBet, messageList.add);
@@ -29,7 +34,7 @@ class MatchTest() {
 	table.sitPlayer(player1);
 	value player2 = makePlayer("player2");
 	table.sitPlayer(player2);
-	value match = table.newMatch(matchPot);
+	value match = table.newMatch(timestamp, matchPot);
 	assert (exists match);
 	
 	test

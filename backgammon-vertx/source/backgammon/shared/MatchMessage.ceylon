@@ -1,6 +1,11 @@
 import ceylon.json {
 	Object
 }
+import ceylon.time {
+
+	Instant,
+	now
+}
 
 shared sealed interface MatchMessage of OutboundMatchMessage | InboundMatchMessage | GameMessage satisfies TableMessage {
 	shared formal MatchId matchId;
@@ -11,7 +16,10 @@ shared sealed interface MatchMessage of OutboundMatchMessage | InboundMatchMessa
 
 shared sealed interface OutboundMatchMessage of AcceptedMatchMessage | MatchEndedMessage satisfies MatchMessage {}
 
-shared sealed interface InboundMatchMessage of AcceptMatchMessage | EndMatchMessage satisfies MatchMessage {}
+shared sealed interface InboundMatchMessage of AcceptMatchMessage | EndMatchMessage satisfies MatchMessage {
+	shared formal Instant timestamp;
+	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
+}
 
 shared final class AcceptedMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
 	toJson() => toExtendedJson({"success" -> success});
@@ -32,19 +40,19 @@ MatchEndedMessage parseMatchEndedMessage(Object json) {
 	return MatchEndedMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("winnerId")), json.getInteger("score"), json.getBoolean("success"));
 }
 
-shared final class AcceptMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId) satisfies InboundMatchMessage {}
+shared final class AcceptMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared actual Instant timestamp = now()) satisfies InboundMatchMessage {}
 AcceptMatchMessage parseAcceptMatchMessage(Object json) {
-	return AcceptMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")));
+	return AcceptMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class EndMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId, shared Integer score) satisfies InboundMatchMessage {
+shared final class EndMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId, shared Integer score, shared actual Instant timestamp = now()) satisfies InboundMatchMessage {
 	toJson() => toExtendedJson({"winnerId" -> winnerId.toJson(), "score" -> score});
 	
 	shared Boolean isNormalWin => playerId != systemPlayerId && playerId == winnerId;
 	shared Boolean isSurrenderWin => playerId != systemPlayerId && playerId != winnerId;
 }
 EndMatchMessage parseEndMatchMessage(Object json) {
-	return EndMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("winnerId")), json.getInteger("score"));
+	return EndMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("winnerId")), json.getInteger("score"), Instant(json.getInteger("timestamp")));
 }
 
 shared OutboundMatchMessage? parseOutboundMatchMessage(Object json) {

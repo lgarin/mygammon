@@ -182,7 +182,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	function showInitialRoll(InitialRollMessage message) {
 		gui.showCurrentPlayer(null);
 		if (message.playerId == playerId) {
-			if (game.initialRoll(message.roll, message.maxDuration)) {
+			if (game.initialRoll(message.roll, now(), message.maxDuration)) {
 				gui.showPlayerMessage(message.playerColor, gui.formatPeriod(message.maxDuration, gui.timeoutTextKey), true);
 				showInitialDices(message.roll);
 				gui.showSubmitButton(gui.rollTextKey);
@@ -200,7 +200,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	function showPlayerReady(PlayerReadyMessage message) {
 		if (game.begin(message.playerColor)) {
 			gui.showPlayerMessage(message.playerColor, gui.readyTextKey, false);
-			nextActions = [PlayerBeginMessage(message.matchId, message.playerId)];
+			nextActions = [PlayerBeginMessage(message.matchId, message.playerId, Instant(0))];
 			return true;
 		} else {
 			return false;
@@ -220,7 +220,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		delayedMessage = [];
 		nextActions = [];
 		
-		if (game.beginTurn(message.playerColor, message.roll, message.maxDuration, message.maxUndo)) {
+		if (game.beginTurn(message.playerColor, message.roll, now(), message.maxDuration, message.maxUndo)) {
 			showTurnDices(message.roll, message.playerColor);
 			showCurrentTurnMessages(message.playerColor, message.maxDuration);
 			if (message.playerId == playerId, nonempty forcedMoves = game.computeForcedMoves(message.playerColor, message.roll)) {
@@ -283,11 +283,11 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	}
 
 	void resetState(GameState state) {
-		delayedMessage = [];
-		nextActions = [];
-		game.state = state;
-		showState();
-	}
+	delayedMessage = [];
+	nextActions = [];
+	game.resetState(state, now());
+	showState();
+}
 	
 	void showTimeout() {
 		gui.hideUndoButton();
@@ -354,7 +354,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 		case (is TurnTimedOutMessage) {
 			delayedMessage = [];
 			nextActions = [];
-			game.forceTimeout();
+			game.forceTimeout(now());
 			showTimeout();
 			return true;
 		}

@@ -5,7 +5,6 @@ import ceylon.collection {
 }
 import ceylon.time {
 	Instant,
-	now,
 	Duration
 }
 
@@ -48,7 +47,7 @@ shared class Game() {
 		}
 	}
 	
-	shared Boolean initialRoll(DiceRoll roll, Duration maxDuration) {
+	shared Boolean initialRoll(DiceRoll roll, Instant timestamp, Duration maxDuration) {
 		if (currentColor exists) {
 			return false;
 		}
@@ -56,7 +55,7 @@ shared class Game() {
 		blackReady = false;
 		whiteReady = false;
 		_currentRoll = roll;
-		nextTimeout = now().plus(maxDuration);
+		nextTimeout = timestamp.plus(maxDuration);
 		return true;
 	}
 	
@@ -116,13 +115,13 @@ shared class Game() {
 		}
 	}
 	
-	shared Boolean beginTurn(CheckerColor player, DiceRoll roll, Duration maxDuration, Integer maxUndo) {
+	shared Boolean beginTurn(CheckerColor player, DiceRoll roll, Instant timestamp, Duration maxDuration, Integer maxUndo) {
 		if (!isCurrentColor(player)) {
 			return false;
 		}
 		remainingUndo = maxUndo;
 		_currentRoll = roll;
-		nextTimeout = now().plus(maxDuration);
+		nextTimeout = timestamp.plus(maxDuration);
 		return true;
 	}
 	
@@ -280,8 +279,8 @@ shared class Game() {
 		}
 	}
 	
-	shared void forceTimeout() {
-		nextTimeout = now().minus(Duration(1));
+	shared void forceTimeout(Instant timestamp) {
+		nextTimeout = timestamp.minus(Duration(1));
 	}
 
 	shared Boolean hasWon(CheckerColor color)=> board.countCheckers(board.homePosition(color), color) == checkerCount;
@@ -358,14 +357,14 @@ shared class Game() {
 		return nextTimeout.durationFrom(time);
 	}
 	
-	shared GameState state {
+	shared GameState buildState(Instant timestamp) {
 		value result = GameState();
 		result.currentColor = currentColor;
 		result.currentRoll = currentRoll;
 		result.remainingUndo = remainingUndo;
 		result.blackReady = blackReady;
 		result.whiteReady = whiteReady;
-		result.remainingTime = remainingTime(now());
+		result.remainingTime = remainingTime(timestamp);
 		result.blackJocker = blackJocker;
 		result.whiteJocker = whiteJocker;
 		result.blackCheckerCounts = board.checkerCounts(black);
@@ -374,14 +373,14 @@ shared class Game() {
 		return result;
 	}
 	
-	assign state {
+	shared void resetState(GameState state, Instant timestamp) {
 		_currentColor = state.currentColor;
 		_currentRoll = state.currentRoll;
 		remainingUndo = state.remainingUndo;
 		blackReady = state.blackReady;
 		whiteReady = state.whiteReady;
 		if (exists remainingTime = state.remainingTime) {
-			nextTimeout = now().plus(remainingTime);
+			nextTimeout = timestamp.plus(remainingTime);
 		} else {
 			nextTimeout = Instant(0);
 		}

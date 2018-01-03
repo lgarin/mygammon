@@ -17,11 +17,13 @@ import ceylon.test {
 	test
 }
 import ceylon.time {
-	now
+	now,
+	Instant
 }
 
 class PlayerTest() {
 	
+	value timestamp = Instant(0);
 	value matchBet = 10;
 	value matchPot = 18;
 	value initialBalance = 1000;
@@ -45,7 +47,7 @@ class PlayerTest() {
 	test
 	shared void markPlayerActiveUpdatesActivity() {
 		value currentTimestamp = now();
-		player.markActive();
+		player.markActive(currentTimestamp);
 		assert (!player.isInactiveSince(currentTimestamp));
 	}
 
@@ -68,7 +70,7 @@ class PlayerTest() {
 		table.sitPlayer(player);
 		value opponent = makePlayer("opponent");
 		table.sitPlayer(opponent);
-		value match = table.newMatch(matchPot);
+		value match = table.newMatch(timestamp, matchPot);
 		assert (exists match);
 		return match;
 	}
@@ -135,7 +137,7 @@ class PlayerTest() {
 		value player = makePlayer("player0");
 		player.placeBet(initialBalance);
 		player.joinTable(table.id);
-		value match = Match(player, makePlayer("other"), table, matchPot, messageList.add);
+		value match = Match(timestamp, player, makePlayer("other"), table, matchPot, messageList.add);
 		value result = player.joinMatch(match);
 		assert (!result);
 	}

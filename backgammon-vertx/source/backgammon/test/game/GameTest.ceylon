@@ -11,11 +11,13 @@ import backgammon.shared.game {
 	GameState
 }
 import ceylon.time {
-	now
+	now,
+	Instant
 }
 
 class GameTest() {
 	
+	value timestamp = Instant(0);
 	value game = Game();
 	
 	test
@@ -36,7 +38,7 @@ class GameTest() {
 	
 	test
 	shared void checkInitialState() {
-		value state = game.state;
+		value state = game.buildState(timestamp);
 		assert (state.currentColor is Null);
 		assert (state.currentRoll is Null);
 		assert (state.blackCheckerCounts.sequence() == [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 0, 0]);
@@ -97,7 +99,7 @@ class GameTest() {
 		value state = GameState();
 		state.blackCheckerCounts = [1, 0];
 		state.whiteCheckerCounts = [0, 0, 1];
-		game.state = state;
+		game.resetState(state, timestamp);
 		
 		value sequence = game.computeBestMoveSequence(black, DiceRoll(2, 1), 0, 3);
 		assert (sequence == [GameMoveInfo(0, 2, 2, true), GameMoveInfo(2, 3, 1, false)]);
@@ -111,7 +113,7 @@ class GameTest() {
 		value state = GameState();
 		state.blackCheckerCounts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
 		state.whiteCheckerCounts = [];
-		game.state = state;
+		game.resetState(state, timestamp);
 		
 		value sequence = game.computeBestMoveSequence(black, DiceRoll(4, 5), 12, 16);
 		assert (sequence == [GameMoveInfo(12, 16, 4, false)]);

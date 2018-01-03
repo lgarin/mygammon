@@ -15,6 +15,10 @@ import ceylon.collection {
 	linked,
 	HashMap
 }
+import ceylon.time {
+
+	Instant
+}
 
 final shared class Table(shared Integer index, shared RoomId roomId, shared Integer playerBet, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
 	
@@ -30,8 +34,8 @@ final shared class Table(shared Integer index, shared RoomId roomId, shared Inte
 	
 	shared [PlayerInfo*] queueState => [for (e in playerQueue.items) e.info]; 
 	
-	function createMatch(Player player1, Player player2, Integer matchPot) {
-		value currentMatch = Match(player1, player2, this, matchPot, messageBroadcaster);
+	function createMatch(Instant timestamp, Player player1, Player player2, Integer matchPot) {
+		value currentMatch = Match(timestamp, player1, player2, this, matchPot, messageBroadcaster);
 		if (player1.joinMatch(currentMatch) && player2.joinMatch(currentMatch)) {
 			_match = currentMatch;
 			messageBroadcaster(CreatedMatchMessage(player2.id, currentMatch.id, player1.info, player2.info, currentMatch.balance));
@@ -44,9 +48,9 @@ final shared class Table(shared Integer index, shared RoomId roomId, shared Inte
 	value firstQueuedPlayer => playerQueue.first?.item;
 	value secondQueuedPlayer =>  playerQueue.rest.first?.item;
 	
-	shared Match? newMatch(Integer matchPot) {
+	shared Match? newMatch(Instant timestamp, Integer matchPot) {
 		if (!_match exists, exists player1 = firstQueuedPlayer, exists player2 = secondQueuedPlayer) {
-			createMatch(player1, player2, matchPot);
+			createMatch(timestamp, player1, player2, matchPot);
 			return _match;
 		} else {
 			return null;

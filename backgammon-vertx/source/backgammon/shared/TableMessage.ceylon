@@ -2,6 +2,11 @@ import ceylon.json {
 	Object,
 	Array
 }
+import ceylon.time {
+
+	Instant,
+	now
+}
 
 shared sealed interface TableMessage of OutboundTableMessage | InboundTableMessage | MatchMessage satisfies RoomMessage  {
 	shared formal TableId tableId;
@@ -11,7 +16,11 @@ shared sealed interface TableMessage of OutboundTableMessage | InboundTableMessa
 }
 
 shared sealed interface OutboundTableMessage of JoinedTableMessage | LeftTableMessage | CreatedMatchMessage | TableStateResponseMessage satisfies TableMessage {}
-shared sealed interface InboundTableMessage of JoinTableMessage | LeaveTableMessage | TableStateRequestMessage satisfies TableMessage {}
+
+shared sealed interface InboundTableMessage of JoinTableMessage | LeaveTableMessage | TableStateRequestMessage satisfies TableMessage {
+	shared formal Instant timestamp;
+	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "tableId" -> tableId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
+}
 
 shared final class JoinedTableMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared PlayerInfo? playerInfo) satisfies OutboundTableMessage & RoomResponseMessage {
 	shared actual Boolean success => playerInfo exists;
@@ -37,21 +46,21 @@ CreatedMatchMessage parseCreatedMatchMessage(Object json) {
 	return CreatedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerInfo(json.getObject("player1")), parsePlayerInfo(json.getObject("player2")), parseMatchBalance(json.getObject("balance")));
 }
 
-shared final class JoinTableMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies InboundTableMessage {}
+shared final class JoinTableMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared actual Instant timestamp = now()) satisfies InboundTableMessage {}
 JoinTableMessage parseJoinTableMessage(Object json) {
-	return JoinTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
+	return JoinTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class LeaveTableMessage(shared actual PlayerId playerId, shared actual TableId tableId) satisfies InboundTableMessage {}
+shared final class LeaveTableMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared actual Instant timestamp = now()) satisfies InboundTableMessage {}
 LeaveTableMessage parseLeaveTableMessage(Object json) {
-	return LeaveTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")));
+	return LeaveTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class TableStateRequestMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared Boolean current) satisfies InboundTableMessage {
+shared final class TableStateRequestMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared Boolean current, shared actual Instant timestamp = now()) satisfies InboundTableMessage {
 	toJson() => toExtendedJson {"current" -> current};
 }
 TableStateRequestMessage parseTableStateRequestMessage(Object json) {
-	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), json.getBoolean("current"));
+	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), json.getBoolean("current"), Instant(json.getInteger("timestamp")));
 }
 
 shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared MatchState? match, shared [PlayerInfo*] playerQueue, shared actual Boolean success) satisfies OutboundTableMessage & RoomResponseMessage {

@@ -11,12 +11,11 @@ import backgammon.shared {
 }
 
 import ceylon.time {
-	now
+	Instant
 }
 
-shared class Match(shared Player player1, shared Player player2, Table table, Integer matchPot, Anything(OutboundMatchMessage) messageBroadcaster) {
+shared class Match(Instant creationTime, shared Player player1, shared Player player2, Table table, Integer matchPot, Anything(OutboundMatchMessage) messageBroadcaster) {
 	
-	value creationTime = now();
 	shared MatchId id = MatchId(table.id, creationTime);
 	shared TableId tableId = table.id;
 	shared Integer playerBet = table.playerBet;

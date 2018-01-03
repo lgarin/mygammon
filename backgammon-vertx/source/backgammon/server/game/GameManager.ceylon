@@ -41,8 +41,7 @@ import backgammon.shared.game {
 }
 
 import ceylon.time {
-	Instant,
-	now
+	Instant
 }
 import backgammon.server.dice {
 
@@ -88,9 +87,9 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	function sendInitialRoll() {
+	function sendInitialRoll(Instant timestamp) {
 		value roll = diceRoller.roll();
-		if (game.initialRoll(roll, configuration.maxRollDuration)) {
+		if (game.initialRoll(roll, timestamp, configuration.maxRollDuration)) {
 			messageBroadcaster(InitialRollMessage(matchId, player1Id, player1Color, roll.getValue(player1Color), roll, configuration.maxRollDuration));
 			messageBroadcaster(InitialRollMessage(matchId, player2Id, player2Color, roll.getValue(player2Color), roll, configuration.maxRollDuration));
 			return true;
@@ -147,19 +146,19 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	function beginNextTurn() {
+	function beginNextTurn(Instant timestamp) {
 		value nextColor = game.currentColor;
 		assert (exists nextColor);
 		value roll = diceRoller.roll();
 		value factor = roll.isPair then 2 else 1;
 		value turnDuration = game.hasAvailableMove(nextColor, roll) then configuration.maxTurnDuration.scale(factor) else configuration.maxEmptyTurnDuration;
 		value maxUndo = configuration.maxUndoPerTurn * factor;
-		assert (game.beginTurn(nextColor, roll, turnDuration, maxUndo));
+		assert (game.beginTurn(nextColor, roll, timestamp, turnDuration, maxUndo));
 		messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, maxUndo));
 		return true;
 	}
 	
-	function endTurn(CheckerColor playerColor) {
+	function endTurn(CheckerColor playerColor, Instant timestamp) {
 		softTimeoutNotified = false;
 		
 		if (blackSuccessiveTimeouts + whiteSuccessiveTimeouts >= configuration.maxSkippedGameTurn) {
@@ -176,16 +175,16 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
 		} else if (game.endTurn(playerColor)) {
-			return beginNextTurn();
+			return beginNextTurn(timestamp);
 		} else if (game.hasWon(playerColor)) {
 			return endGame(toPlayerId(playerColor), toPlayerId(playerColor));
 		} else {
-			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.buildState(timestamp)));
 			return false;
 		}
 	}
 	
-	function undoMoves(CheckerColor playerColor) {
+	function undoMoves(CheckerColor playerColor, Instant timestamp) {
 		if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
@@ -193,7 +192,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 			messageBroadcaster(UndoneMovesMessage(matchId, toPlayerId(playerColor), playerColor));
 			return true;
 		} else {
-			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.buildState(timestamp)));
 			return false;
 		}
 	}
@@ -212,12 +211,12 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	function beginFirstTurn(CheckerColor currentColor) {
+	function beginFirstTurn(CheckerColor currentColor, Instant timestamp) {
 		value roll = diceRoller.roll();
 		value factor = roll.isPair then 2 else 1;
 		value turnDuration = configuration.maxTurnDuration.scale(factor);
 		value maxUndo = configuration.maxUndoPerTurn * factor;
-		if (game.beginTurn(currentColor, roll, turnDuration, maxUndo)) {
+		if (game.beginTurn(currentColor, roll, timestamp, turnDuration, maxUndo)) {
 			messageBroadcaster(StartTurnMessage(matchId, toPlayerId(currentColor), currentColor, roll, turnDuration, maxUndo));
 			return true;
 		} else {
@@ -225,34 +224,34 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	function beginGame(CheckerColor playerColor) {
+	function beginGame(CheckerColor playerColor, Instant timestamp) {
 		if (game.begin(playerColor)) {
 			messageBroadcaster(PlayerReadyMessage(matchId, toPlayerId(playerColor), playerColor));
 			if (exists currentColor = game.currentColor) {
-				return beginFirstTurn(currentColor);
+				return beginFirstTurn(currentColor, timestamp);
 			} else if (exists roll = game.currentRoll, roll.isPair) {
-				return sendInitialRoll();
+				return sendInitialRoll(timestamp);
 			} else {
 				// first player annouced ready
 				return true;
 			}
 		} else {
-			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.buildState(timestamp)));
 			return false;
 		}
 	}
 	
-	function takeTurn(CheckerColor playerColor) {
+	function takeTurn(CheckerColor playerColor, Instant timestamp) {
 		
 		if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
 		} else if (game.takeTurn(playerColor)) {
-			return beginNextTurn();
+			return beginNextTurn(timestamp);
 		} else if (game.hasWon(playerColor)) {
 			return endGame(toPlayerId(playerColor), toPlayerId(playerColor));
 		} else {
-			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.state));
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.buildState(timestamp)));
 			return false;
 		}
 	}
@@ -262,28 +261,28 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		
 		switch (message) 
 		case (is StartGameMessage) {
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, sendInitialRoll());
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, sendInitialRoll(message.timestamp));
 		}
 		case (is PlayerBeginMessage) {
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, beginGame(playerColor));
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, beginGame(playerColor, message.timestamp));
 		}
 		case (is MakeMoveMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, makeMove(playerColor, message.sourcePosition, message.targetPosition));
 		}
 		case (is UndoMovesMessage) {
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, undoMoves(playerColor));
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, undoMoves(playerColor, message.timestamp));
 		}
 		case (is EndTurnMessage) {
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, endTurn(playerColor));
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, endTurn(playerColor, message.timestamp));
 		}
 		case (is EndGameMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, surrenderGame(toPlayerId(playerColor), playerColor));
 		}
 		case (is TakeTurnMessage) {
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, takeTurn(playerColor));
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, takeTurn(playerColor, message.timestamp));
 		}
 		case (is GameStateRequestMessage) {
-			return GameStateResponseMessage(matchId, message.playerId, playerColor, game.state);
+			return GameStateResponseMessage(matchId, message.playerId, playerColor, game.buildState(message.timestamp));
 		}
 	}
 	
@@ -302,23 +301,23 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	void doHardTimeout() {
+	void doHardTimeout(Instant timestamp) {
 		if (exists currentColor = game.currentColor) {
 			increasePlayerTimeoutCount(currentColor);
-			endTurn(currentColor);
+			endTurn(currentColor, timestamp);
 		} else {
 			endGame(systemPlayerId);
 		}
 	}
 	
 	function handleHardTimeout(InboundGameMessage message, CheckerColor playerColor) {
-		doHardTimeout();
+		doHardTimeout(message.timestamp);
 		return GameActionResponseMessage(matchId, message.playerId, playerColor, false);
 	}
 	
 	void doTimeoutNotifications(Instant currentTime) {
 		if (game.timedOut(currentTime.minus(configuration.serverAdditionalTimeout))) {
-			doHardTimeout();
+			doHardTimeout(currentTime);
 		} else if (!softTimeoutNotified && game.timedOut(currentTime)) {
 			doSoftTimeout(currentTime);
 		}
@@ -330,9 +329,9 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	function process(InboundGameMessage message, Instant currentTime, CheckerColor color) {
+	function process(InboundGameMessage message, CheckerColor color) {
 		variable GameActionResponseMessage|GameStateResponseMessage result;
-		if (game.timedOut(currentTime.minus(configuration.serverAdditionalTimeout))) {
+		if (game.timedOut(message.timestamp.minus(configuration.serverAdditionalTimeout))) {
 			result = handleHardTimeout(message, color);
 		} else {
 			result = handleMessage(message, color);
@@ -345,12 +344,11 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		if (is GameStateRequestMessage message) {
 			try (lock) {
 				// TODO cannot determine color
-				return GameStateResponseMessage(matchId, message.playerId, player1Color, game.state);
+				return GameStateResponseMessage(matchId, message.playerId, player1Color, game.buildState(message.timestamp));
 			}
 		} else if (exists color = toPlayerColor(message.playerId)) {
-			Instant currentTime = now();
 			try (lock) {
-				return process(message, currentTime, color);
+				return process(message, color);
 			}
 		} else {
 			// TODO cannot determine color

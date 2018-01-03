@@ -64,8 +64,8 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 		_maxMatchCount = max([_maxMatchCount, matchCount]);
 	}
 	
-	shared Boolean createMatch(Table table) {
-		if (exists match = table.newMatch(matchBet.matchPot)) {
+	shared Boolean createMatch(Table table, Instant timestamp) {
+		if (exists match = table.newMatch(timestamp, matchBet.matchPot)) {
 			updateMatchCount();
 			return true;
 		} else {
@@ -81,20 +81,20 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 		return null;
 	}
 	
-	function sitPlayer(Player player) {
+	function sitPlayer(Player player, Instant timestamp) {
 		if (exists table = tableList.find((table) => table.queueSize == 1 && table.sitPlayer(player))) {
-			createMatch(table);
+			createMatch(table, timestamp);
 			updateTableCount();
 			return table;
 		}
 		return openTable(player);
 	}
 	
-	shared Boolean removePlayer(Player player) {
+	shared Boolean removePlayer(Player player, Instant timestamp) {
 		if (exists tableId = player.tableId, exists table = findTable(tableId)) {
 			updatedPlayers.add(player);
 			table.removePlayer(player);
-			createMatch(table);
+			createMatch(table, timestamp);
 		}
 		playerMap.remove(player.id);
 		oldPlayers.add(player);
@@ -105,7 +105,7 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 		variable value result = 0;
 		for (player in playerMap.items.clone()) {
 			if (!player.isPlaying() && player.isInactiveSince(timeoutTime)) {
-				removePlayer(player);
+				removePlayer(player, timeoutTime);
 				result++;
 			}
 		}
@@ -137,11 +137,11 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 		}
 	}
 	
-	shared Table? findMatchTable(Player player) {
+	shared Table? findMatchTable(Player player, Instant timestamp) {
 		if (exists tableId = player.tableId, exists table = findTable(tableId)) {
 			return table;
 		} else if (!player.tableId exists) {
-			return sitPlayer(player);
+			return sitPlayer(player, timestamp);
 		} else {
 			return null;
 		}
