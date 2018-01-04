@@ -163,7 +163,7 @@ final shared class GameRoomEventBus(Vertx vertx, ServerConfiguration configurati
 		if (disableOutput) {
 			return;
 		}
-		value formattedMessage = formatGameEventMessage(message); 
+		value formattedMessage = formatGameEventMessage(message);
 		eventStore.storeEvent("game-``message.roomId``-``message.matchId.date``", formattedMessage, (result) {
 			if (is Throwable result) {
 				throw Exception("Failed to store message ``formattedMessage``");
@@ -172,7 +172,7 @@ final shared class GameRoomEventBus(Vertx vertx, ServerConfiguration configurati
 			}
 		});
 	}
-	
+
 	shared void registerGameEventMessageCosumer(String roomId, void process(GameEventMessage message)) {
 		eventBus.registerConsumer("GameEventMessage-``roomId``", function (Object msg) {
 			if (is GameEventMessage request = parseGameEventMessage(msg)) {

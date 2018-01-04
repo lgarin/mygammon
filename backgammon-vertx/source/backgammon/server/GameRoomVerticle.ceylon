@@ -82,6 +82,7 @@ final class GameRoomVerticle() extends Verticle() {
 		}
 		
 		void replayMatchRoom() {
+			// TODO replay only active games
 			roomEventBus.replayAllRoomEvents(roomConfig.roomId, matchRoom.processMessage, (result) {
 				if (is Throwable result) {
 					startFuture.fail(result);

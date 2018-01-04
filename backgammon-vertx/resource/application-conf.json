@@ -10,5 +10,8 @@
 	"playerInactiveTimeout": 600000,
 	"maxWarningCount": 2,
 	"maxUndoPerTurn": 1,
-	"maxSkippedPlayerTurn": 3
+	"maxSkippedPlayerTurn": 3,
+	"blockedThreadCheckInterval": 10000000000,
+	"maxEventLoopExecuteTime": 10000000000,
+	"maxWorkerExecuteTime": 10000000000
 }

@@ -1,4 +1,7 @@
 
+import backgammon.server.dice {
+	DiceRollQueue
+}
 import backgammon.server.util {
 	ObtainableLock
 }
@@ -38,8 +41,7 @@ import backgammon.shared.game {
 	white,
 	CheckerColor,
 	player1Color,
-	player2Color,
-	DiceRoll
+	player2Color
 }
 
 import ceylon.time {
@@ -54,8 +56,7 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 	
 	value lock = ObtainableLock("GameManager ``matchId``"); 
 	
-	variable DiceRoll? nextRoll = null;
-	value nextRollLock = ObtainableLock("NextRoll ``matchId``");
+	shared DiceRollQueue diceRollQueue = DiceRollQueue(matchId.string);
 	
 	// TODO should be in game state
 	variable Integer blackInvalidMoves = 0;
@@ -65,7 +66,7 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 	
 	variable Boolean softTimeoutNotified = false;
 	
-	value game = Game(createGameMessage.timestamp.plus(configuration.maxRollDuration));
+	value game = Game(createGameMessage.timestamp.plus(configuration.serverAdditionalTimeout));
 	
 	function toPlayerColor(PlayerId playerId) {
 		if (playerId == player1Id) {
@@ -87,51 +88,8 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 		}
 	}
 	
-	function takeNextRoll() {
-		try (nextRollLock) {
-			while (true) {
-				if (exists roll = nextRoll) {
-					nextRoll = null;
-					nextRollLock.signalAll();
-					return roll;
-				} else {
-					nextRollLock.waitSignal();
-				}
-			}
-		}
-	}
-	
-	shared void waitForNewRoll() {
-		try (nextRollLock) {
-			while (true) {
-				if (nextRoll is Null) {
-					nextRollLock.waitSignal();
-				}
-			}
-		}
-	}
-	
-	shared Boolean needNewRoll() {
-		try (nextRollLock) {
-			return nextRoll is Null;
-		}
-	}
-	
-	shared void setNextRoll(DiceRoll roll) {
-		try (nextRollLock) {
-			while (true) {
-				if (nextRoll is Null) {
-					nextRoll = roll;
-					return;
-				} else {
-					nextRollLock.waitSignal();
-				}
-			}
-		}
-	}
-	
 	function sendInitialRoll(Instant timestamp) {
-		value roll = takeNextRoll();
+		value roll = diceRollQueue.takeNextRoll();
 		if (game.initialRoll(roll, timestamp, configuration.maxRollDuration)) {
 			messageBroadcaster(InitialRollMessage(matchId, player1Id, player1Color, roll.getValue(player1Color), roll, configuration.maxRollDuration));
 			messageBroadcaster(InitialRollMessage(matchId, player2Id, player2Color, roll.getValue(player2Color), roll, configuration.maxRollDuration));
@@ -192,7 +150,7 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 	function beginNextTurn(Instant timestamp) {
 		value nextColor = game.currentColor;
 		assert (exists nextColor);
-		value roll = takeNextRoll();
+		value roll = diceRollQueue.takeNextRoll();
 		value factor = roll.isPair then 2 else 1;
 		value turnDuration = game.hasAvailableMove(nextColor, roll) then configuration.maxTurnDuration.scale(factor) else configuration.maxEmptyTurnDuration;
 		value maxUndo = configuration.maxUndoPerTurn * factor;
@@ -255,7 +213,7 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 	}
 	
 	function beginFirstTurn(CheckerColor currentColor, Instant timestamp) {
-		value roll = takeNextRoll();
+		value roll = diceRollQueue.takeNextRoll();
 		value factor = roll.isPair then 2 else 1;
 		value turnDuration = configuration.maxTurnDuration.scale(factor);
 		value maxUndo = configuration.maxUndoPerTurn * factor;

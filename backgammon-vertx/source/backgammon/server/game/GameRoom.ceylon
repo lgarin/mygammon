@@ -82,11 +82,11 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
 		if (exists game = getGameManager(message)) {
 			value result = game.processGameMessage(message);
-			if (game.needNewRoll()) {
+			if (game.diceRollQueue.needNewRoll()) {
 				eventRecorder(NextRollMessage(game.matchId, diceRoller.roll(), message.timestamp));
 			}
-			// TODO should we really wait here?
-			game.waitForNewRoll();
+			// TODO should we wait here?
+			//game.diceRollQueue.waitForNewRoll();
 			return result;
 		} else {
 			// TODO cannot determine color
@@ -98,7 +98,7 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		if (exists game = getGameManager(message)) {
 			switch (message) 
 			case (is NextRollMessage) {
-				game.setNextRoll(message.roll);
+				game.diceRollQueue.setNextRoll(message.roll);
 			}
 			case (is GameTimeoutMessage) {
 				game.notifyTimeouts(message.timestamp);
@@ -127,7 +127,7 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 					game.notifyTimeouts(currentTime);
 				}
 				
-				if (game.needNewRoll()) {
+				if (game.diceRollQueue.needNewRoll()) {
 					eventRecorder(NextRollMessage(game.matchId, diceRoller.roll(), currentTime));
 				}
 			}

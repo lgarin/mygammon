@@ -20,7 +20,9 @@ import ceylon.time {
 import io.vertx.ceylon.core {
 	Verticle,
 	DeploymentOptions,
-	vertxFactory=vertx
+	vertxFactory=vertx,
+	VertxOptions,
+	vertxOptions
 }
 import java.util.concurrent {
 	TimeUnit,
@@ -32,7 +34,6 @@ import java.util.concurrent.atomic {
 
 final class VertxContainer(Module mod, String configFile, Duration startupShutdownTimeout = Duration(30 * 1000)) {
 	value log = logger(mod);
-	value container = vertxFactory.vertx();
 	
 	function parseConfiguration() {
 		value file = JsonFile(configFile);
@@ -43,6 +44,10 @@ final class VertxContainer(Module mod, String configFile, Duration startupShutdo
 		}
 	}
 	
+	value configuration = parseConfiguration();
+	
+	value options = if (exists configuration) then vertxOptions.fromJson(configuration) else VertxOptions();
+	value container = vertxFactory.vertx(options);
 	
 	function waitLatch(CountDownLatch latch) {
 		try {
@@ -65,7 +70,7 @@ final class VertxContainer(Module mod, String configFile, Duration startupShutdo
 	
 	shared Boolean deployVerticles([Class<Verticle,[]>*] verticleClasses) {
 		log.info("Deploying version ``mod.version``...");
-		value options = DeploymentOptions { config = parseConfiguration();  };
+		value options = DeploymentOptions { config = configuration;  };
 		value latch = CountDownLatch(verticleClasses.size);
 		value successCount = AtomicInteger(0);
 		for (verticleClass in verticleClasses) {

@@ -1,17 +1,12 @@
-import java.util.concurrent.locks {
-	ReentrantLock
-}
 import ceylon.logging {
-
 	logger
 }
-import java.util.concurrent {
 
+import java.util.concurrent {
 	TimeUnit
 }
-import java.lang {
-
-	InterruptedException
+import java.util.concurrent.locks {
+	ReentrantLock
 }
 
 shared final class ObtainableLock(String name) satisfies Obtainable {
@@ -21,13 +16,8 @@ shared final class ObtainableLock(String name) satisfies Obtainable {
 	shared Boolean locked => lock.locked;
 	
 	shared actual void obtain() {
-		while (true) {
-			try {
-				lock.tryLock(1, TimeUnit.seconds);
-				return;
-			} catch (InterruptedException e) {
-				logger(`package`).warn("Waiting for lock : ``name``");
-			}
+		while (!lock.tryLock(1, TimeUnit.seconds)) {
+			logger(`package`).warn("Waiting for lock : ``name``");
 		}
 	}
 	
@@ -36,13 +26,8 @@ shared final class ObtainableLock(String name) satisfies Obtainable {
 	}
 	
 	shared void waitSignal() {
-		while (true) {
-			try {
-				condition.await(1, TimeUnit.seconds);
-				return;
-			} catch (InterruptedException e) {
-				logger(`package`).warn("Waiting for condition : ``name``");
-			}
+		while (!condition.await(1, TimeUnit.seconds)) {
+			logger(`package`).warn("Waiting for condition : ``name``");
 		}
 	}
 	

@@ -53,7 +53,7 @@ final class JsonEventBus(Vertx vertx) {
 							log.error("Failed processing for ``message.body() else message``", result);
 							message.fail(500, "Processing error: ``result.message``");
 						} else if (is Object result) {
-							log.info("Reply ``result.string``");
+							log.info("Rep ``result.string``");
 							message.reply(result);
 						}
 					});

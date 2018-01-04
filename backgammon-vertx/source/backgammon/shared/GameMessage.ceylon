@@ -183,7 +183,7 @@ shared OutboundGameMessage? parseOutboundGameMessage(Object json) {
 shared InboundGameMessage? parseInboundGameMessage(Object json) {
 	if (exists typeName = json.keys.first) {
 		if (typeName == `class CreateGameMessage`.name) {
-			return parseStartGameMessage(json.getObject(typeName));
+			return parseCreateGameMessage(json.getObject(typeName));
 		} else if (typeName == `class StartGameMessage`.name) {
 			return parseStartGameMessage(json.getObject(typeName));
 		} else if (typeName == `class PlayerBeginMessage`.name) {
