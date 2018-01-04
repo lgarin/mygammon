@@ -7,7 +7,7 @@ import ceylon.test {
 }
 
 class ObtainableLockTest() {
-	value lock = ObtainableLock();
+	value lock = ObtainableLock("Test");
 	
 	test
 	shared void lockReleasesLock() {

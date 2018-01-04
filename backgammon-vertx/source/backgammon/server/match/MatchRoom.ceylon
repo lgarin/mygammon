@@ -40,7 +40,8 @@ import backgammon.shared {
 	PlayerStateMessage,
 	RoomActionResponseMessage,
 	PlayerRosterInboundMessage,
-	PlayerStatisticUpdateMessage
+	PlayerStatisticUpdateMessage,
+	CreateGameMessage
 }
 
 import ceylon.time {
@@ -49,7 +50,7 @@ import ceylon.time {
 
 shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander, Anything(PlayerRosterInboundMessage) playerRepository) {
 	
-	value lock = ObtainableLock(); 
+	value lock = ObtainableLock("MatchRoom ``configuration.roomId``"); 
 	value room = Room(configuration.roomId, configuration.roomSize, configuration.matchBet, messageBroadcaster);
 	variable Instant lastNotification = Instant(0);
 	
@@ -202,6 +203,8 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				handlePlayerChange(match.player1);
 				handlePlayerChange(match.player2);
 				gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
+			} else {
+				gameCommander(CreateGameMessage(match.id, match.player1.id, match.player2.id));
 			}
 			return AcceptedMatchMessage(message.playerId, message.matchId, true);
 		} else {
@@ -238,6 +241,19 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			}
 		}
 	}
+	
+	shared OutboundMatchMessage|OutboundTableMessage|OutboundRoomMessage processMessage(InboundMatchMessage|InboundTableMessage|InboundRoomMessage message) {
+		switch (message)
+		case (is InboundMatchMessage) {
+			return processMatchMessage(message);
+		}
+		case (is InboundTableMessage) {
+			return processTableMessage(message);
+		}
+		case (is InboundRoomMessage) {
+			return processRoomMessage(message);
+		}
+	}
 
 	shared void periodicCleanup(Instant currentTime) {
 		try (lock) {
@@ -259,6 +275,13 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				maxMatchCount = room.maxMatchCount;
 				totalMatchCount = room.createdMatchCount;
 			};
+		}
+	}
+	
+	shared void resetPeriodicNotification(Instant currentTime) {
+		try (lock) {
+			room.clearPlayerListDelta();
+			lastNotification = currentTime;
 		}
 	}
 	

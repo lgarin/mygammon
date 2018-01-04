@@ -15,10 +15,6 @@ import io.vertx.ceylon.web {
 import io.vertx.ceylon.web.handler {
 	staticHandler
 }
-import backgammon.server.bus {
-
-	GameRoomEventBus
-}
 
 final class HttpServerVerticle() extends Verticle() {
 	
@@ -28,6 +24,7 @@ final class HttpServerVerticle() extends Verticle() {
 	shared actual void startAsync(Future<Anything> startFuture) {
 		value serverConfig = ServerConfiguration(config);
 		value authRouterFactory = KeycloakAuthRouterFactory(vertx, serverConfig.hostname, serverConfig.port);
+		value roomRouterFactory = GameRoomRouterFactory(vertx, serverConfig);
 		value router = routerFactory.router(vertx);
 		
 		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(serverConfig.userSessionTimeout.milliseconds));
@@ -36,11 +33,11 @@ final class HttpServerVerticle() extends Verticle() {
 		router.route("/static/*").handler(staticHandler.create("static").handle);
 		router.route("/client/*").handler(staticHandler.create("client").handle);
 		
-		router.mountSubRouter("/eventbus", GameRoomEventBus(vertx).createEventBusRouter());
-		router.mountSubRouter("/api", GameRoomRestApi(vertx).createRouter());
+		router.mountSubRouter("/eventbus", roomRouterFactory.createEventBusRouter());
+		router.mountSubRouter("/api", roomRouterFactory.createApiRouter());
 		
 		router.mountSubRouter("/", authRouterFactory.createLoginRouter());
-		router.mountSubRouter("/", GameRoomRouterFactory(vertx, serverConfig).createRouter());
+		router.mountSubRouter("/", roomRouterFactory.createRootRouter());
 		
 		vertx.createHttpServer().requestHandler(router.accept).listen(serverConfig.port, (result) {
 			if (is HttpServer result) {

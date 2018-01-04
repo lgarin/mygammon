@@ -34,10 +34,8 @@ import backgammon.server.bus {
 	GameRoomEventBus
 }
 
-final class GameRoomRestApi(Vertx vertx) {
+final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
 	
-	value eventBus = GameRoomEventBus(vertx);
-
 	void forwardResponse(GameRoomRoutingContext context, InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message) {
 		eventBus.sendInboundMessage(message, void (Throwable|RoomMessage result) {
 			if (is Throwable result) {

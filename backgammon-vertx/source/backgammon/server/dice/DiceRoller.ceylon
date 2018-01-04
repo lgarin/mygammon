@@ -5,8 +5,14 @@ import backgammon.shared.game {
 import java.security {
 	SecureRandom
 }
+import backgammon.server.util {
+
+	ObtainableLock
+}
 
 shared final class DiceRoller() {
+	
+	value lock = ObtainableLock("DiceRoller"); 
 	
 	variable SecureRandom? random = null;
 	
@@ -14,5 +20,9 @@ shared final class DiceRoller() {
 	
 	function rollOne() => lazyRandom.nextInt(5) + 1;
 	
-	shared DiceRoll roll() => DiceRoll(rollOne(), rollOne());
+	shared DiceRoll roll() {
+		try (lock) {
+			return DiceRoll(rollOne(), rollOne());
+		}
+	}
 }

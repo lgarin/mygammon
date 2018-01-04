@@ -1,3 +1,9 @@
+import backgammon.server {
+	ServerConfiguration
+}
+import backgammon.server.store {
+	JsonEventStore
+}
 import backgammon.shared {
 	parseInboundGameMessage,
 	InboundGameMessage,
@@ -16,11 +22,17 @@ import backgammon.shared {
 	InboundTableMessage,
 	parseOutboundTableMessage,
 	parseInboundTableMessage,
-	parseInboundMatchMessage
+	parseInboundMatchMessage,
+	GameEventMessage,
+	parseGameEventMessage,
+	formatGameEventMessage
 }
 
 import ceylon.json {
 	Object
+}
+import ceylon.time {
+	now
 }
 
 import io.vertx.ceylon.core {
@@ -31,11 +43,20 @@ import io.vertx.ceylon.web {
 	Router
 }
 
-final shared class GameRoomEventBus(Vertx vertx) {
+final shared class GameRoomEventBus(Vertx vertx, ServerConfiguration configuration) {
 
+	shared variable Boolean disableOutput = false;
+	
 	value eventBus = JsonEventBus(vertx);
+	value eventStore = JsonEventStore(vertx, configuration.elasticIndexUrl, configuration.replayPageSize);
 
-	shared void sendInboundMessage<OutboundMessage>(InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies RoomMessage {
+	void rethrowExceptionHandler(Anything result) {
+		if (is Throwable result) {
+			throw result;
+		}
+	}
+
+	void sendMessage<OutboundMessage>(InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies RoomMessage {
 		value formattedMessage = formatRoomMessage(message);
 		switch (message)
 		case (is InboundRoomMessage) {
@@ -51,12 +72,40 @@ final shared class GameRoomEventBus(Vertx vertx) {
 			eventBus.sendMessage(formattedMessage, "InboundGameMessage-``message.roomId``", parseOutboundGameMessage, responseHandler);
 		}
 	}
-	
-	shared void queueInboundMessage(InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message) {
-		vertx.runOnContext(() => sendInboundMessage(message, noop));
+
+	void storeAndSendMessage<OutboundMessage>(String indexName, InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies RoomMessage {
+		value formattedMessage = formatRoomMessage(message);
+		eventStore.storeEvent(indexName, formattedMessage, (result) {
+			if (is Throwable result) {
+				responseHandler(result);
+			} else {
+				sendMessage(message, responseHandler);
+			}
+		});
 	}
 
+	shared void sendInboundMessage<OutboundMessage>(InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies RoomMessage {
+		if (disableOutput) {
+			return;
+		}
+		if (is InboundGameMessage message) {
+			storeAndSendMessage("game-``message.roomId``-``message.matchId.date``", message, responseHandler);
+		} else {
+			storeAndSendMessage("room-``message.roomId``", message, responseHandler);
+		}
+	}
+	
+	shared void queueInboundMessage(InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message) {
+		if (disableOutput) {
+			return;
+		}
+		vertx.runOnContext(() => sendInboundMessage(message, rethrowExceptionHandler));
+	}
+	
 	shared void publishOutboundMessage(OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage|OutboundGameMessage message) {
+		if (disableOutput) {
+			return;
+		}
 		value formattedMessage = formatRoomMessage(message); 
 		switch (message)
 		case (is OutboundRoomMessage) {
@@ -109,8 +158,85 @@ final shared class GameRoomEventBus(Vertx vertx) {
 		value executor = vertx.createSharedWorkerExecutor("game-workerthread-``roomId``", threadCount);
 		registerParallelRoomMessageConsumer(executor, "InboundGameMessage-``roomId``", parseInboundGameMessage, process);
 	}
+	
+	shared void storeGameEventMessage(GameEventMessage message) {
+		if (disableOutput) {
+			return;
+		}
+		value formattedMessage = formatGameEventMessage(message); 
+		eventStore.storeEvent("game-``message.roomId``-``message.matchId.date``", formattedMessage, (result) {
+			if (is Throwable result) {
+				throw Exception("Failed to store message ``formattedMessage``");
+			} else {
+				eventBus.sendMessage(formattedMessage, "GameEventMessage-``message.roomId``", parseGameEventMessage, rethrowExceptionHandler);
+			}
+		});
+	}
+	
+	shared void registerGameEventMessageCosumer(String roomId, void process(GameEventMessage message)) {
+		eventBus.registerConsumer("GameEventMessage-``roomId``", function (Object msg) {
+			if (is GameEventMessage request = parseGameEventMessage(msg)) {
+				process(request);
+				return msg;
+			} else {
+				throw Exception("Invalid request: ``msg``");
+			}
+		});
+	}
 		
 	shared Router createEventBusRouter() {
 		return eventBus.createEventBusRouter("/*", {"^OutboundRoomMessage-.*$", "^OutboundTableMessage-.*$", "^OutboundGameMessage-.*$"});
+	}
+	
+	function parseRoomEvent(Object json) {
+		if (exists result = parseInboundRoomMessage(json)) {
+			return result;
+		} else if (exists result = parseInboundTableMessage(json)) {
+			return result;
+		} else if (exists result = parseInboundMatchMessage(json)) {
+			return result;
+		} else {
+			return null;
+		}
+	}
+	
+	shared void replayAllRoomEvents(String roomId, void process(InboundRoomMessage|InboundTableMessage|InboundMatchMessage message), void completion(Integer|Throwable result)) {
+		eventStore.replayAllEvents("room-``roomId``", parseRoomEvent, process, completion);
+	}
+	
+	function parseGameEvent(Object json) {
+		if (exists result = parseInboundGameMessage(json)) {
+			return result;
+		} else if (exists result = parseGameEventMessage(json)) {
+			return result;
+		} else {
+			return null;
+		}
+	}
+	
+	shared void replayAllGameEvents(String roomId, void process(InboundGameMessage|GameEventMessage message), void completion(Integer|Throwable result)) {
+		void replaySumCompletion(Integer previous)(Integer|Throwable result) {
+			if (is Integer result) {
+				completion(result + previous);
+			} else {
+				completion(result);
+			}
+		}
+		
+		value today = now().date();
+		void replayToday(Integer|Throwable result) {
+			if (is Throwable result) {
+				completion(result);
+			} else {
+				eventStore.replayAllEvents("game-``roomId``-``today``", parseGameEvent, process, replaySumCompletion(result));
+			}
+		}
+		
+		value yersterday = today.minusDays(1);
+		void replayYesterday() {
+			eventStore.replayAllEvents("game-``roomId``-``yersterday``", parseGameEvent, process, replayToday);
+		}
+		
+		replayYesterday();
 	}
 }

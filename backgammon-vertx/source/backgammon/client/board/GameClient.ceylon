@@ -45,7 +45,7 @@ shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? player
 	value initialRollDelay = Duration(2000);
 	value moveSequenceDelay = Duration(300);
 			
-	value game = Game();
+	value game = Game(now().plus(initialRollDelay));
 	
 	final class DelayedGameMessage(shared InboundGameMessage message, Duration delay) {
 		value sendTime = now().plus(delay);

@@ -18,7 +18,7 @@ import ceylon.time {
 class GameTest() {
 	
 	value timestamp = Instant(0);
-	value game = Game();
+	value game = Game(timestamp);
 	
 	test
 	shared void checkInitialGame() {

@@ -17,7 +17,7 @@ import ceylon.time {
 
 shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage satisfies MatchMessage {}
 
-shared interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
+shared interface InboundGameMessage of CreateGameMessage | StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
 	shared formal Instant timestamp;
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
 }
@@ -25,6 +25,13 @@ shared interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | M
 shared interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
 	shared formal CheckerColor playerColor;
 	shared actual default Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "playerColor" -> playerColor.name };
+}
+
+shared final class CreateGameMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared PlayerId opponentId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {
+	toJson() => toExtendedJson({"opponentId" -> opponentId.toJson()});
+}
+CreateGameMessage parseCreateGameMessage(Object json) {
+	return CreateGameMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parsePlayerId(json.getString("opponentId")), Instant(json.getInteger("timestamp")));
 }
 
 shared final class StartGameMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared PlayerId opponentId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {
@@ -175,7 +182,9 @@ shared OutboundGameMessage? parseOutboundGameMessage(Object json) {
 
 shared InboundGameMessage? parseInboundGameMessage(Object json) {
 	if (exists typeName = json.keys.first) {
-		if (typeName == `class StartGameMessage`.name) {
+		if (typeName == `class CreateGameMessage`.name) {
+			return parseStartGameMessage(json.getObject(typeName));
+		} else if (typeName == `class StartGameMessage`.name) {
 			return parseStartGameMessage(json.getObject(typeName));
 		} else if (typeName == `class PlayerBeginMessage`.name) {
 			return parsePlayerBeginMessage(json.getObject(typeName));

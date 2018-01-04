@@ -31,9 +31,10 @@ final class PlayerRosterVerticle() extends Verticle() {
 		value roster = PlayerRoster(serverConfig);
 		value repoEventBus = PlayerRosterEventBus(vertx, serverConfig);
 		
-		log.info("Starting player roster");
+		repoEventBus.disableOutput = true;
+		log.info("Starting player roster...");
 		repoEventBus.replayAllEvents(roster.processInputMessage, (result) {
-			if (is Exception result) {
+			if (is Throwable result) {
 				startFuture.fail(result);
 			} else {
 				repoEventBus.registerConsumer(roster.processInputMessage);
@@ -42,6 +43,7 @@ final class PlayerRosterVerticle() extends Verticle() {
 					handleStatistic(roster);
 				});
 				
+				repoEventBus.disableOutput = false;
 				log.info("Replayed ``result`` events in player roster");
 				startFuture.complete();
 			}

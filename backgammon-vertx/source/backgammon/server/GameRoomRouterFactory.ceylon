@@ -36,9 +36,10 @@ import backgammon.server.bus {
 
 final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig) {
 	
-	value roomEventBus = GameRoomEventBus(vertx);
+	value roomEventBus = GameRoomEventBus(vertx, serverConfig);
 	value repoEventBus = PlayerRosterEventBus(vertx, serverConfig);
 	value authClient = KeycloakAuthClient(vertx, serverConfig.keycloakLoginUrl);
+	value restApi = GameRoomRestApi(vertx, roomEventBus);
 	
 	void enterRoom(RoutingContext routingContext, PlayerInfo playerInfo, PlayerStatistic playerStat) {
 		value context = GameRoomRoutingContext(routingContext);
@@ -130,7 +131,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		}
 	}
 
-	shared Router createRouter() {
+	shared Router createRootRouter() {
 		value router = routerFactory.router(vertx);
 		router.route("/start").handler(handleStart);
 		router.route("/logout").handler(handleLogout);
@@ -140,4 +141,8 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		router.route("/room/:roomId/table/:tableId/play").handler(handleTable);
 		return router;
 	}
+	
+	shared Router createApiRouter() => restApi.createRouter();
+	
+	shared Router createEventBusRouter() => roomEventBus.createEventBusRouter();
 }

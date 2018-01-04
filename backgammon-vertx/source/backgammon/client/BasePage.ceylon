@@ -38,7 +38,8 @@ import backgammon.shared {
 	OutboundTableMessage,
 	OutboundMatchMessage,
 	OutboundGameMessage,
-	TakeTurnMessage
+	TakeTurnMessage,
+	CreateGameMessage
 }
 
 import ceylon.json {
@@ -137,6 +138,9 @@ abstract shared class BasePage() {
 		switch (message)
 		case (is AcceptMatchMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");
+		}
+		case (is CreateGameMessage) {
+			// ignore
 		}
 		case (is StartGameMessage) {
 			// ignore

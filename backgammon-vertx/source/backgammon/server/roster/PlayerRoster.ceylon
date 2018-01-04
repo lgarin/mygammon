@@ -24,7 +24,7 @@ import ceylon.time {
 shared final class PlayerRoster(RoomConfiguration config) {
 	
 	value statisticMap = HashMap<PlayerId, PlayerRosterRecord>();
-	value lock = ObtainableLock();
+	value lock = ObtainableLock("PlayerRoster");
 
 	function storeRecord(PlayerRosterRecord record) {
 		statisticMap.put(record.id, record);

@@ -3,7 +3,8 @@ import ceylon.json {
 	Value
 }
 import ceylon.time {
-	Instant
+	Instant,
+	Date
 }
 shared abstract class StringIdentifier(String id) extends Object() {
 	string = id;
@@ -22,6 +23,8 @@ shared final class TableId(shared String roomId, shared Integer table) extends S
 	toJson() => JsonObject {"roomId" -> roomId, "table" -> table};
 }
 shared final class MatchId(shared TableId tableId, shared Instant timestamp) extends StringIdentifier("``tableId``-game-``timestamp.millisecondsOfEpoch``") {
+	shared String roomId => tableId.roomId;
+	shared Date date => timestamp.date();
 	toJson() => JsonObject {"roomId" -> tableId.roomId, "table" -> tableId.table, "timestamp" -> timestamp.millisecondsOfEpoch};
 }
 shared final class PlayerId(shared String id) extends StringIdentifier(id) {

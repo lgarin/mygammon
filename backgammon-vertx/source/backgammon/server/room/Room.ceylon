@@ -181,13 +181,17 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 	
 	shared Integer playerListDeltaSize => newPlayers.size + oldPlayers.size + updatedPlayers.size; 
 	
+	shared void clearPlayerListDelta() {
+		newPlayers.clear();
+		oldPlayers.clear();
+		updatedPlayers.clear();
+	}
+	
 	shared PlayerListMessage createPlayerListDelta() {
 		updatedPlayers.removeAll(newPlayers);
 		updatedPlayers.removeAll(oldPlayers);
 		value message = PlayerListMessage(id, [for (element in newPlayers) element.state], [for (element in oldPlayers) element.state], [for (element in updatedPlayers) element.state]);
-		newPlayers.clear();
-		oldPlayers.clear();
-		updatedPlayers.clear();
+		clearPlayerListDelta();
 		return message;
 	}
 	

@@ -22,10 +22,15 @@ import io.vertx.ceylon.core {
 
 final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configuration) {
 	
+	shared variable Boolean disableOutput = false;
+	
 	value eventBus = JsonEventBus(vertx);
 	value eventStore = JsonEventStore(vertx, configuration.elasticIndexUrl, configuration.replayPageSize);
 	
 	shared void sendInboundMessage<OutputMessage>(PlayerRosterInboundMessage message, void responseHandler(Throwable|OutputMessage response)) given OutputMessage satisfies PlayerRosterOutboundMessage {
+		if (disableOutput) {
+			return;
+		}
 		value formattedMessage = formatPlayerRosterMessage(message); 
 		eventStore.storeEvent("playerroster", formattedMessage, (result) {
 			if (is Throwable result) {
@@ -36,8 +41,17 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 		});
 	}
 
+	void rethrowExceptionHandler(Anything result) {
+		if (is Throwable result) {
+			throw result;
+		}
+	}
+
 	shared void queueInputMessage(PlayerRosterInboundMessage message) {
-		vertx.runOnContext(() => sendInboundMessage(message, noop));
+		if (disableOutput) {
+			return;
+		}
+		vertx.runOnContext(() => sendInboundMessage(message, rethrowExceptionHandler));
 	}
 
 	shared void registerConsumer(PlayerRosterOutboundMessage process(PlayerRosterInboundMessage request)) {

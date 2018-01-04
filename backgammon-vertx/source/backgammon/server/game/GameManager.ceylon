@@ -28,7 +28,8 @@ import backgammon.shared {
 	InboundMatchMessage,
 	EndMatchMessage,
 	systemPlayerId,
-	TakeTurnMessage
+	TakeTurnMessage,
+	CreateGameMessage
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -37,25 +38,24 @@ import backgammon.shared.game {
 	white,
 	CheckerColor,
 	player1Color,
-	player2Color
+	player2Color,
+	DiceRoll
 }
 
 import ceylon.time {
 	Instant
 }
-import backgammon.server.dice {
 
-	DiceRoller
-}
-
-final class GameManager(StartGameMessage startGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
+final class GameManager(CreateGameMessage createGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
 	
-	shared MatchId matchId = startGameMessage.matchId;
-	value player1Id = startGameMessage.playerId;
-	value player2Id = startGameMessage.opponentId;
+	shared MatchId matchId = createGameMessage.matchId;
+	value player1Id = createGameMessage.playerId;
+	value player2Id = createGameMessage.opponentId;
 	
-	value lock = ObtainableLock(); 
-	value diceRoller = DiceRoller();
+	value lock = ObtainableLock("GameManager ``matchId``"); 
+	
+	variable DiceRoll? nextRoll = null;
+	value nextRollLock = ObtainableLock("NextRoll ``matchId``");
 	
 	// TODO should be in game state
 	variable Integer blackInvalidMoves = 0;
@@ -65,7 +65,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 	
 	variable Boolean softTimeoutNotified = false;
 	
-	value game = Game();
+	value game = Game(createGameMessage.timestamp.plus(configuration.maxRollDuration));
 	
 	function toPlayerColor(PlayerId playerId) {
 		if (playerId == player1Id) {
@@ -87,8 +87,51 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
+	function takeNextRoll() {
+		try (nextRollLock) {
+			while (true) {
+				if (exists roll = nextRoll) {
+					nextRoll = null;
+					nextRollLock.signalAll();
+					return roll;
+				} else {
+					nextRollLock.waitSignal();
+				}
+			}
+		}
+	}
+	
+	shared void waitForNewRoll() {
+		try (nextRollLock) {
+			while (true) {
+				if (nextRoll is Null) {
+					nextRollLock.waitSignal();
+				}
+			}
+		}
+	}
+	
+	shared Boolean needNewRoll() {
+		try (nextRollLock) {
+			return nextRoll is Null;
+		}
+	}
+	
+	shared void setNextRoll(DiceRoll roll) {
+		try (nextRollLock) {
+			while (true) {
+				if (nextRoll is Null) {
+					nextRoll = roll;
+					return;
+				} else {
+					nextRollLock.waitSignal();
+				}
+			}
+		}
+	}
+	
 	function sendInitialRoll(Instant timestamp) {
-		value roll = diceRoller.roll();
+		value roll = takeNextRoll();
 		if (game.initialRoll(roll, timestamp, configuration.maxRollDuration)) {
 			messageBroadcaster(InitialRollMessage(matchId, player1Id, player1Color, roll.getValue(player1Color), roll, configuration.maxRollDuration));
 			messageBroadcaster(InitialRollMessage(matchId, player2Id, player2Color, roll.getValue(player2Color), roll, configuration.maxRollDuration));
@@ -149,7 +192,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 	function beginNextTurn(Instant timestamp) {
 		value nextColor = game.currentColor;
 		assert (exists nextColor);
-		value roll = diceRoller.roll();
+		value roll = takeNextRoll();
 		value factor = roll.isPair then 2 else 1;
 		value turnDuration = game.hasAvailableMove(nextColor, roll) then configuration.maxTurnDuration.scale(factor) else configuration.maxEmptyTurnDuration;
 		value maxUndo = configuration.maxUndoPerTurn * factor;
@@ -212,7 +255,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 	}
 	
 	function beginFirstTurn(CheckerColor currentColor, Instant timestamp) {
-		value roll = diceRoller.roll();
+		value roll = takeNextRoll();
 		value factor = roll.isPair then 2 else 1;
 		value turnDuration = configuration.maxTurnDuration.scale(factor);
 		value maxUndo = configuration.maxUndoPerTurn * factor;
@@ -260,6 +303,9 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		resetPlayerTimeoutCount(playerColor);
 		
 		switch (message) 
+		case (is CreateGameMessage) {
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, true);
+		}
 		case (is StartGameMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, sendInitialRoll(message.timestamp));
 		}
@@ -286,7 +332,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	void doSoftTimeout(Instant currentTime) {
+	function doSoftTimeout(Instant currentTime) {
 		softTimeoutNotified = true;
 		
 		if (exists currentColor = game.currentColor) {
@@ -299,6 +345,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 				messageBroadcaster(TurnTimedOutMessage(matchId, player2Id, player2Color));
 			}
 		}
+		return false;
 	}
 	
 	void doHardTimeout(Instant timestamp) {
@@ -329,17 +376,20 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	function process(InboundGameMessage message, CheckerColor color) {
-		variable GameActionResponseMessage|GameStateResponseMessage result;
-		if (game.timedOut(message.timestamp.minus(configuration.serverAdditionalTimeout))) {
-			result = handleHardTimeout(message, color);
-		} else {
-			result = handleMessage(message, color);
+	shared Boolean hasHardTimeout(Instant timestamp) {
+		try (lock) {
+			return game.timedOut(timestamp.minus(configuration.serverAdditionalTimeout));
 		}
-		
-		return result;
 	}
 	
+	function process(InboundGameMessage message, CheckerColor color) {
+		if (hasHardTimeout(message.timestamp)) {
+			return handleHardTimeout(message, color);
+		} else {
+			return handleMessage(message, color);
+		}
+	}
+
 	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
 		if (is GameStateRequestMessage message) {
 			try (lock) {

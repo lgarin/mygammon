@@ -8,11 +8,14 @@ import backgammon.shared {
 	MatchId,
 	RoomId,
 	OutboundGameMessage,
-	StartGameMessage,
 	GameActionResponseMessage,
 	InboundGameMessage,
 	GameStateResponseMessage,
-	InboundMatchMessage
+	InboundMatchMessage,
+	CreateGameMessage,
+	NextRollMessage,
+	GameEventMessage,
+	GameTimeoutMessage
 }
 import backgammon.shared.game {
 	black
@@ -24,12 +27,17 @@ import ceylon.collection {
 import ceylon.time {
 	Instant
 }
+import backgammon.server.dice {
 
-shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
+	DiceRoller
+}
+
+shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander, Anything(GameEventMessage) eventRecorder) {
 	
 	value roomId = RoomId(configuration.roomId);
-	value lock = ObtainableLock(); 
+	value lock = ObtainableLock("GameRoom ``configuration.roomId``"); 
 	value managerMap = HashMap<MatchId, GameManager>();
+	value diceRoller = DiceRoller();
 	variable Integer _totalGameCount = 0;
 	variable Integer _maxGameCount = 0;
 	
@@ -42,11 +50,13 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		return _maxGameCount;
 	}
 	
-	function getGameManager(InboundGameMessage message) {
+	function getGameManager(InboundGameMessage|GameEventMessage message) {
 		try (lock) {
-			if (exists currentManager = managerMap[message.matchId]) {
+			if (is InboundGameMessage message, exists currentManager = managerMap[message.matchId]) {
 				return currentManager;
-			} else if (is StartGameMessage message) {
+			} else if (is GameEventMessage message, exists currentManager = managerMap[message.matchId]) {
+				return currentManager;
+			} else if (is CreateGameMessage message) {
 				value manager = GameManager(message, configuration, messageBroadcaster, matchCommander);
 				managerMap.put(message.matchId, manager);
 				_totalGameCount++;
@@ -71,10 +81,38 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	
 	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
 		if (exists game = getGameManager(message)) {
-			return game.processGameMessage(message);
+			value result = game.processGameMessage(message);
+			if (game.needNewRoll()) {
+				eventRecorder(NextRollMessage(game.matchId, diceRoller.roll(), message.timestamp));
+			}
+			// TODO should we really wait here?
+			game.waitForNewRoll();
+			return result;
 		} else {
 			// TODO cannot determine color
 			return GameActionResponseMessage(message.matchId, message.playerId, black, false);
+		}
+	}
+	
+	shared void processEventMessage(GameEventMessage message) {
+		if (exists game = getGameManager(message)) {
+			switch (message) 
+			case (is NextRollMessage) {
+				game.setNextRoll(message.roll);
+			}
+			case (is GameTimeoutMessage) {
+				game.notifyTimeouts(message.timestamp);
+			}
+		}
+	}
+	
+	shared void processMessage(InboundGameMessage|GameEventMessage message) {
+		switch (message)
+		case (is InboundGameMessage) {
+			processGameMessage(message);
+		}
+		case (is GameEventMessage) {
+			processEventMessage(message);
 		}
 	}
 	
@@ -83,7 +121,15 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 			if (game.ended) {
 				removeGameManager(game);
 			} else {
-				game.notifyTimeouts(currentTime);
+				if (game.hasHardTimeout(currentTime)) {
+					eventRecorder(GameTimeoutMessage(game.matchId, currentTime));
+				} else {
+					game.notifyTimeouts(currentTime);
+				}
+				
+				if (game.needNewRoll()) {
+					eventRecorder(NextRollMessage(game.matchId, diceRoller.roll(), currentTime));
+				}
 			}
 		}
 	}

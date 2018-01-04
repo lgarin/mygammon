@@ -8,7 +8,7 @@ import ceylon.time {
 	Duration
 }
 
-shared class Game() {
+shared class Game(variable Instant nextTimeout) {
 
 	shared GameBoard board = GameBoard();
 	value currentMoves = ArrayList<GameMoveInfo>();
@@ -34,8 +34,6 @@ shared class Game() {
 	
 	variable Integer blackJocker = 1;
 	variable Integer whiteJocker = 1;
-	
-	variable Instant nextTimeout = Instant(0);
 	
 	function initialColor(DiceRoll diceRoll) {
 		if (diceRoll.getValue(black) > diceRoll.getValue(white)) {
@@ -334,6 +332,8 @@ shared class Game() {
 	
 	shared Boolean end() {
 		if (currentRoll exists) {
+			blackReady = false;
+			whiteReady = false;
 			_currentColor = null;
 			_currentRoll = null;
 			nextTimeout = Instant(0);

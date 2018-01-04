@@ -20,7 +20,8 @@ import ceylon.time {
 }
 
 import io.vertx.ceylon.core {
-	Verticle
+	Verticle,
+	Future
 }
 
 final class GameRoomVerticle() extends Verticle() {
@@ -35,29 +36,66 @@ final class GameRoomVerticle() extends Verticle() {
 			log.info(statistic);
 		}
 	}
+	
 
-	shared actual void start() {
+	shared actual void startAsync(Future<Anything> startFuture) {
 		value roomConfig = ServerConfiguration(config);
 		value rosterEventBus = PlayerRosterEventBus(vertx, roomConfig);
-		value roomEventBus = GameRoomEventBus(vertx);
+		value roomEventBus = GameRoomEventBus(vertx, roomConfig);
 		
 		value matchRoom = MatchRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage, rosterEventBus.queueInputMessage);
-		roomEventBus.registerInboundRoomMessageConsumer(roomConfig.roomId, matchRoom.processRoomMessage);
-		roomEventBus.registerInboundTableMessageConsumer(roomConfig.roomId, matchRoom.processTableMessage);
-		roomEventBus.registerInboundMatchMessageConsumer(roomConfig.roomId, matchRoom.processMatchMessage);
+		value gameRoom = GameRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage, roomEventBus.storeGameEventMessage);
 		
-		value gameRoom = GameRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage);
-		roomEventBus.registerInboundGameMessageConsumer(roomConfig.roomId, roomConfig.gameThreadCount, gameRoom.processGameMessage);
+		void finishStartup() {
+			roomEventBus.registerInboundRoomMessageConsumer(roomConfig.roomId, matchRoom.processRoomMessage);
+			roomEventBus.registerInboundTableMessageConsumer(roomConfig.roomId, matchRoom.processTableMessage);
+			roomEventBus.registerInboundMatchMessageConsumer(roomConfig.roomId, matchRoom.processMatchMessage);
+			
+			roomEventBus.registerInboundGameMessageConsumer(roomConfig.roomId, roomConfig.gameThreadCount, gameRoom.processGameMessage);
+			roomEventBus.registerGameEventMessageCosumer(roomConfig.roomId, gameRoom.processEventMessage);
+			
+			matchRoom.resetPeriodicNotification(now());
+			
+			vertx.setPeriodic(roomConfig.serverAdditionalTimeout.milliseconds / 2, void (Integer val) {
+				value currentTime = now();
+				matchRoom.periodicCleanup(currentTime);
+				gameRoom.periodicCleanup(currentTime);
+				matchRoom.periodicNotification(currentTime);
+				handleStatistic(matchRoom, gameRoom);
+			});
+			
+			roomEventBus.disableOutput = false;
+			rosterEventBus.disableOutput = false;
+			log.info("Started room : ``roomConfig.roomId``");
+			startFuture.complete();
+		}
 		
-		vertx.setPeriodic(roomConfig.serverAdditionalTimeout.milliseconds / 2, void (Integer val) {
-			value currentTime = now();
-			matchRoom.periodicCleanup(currentTime);
-			gameRoom.periodicCleanup(currentTime);
-			matchRoom.periodicNotification(currentTime);
-			handleStatistic(matchRoom, gameRoom);
-		});
+		void replayGameRoom() {
+			roomEventBus.replayAllGameEvents(roomConfig.roomId, gameRoom.processMessage, (result) {
+				if (is Throwable result) {
+					startFuture.fail(result);
+				} else {
+					log.info("Replayed ``result`` events in game room ``roomConfig.roomId``");
+					finishStartup();
+				}
+			});
+		}
 		
-		log.info("Started room : ``roomConfig.roomId``");
+		void replayMatchRoom() {
+			roomEventBus.replayAllRoomEvents(roomConfig.roomId, matchRoom.processMessage, (result) {
+				if (is Throwable result) {
+					startFuture.fail(result);
+				} else {
+					log.info("Replayed ``result`` events in match room ``roomConfig.roomId``");
+					replayGameRoom();
+				}
+			});
+		}
+		
+		log.info("Starting room ``roomConfig.roomId``...");
+		roomEventBus.disableOutput = true;
+		rosterEventBus.disableOutput = true;
+		replayMatchRoom();
 	}
 	
 	shared actual void stop() {
