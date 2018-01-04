@@ -6,52 +6,48 @@ import backgammon.server.util {
 
 	ObtainableLock
 }
+import ceylon.collection {
+
+	LinkedList
+}
 shared final class DiceRollQueue(String id) {
 	
-	variable DiceRoll? nextRoll = null;
-	value nextRollLock = ObtainableLock("DiceRoll ``id``");
+	value queue = LinkedList<DiceRoll>();
+	value lock = ObtainableLock("DiceRollQueue ``id``");
 	
 	shared DiceRoll takeNextRoll() {
-		try (nextRollLock) {
+		try (lock) {
 			while (true) {
-				if (exists roll = nextRoll) {
-					nextRoll = null;
-					nextRollLock.signalAll();
+				if (exists roll = queue.accept()) {
+					lock.signalAll();
 					return roll;
 				} else {
-					nextRollLock.waitSignal();
+					lock.waitSignal();
 				}
 			}
 		}
 	}
 	
 	shared void waitForNewRoll() {
-		try (nextRollLock) {
+		try (lock) {
 			while (true) {
-				if (nextRoll is Null) {
-					nextRollLock.waitSignal();
+				if (queue.empty) {
+					lock.waitSignal();
 				}
 			}
 		}
 	}
 	
 	shared Boolean needNewRoll() {
-		try (nextRollLock) {
-			return nextRoll is Null;
+		try (lock) {
+			return queue.size < 2;
 		}
 	}
 	
 	shared void setNextRoll(DiceRoll roll) {
-		try (nextRollLock) {
-			while (true) {
-				if (nextRoll is Null) {
-					nextRoll = roll;
-					nextRollLock.signalAll();
-					return;
-				} else {
-					nextRollLock.waitSignal();
-				}
-			}
+		try (lock) {
+			queue.add(roll);
+			lock.signalAll();
 		}
 	}
 }

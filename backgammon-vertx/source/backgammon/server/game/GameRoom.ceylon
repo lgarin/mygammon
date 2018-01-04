@@ -15,7 +15,8 @@ import backgammon.shared {
 	CreateGameMessage,
 	NextRollMessage,
 	GameEventMessage,
-	GameTimeoutMessage
+	GameTimeoutMessage,
+	GameMessage
 }
 import backgammon.shared.game {
 	black
@@ -50,11 +51,9 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		return _maxGameCount;
 	}
 	
-	function getGameManager(InboundGameMessage|GameEventMessage message) {
+	function getGameManager(GameMessage message) {
 		try (lock) {
-			if (is InboundGameMessage message, exists currentManager = managerMap[message.matchId]) {
-				return currentManager;
-			} else if (is GameEventMessage message, exists currentManager = managerMap[message.matchId]) {
+			if (exists currentManager = managerMap[message.matchId]) {
 				return currentManager;
 			} else if (is CreateGameMessage message) {
 				value manager = GameManager(message, configuration, messageBroadcaster, matchCommander);
@@ -79,15 +78,16 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		}
 	}
 	
+	void orderNewDiceRoll(GameManager game, Instant timestamp) {
+		if (game.diceRollQueue.needNewRoll()) {
+			eventRecorder(NextRollMessage(game.matchId, diceRoller.roll(), timestamp));
+		}
+	}
+	
 	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
 		if (exists game = getGameManager(message)) {
-			value result = game.processGameMessage(message);
-			if (game.diceRollQueue.needNewRoll()) {
-				eventRecorder(NextRollMessage(game.matchId, diceRoller.roll(), message.timestamp));
-			}
-			// TODO should we wait here?
-			//game.diceRollQueue.waitForNewRoll();
-			return result;
+			orderNewDiceRoll(game, message.timestamp);
+			return game.processGameMessage(message);
 		} else {
 			// TODO cannot determine color
 			return GameActionResponseMessage(message.matchId, message.playerId, black, false);
@@ -116,20 +116,21 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		}
 	}
 	
+	void processTimeout(GameManager game, Instant currentTime) {
+		if (game.hasHardTimeout(currentTime)) {
+			eventRecorder(GameTimeoutMessage(game.matchId, currentTime));
+		} else {
+			game.notifyTimeouts(currentTime);
+		}
+	}
+	
 	shared void periodicCleanup(Instant currentTime) {
 		for (game in getAllGameManagers()) {
 			if (game.ended) {
 				removeGameManager(game);
 			} else {
-				if (game.hasHardTimeout(currentTime)) {
-					eventRecorder(GameTimeoutMessage(game.matchId, currentTime));
-				} else {
-					game.notifyTimeouts(currentTime);
-				}
-				
-				if (game.diceRollQueue.needNewRoll()) {
-					eventRecorder(NextRollMessage(game.matchId, diceRoller.roll(), currentTime));
-				}
+				orderNewDiceRoll(game, currentTime);
+				processTimeout(game, currentTime);
 			}
 		}
 	}

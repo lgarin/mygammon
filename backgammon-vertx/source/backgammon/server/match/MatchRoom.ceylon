@@ -41,7 +41,10 @@ import backgammon.shared {
 	RoomActionResponseMessage,
 	PlayerRosterInboundMessage,
 	PlayerStatisticUpdateMessage,
-	CreateGameMessage
+	CreateGameMessage,
+	MatchId,
+	PingMatchMessage,
+	MatchActivityMessage
 }
 
 import ceylon.time {
@@ -212,6 +215,15 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 		}
 	}
 	
+	function pingMatch(PingMatchMessage message) {
+		if (exists room = findRoom(message.roomId), exists match = room.findCurrentMatch(message.matchId), exists player = room.findPlayer(message.playerId)) {
+			player.markActive(message.timestamp);
+			return MatchActivityMessage(message.playerId, message.matchId, true);
+		} else {
+			return MatchActivityMessage(message.playerId, message.matchId, false);
+		}
+	}
+	
 	function endMatch(EndMatchMessage message) {
 		function bonusScore(Match match) => configuration.bonusScorePercentage * (match.player1.statistic.score - match.player2.statistic.score).magnitude / 100;
 		
@@ -235,6 +247,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			switch (message)
 			case (is AcceptMatchMessage) {
 				return acceptMatch(message);
+			}
+			case (is PingMatchMessage) {
+				return pingMatch(message);
 			}
 			case (is EndMatchMessage) {
 				return endMatch(message);
@@ -291,6 +306,12 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				messageBroadcaster(room.createPlayerListDelta());
 				lastNotification = currentTime;
 			}
+		}
+	}
+	
+	shared Set<MatchId> listRecentMatches() {
+		try (lock) {
+			return room.listRecentMatches();
 		}
 	}
 }

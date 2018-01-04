@@ -21,6 +21,7 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 
 	shared TableId? tableId => _tableId;
 	shared Match? match => _match;
+	shared Match? previousMatch => _previousMatch;
 	shared PlayerId id = PlayerId(info.id);
 	
 	variable PlayerStatistic _statistic = initialStatistic;

@@ -104,7 +104,7 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 	shared Integer removeInactivePlayers(Instant timeoutTime) {
 		variable value result = 0;
 		for (player in playerMap.items.clone()) {
-			if (!player.isPlaying() && player.isInactiveSince(timeoutTime)) {
+			if (player.isInactiveSince(timeoutTime)) {
 				removePlayer(player, timeoutTime);
 				result++;
 			}
@@ -197,6 +197,13 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 	
 	shared [PlayerState*] createPlayerList() {
 		return [for (element in playerMap.items) element.state];
+	}
+	
+	shared Set<MatchId> listRecentMatches() {
+		value result = HashSet<MatchId>();
+		result.addAll {for (table in tableList) if (exists match = table.match) match.id};
+		result.addAll {for (player in playerMap.items) if (exists match = player.previousMatch) match.id}; 
+		return result;
 	}
 	
 }

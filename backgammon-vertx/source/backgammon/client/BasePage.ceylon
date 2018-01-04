@@ -39,7 +39,8 @@ import backgammon.shared {
 	OutboundMatchMessage,
 	OutboundGameMessage,
 	TakeTurnMessage,
-	CreateGameMessage
+	CreateGameMessage,
+	PingMatchMessage
 }
 
 import ceylon.json {
@@ -143,6 +144,9 @@ abstract shared class BasePage() {
 			// ignore
 		}
 		case (is StartGameMessage) {
+			// ignore
+		}
+		case (is PingMatchMessage) {
 			// ignore
 		}
 		case (is EndMatchMessage) {

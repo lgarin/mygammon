@@ -24,8 +24,7 @@ import backgammon.shared {
 	parseInboundTableMessage,
 	parseInboundMatchMessage,
 	GameEventMessage,
-	parseGameEventMessage,
-	formatGameEventMessage
+	parseGameEventMessage
 }
 
 import ceylon.json {
@@ -163,7 +162,7 @@ final shared class GameRoomEventBus(Vertx vertx, ServerConfiguration configurati
 		if (disableOutput) {
 			return;
 		}
-		value formattedMessage = formatGameEventMessage(message);
+		value formattedMessage = formatRoomMessage(message);
 		eventStore.storeEvent("game-``message.roomId``-``message.matchId.date``", formattedMessage, (result) {
 			if (is Throwable result) {
 				throw Exception("Failed to store message ``formattedMessage``");

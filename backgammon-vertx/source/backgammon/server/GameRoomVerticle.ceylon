@@ -11,6 +11,11 @@ import backgammon.server.match {
 import backgammon.server.room {
 	RoomConfiguration
 }
+import backgammon.shared {
+	InboundGameMessage,
+	GameEventMessage,
+	MatchId
+}
 
 import ceylon.logging {
 	logger
@@ -70,8 +75,14 @@ final class GameRoomVerticle() extends Verticle() {
 			startFuture.complete();
 		}
 		
+		void filterAndProcessGameEvents(Set<MatchId> recentMatches)(InboundGameMessage|GameEventMessage message) {
+			if (recentMatches.contains(message.matchId)) {
+				gameRoom.processMessage(message);
+			}
+		}
+		
 		void replayGameRoom() {
-			roomEventBus.replayAllGameEvents(roomConfig.roomId, gameRoom.processMessage, (result) {
+			roomEventBus.replayAllGameEvents(roomConfig.roomId, filterAndProcessGameEvents(matchRoom.listRecentMatches()), (result) {
 				if (is Throwable result) {
 					startFuture.fail(result);
 				} else {

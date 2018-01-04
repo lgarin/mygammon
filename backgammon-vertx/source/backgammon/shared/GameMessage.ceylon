@@ -15,7 +15,7 @@ import ceylon.time {
 	now
 }
 
-shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage satisfies MatchMessage {}
+shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage | GameEventMessage satisfies MatchMessage {}
 
 shared interface InboundGameMessage of CreateGameMessage | StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
 	shared formal Instant timestamp;

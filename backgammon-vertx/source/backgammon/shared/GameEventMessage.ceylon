@@ -1,10 +1,5 @@
 import ceylon.json {
-	Object,
-	Value
-}
-import ceylon.language.meta {
-
-	type
+	Object
 }
 import backgammon.shared.game {
 
@@ -15,19 +10,10 @@ import ceylon.time {
 	Instant
 }
 
-shared sealed interface GameEventMessage of GameTimeoutMessage | NextRollMessage {
-	shared formal MatchId matchId;
-	shared default String roomId => matchId.roomId;
+shared sealed interface GameEventMessage of GameTimeoutMessage | NextRollMessage satisfies GameMessage {
+	shared actual PlayerId playerId => systemPlayerId;
 	shared formal Instant timestamp;
-	shared default Object toBaseJson() => Object {"matchId" -> matchId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
-	shared default Object toJson() => toBaseJson();
-	shared Object toExtendedJson({<String->Value>*} entries) {
-		value result = toBaseJson();
-		result.putAll(entries);
-		return result;
-	}
-	
-	string => toJson().string;
+	shared actual default Object toBaseJson() => Object {"matchId" -> matchId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
 }
 
 shared final class GameTimeoutMessage(shared actual MatchId matchId, shared actual Instant timestamp) satisfies GameEventMessage {
@@ -41,10 +27,6 @@ shared final class NextRollMessage(shared actual MatchId matchId, shared DiceRol
 }
 shared NextRollMessage parseNextRollMessage(Object json) {
 	return NextRollMessage(parseMatchId(json.getObject("matchId")), DiceRoll(json.getInteger("rollValue1"), json.getInteger("rollValue2")), Instant(json.getInteger("timestamp")));
-}
-
-shared Object formatGameEventMessage(GameEventMessage message) {
-	return Object({type(message).declaration.name -> message.toJson()});
 }
 
 shared GameEventMessage? parseGameEventMessage(Object json) {

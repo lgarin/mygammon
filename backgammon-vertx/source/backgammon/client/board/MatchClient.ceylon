@@ -10,7 +10,8 @@ import backgammon.shared {
 	GameStateRequestMessage,
 	InboundGameMessage,
 	MatchEndedMessage,
-	systemPlayerId
+	systemPlayerId,
+	MatchActivityMessage
 }
 import backgammon.shared.game {
 	player2Color,
@@ -137,6 +138,9 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 		case (is AcceptedMatchMessage) {
 			match.markReady(message.playerId);
 			showAccept(message);
+			return true;
+		}
+		case (is MatchActivityMessage) {
 			return true;
 		}
 		case (is MatchEndedMessage) {

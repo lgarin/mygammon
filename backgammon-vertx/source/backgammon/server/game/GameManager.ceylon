@@ -32,7 +32,8 @@ import backgammon.shared {
 	EndMatchMessage,
 	systemPlayerId,
 	TakeTurnMessage,
-	CreateGameMessage
+	CreateGameMessage,
+	PingMatchMessage
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -268,6 +269,7 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, sendInitialRoll(message.timestamp));
 		}
 		case (is PlayerBeginMessage) {
+			matchCommander(PingMatchMessage(message.playerId, matchId));
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, beginGame(playerColor, message.timestamp));
 		}
 		case (is MakeMoveMessage) {
@@ -277,12 +279,14 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, undoMoves(playerColor, message.timestamp));
 		}
 		case (is EndTurnMessage) {
+			matchCommander(PingMatchMessage(message.playerId, matchId));
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, endTurn(playerColor, message.timestamp));
 		}
 		case (is EndGameMessage) {
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, surrenderGame(toPlayerId(playerColor), playerColor));
 		}
 		case (is TakeTurnMessage) {
+			matchCommander(PingMatchMessage(message.playerId, matchId));
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, takeTurn(playerColor, message.timestamp));
 		}
 		case (is GameStateRequestMessage) {
