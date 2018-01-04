@@ -94,8 +94,8 @@ class PlayerTest() {
 	shared void leaveTableWithGame() {
 		startGame();
 		value result = player.leaveTable(table.id);
-		assert (!result);
-		assert (player.isAtTable(table.id));
+		assert (result);
+		assert (!player.isAtTable(table.id));
 	}
 	
 	test

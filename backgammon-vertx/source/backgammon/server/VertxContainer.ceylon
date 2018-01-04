@@ -51,7 +51,7 @@ final class VertxContainer(Module mod, String configFile, Duration startupShutdo
 	
 	function waitLatch(CountDownLatch latch) {
 		try {
-			return latch.await(startupShutdownTimeout.milliseconds, TimeUnit.\iMILLISECONDS);
+			return latch.await(startupShutdownTimeout.milliseconds, TimeUnit.milliseconds);
 		} catch (Exception e) {
 			return false;
 		}

@@ -18,7 +18,8 @@ import ceylon.collection {
 	HashSet
 }
 import ceylon.time {
-	Instant
+	Instant,
+	Duration
 }
 
 final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet matchBet, Anything(OutboundTableMessage|OutboundMatchMessage) messageBroadcaster) {
@@ -52,7 +53,7 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 	shared Integer busyPlayerCount => playerMap.count((element) => element.item.isPlaying());
 	
 	shared Integer createdTableCount => tableList.size;
-	shared Integer busyTableCount => tableList.count((table) => table.queueSize > 0);
+	shared Integer busyTableCount => tableList.count((element) => element.queueSize > 0);
 	shared Integer maxTableCount => _maxTableCount;
 	
 	void updateTableCount() {
@@ -96,16 +97,19 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 			table.removePlayer(player);
 			createMatch(table, timestamp);
 		}
-		playerMap.remove(player.id);
-		oldPlayers.add(player);
-		return true;
+		if (playerMap.remove(player.id) exists) {
+			oldPlayers.add(player);
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
-	shared Integer removeInactivePlayers(Instant timeoutTime) {
+	shared Integer removeInactivePlayers(Instant currentTime, Duration timeoutPeriod) {
+		value timeoutTime = currentTime.minus(timeoutPeriod);
 		variable value result = 0;
-		for (player in playerMap.items.clone()) {
-			if (player.isInactiveSince(timeoutTime)) {
-				removePlayer(player, timeoutTime);
+		for (player in playerMap.items.sequence()) {
+			if (player.isInactiveSince(timeoutTime) && removePlayer(player, currentTime)) {
 				result++;
 			}
 		}

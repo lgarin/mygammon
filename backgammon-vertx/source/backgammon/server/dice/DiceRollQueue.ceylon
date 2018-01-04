@@ -40,7 +40,7 @@ shared final class DiceRollQueue(String id) {
 	
 	shared Boolean needNewRoll() {
 		try (lock) {
-			return queue.size < 2;
+			return queue.empty;
 		}
 	}
 	

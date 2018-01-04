@@ -47,10 +47,16 @@ class RoomTest() {
 	}
 	
 	test
+	shared void newRoomHasNoRecentMatch() {
+		assert (room.listRecentMatches().empty);
+	}
+	
+	test
 	shared void addNewPlayer() {
 		value result = room.definePlayer(makePlayerInfo("player1"), PlayerStatistic(initialPlayerBalance));
-		assert (result exists);
+		assert (exists result);
 		assert (room.playerCount == 1);
+		assert (room.createPlayerList().contains(result.state));
 	}
 	
 	test
@@ -76,7 +82,8 @@ class RoomTest() {
 	shared void removeExistingPlayer() {
 		value player = room.definePlayer(makePlayerInfo("player1"), PlayerStatistic(initialPlayerBalance));
 		assert (exists player);
-		room.removePlayer(player, timestamp);
+		value result = room.removePlayer(player, timestamp);
+		assert (result);
 		assert (!room.findPlayer(player.id) exists);
 	}
 	
@@ -96,7 +103,8 @@ class RoomTest() {
 	test
 	shared void removeNonExistingPlayer() {
 		value player = Player(makePlayerInfo("player1"), PlayerStatistic(initialPlayerBalance));
-		room.removePlayer(player, timestamp);
+		value result = room.removePlayer(player, timestamp);
+		assert (!result);
 		assert (!room.findPlayer(player.id) exists);
 	}
 	
@@ -163,6 +171,27 @@ class RoomTest() {
 		assert (result);
 		assert (player1.match exists);
 		assert (player2.match exists);
+		assert (table.match exists);
+		assert (room.listRecentMatches().size == 1);
+	}
+	
+	test
+	shared void removePlayerWithMatch() {
+		value player1 = room.definePlayer(makePlayerInfo("player1"), PlayerStatistic(initialPlayerBalance));
+		assert (exists player1);
+		value player2 = room.definePlayer(makePlayerInfo("player2"), PlayerStatistic(initialPlayerBalance));
+		assert (exists player2);
+		value table = room.findTable(TableId(room.roomId, 1));
+		assert (exists table);
+		table.sitPlayer(player1);
+		table.sitPlayer(player2);
+		room.createMatch(table, timestamp);
+		value result = room.removePlayer(player1, timestamp);
+		assert (result);
+		assert (!player1.match exists);
+		assert (!player2.match exists);
+		assert (!table.match exists);
+		assert (room.listRecentMatches().size == 1);
 	}
 	
 	test
@@ -174,5 +203,8 @@ class RoomTest() {
 		table.sitPlayer(player1);
 		value result = room.createMatch(table, timestamp);
 		assert (!result);
+		assert (!player1.match exists);
+		assert (!table.match exists);
+		assert (room.listRecentMatches().empty);
 	}
 }

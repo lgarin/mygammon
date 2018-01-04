@@ -272,7 +272,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 
 	shared void periodicCleanup(Instant currentTime) {
 		try (lock) {
-			room.removeInactivePlayers(currentTime.minus(configuration.playerInactiveTimeout));
+			room.removeInactivePlayers(currentTime, configuration.playerInactiveTimeout);
 		}
 	}
 	
@@ -294,6 +294,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	}
 	
 	shared void resetPeriodicNotification(Instant currentTime) {
+		// TODO find a better solution
 		try (lock) {
 			room.clearPlayerListDelta();
 			lastNotification = currentTime;

@@ -36,12 +36,12 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 	shared Boolean isInMatch(MatchId matchId) => match?.id?.equals(matchId) else false;
 	
 	shared Boolean leaveTable(TableId tableId) {
-		if (isPlaying()) {
-			return false;
-		} else if (!isAtTable(tableId)) {
+		if (!isAtTable(tableId)) {
 			return false;
 		} else {
 			_tableId = null;
+			_previousMatch = _match;
+			_match = null;
 			return true;
 		}
 	}
