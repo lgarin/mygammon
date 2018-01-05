@@ -136,11 +136,13 @@ shared final class RoomPage() extends BasePage() {
 	
 	shared Boolean onLeaveConfirmed() {
 		
-		if (exists currentTableClient = tableClient) {
-			gameCommander(LeaveTableMessage(currentPlayerId, currentTableClient.tableId));
+		if (exists playerState = playerList.findPlayer(currentPlayerId), exists tableId = playerState.tableId) {
+			gameCommander(LeaveTableMessage(currentPlayerId, tableId));
 			return true;
 		} else {
-			return false;
+			// player is only viewing the table
+			refreshPlayerList(null);
+			return true;
 		}
 	}
 	

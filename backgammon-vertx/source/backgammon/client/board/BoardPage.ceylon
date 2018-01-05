@@ -213,8 +213,6 @@ shared final class BoardPage() extends BasePage() {
 			gui.hideLeaveButton();
 			if (isBoardPreview()) {
 				gui.showJoinButton();
-			} else {
-				window.location.\iassign("/room/``message.tableId.roomId``");
 			}
 		}
 		
