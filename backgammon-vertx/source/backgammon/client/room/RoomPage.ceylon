@@ -250,11 +250,7 @@ shared final class RoomPage() extends BasePage() {
 		}
 		
 		//gui.showTableInfo(message.tableId, playerList.findPlayer(currentPlayerId));
-		if (is LeftTableMessage message) {
-			refreshPlayerList(null);
-		} else {
-			refreshPlayerList(message.tableId);
-		}
+		refreshPlayerList(playerList.findTable(currentPlayerId));
 		
 		if (exists currentClient = tableClient) {
 			return currentClient.handleTableMessage(message);

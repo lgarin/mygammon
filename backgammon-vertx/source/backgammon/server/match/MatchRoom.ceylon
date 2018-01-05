@@ -216,7 +216,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	}
 	
 	function pingMatch(PingMatchMessage message) {
-		if (exists room = findRoom(message.roomId), exists match = room.findCurrentMatch(message.matchId), exists player = room.findPlayer(message.playerId)) {
+		if (exists room = findRoom(message.roomId), exists match = room.findRecentMatch(message.matchId), exists player = room.findPlayer(message.playerId)) {
 			player.markActive(message.timestamp);
 			return MatchActivityMessage(message.playerId, message.matchId, true);
 		} else {
@@ -227,7 +227,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	function endMatch(EndMatchMessage message) {
 		function bonusScore(Match match) => configuration.bonusScorePercentage * (match.player1.statistic.score - match.player2.statistic.score).magnitude / 100;
 		
-		if (exists room = findRoom(message.roomId), exists match = room.findCurrentMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score + bonusScore(match))) {
+		if (exists room = findRoom(message.roomId), exists match = room.findRecentMatch(message.matchId), match.end(message.playerId, message.winnerId, message.score + bonusScore(match))) {
 			if (message.isNormalWin) {
 				match.player1.markActive(message.timestamp);
 				match.player2.markActive(message.timestamp);

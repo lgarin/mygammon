@@ -3,7 +3,6 @@
   "auth-server-url": "http://localhost:8080/auth",
   "ssl-required": "none",
   "resource": "game",
-  "public-client": true,
   "use-resource-role-mappings": true,
   "credentials": {
   	"secret": "6573c665-1447-4d20-81a2-cbf9ec8dee16"

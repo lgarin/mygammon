@@ -182,6 +182,18 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 	shared Match? findCurrentMatch(MatchId matchId) {
 		return findTable(matchId.tableId)?.match;
 	}
+	
+	shared Match? findRecentMatch(MatchId matchId) {
+		if (exists match = findCurrentMatch(matchId)) {
+			return match;
+		}
+		for (player in playerMap.items) {
+			if (exists match = player.previousMatch, match.id == matchId) {
+				return match;
+			}
+		}
+		return null;
+	}
 
 	shared Player? findPlayer(PlayerId playerId) =>  playerMap[playerId];
 	

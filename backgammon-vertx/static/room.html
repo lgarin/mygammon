@@ -61,6 +61,22 @@
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
+	            	$("#dialog-won").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: [{
+                    		text:  $("#i18n #_ok").text(),
+                    		click: function() { $(this).dialog("close"); return true; }
+                    	}]
+	                });
+	                $("#dialog-lost").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: [{
+                    		text:  $("#i18n #_ok").text(),
+                    		click: function() { $(this).dialog("close"); return true; }
+                    	}]
+	                });
 	            	window.setInterval(function() { return room.onTimer(); }, 100);
 	            	$("#player-list tbody").on("click", ".player-row .player-name", function() {
 	            		var trigger = $(this);
@@ -350,6 +366,16 @@
 		    <b>You have a game in progress.<br/>Do you really want to logout?</b>
 		  </p>
 		</div>
+		<div id="dialog-won" title="Game won" style="display: none">
+		  <p>
+		    <b>Congratulation. You've won the game with </b><b id="game-score">0</b><b> point(s).</b> 
+		  </p>
+		</div>
+		<div id="dialog-lost" title="Game lost" style="display: none">
+		  <p>
+		    <b>Sorry. You've lost the game.</b>
+		  </p>
+		</div>
 
 		<div id="i18n" style="display: none">
 			<div id="_logout">Logout</div>
@@ -369,6 +395,7 @@
 			<div id="_left">Left</div>
 			<div id="_begin">Play?</div>
 			<div id="_play">Play</div>
+			<div id="_ok">Ok</div>
 		</div>
 	</body>
 </html>

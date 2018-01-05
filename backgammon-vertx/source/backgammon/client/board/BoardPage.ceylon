@@ -195,25 +195,20 @@ shared final class BoardPage() extends BasePage() {
 			return true;
 		}
 		
-		// TODO cleanup this block
 		if (is TableStateResponseMessage message) {
 			if (message.isPlayerInQueue(currentPlayerId)) {
 				gui.hideJoinButton();
 				gui.showLeaveButton();
 			} else {
 				gui.hideLeaveButton();
-				if (isBoardPreview()) {
-					gui.showJoinButton();
-				}
+				gui.showJoinButton();
 			}
 		} else if (is JoinedTableMessage message, message.playerId == currentPlayerId) {
 			gui.hideJoinButton();
 			gui.showLeaveButton();
 		} else if (is LeftTableMessage message, message.playerId == currentPlayerId) {
 			gui.hideLeaveButton();
-			if (isBoardPreview()) {
-				gui.showJoinButton();
-			}
+			gui.showJoinButton();
 		}
 		
 		if (is TableStateResponseMessage message, exists currentMatch = message.match) {
