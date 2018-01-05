@@ -31,13 +31,12 @@ import backgammon.shared {
 import ceylon.time {
 	now
 }
-shared class BoardPage() extends BasePage() {
+shared final class BoardPage() extends BasePage() {
 	variable TableId? tableId = null;
 	value gui = BoardGui(document);
 	variable TableClient? tableClient = null;
 	variable String? draggedElementStyle = null;
-	variable EventBusClient? tableEventClient = null;
-	variable EventBusClient? gameEventClient = null;
+	variable EventBusClient? eventBusClient = null;
 	
 	function extractTableId() {
 		if (!tableId exists) {
@@ -54,8 +53,7 @@ shared class BoardPage() extends BasePage() {
 	isBoardPreview() => window.location.href.endsWith("view");
 	
 	void logout() {
-		gameEventClient?.close();
-		tableEventClient?.close();
+		eventBusClient?.close();
 		
 		window.location.\iassign("/logout");
 	}
@@ -95,7 +93,6 @@ shared class BoardPage() extends BasePage() {
 			window.location.\iassign("/room/``tableId.roomId``");
 			return true;
 		} else if (target.id == gui.joinButtonId, exists tableId = extractTableId()) {
-			gui.hideJoinButton();
 			gameCommander(JoinTableMessage(currentPlayerId, tableId));
 			return true;
 		} else if (target.id == gui.leaveButtonId) {
@@ -144,9 +141,7 @@ shared class BoardPage() extends BasePage() {
 	shared Boolean onLeaveConfirmed() {
 
 		if (exists currentTableClient = tableClient) {
-			gui.hideLeaveButton();
 			gameCommander(LeaveTableMessage(currentPlayerId, currentTableClient.tableId));
-			window.location.\iassign("/room/``currentTableClient.tableId.roomId``");
 			return true;
 		} else {
 			return false;
@@ -218,6 +213,8 @@ shared class BoardPage() extends BasePage() {
 			gui.hideLeaveButton();
 			if (isBoardPreview()) {
 				gui.showJoinButton();
+			} else {
+				window.location.\iassign("/room/``message.tableId.roomId``");
 			}
 		}
 		
@@ -226,13 +223,13 @@ shared class BoardPage() extends BasePage() {
 				window.location.\iassign("/room/``message.tableId.roomId``/table/``message.tableId.table``/play");
 			} else {
 				// TODO some changes may occur on the state between the response and the registration
-				gameEventClient = EventBusClient("OutboundGameMessage-``currentMatch.id``", onServerMessage, onServerError);
+				eventBusClient?.addAddress("OutboundGameMessage-``currentMatch.id``");
 			}
 		} else if (is CreatedMatchMessage message) {
 			if (message.hasPlayer(currentPlayerId) && isBoardPreview()) {
 				window.location.\iassign("/room/``message.tableId.roomId``/table/``message.tableId.table``/play");
 			} else {
-				gameEventClient = EventBusClient("OutboundGameMessage-``message.matchId``", onServerMessage, onServerError);
+				eventBusClient?.addAddress("OutboundGameMessage-``message.matchId``");
 			}
 		}
 		
@@ -250,9 +247,9 @@ shared class BoardPage() extends BasePage() {
 		}
 		
 		if (is MatchEndedMessage message) {
-			gameEventClient?.close();
+			eventBusClient?.removeAddresses((a) => a.startsWith("OutboundGameMessage-"));
 			if (!isBoardPreview()) {
-				tableEventClient?.close();
+				eventBusClient?.removeAddresses((a) => a.startsWith("OutboundTableMessage-"));
 			}
 		}
 		
@@ -279,12 +276,13 @@ shared class BoardPage() extends BasePage() {
 	void login(PlayerState playerState, TableId tableId, Boolean viewTable) {
 		print(playerState.toJson());
 		tableClient = TableClient(currentPlayerId, tableId, gui, viewTable, gameCommander);
-		tableEventClient = EventBusClient("OutboundTableMessage-``tableId``", onServerMessage, onServerError);
+		eventBusClient?.addAddress("OutboundTableMessage-``tableId``");
 		gameCommander(TableStateRequestMessage(currentPlayerId, tableId, viewTable));
 		gui.showBeginState(playerState);
 	}
 	
 	shared void run() {
+		eventBusClient = EventBusClient(onServerMessage, onServerError);
 		if (exists currentTableId = extractTableId(), exists currentPlayerId = extractPlayerId()) {
 			roomCommander(PlayerStateRequestMessage(currentPlayerId, RoomId(currentTableId.roomId)));
 		} else {

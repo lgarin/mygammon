@@ -86,8 +86,9 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 	
 	shared GameActionResponseMessage|GameStateResponseMessage processGameMessage(InboundGameMessage message) {
 		if (exists game = getGameManager(message)) {
+			value result = game.processGameMessage(message); 
 			orderNewDiceRoll(game, message.timestamp);
-			return game.processGameMessage(message);
+			return result;
 		} else {
 			// TODO cannot determine color
 			return GameActionResponseMessage(message.matchId, message.playerId, black, false);
@@ -129,8 +130,8 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 			if (game.ended) {
 				removeGameManager(game);
 			} else {
-				orderNewDiceRoll(game, currentTime);
 				processTimeout(game, currentTime);
+				orderNewDiceRoll(game, currentTime);
 			}
 		}
 	}

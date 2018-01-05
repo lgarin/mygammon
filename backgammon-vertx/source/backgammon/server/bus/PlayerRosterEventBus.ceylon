@@ -32,7 +32,7 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 			return;
 		}
 		value formattedMessage = formatPlayerRosterMessage(message); 
-		eventStore.storeEvent("playerroster", formattedMessage, (result) {
+		eventStore.storeEvent("player-roster", formattedMessage, (result) {
 			if (is Throwable result) {
 				responseHandler(result);
 			} else {
@@ -65,6 +65,6 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 	}
 	
 	shared void replayAllEvents(void process(PlayerRosterInboundMessage message), void completion(Integer|Throwable result)) {
-		eventStore.replayAllEvents("playerroster", parsePlayerRosterInboundMessage, process, completion);
+		eventStore.replayAllEvents("player-roster", parsePlayerRosterInboundMessage, process, completion);
 	}
 }
