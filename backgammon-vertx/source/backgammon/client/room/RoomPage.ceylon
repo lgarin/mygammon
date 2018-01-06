@@ -186,8 +186,6 @@ shared final class RoomPage() extends BasePage() {
 	}
 	
 	void logout() {
-		eventBusClient?.close();
-
 		window.location.\iassign("/logout");
 	}
 	

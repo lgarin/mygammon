@@ -53,8 +53,6 @@ shared final class BoardPage() extends BasePage() {
 	isBoardPreview() => window.location.href.endsWith("view");
 	
 	void logout() {
-		eventBusClient?.close();
-		
 		window.location.\iassign("/logout");
 	}
 	
