@@ -10,7 +10,7 @@
 		<link rel="stylesheet" href="/static/css/room.css"></link>
 		<link rel="stylesheet" href="/static/css/bootstrap.min.css"></link>
 		<link rel="stylesheet" href="/static/css/jquery-ui.min.css"></link>
-		<script src="/static/javascript/jquery-3.1.1.min.js"></script>
+		<script src="/static/javascript/jquery-3.2.1.min.js"></script>
 		<script src="/static/javascript/jquery-ui.min.js"></script>
 		<script src="/static/javascript/bootstrap.min.js"></script>
 		<script src="/static/javascript/sockjs.min.js"></script>
@@ -70,6 +70,14 @@
                     	}]
 	                });
 	                $("#dialog-lost").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: [{
+                    		text:  $("#i18n #_ok").text(),
+                    		click: function() { $(this).dialog("close"); return true; }
+                    	}]
+	                });
+	                $("#dialog-timeout").dialog({
 	                	autoOpen: false,
 	                    modal: true,
 	                    buttons: [{
@@ -376,7 +384,11 @@
 		    <b>Sorry. You've lost the game.</b>
 		  </p>
 		</div>
-
+		<div id="dialog-timeout" title="Game ended" style="display: none">
+		  <p>
+		    <b>You did not take an action before the timeout.</b>
+		  </p>
+		</div>
 		<div id="i18n" style="display: none">
 			<div id="_logout">Logout</div>
 			<div id="_leave">Leave</div>

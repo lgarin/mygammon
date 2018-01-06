@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/static/css/board.css"></link>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css"></link>
     <link rel="stylesheet" href="/static/css/jquery-ui.min.css"></link>
-    <script src="/static/javascript/jquery-3.1.1.min.js"></script>
+    <script src="/static/javascript/jquery-3.2.1.min.js"></script>
     <script src="/static/javascript/jquery-ui.min.js"></script>
     <script src="/static/javascript/bootstrap.min.js"></script>
     <script src="/static/javascript/sockjs.min.js"></script>
@@ -48,6 +48,17 @@
 	                    }]
 	                });
 	                $("#dialog-lost").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: [{
+	                    	text: $("#i18n #_retry").text(),
+	                    	click: function() { $(this).dialog("close"); return board.onPlayAgain(); }
+	                    }, {
+	                    	text: $("#i18n #_leave").text(),
+	                    	click: function() { $(this).dialog("close"); return board.onStopPlay(); }
+	                    }]
+	                });
+	                $("#dialog-timeout").dialog({
 	                	autoOpen: false,
 	                    modal: true,
 	                    buttons: [{
@@ -288,6 +299,11 @@
 	<div id="dialog-lost" title="Game lost" style="display: none">
 	  <p>
 	    <b>Sorry. You've lost the game.</b>
+	  </p>
+	</div>
+	<div id="dialog-timeout" title="Game ended" style="display: none">
+	  <p>
+	    <b>You did not take an action before the timeout.</b>
 	  </p>
 	</div>
 	<div id="dialog-leave" title="Leave the game?" style="display: none">

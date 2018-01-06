@@ -16,19 +16,30 @@ import backgammon.shared {
 	PlayerInfo,
 	PlayerStatistic,
 	PlayerStatisticOutputMessage,
-	PlayerLoginMessage
+	PlayerLoginMessage,
+	PlayerRosterInboundMessage
 }
 import ceylon.time {
 
 	Instant,
 	Duration
 }
+import ceylon.collection {
+
+	ArrayList
+}
 class PlayerRosterTest() {
 	
 	value baseTimestamp = Instant(0);
 	value playerInfo = PlayerInfo("id", "name");
 	value configuration = RoomConfiguration(null);
-	value roster = PlayerRoster(configuration);
+	value messageQueue = ArrayList<PlayerRosterInboundMessage>();
+	value roster = PlayerRoster(configuration, messageQueue.add);
+	
+	void processMessageQueue() {
+		messageQueue.each(roster.processInputMessage);
+		messageQueue.clear();
+	}
 	
 	test
 	shared void loginNewPlayer() {
@@ -41,6 +52,7 @@ class PlayerRosterTest() {
 	test
 	shared void loginKnownPlayer() {
 		roster.processInputMessage(PlayerLoginMessage(playerInfo, baseTimestamp));
+		processMessageQueue();
 		value result = roster.processInputMessage(PlayerLoginMessage(playerInfo, baseTimestamp.plus(Duration(1))));
 		assert (result.playerId == playerInfo.playerId);
 		assert (is PlayerStatisticOutputMessage result);
@@ -50,6 +62,7 @@ class PlayerRosterTest() {
 	test
 	shared void loginPlayerForFreeCredit() {
 		roster.processInputMessage(PlayerLoginMessage(playerInfo, baseTimestamp));
+		processMessageQueue();
 		value result = roster.processInputMessage(PlayerLoginMessage(playerInfo, baseTimestamp.plus(configuration.balanceIncreaseDelay)));
 		assert (result.playerId == playerInfo.playerId);
 		assert (is PlayerStatisticOutputMessage result);
@@ -59,6 +72,7 @@ class PlayerRosterTest() {
 	test
 	shared void updateStatisticForKnownPlayer() {
 		roster.processInputMessage(PlayerLoginMessage(playerInfo, baseTimestamp));
+		processMessageQueue();
 		value delta = PlayerStatistic(2000, 1, 1, 100);
 		value result = roster.processInputMessage(PlayerStatisticUpdateMessage(playerInfo, delta, baseTimestamp.plus(Duration(1))));
 		assert (result.playerId == playerInfo.playerId);

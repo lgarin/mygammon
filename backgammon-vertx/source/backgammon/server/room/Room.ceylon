@@ -75,7 +75,7 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 	}
 
 	function openTable(Player player) {
-		if (exists table = tableList.find((table) => table.queueSize == 0 && table.sitPlayer(player))) {
+		if (exists table = tableList.find((table) => table.queueSize == 0 && !player.wasAtTable(table.id) && table.sitPlayer(player))) {
 			updateTableCount();
 			updatedPlayers.add(player);
 			return table;
@@ -84,7 +84,7 @@ final shared class Room(shared String roomId, RoomSize maxSize, shared MatchBet 
 	}
 	
 	function sitPlayer(Player player, Instant timestamp) {
-		if (exists table = tableList.find((table) => table.queueSize == 1 && table.sitPlayer(player))) {
+		if (exists table = tableList.find((table) => table.queueSize == 1 && !player.wasAtTable(table.id) && table.sitPlayer(player))) {
 			createMatch(table, timestamp);
 			updateTableCount();
 			updatedPlayers.add(player);

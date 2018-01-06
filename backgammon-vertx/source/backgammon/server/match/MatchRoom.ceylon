@@ -148,9 +148,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	
 	function joinTable(JoinTableMessage message) {
 		if (exists room = findRoom(message.roomId), exists table = room.findTable(message.tableId), exists player = room.findPlayer(message.playerId), table.sitPlayer(player)) {
+			room.createMatch(table, message.timestamp); // try to create a match because sit player does not do it
 			player.markActive(message.timestamp);
 			handlePlayerChange(player);
-			room.createMatch(table, message.timestamp); // TODO why?
 			return JoinedTableMessage(message.playerId, message.tableId, player.info);
 		} else {
 			return JoinedTableMessage(message.playerId, message.tableId, null);

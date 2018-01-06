@@ -67,7 +67,7 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 	
 	variable Boolean softTimeoutNotified = false;
 	
-	value game = Game(createGameMessage.timestamp.plus(configuration.serverAdditionalTimeout));
+	value game = Game(createGameMessage.timestamp.plus(configuration.playerInactiveTimeout));
 	
 	function toPlayerColor(PlayerId playerId) {
 		if (playerId == player1Id) {

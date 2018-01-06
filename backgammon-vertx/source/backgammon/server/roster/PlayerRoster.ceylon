@@ -21,14 +21,20 @@ import ceylon.collection {
 import ceylon.time {
 	Instant
 }
-shared final class PlayerRoster(RoomConfiguration config) {
+shared final class PlayerRoster(RoomConfiguration config, Anything(PlayerRosterInboundMessage) recordUpdate) {
 	
 	value statisticMap = HashMap<PlayerId, PlayerRosterRecord>();
 	value lock = ObtainableLock("PlayerRoster");
 
-	function storeRecord(PlayerRosterRecord record) {
+	function storeRecord(PlayerRosterRecord record, [PlayerInfo,PlayerStatistic]? loginDelta = null) {
 		statisticMap.put(record.id, record);
 		return PlayerStatisticOutputMessage(record.id, record.stat);
+	}
+	
+	function storeRecordWithLoginDelta(PlayerRosterRecord record, PlayerInfo playerInfo, PlayerStatistic loginDelta) {
+		statisticMap.put(record.id, record);
+		recordUpdate(PlayerStatisticUpdateMessage(playerInfo, loginDelta));
+		return PlayerStatisticOutputMessage(record.id, record.stat + loginDelta);
 	}
 	
 	function initialLogin(PlayerInfo playerInfo, Instant timestamp)
@@ -36,10 +42,10 @@ shared final class PlayerRoster(RoomConfiguration config) {
 	
 	function updatePlayerStatistic(PlayerStatisticUpdateMessage message) {
 		if (exists oldRecord = statisticMap[message.playerId]) {
-			value record = PlayerRosterRecord(oldRecord.id, oldRecord.login, oldRecord.stat + message.statistic);
+			value record = PlayerRosterRecord(oldRecord.id, oldRecord.login, oldRecord.stat + message.statisticDelta);
 			return storeRecord(record);
 		} else {
-			value record = PlayerRosterRecord(message.playerId, initialLogin(message.playerInfo, message.timestamp), message.statistic);
+			value record = PlayerRosterRecord(message.playerId, initialLogin(message.playerInfo, message.timestamp), message.statisticDelta);
 			return storeRecord(record);
 		}
 	}
@@ -48,15 +54,17 @@ shared final class PlayerRoster(RoomConfiguration config) {
 		if (exists oldRecord = statisticMap[message.playerId]) {
 			value newLogin = oldRecord.login.renew(message.timestamp, config.balanceIncreaseDelay);
 			if (oldRecord.login.mustCredit(message.timestamp)) {
-				value record = PlayerRosterRecord(oldRecord.id, newLogin, oldRecord.stat.updateBalance(config.balanceIncreaseAmount));
-				return storeRecord(record);
+				value loginDelta = PlayerStatistic(config.balanceIncreaseAmount);
+				value record = PlayerRosterRecord(oldRecord.id, newLogin, oldRecord.stat);
+				return storeRecordWithLoginDelta(record, message.playerInfo, loginDelta);
 			} else {
 				value record = PlayerRosterRecord(oldRecord.id, newLogin, oldRecord.stat);
 				return storeRecord(record);
 			}
 		} else {
-			value record = PlayerRosterRecord(message.playerId, initialLogin(message.playerInfo, message.timestamp), PlayerStatistic(config.initialPlayerBalance));
-			return storeRecord(record);
+			value record = PlayerRosterRecord(message.playerId, initialLogin(message.playerInfo, message.timestamp), PlayerStatistic());
+			value loginDelta = PlayerStatistic(config.initialPlayerBalance);
+			return storeRecordWithLoginDelta(record, message.playerInfo, loginDelta);
 		}
 	}
 	

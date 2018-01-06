@@ -4,7 +4,8 @@ curl -XPUT 'localhost:9200/_template/backgammon?pretty' -H 'Content-Type: applic
 {
   "index_patterns": ["backgammon-*"],
   "settings": {
-    "number_of_shards": 1
+    "number_of_shards": 1,
+    "max_result_window" : 100000
   },
   "mappings": {
     "doc": {

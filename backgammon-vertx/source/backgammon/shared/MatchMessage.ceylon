@@ -59,6 +59,7 @@ PingMatchMessage parsePingMatchMessage(Object json) {
 shared final class EndMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId, shared Integer score, shared actual Instant timestamp = now()) satisfies InboundMatchMessage {
 	toJson() => toExtendedJson({"winnerId" -> winnerId.toJson(), "score" -> score});
 	
+	shared Boolean isAbandonedMatch => playerId == systemPlayerId && playerId == winnerId;
 	shared Boolean isNormalWin => playerId != systemPlayerId && playerId == winnerId;
 	shared Boolean isSurrenderWin => playerId != systemPlayerId && playerId != winnerId;
 }

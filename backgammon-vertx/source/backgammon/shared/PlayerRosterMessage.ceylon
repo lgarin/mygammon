@@ -2,11 +2,9 @@ import ceylon.json {
 	Object
 }
 import ceylon.language.meta {
-
 	type
 }
 import ceylon.time {
-
 	Instant,
 	now
 }
@@ -23,12 +21,16 @@ shared sealed interface PlayerRosterInboundMessage of PlayerStatisticUpdateMessa
 
 shared sealed interface PlayerRosterOutboundMessage of PlayerStatisticOutputMessage satisfies PlayerRosterMessage {}
 
-shared final class PlayerStatisticUpdateMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statistic, shared actual Instant timestamp = now()) satisfies PlayerRosterInboundMessage {
+shared final class PlayerStatisticUpdateMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statisticDelta, shared actual Instant timestamp = now()) satisfies PlayerRosterInboundMessage {
 	playerId = playerInfo.playerId;
-	toJson() => Object { "playerInfo" -> playerInfo.toJson(), "statistic" -> statistic.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch };
+	toJson() => Object { "playerInfo" -> playerInfo.toJson(), "statisticDelta" -> statisticDelta.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch };
+	shared Boolean isBet => statisticDelta.playedGames == 0 && statisticDelta.balance < 0;
+	shared Boolean isWonGame => statisticDelta.wonGames > 0;
+	shared Boolean isLostGame => statisticDelta.wonGames == 0 && statisticDelta.playedGames > 0;
+	shared Boolean isRefund =>  statisticDelta.playedGames > 0 && statisticDelta.balance > 0;
 }
 PlayerStatisticUpdateMessage parsePlayerStatisticUpdateMessage(Object json) {
-	return PlayerStatisticUpdateMessage(parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("statistic")), Instant(json.getInteger("timestamp")));
+	return PlayerStatisticUpdateMessage(parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("statisticDelta")), Instant(json.getInteger("timestamp")));
 }
 
 shared final class PlayerLoginMessage(shared PlayerInfo playerInfo, shared actual Instant timestamp = now()) satisfies PlayerRosterInboundMessage {

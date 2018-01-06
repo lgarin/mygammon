@@ -73,8 +73,8 @@ shared class Match(Instant creationTime, shared Player player1, shared Player pl
 		if (exists winner = findPlayer(winnerId)) {
 			winner.increaseWonGame(score, matchPot);
 		} else {
-			player1.placeBet(-matchPot / 2);
-			player2.placeBet(-matchPot / 2);
+			player1.refundBet(matchPot / 2);
+			player2.refundBet(matchPot / 2);
 		}
 	}
 	

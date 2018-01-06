@@ -28,10 +28,12 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 	variable PlayerStatistic _statisticDelta = PlayerStatistic();
 	
 	shared PlayerStatistic statistic => _statistic + _statisticDelta;
-	shared Integer balance => statistic.balance;
+	shared Integer balance => _statistic.balance + _statisticDelta.balance;
 	shared PlayerState state => PlayerState(info, _statistic, _tableId, match?.id);
 
 	shared Boolean isAtTable(TableId tableId) => _tableId?.equals(tableId) else false;
+	
+	shared Boolean wasAtTable(TableId tableId) => _previousMatch?.tableId?.equals(tableId) else false;
 	
 	shared Boolean isInMatch(MatchId matchId) => match?.id?.equals(matchId) else false;
 	
@@ -99,6 +101,10 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 	
 	shared void placeBet(Integer bet) {
 		_statisticDelta = _statisticDelta.updateBalance(-bet);
+	}
+	
+	shared void refundBet(Integer bet) {
+		_statisticDelta = _statisticDelta.updateBalance(bet);
 	}
 
 	shared Boolean isPlaying() {

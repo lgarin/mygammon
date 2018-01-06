@@ -17,8 +17,7 @@ shared final class PlayerStatistic(shared Integer balance = 0, shared Integer pl
 				playedGames==that.playedGames && 
 				wonGames==that.wonGames && 
 				score==that.score;
-		}
-		else {
+		} else {
 			return false;
 		}
 	}

@@ -1,7 +1,5 @@
 shared class EventBusClient(void onMessage(String message), void onError(String error)) {
 	variable dynamic eventBus = null;
-	variable dynamic reconnectTimer = null;
-	
 	variable [String*] addressList = [];
 	
 	void messageCallback(dynamic error, dynamic message) {
@@ -14,34 +12,28 @@ shared class EventBusClient(void onMessage(String message), void onError(String 
 		}
 	}
 	
-	void connectEventBus() {
-		dynamic {
-			dynamic bus = EventBus("/eventbus/");
-			bus.onopen = void() {
-				if (exists timer = reconnectTimer) {
-					clearInterval(timer);
-					reconnectTimer = null;
-				}
-				for (address in addressList) {
-					bus.registerHandler(address, messageCallback);
-				}
-			};
-			
-			bus.onerror = void(dynamic error) {
-				onError(JSON.stringify(error));
-			};
-			
-			bus.onclose = void(dynamic error) {
-				if (exists error, !reconnectTimer exists) {
-					reconnectTimer = setInterval(connectEventBus, 1800 + 600 * (Math.random() - 0.5));
-				}
-			};
-			
+	dynamic {
+		dynamic bus = EventBus("/eventbus/");
+		bus.onopen = void() {
+			for (address in addressList) {
+				bus.registerHandler(address, messageCallback);
+			}
 			eventBus = bus;
-		}
+		};
+		
+		bus.onerror = void(dynamic error) {
+			if (exists error, exists reason = error.reason, reason != "") {
+				onError(error.reason);
+			}
+		};
+		
+		bus.onclose = void(dynamic error) {
+			eventBus = null;
+			if (exists error, exists reason = error.reason, reason != "") {
+				onError(error.reason);
+			}
+		};
 	}
-	
-	connectEventBus();
 	
 	shared void addAddress(String address) {
 		addressList = [address, *addressList];
