@@ -66,7 +66,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Board
 			gui.showDialog("dialog-won", {"game-score" -> score.string});
 		} else if (exists looserId = match.opponentId(winnerId), playerId == looserId) {
 			gui.showDialog("dialog-lost");
-		} else if (winnerId == systemPlayerId) {
+		} else if (winnerId == systemPlayerId && match.playerColor(playerId) exists) {
 			gui.showDialog("dialog-timeout");
 		}
 		

@@ -51,7 +51,7 @@ class RoomGui(Document document) extends BoardGui(document) {
 		value playing = currentPlayerState?.isPlayingAtTable(tableId) else false;
 		value tableLink =  if (playing) then "``baseTableLink``/play" else "``baseTableLink``/view";
 		
-		value data = Object {"tableLink" -> tableLink, "tableId" -> tableId.table, "buttonClass" -> buttonClass}.string;
+		value data = Object {"tableLink" -> tableLink, "tableId" -> tableId.table, "joinButtonClass" -> buttonClass}.string;
 		dynamic {
 			jQuery("#table-info").loadTemplate(jQuery("#table-info-template"), JSON.parse(data));
 		}

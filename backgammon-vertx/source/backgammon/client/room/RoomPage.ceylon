@@ -57,7 +57,7 @@ shared final class RoomPage() extends BasePage() {
 		return roomId;
 	}
 	
-	isBoardPreview() => false;
+	isBoardPreview() => true;
 
 	shared Boolean onButton(HTMLElement target) {
 		
@@ -159,16 +159,16 @@ shared final class RoomPage() extends BasePage() {
 	void refreshPlayerList(TableId? joinedTableId) {
 		if (exists joinedTableId) {
 			showTable(joinedTableId);
+		} else if (exists currentTableClient = tableClient) {
+			showTable(currentTableClient.tableId);
 		}
 		
 		if (exists joinedTableId) {
 			gui.hideNewButton();
 			gui.showLeaveButton();
-			gui.hideJoinButton();
 		} else {
 			gui.showNewButton();
 			gui.hideLeaveButton();
-			gui.hideJoinButton();
 		}
 		if (playerList.empty) {
 			gui.showEmptyPlayerList();
@@ -247,7 +247,6 @@ shared final class RoomPage() extends BasePage() {
 			playerList.updateTable(message.playerId, null);
 		}
 		
-		//gui.showTableInfo(message.tableId, playerList.findPlayer(currentPlayerId));
 		refreshPlayerList(playerList.findTable(currentPlayerId));
 		
 		if (exists currentClient = tableClient) {
