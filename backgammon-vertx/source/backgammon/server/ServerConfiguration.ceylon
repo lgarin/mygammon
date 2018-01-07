@@ -11,6 +11,7 @@ import ceylon.time {
 
 shared final class ServerConfiguration(Object? json) extends RoomConfiguration(json) {
 	shared String keycloakLoginUrl = json?.getStringOrNull("keycloakLoginUrl") else "http://localhost:8080/auth/realms/MyGammon/protocol/openid-connect";
+	shared String keycloakLogoutUrl = json?.getStringOrNull("keycloakLogoutUrl") else "http://localhost:8080/auth/realms/MyGammon/protocol/openid-connect/logout";
 	shared String elasticIndexUrl =  json?.getStringOrNull("elasticIndexUrl") else "http://localhost:9200";
 
 	shared Integer replayPageSize = json?.getIntegerOrNull("replayPageSize") else 1000;

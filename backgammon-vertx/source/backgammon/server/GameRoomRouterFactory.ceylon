@@ -33,6 +33,10 @@ import backgammon.server.bus {
 	GameRoomEventBus,
 	PlayerRosterEventBus
 }
+import java.net {
+
+	URLEncoder
+}
 
 final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig) {
 	
@@ -40,6 +44,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 	value repoEventBus = PlayerRosterEventBus(vertx, serverConfig);
 	value authClient = KeycloakAuthClient(vertx, serverConfig.keycloakLoginUrl);
 	value restApi = GameRoomRestApi(vertx, roomEventBus);
+	value encodedStartUrl = URLEncoder.encode("http://``serverConfig.hostname``:``serverConfig.port``/start", "UTF-8");
 	
 	void enterRoom(RoutingContext routingContext, PlayerInfo playerInfo, PlayerStatistic playerStat) {
 		value context = GameRoomRoutingContext(routingContext);
@@ -122,17 +127,18 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 						context.fail(error);
 					} else {
 						context.clearUser();
-						context.sendRedirect(serverConfig.homeUrl);
+						context.sendRedirect("``serverConfig.keycloakLogoutUrl``?redirect_uri=``encodedStartUrl``");
 					}
 				});
 			});
 		} else {
-			context.sendRedirect(serverConfig.homeUrl);
+			context.sendRedirect("``serverConfig.keycloakLogoutUrl``?redirect_uri=``encodedStartUrl``");
 		}
 	}
 
 	shared Router createRootRouter() {
 		value router = routerFactory.router(vertx);
+		router.route("/").handler(handleStart);
 		router.route("/start").handler(handleStart);
 		router.route("/logout").handler(handleLogout);
 		router.route("/room/:roomId").handler(handleRoom);
