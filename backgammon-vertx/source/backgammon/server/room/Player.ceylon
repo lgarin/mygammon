@@ -47,15 +47,6 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 			return true;
 		}
 	}
-	
-	void unregisterOldMatch(Match currentMatch) {
-		if (exists currentTableId = _tableId, currentTableId == currentMatch.tableId) {
-			_previousMatch = null;
-		} else {
-			_previousMatch = currentMatch;
-		}
-		_match = null;
-	}
 
 	shared Boolean joinTable(TableId newTableId) {
 		if (isPlaying()) {
@@ -69,9 +60,8 @@ final shared class Player(shared PlayerInfo info, PlayerStatistic initialStatist
 		}
 		
 		_tableId = newTableId;
-		if (exists currentMatch = _match) {
-			unregisterOldMatch(currentMatch);
-		}
+		_previousMatch = null;
+		_match = null;
 		return true;
 	}
 	

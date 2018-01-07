@@ -36,7 +36,7 @@ final class JsonEventBus(Vertx vertx) {
 			} else if (exists body = result.body(), is OutboundMessage response = parseOutboundMessage(body)) {
 				responseHandler(response);
 			} else {
-				responseHandler(Exception("Invalid response: ``result``"));
+				responseHandler(Exception("Invalid response: ``result.body() else "<no content>"``"));
 			}
 		});
 	}

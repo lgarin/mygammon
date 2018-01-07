@@ -66,35 +66,3 @@ shared final class EndMatchMessage(shared actual PlayerId playerId, shared actua
 EndMatchMessage parseEndMatchMessage(Object json) {
 	return EndMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("winnerId")), json.getInteger("score"), Instant(json.getInteger("timestamp")));
 }
-
-shared OutboundMatchMessage? parseOutboundMatchMessage(Object json) {
-	if (exists typeName = json.keys.first) {
-		if (typeName == `class AcceptedMatchMessage`.name) {
-			return parseAcceptedMatchMessage(json.getObject(typeName));
-		} else if (typeName == `class MatchActivityMessage`.name) {
-			return parseMatchActivityMessage(json.getObject(typeName));
-		} else if (typeName == `class MatchEndedMessage`.name) {
-			return parseMatchEndedMessage(json.getObject(typeName));
-		} else {
-			return null;
-		}
-	} else {
-		return null;
-	}
-}
-
-shared InboundMatchMessage? parseInboundMatchMessage(Object json) {
-	if (exists typeName = json.keys.first) {
-		if (typeName == `class AcceptMatchMessage`.name) {
-			return parseAcceptMatchMessage(json.getObject(typeName));
-		} else if (typeName == `class PingMatchMessage`.name) {
-			return parsePingMatchMessage(json.getObject(typeName));
-		} else if (typeName == `class EndMatchMessage`.name) {
-			return parseEndMatchMessage(json.getObject(typeName));
-		} else {
-			return null;
-		}
-	} else {
-		return null;
-	}
-}

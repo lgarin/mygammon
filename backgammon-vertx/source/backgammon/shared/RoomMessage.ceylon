@@ -4,29 +4,23 @@ import ceylon.json {
 	Value,
 	JsonArray=Array
 }
-import ceylon.language.meta {
-
-	type
-}
 import ceylon.time {
 
 	Instant,
 	now
 }
 
-shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage | TableMessage {
+shared sealed interface RoomMessage of InboundRoomMessage | OutboundRoomMessage | TableMessage satisfies ApplicationMessage {
 	shared formal PlayerId playerId;
 	shared formal RoomId roomId;
 	
 	shared default Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson()};
-	shared default Object toJson() => toBaseJson();
+	shared actual default Object toJson() => toBaseJson();
 	shared Object toExtendedJson({<String->Value>*} entries) {
 		value result = toBaseJson();
 		result.putAll(entries);
 		return result;
 	}
-	
-	string => toJson().string;
 }
 
 shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessage | FindMatchTableMessage | FindEmptyTableMessage | RoomStateRequestMessage | PlayerStateRequestMessage satisfies RoomMessage {
@@ -113,50 +107,4 @@ shared final class PlayerStateMessage(shared actual RoomId roomId, shared Player
 }
 PlayerStateMessage parsePlayerStateMessageMessage(Object json) {
 	return PlayerStateMessage(parseRoomId(json.getString("roomId")), parseNullablePlayerState(json.getObjectOrNull("state")), parseNullableMatchState(json.getObjectOrNull("match")));
-}
-
-shared Object formatRoomMessage(RoomMessage message) {
-	return Object({type(message).declaration.name -> message.toJson()});
-}
-
-shared InboundRoomMessage? parseInboundRoomMessage(Object json) {
-	if (exists typeName = json.keys.first) {
-		if (typeName == `class EnterRoomMessage`.name) {
-			return parseEnterRoomMessage(json.getObject(typeName));
-		} else if (typeName == `class LeaveRoomMessage`.name) {
-			return parseLeaveRoomMessage(json.getObject(typeName));
-		} else if (typeName == `class FindMatchTableMessage`.name) {
-			return parseFindMatchTableMessage(json.getObject(typeName));
-		} else if (typeName == `class FindEmptyTableMessage`.name) {
-			return parseFindEmptyTableMessage(json.getObject(typeName));
-		} else if (typeName == `class RoomStateRequestMessage`.name) {
-			return parseRoomStateRequestMessage(json.getObject(typeName));
-		} else if (typeName == `class PlayerStateRequestMessage`.name) {
-			return parsePlayerStateRequestMessage(json.getObject(typeName));
-		} else {
-			return null;
-		}
-	} else {
-		return null;
-	}
-}
-
-shared OutboundRoomMessage? parseOutboundRoomMessage(Object json) {
-	if (exists typeName = json.keys.first) {
-		if (typeName == `class RoomActionResponseMessage`.name) {
-			return parseRoomActionResponseMessage(json.getObject(typeName));
-		} else if (typeName == `class FoundMatchTableMessage`.name) {
-			return parseFoundMatchTableMessage(json.getObject(typeName));
-		} else if (typeName == `class FoundEmptyTableMessage`.name) {
-			return parseFoundEmptyTableMessage(json.getObject(typeName));
-		} else if (typeName == `class PlayerListMessage`.name) {
-			return parsePlayerListMessageMessage(json.getObject(typeName));
-		} else if (typeName == `class PlayerStateMessage`.name) {
-			return parsePlayerStateMessageMessage(json.getObject(typeName));
-		} else {
-			return null;
-		}
-	} else {
-		return null;
-	}
 }

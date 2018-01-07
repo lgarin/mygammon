@@ -7,9 +7,7 @@ import backgammon.server.store {
 import backgammon.shared {
 	PlayerRosterOutboundMessage,
 	PlayerRosterInboundMessage,
-	parsePlayerRosterOutboundMessage,
-	formatPlayerRosterMessage,
-	parsePlayerRosterInboundMessage
+	applicationMessages
 }
 
 import ceylon.json {
@@ -31,12 +29,12 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 		if (disableOutput) {
 			return;
 		}
-		value formattedMessage = formatPlayerRosterMessage(message); 
+		value formattedMessage = applicationMessages.format(message); 
 		eventStore.storeEvent("player-roster", formattedMessage, (result) {
 			if (is Throwable result) {
 				responseHandler(result);
 			} else {
-				eventBus.sendMessage(formattedMessage, "PlayerRosterMessage", parsePlayerRosterOutboundMessage, responseHandler);
+				eventBus.sendMessage(formattedMessage, "PlayerRosterMessage", applicationMessages.parse<OutputMessage>, responseHandler);
 			}
 		});
 	}
@@ -56,8 +54,8 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 
 	shared void registerConsumer(PlayerRosterOutboundMessage process(PlayerRosterInboundMessage request)) {
 		eventBus.registerConsumer("PlayerRosterMessage", function (JsonObject msg) {
-			if (exists request = parsePlayerRosterInboundMessage(msg)) {
-				return formatPlayerRosterMessage(process(request));
+			if (exists request = applicationMessages.parse<PlayerRosterInboundMessage>(msg)) {
+				return applicationMessages.format(process(request));
 			} else {
 				throw Exception("Invalid request: ``msg``");
 			}
@@ -65,6 +63,6 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 	}
 	
 	shared void replayAllEvents(void process(PlayerRosterInboundMessage message), void completion(Integer|Throwable result)) {
-		eventStore.replayAllEvents("player-roster", parsePlayerRosterInboundMessage, process, completion);
+		eventStore.replayAllEvents("player-roster", applicationMessages.parse<PlayerRosterInboundMessage>, process, completion);
 	}
 }

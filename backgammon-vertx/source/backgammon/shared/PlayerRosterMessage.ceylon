@@ -1,18 +1,13 @@
 import ceylon.json {
 	Object
 }
-import ceylon.language.meta {
-	type
-}
 import ceylon.time {
 	Instant,
 	now
 }
 
-shared sealed interface PlayerRosterMessage of PlayerRosterInboundMessage | PlayerRosterOutboundMessage {
+shared sealed interface PlayerRosterMessage of PlayerRosterInboundMessage | PlayerRosterOutboundMessage satisfies ApplicationMessage {
 	shared formal PlayerId playerId;
-	shared formal Object toJson();
-	string => toJson().string;
 }
 
 shared sealed interface PlayerRosterInboundMessage of PlayerStatisticUpdateMessage | PlayerLoginMessage satisfies PlayerRosterMessage {
@@ -46,34 +41,4 @@ shared final class PlayerStatisticOutputMessage(shared actual PlayerId playerId,
 }
 PlayerStatisticOutputMessage parsePlayerStatisticOutputMessage(Object json) {
 	return PlayerStatisticOutputMessage(parsePlayerId(json.getString("playerId")), parsePlayerStatistic(json.getObject("statistic")));
-}
-
-shared Object formatPlayerRosterMessage(PlayerRosterMessage message) {
-	return Object({type(message).declaration.name -> message.toJson()});
-}
-
-shared PlayerRosterInboundMessage? parsePlayerRosterInboundMessage(Object json) {
-	if (exists typeName = json.keys.first) {
-		if (typeName == `class PlayerStatisticUpdateMessage`.name) {
-			return parsePlayerStatisticUpdateMessage(json.getObject(typeName));
-		} else if (typeName == `class PlayerLoginMessage`.name) {
-			return parsePlayerLoginMessage(json.getObject(typeName));
-		} else {
-			return null;
-		}
-	} else {
-		return null;
-	}
-}
-
-shared PlayerRosterOutboundMessage? parsePlayerRosterOutboundMessage(Object json) {
-	if (exists typeName = json.keys.first) {
-		if (typeName == `class PlayerStatisticOutputMessage`.name) {
-			return parsePlayerStatisticOutputMessage(json.getObject(typeName));
-		} else {
-			return null;
-		}
-	} else {
-		return null;
-	}
 }

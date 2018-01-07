@@ -8,14 +8,12 @@ import backgammon.shared {
 	systemPlayerId,
 	PlayerId,
 	InboundTableMessage,
-	parseOutboundGameMessage,
 	TableStateRequestMessage,
 	UndoMovesMessage,
 	EnterRoomMessage,
 	LeaveTableMessage,
 	FindEmptyTableMessage,
 	EndMatchMessage,
-	formatRoomMessage,
 	InboundRoomMessage,
 	StartGameMessage,
 	EndGameMessage,
@@ -24,23 +22,21 @@ import backgammon.shared {
 	PlayerStateRequestMessage,
 	MakeMoveMessage,
 	InboundGameMessage,
-	parseOutboundTableMessage,
 	FindMatchTableMessage,
 	LeaveRoomMessage,
 	EndTurnMessage,
 	PlayerBeginMessage,
-	parseOutboundMatchMessage,
 	RoomStateRequestMessage,
 	GameStateRequestMessage,
 	InboundMatchMessage,
-	parseOutboundRoomMessage,
 	OutboundRoomMessage,
 	OutboundTableMessage,
 	OutboundMatchMessage,
 	OutboundGameMessage,
 	TakeTurnMessage,
 	CreateGameMessage,
-	PingMatchMessage
+	PingMatchMessage,
+	applicationMessages
 }
 
 import ceylon.json {
@@ -62,13 +58,13 @@ abstract shared class BasePage() {
 	
 	function handleServerMessage(Object json)  {
 		
-		if (exists message = parseOutboundRoomMessage(json)) {
+		if (exists message = applicationMessages.parse<OutboundRoomMessage>(json)) {
 			return handleRoomMessage(message);
-		} else if (exists message = parseOutboundTableMessage(json)) {
+		} else if (exists message = applicationMessages.parse<OutboundTableMessage>(json)) {
 			return handleTableMessage(message);
-		} else if (exists message = parseOutboundMatchMessage(json)) {
+		} else if (exists message = applicationMessages.parse<OutboundMatchMessage>(json)) {
 			return handleMatchMessage(message);
-		} else if (exists message = parseOutboundGameMessage(json)) {
+		} else if (exists message = applicationMessages.parse<OutboundGameMessage>(json)) {
 			return handleGameMessage(message);
 		} else {
 			return false;
@@ -134,7 +130,7 @@ abstract shared class BasePage() {
 	shared formal Boolean isBoardPreview();
 	
 	shared void gameCommander(InboundGameMessage|InboundMatchMessage|InboundTableMessage message) {
-		print(formatRoomMessage(message));
+		print(applicationMessages.format(message));
 		switch (message)
 		case (is AcceptMatchMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");

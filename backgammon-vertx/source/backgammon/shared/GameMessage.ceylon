@@ -17,12 +17,12 @@ import ceylon.time {
 
 shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage | GameEventMessage satisfies MatchMessage {}
 
-shared interface InboundGameMessage of CreateGameMessage | StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
+shared sealed interface InboundGameMessage of CreateGameMessage | StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
 	shared formal Instant timestamp;
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
 }
 
-shared interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
+shared sealed interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
 	shared formal CheckerColor playerColor;
 	shared actual default Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "playerColor" -> playerColor.name };
 }
@@ -148,62 +148,3 @@ GameActionResponseMessage parseGameActionResponseMessage(Object json) {
 	return GameActionResponseMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getBoolean("success"));
 }
 
-shared OutboundGameMessage? parseOutboundGameMessage(Object json) {
-	if (exists typeName = json.keys.first) {
-		if (typeName == `class InitialRollMessage`.name) {
-			return parseInitialRollMessage(json.getObject(typeName));
-		} else if (typeName == `class PlayerReadyMessage`.name) {
-			return parsePlayerReadyMessage(json.getObject(typeName));
-		} else if (typeName == `class StartTurnMessage`.name) {
-			return parseStartTurnMessage(json.getObject(typeName));
-		} else if (typeName == `class PlayedMoveMessage`.name) {
-			return parsePlayedMoveMessage(json.getObject(typeName));
-		} else if (typeName == `class UndoneMovesMessage`.name) {
-			return parseUndoneMovesMessage(json.getObject(typeName));
-		} else if (typeName == `class InvalidMoveMessage`.name) {
-			return parseInvalidMoveMessage(json.getObject(typeName));
-		} else if (typeName == `class TurnTimedOutMessage`.name) {
-			return parseTurnTimedOutMessage(json.getObject(typeName));
-		} else if (typeName == `class DesynchronizedMessage`.name) {
-			return parseDesynchronizedMessage(json.getObject(typeName));
-		} else if (typeName == `class NotYourTurnMessage`.name) {
-			return parseNotYourTurnMessage(json.getObject(typeName));
-		} else if (typeName == `class GameStateResponseMessage`.name) {
-			return parseGameStateResponseMessage(json.getObject(typeName));
-		} else if (typeName == `class GameActionResponseMessage`.name) {
-			return parseGameActionResponseMessage(json.getObject(typeName));
-		} else {
-			return null;
-		}
-	} else {
-		return null;
-	}
-}
-
-shared InboundGameMessage? parseInboundGameMessage(Object json) {
-	if (exists typeName = json.keys.first) {
-		if (typeName == `class CreateGameMessage`.name) {
-			return parseCreateGameMessage(json.getObject(typeName));
-		} else if (typeName == `class StartGameMessage`.name) {
-			return parseStartGameMessage(json.getObject(typeName));
-		} else if (typeName == `class PlayerBeginMessage`.name) {
-			return parsePlayerBeginMessage(json.getObject(typeName));
-		} else if (typeName == `class MakeMoveMessage`.name) {
-			return parseMakeMoveMessage(json.getObject(typeName));
-		} else if (typeName == `class UndoMovesMessage`.name) {
-			return parseUndoMovesMessage(json.getObject(typeName));
-		} else if (typeName == `class EndTurnMessage`.name) {
-			return parseEndTurnMessage(json.getObject(typeName));
-		} else if (typeName == `class TakeTurnMessage`.name) {
-			return parseTakeTurnMessage(json.getObject(typeName));
-		} else if (typeName == `class EndGameMessage`.name) {
-			return parseEndGameMessage(json.getObject(typeName));
-		} else if (typeName == `class GameStateRequestMessage`.name) {
-			return parseGameStateRequestMessage(json.getObject(typeName));
-		} else {
-			return null;
-		}
-	} else {
-		return null;
-	}
-}

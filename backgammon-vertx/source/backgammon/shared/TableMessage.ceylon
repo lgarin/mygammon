@@ -72,37 +72,3 @@ shared final class TableStateResponseMessage(shared actual PlayerId playerId, sh
 TableStateResponseMessage parseTableStateResponseMessage(Object json) {
 	return TableStateResponseMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), parseNullableMatchState(json.getObjectOrNull("match")), json.getArray("playerQueue").narrow<Object>().collect(parsePlayerInfo), json.getBoolean("success"));
 }
-
-shared OutboundTableMessage? parseOutboundTableMessage(Object json) {
-	if (exists typeName = json.keys.first) {
-		if (typeName == `class JoinedTableMessage`.name) {
-			return parseJoinedTableMessage(json.getObject(typeName));
-		} else if (typeName == `class LeftTableMessage`.name) {
-			return parseLeftTableMessage(json.getObject(typeName));
-		} else if (typeName == `class CreatedMatchMessage`.name) {
-			return parseCreatedMatchMessage(json.getObject(typeName));
-		} else if (typeName == `class TableStateResponseMessage`.name) {
-			return parseTableStateResponseMessage(json.getObject(typeName));
-		} else {
-			return null;
-		}
-	} else {
-		return null;
-	}
-}
-
-shared InboundTableMessage? parseInboundTableMessage(Object json) {
-	if (exists typeName = json.keys.first) {
-		if (typeName == `class LeaveTableMessage`.name) {
-			return parseLeaveTableMessage(json.getObject(typeName));
-		} else if (typeName == `class JoinTableMessage`.name) {
-			return parseJoinTableMessage(json.getObject(typeName));
-		} else if (typeName == `class TableStateRequestMessage`.name) {
-			return parseTableStateRequestMessage(json.getObject(typeName));
-		} else {
-			return null;
-		}
-	} else {
-		return null;
-	}
-}

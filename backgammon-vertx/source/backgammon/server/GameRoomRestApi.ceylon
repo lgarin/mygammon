@@ -1,7 +1,6 @@
 import backgammon.shared {
 	TableStateRequestMessage,
 	GameStateRequestMessage,
-	formatRoomMessage,
 	AcceptMatchMessage,
 	LeaveTableMessage,
 	InboundGameMessage,
@@ -18,7 +17,8 @@ import backgammon.shared {
 	JoinTableMessage,
 	LeaveRoomMessage,
 	PlayerStateRequestMessage,
-	TakeTurnMessage
+	TakeTurnMessage,
+	applicationMessages
 }
 
 import io.vertx.ceylon.core {
@@ -41,7 +41,7 @@ final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
 			if (is Throwable result) {
 				context.fail(result);
 			} else {
-				context.writeJsonResponse(formatRoomMessage(result));
+				context.writeJsonResponse(applicationMessages.format(result));
 			}
 		});
 	}
