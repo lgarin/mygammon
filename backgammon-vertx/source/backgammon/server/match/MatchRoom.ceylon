@@ -41,7 +41,6 @@ import backgammon.shared {
 	RoomActionResponseMessage,
 	PlayerRosterInboundMessage,
 	PlayerStatisticUpdateMessage,
-	CreateGameMessage,
 	MatchId,
 	PingMatchMessage,
 	MatchActivityMessage
@@ -207,7 +206,7 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 				handlePlayerChange(match.player2);
 				gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
 			} else {
-				gameCommander(CreateGameMessage(match.id, match.player1.id, match.player2.id));
+				gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
 			}
 			return AcceptedMatchMessage(message.playerId, message.matchId, true);
 		} else {

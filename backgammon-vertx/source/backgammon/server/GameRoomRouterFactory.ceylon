@@ -44,7 +44,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 	value repoEventBus = PlayerRosterEventBus(vertx, serverConfig);
 	value authClient = KeycloakAuthClient(vertx, serverConfig.keycloakLoginUrl);
 	value restApi = GameRoomRestApi(vertx, roomEventBus);
-	value encodedStartUrl = URLEncoder.encode("http://``serverConfig.hostname``:``serverConfig.port``/start", "UTF-8");
+	value encodedStartUrl = URLEncoder.encode("http://``serverConfig.hostname``:``serverConfig.port``/start");
 	
 	void enterRoom(RoutingContext routingContext, PlayerInfo playerInfo, PlayerStatistic playerStat) {
 		value context = GameRoomRoutingContext(routingContext);

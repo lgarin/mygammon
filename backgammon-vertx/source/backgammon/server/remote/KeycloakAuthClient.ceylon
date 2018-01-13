@@ -1,5 +1,6 @@
 import ceylon.json {
-	Object
+	Object,
+	parse
 }
 
 import io.vertx.ceylon.core {
@@ -16,10 +17,18 @@ import io.vertx.ceylon.core.http {
 import io.vertx.ceylon.web {
 	RoutingContext
 }
+import java.util {
+
+	Base64
+}
+
+import java.lang {
+	JString=String
+}
 
 final shared class KeycloakUserInfo(Object json) {
 	shared String displayName = json.getString("preferred_username");
-	shared String userId => json.getString("sub");
+	shared String userId = json.getString("sub");
 }
 
 
@@ -55,19 +64,40 @@ final shared class KeycloakAuthClient(Vertx vertx, String baseUrl) {
 		request.end();
 	}
 	
+	function decodeUserInfo(String accessToken) {
+		if (exists encodedInfo = accessToken.split('.'.equals).getFromFirst(1)) {
+			value decodedToken = JString(Base64.decoder.decode(encodedInfo), "UTF-8");
+			return parse(decodedToken.string);
+		} else {
+			return null;
+		}
+	}
+	
+	function buildUserInfo(Object json) {
+		try {
+			return KeycloakUserInfo(json);
+		} catch (Exception e) {
+			return Exception("Cannot parse user info: ``json``", e);
+		}
+	}
+	
 	shared void fetchUserInfo(RoutingContext context, void handler(KeycloakUserInfo|Throwable result)) {
 		if (exists token = context.user()) {
-			makeRestCall {
-				url = "``baseUrl``/userinfo";
-				token = token.principal().getString("access_token");
-				void bodyHandler(Buffer|Throwable result) {
-					if (is Buffer result) {
-						handler(KeycloakUserInfo(result.toJsonObject()));
-					} else {
-						handler(result);
+			if (is Object userInfo = decodeUserInfo(token.principal().getString("access_token"))) {
+				handler(buildUserInfo(userInfo));
+			} else {
+				makeRestCall {
+					url = "``baseUrl``/userinfo";
+					token = token.principal().getString("access_token");
+					void bodyHandler(Buffer|Throwable result) {
+						if (is Buffer result) {
+							handler(buildUserInfo(result.toJsonObject()));
+						} else {
+							handler(result);
+						}
 					}
-				}
-			};
+				};
+			}
 		} else {
 			handler(Exception("No login token available"));
 		}

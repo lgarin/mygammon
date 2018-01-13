@@ -12,11 +12,11 @@ import backgammon.shared {
 	InboundGameMessage,
 	GameStateResponseMessage,
 	InboundMatchMessage,
-	CreateGameMessage,
 	NextRollMessage,
 	GameEventMessage,
 	GameTimeoutMessage,
-	GameMessage
+	GameMessage,
+	StartGameMessage
 }
 import backgammon.shared.game {
 	black
@@ -50,16 +50,16 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 		}
 		return _maxGameCount;
 	}
-	
+
 	function getGameManager(GameMessage message) {
 		try (lock) {
 			if (exists currentManager = managerMap[message.matchId]) {
 				return currentManager;
-			} else if (is CreateGameMessage message) {
+			} else if (is StartGameMessage message) {
 				value manager = GameManager(message, configuration, messageBroadcaster, matchCommander);
 				managerMap.put(message.matchId, manager);
 				_totalGameCount++;
-				return manager;
+				return manager;	
 			} else {
 				return null;
 			}

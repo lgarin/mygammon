@@ -32,7 +32,6 @@ import backgammon.shared {
 	EndMatchMessage,
 	systemPlayerId,
 	TakeTurnMessage,
-	CreateGameMessage,
 	PingMatchMessage
 }
 import backgammon.shared.game {
@@ -49,11 +48,11 @@ import ceylon.time {
 	Instant
 }
 
-final class GameManager(CreateGameMessage createGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
+final class GameManager(StartGameMessage startGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
 	
-	shared MatchId matchId = createGameMessage.matchId;
-	value player1Id = createGameMessage.playerId;
-	value player2Id = createGameMessage.opponentId;
+	shared MatchId matchId = startGameMessage.matchId;
+	value player1Id = startGameMessage.playerId;
+	value player2Id = startGameMessage.opponentId;
 	
 	value lock = ObtainableLock("GameManager ``matchId``"); 
 	
@@ -67,7 +66,7 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 	
 	variable Boolean softTimeoutNotified = false;
 	
-	value game = Game(createGameMessage.timestamp.plus(configuration.playerInactiveTimeout));
+	value game = Game(startGameMessage.timestamp.plus(configuration.playerInactiveTimeout));
 	
 	function toPlayerColor(PlayerId playerId) {
 		if (playerId == player1Id) {
@@ -99,7 +98,7 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 			return false;
 		}
 	}
-	
+
 	void increaseInvalidMoveCount(CheckerColor playerColor) {
 		switch (playerColor)
 		case (black) {
@@ -262,11 +261,12 @@ final class GameManager(CreateGameMessage createGameMessage, GameConfiguration c
 		resetPlayerTimeoutCount(playerColor);
 		
 		switch (message) 
-		case (is CreateGameMessage) {
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, true);
-		}
 		case (is StartGameMessage) {
-			return GameActionResponseMessage(matchId, message.playerId, playerColor, sendInitialRoll(message.timestamp));
+			if (diceRollQueue.needNewRoll()) {
+				return GameActionResponseMessage(matchId, message.playerId, playerColor, false);
+			} else {
+				return GameActionResponseMessage(matchId, message.playerId, playerColor, sendInitialRoll(message.timestamp));
+			}
 		}
 		case (is PlayerBeginMessage) {
 			matchCommander(PingMatchMessage(message.playerId, matchId));

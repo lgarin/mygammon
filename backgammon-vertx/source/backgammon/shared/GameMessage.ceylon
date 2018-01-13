@@ -17,7 +17,7 @@ import ceylon.time {
 
 shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage | GameEventMessage satisfies MatchMessage {}
 
-shared sealed interface InboundGameMessage of CreateGameMessage | StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
+shared sealed interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
 	shared formal Instant timestamp;
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
 }
@@ -25,13 +25,6 @@ shared sealed interface InboundGameMessage of CreateGameMessage | StartGameMessa
 shared sealed interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
 	shared formal CheckerColor playerColor;
 	shared actual default Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "playerColor" -> playerColor.name };
-}
-
-shared final class CreateGameMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared PlayerId opponentId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {
-	toJson() => toExtendedJson({"opponentId" -> opponentId.toJson()});
-}
-CreateGameMessage parseCreateGameMessage(Object json) {
-	return CreateGameMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parsePlayerId(json.getString("opponentId")), Instant(json.getInteger("timestamp")));
 }
 
 shared final class StartGameMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared PlayerId opponentId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {

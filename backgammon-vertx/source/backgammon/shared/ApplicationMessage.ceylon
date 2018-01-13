@@ -87,7 +87,6 @@ shared object applicationMessages {
 	registerParser(parseNotYourTurnMessage);
 	registerParser(parseGameStateResponseMessage);
 	registerParser(parseGameActionResponseMessage);
-	registerParser(parseCreateGameMessage);
 	registerParser(parseStartGameMessage);
 	registerParser(parsePlayerBeginMessage);
 	registerParser(parseMakeMoveMessage);

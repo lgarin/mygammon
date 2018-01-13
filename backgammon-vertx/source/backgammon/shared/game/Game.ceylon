@@ -45,6 +45,10 @@ shared class Game(variable Instant nextTimeout) {
 		}
 	}
 	
+	shared Boolean needInitialRoll {
+		return currentRoll is Null && _currentColor is Null && nextTimeout.millisecondsOfEpoch > 0;
+	}
+	
 	shared Boolean initialRoll(DiceRoll roll, Instant timestamp, Duration maxDuration) {
 		if (currentColor exists) {
 			return false;
@@ -331,15 +335,12 @@ shared class Game(variable Instant nextTimeout) {
 	}
 	
 	shared Boolean end() {
-		if (currentRoll exists) {
-			blackReady = false;
-			whiteReady = false;
-			_currentColor = null;
-			_currentRoll = null;
-			nextTimeout = Instant(0);
-			return true;
-		}
-		return false;
+		blackReady = false;
+		whiteReady = false;
+		_currentColor = null;
+		_currentRoll = null;
+		nextTimeout = Instant(0);
+		return true;
 	}
 	
 	shared Boolean ended => nextTimeout.millisecondsOfEpoch == 0;

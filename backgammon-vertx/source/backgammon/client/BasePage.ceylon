@@ -34,7 +34,6 @@ import backgammon.shared {
 	OutboundMatchMessage,
 	OutboundGameMessage,
 	TakeTurnMessage,
-	CreateGameMessage,
 	PingMatchMessage,
 	applicationMessages
 }
@@ -134,9 +133,6 @@ abstract shared class BasePage() {
 		switch (message)
 		case (is AcceptMatchMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/accept");
-		}
-		case (is CreateGameMessage) {
-			// ignore
 		}
 		case (is StartGameMessage) {
 			// ignore
