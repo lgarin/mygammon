@@ -16,6 +16,11 @@ import backgammon.client.browser {
 	Document,
 	Element
 }
+import ceylon.json {
+
+	JsonObject,
+	JsonArray
+}
 
 shared class GameGui(Document document) extends BaseGui(document) {
 	
@@ -238,6 +243,14 @@ shared class GameGui(Document document) extends BaseGui(document) {
 			return getPosition(parent);
 		} else {
 			return null;
+		}
+	}
+	
+	shared void showPlayerStatus(JsonObject statistic, JsonArray transactions) {
+		dynamic {
+			jQuery("#dialog-status").loadTemplate(jQuery("#dialog-status-template"), JSON.parse(statistic.string));
+			jQuery("#transaction-table tbody").loadTemplate(jQuery("#transaction-row-template"), JSON.parse(transactions.string));
+			jQuery("#dialog-status").dialog("open");
 		}
 	}
 }

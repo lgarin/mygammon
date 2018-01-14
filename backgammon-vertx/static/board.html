@@ -10,9 +10,12 @@
     <link rel="stylesheet" href="/static/css/board.css"></link>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css"></link>
     <link rel="stylesheet" href="/static/css/jquery-ui.min.css"></link>
+    <link rel="stylesheet" href="/static/css/datatables.min.css"></link>
     <script src="/static/javascript/jquery-3.2.1.min.js"></script>
     <script src="/static/javascript/jquery-ui.min.js"></script>
     <script src="/static/javascript/bootstrap.min.js"></script>
+    <script src="/static/javascript/datatables.min.js"></script>
+    <script src="/static/javascript/jquery.loadTemplate.min.js"></script>
     <script src="/static/javascript/sockjs.min.js"></script>
     <script src="/static/javascript/vertx-eventbus.js"></script>
 	<script src="/static/javascript/require.js"></script>
@@ -80,6 +83,18 @@
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
+	                $("#dialog-status").dialog({
+		            	autoOpen: false,
+		                modal: true,
+		                width:520,
+		                open: function(event, ui) { $("#transaction-table").dataTable(
+		                		{"searching" : false,
+		                		 "paging": "simple",
+		                		 "lengthChange": false,
+		                		 "pageLength": 10})
+		                },
+		                buttons: { "Close": function() { $(this).dialog("close") } }
+	            	});
 	                $("#dialog-logout").dialog({
 	                	autoOpen: false,
 	                    modal: true,
@@ -290,6 +305,58 @@
         <div id="jockerText" class="jocker">Jocker</div>
       </div>
     </div><!-- end of gui -->
+
+	<script type="text/html" id="transaction-row-template">
+			<tr>
+				<td data-content="type"></td>
+				<td data-content="amount" class="text-right"></td>
+				<td data-content="dateTime" data-template-bind='[{"attribute": "data-order", "value": "timestamp"}]' class="text-right"></td>
+			</tr>
+	</script>
+	
+	<script type="text/html" id="dialog-status-template">
+			<table>
+				<tr>
+					<td class="col-xs-3"><span data-class="levelClass"></span></td>
+					<td class="col-xs-9"><h3 data-content="name"></h3></td>
+				</tr>
+			</table>
+			<table>
+				<tr>
+					<td class="col-xs-6"><b>Score</b></td>
+					<td class="col-xs-6" data-content="score"></td>
+				</tr>
+				<tr>
+					<td class="col-xs-6"><b>Win&nbsp;%</b></td>
+					<td class="col-xs-6" data-content="win"></td>
+				</tr>
+				<tr>
+					<td class="col-xs-6"><b>Lost&nbsp;%</b></td>
+					<td class="col-xs-6" data-content="lost"></td>
+				</tr>
+				<tr>
+					<td class="col-xs-6"><b>Games</b></td>
+					<td class="col-xs-6" data-content="games"></td>
+				</tr>
+			</table>
+			<br></br>
+			<div class="table-responsive">
+			<table id="transaction-table" class="table table-striped">
+				<thead>
+					<tr>
+						<th class="col-md-5">Type</th>
+	       				<th class="col-md-2">Amount</th>
+	       				<th class="col-md-5">Date/Time</th>
+	       			</tr>
+       			</thead>
+				<tbody>
+				</tbody>
+			</table>
+			</div>
+	</script>
+	
+	<div id="dialog-status" title="Status" style="display: none">
+	</div>
 
     <div id="dialog-won" title="Game won" style="display: none">
 	  <p>

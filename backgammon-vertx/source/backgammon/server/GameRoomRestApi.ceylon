@@ -146,21 +146,21 @@ final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
 
 	shared Router createRouter() {
 		value restApi = routerFactory.router(vertx);
-		restApi.get("/room/:roomId/listplayer").handler(handlePlayerListRequest);
-		restApi.get("/room/:roomId/opentable").handler(handleOpenTableRequest);
-		restApi.get("/room/:roomId/leave").handler(handleRoomLeaveRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/currentstate").handler(handleTableStateRequest(true));
-		restApi.get("/room/:roomId/table/:tableIndex/playerstate").handler(handleTableStateRequest(false));
-		restApi.get("/room/:roomId/table/:tableIndex/leave").handler(handleTableLeaveRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/join").handler(handleTableJoinRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/accept").handler(handleMatchAcceptRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/begin").handler(handlePlayerBeginRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/move/:sourcePosition/:targetPosition").handler(handleMakeMoveRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/undomoves").handler(handleUndoMovesRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handleEndTurnRequest);
-		restApi.get("/room/:roomId/table/:tableIndex/match/:matchTimestamp/taketurn").handler(handleTakeTurnRequest);
-		restApi.get("/room/:roomId/player/:playerId/state").handler(handlePlayerStateRequest);
+		restApi.get("/:roomId/listplayer").handler(handlePlayerListRequest);
+		restApi.get("/:roomId/opentable").handler(handleOpenTableRequest);
+		restApi.get("/:roomId/leave").handler(handleRoomLeaveRequest);
+		restApi.get("/:roomId/table/:tableIndex/currentstate").handler(handleTableStateRequest(true));
+		restApi.get("/:roomId/table/:tableIndex/playerstate").handler(handleTableStateRequest(false));
+		restApi.get("/:roomId/table/:tableIndex/leave").handler(handleTableLeaveRequest);
+		restApi.get("/:roomId/table/:tableIndex/join").handler(handleTableJoinRequest);
+		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/state").handler(handleGameStateRequest);
+		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/accept").handler(handleMatchAcceptRequest);
+		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/begin").handler(handlePlayerBeginRequest);
+		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/move/:sourcePosition/:targetPosition").handler(handleMakeMoveRequest);
+		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/undomoves").handler(handleUndoMovesRequest);
+		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handleEndTurnRequest);
+		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/taketurn").handler(handleTakeTurnRequest);
+		restApi.get("/:roomId/player/:playerId/state").handler(handlePlayerStateRequest);
 		return restApi;
 	}
 }

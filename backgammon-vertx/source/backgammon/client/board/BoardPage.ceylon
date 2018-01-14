@@ -1,6 +1,7 @@
 import backgammon.client {
 	BasePage,
-	EventBusClient
+	EventBusClient,
+	PlayerStatusModel
 }
 import backgammon.client.browser {
 	HTMLElement,
@@ -25,7 +26,11 @@ import backgammon.shared {
 	OutboundRoomMessage,
 	PlayerStateMessage,
 	PlayerState,
-	RoomId
+	RoomId,
+	OutboundPlayerRosterMessage,
+	PlayerDetailOutputMessage,
+	PlayerStatisticOutputMessage,
+	PlayerDetailRequestMessage
 }
 
 import ceylon.time {
@@ -106,6 +111,9 @@ shared final class BoardPage() extends BasePage() {
 			return gameClient.handleUndoEvent();
 		} else if (target.id == gui.jockerButtonId, exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleJockerEvent();
+		} else if (target.id == gui.statusButtonId) {
+			rosterCommander(PlayerDetailRequestMessage(currentPlayerId));
+			return true;
 		} else if (target.id == gui.exitButtonId) {
 			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
 				gui.showDialog("dialog-logout");
@@ -261,6 +269,18 @@ shared final class BoardPage() extends BasePage() {
 			return currentClient.handleGameMessage(message);
 		} else {
 			return false;
+		}
+	}
+	
+	shared actual Boolean handleRosterMessage(OutboundPlayerRosterMessage message) {
+		switch (message)
+		case (is PlayerStatisticOutputMessage) {
+			return false;
+		}
+		case (is PlayerDetailOutputMessage) {
+			value model = PlayerStatusModel(message.playerInfo, message.statistic, message.transactions);
+			gui.showPlayerStatus(model.buildStatisticData(), model.buildTransactionList());
+			return true;
 		}
 	}
 	

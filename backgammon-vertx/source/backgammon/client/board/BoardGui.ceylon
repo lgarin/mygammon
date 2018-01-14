@@ -28,6 +28,7 @@ shared class BoardGui(Document document) extends GameGui(document) {
 	shared String statusBalanceId = "currentBalance";
 	shared String matchPotId = "matchPot";
 	shared String matchPotAmountId = "matchPotAmount";
+	shared String statusButtonId = "status";
 	
 	shared void hideUndoButton() {
 		addClass(undoButtonId, hiddenClass);

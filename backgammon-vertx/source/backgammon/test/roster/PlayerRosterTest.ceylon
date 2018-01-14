@@ -17,7 +17,7 @@ import backgammon.shared {
 	PlayerStatistic,
 	PlayerStatisticOutputMessage,
 	PlayerLoginMessage,
-	PlayerRosterInboundMessage
+	InboundPlayerRosterMessage
 }
 import ceylon.time {
 
@@ -33,7 +33,7 @@ class PlayerRosterTest() {
 	value baseTimestamp = Instant(0);
 	value playerInfo = PlayerInfo("id", "name");
 	value configuration = RoomConfiguration(null);
-	value messageQueue = ArrayList<PlayerRosterInboundMessage>();
+	value messageQueue = ArrayList<InboundPlayerRosterMessage>();
 	value roster = PlayerRoster(configuration, messageQueue.add);
 	
 	void processMessageQueue() {

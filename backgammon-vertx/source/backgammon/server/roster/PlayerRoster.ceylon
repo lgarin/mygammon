@@ -5,14 +5,16 @@ import backgammon.server.util {
 	ObtainableLock
 }
 import backgammon.shared {
-	PlayerRosterInboundMessage,
-	PlayerRosterOutboundMessage,
+	InboundPlayerRosterMessage,
+	OutboundPlayerRosterMessage,
 	PlayerId,
 	PlayerStatistic,
 	PlayerStatisticOutputMessage,
 	PlayerLoginMessage,
 	PlayerStatisticUpdateMessage,
-	PlayerInfo
+	PlayerInfo,
+	PlayerDetailRequestMessage,
+	PlayerDetailOutputMessage
 }
 
 import ceylon.collection {
@@ -21,7 +23,7 @@ import ceylon.collection {
 import ceylon.time {
 	Instant
 }
-shared final class PlayerRoster(RoomConfiguration config, Anything(PlayerRosterInboundMessage) recordUpdate) {
+shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayerRosterMessage) recordUpdate) {
 	
 	value statisticMap = HashMap<PlayerId, PlayerRosterRecord>();
 	value lock = ObtainableLock("PlayerRoster");
@@ -68,7 +70,16 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(PlayerRosterI
 		}
 	}
 	
-	shared PlayerRosterOutboundMessage processInputMessage(PlayerRosterInboundMessage message) {
+	// TODO cleanup later
+	function readStatistics(PlayerDetailRequestMessage message) {
+		if (exists record = statisticMap[message.playerId]) {
+			return PlayerDetailOutputMessage(PlayerInfo(record.id.string, record.login.name), record.stat, []);
+		} else {
+			return PlayerDetailOutputMessage(PlayerInfo(message.playerId.string, ""), PlayerStatistic(), []);
+		}
+	}
+	
+	shared OutboundPlayerRosterMessage processInputMessage(InboundPlayerRosterMessage message) {
 		try (lock) {
 			switch (message)
 			case (is PlayerStatisticUpdateMessage) {
@@ -76,6 +87,9 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(PlayerRosterI
 			}
 			case (is PlayerLoginMessage) {
 				return loginPlayer(message);
+			}
+			case (is PlayerDetailRequestMessage) {
+				return readStatistics(message);
 			}
 		}
 	}

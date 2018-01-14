@@ -1,6 +1,10 @@
 import ceylon.json {
 	JsonObject=Object
 }
+import ceylon.time {
+
+	Instant
+}
 
 shared final class PlayerStatistic(shared Integer balance = 0, shared Integer playedGames = 0, shared Integer wonGames = 0, shared Integer score = 0) extends Object() satisfies Summable<PlayerStatistic> {
 	shared Integer winPercentage => if (playedGames > 0) then 100 * wonGames / playedGames else 0;
@@ -74,3 +78,10 @@ shared final class PlayerState(shared PlayerInfo info, shared PlayerStatistic st
 shared PlayerState parsePlayerState(JsonObject json) => PlayerState(parsePlayerInfo(json.getObject("info")), parsePlayerStatistic(json.getObject("statistic")), parseNullableTableId(json.getObjectOrNull("tableId")), parseNullableMatchId(json.getObjectOrNull("matchId")));
 
 shared PlayerState? parseNullablePlayerState(JsonObject? json) => if (exists json) then parsePlayerState(json) else null;
+
+shared final class PlayerTransaction(shared String type, shared Integer amount, shared Instant timestamp) {
+	shared JsonObject toJson() => JsonObject {"type" -> type, "amount" -> amount, "timestamp" -> timestamp.millisecondsOfEpoch};
+}
+PlayerTransaction parsePlayerTransaction(JsonObject json) {
+	return PlayerTransaction(json.getString("type"), json.getInteger("amount"), Instant(json.getInteger("timestamp")));
+}

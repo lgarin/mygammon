@@ -14,6 +14,41 @@ import io.vertx.ceylon.core.http {
 	HttpClient,
 	HttpClientResponse
 }
+import java.net {
+
+	URLEncoder
+}
+
+shared interface ElasticSearchCriteria {
+	shared formal String toQueryString();
+}
+
+shared class FieldSearchCriteria(shared String searchField, shared String searchValue) satisfies ElasticSearchCriteria {
+	toQueryString() => "``URLEncoder.encode(searchField)``:``URLEncoder.encode(searchValue)``";
+}
+
+shared class AndSearchCriteria(ElasticSearchCriteria left, ElasticSearchCriteria right) satisfies ElasticSearchCriteria {
+	toQueryString() => "(``left.toQueryString()`` AND ``right.toQueryString()``)";
+}
+
+shared class OrSearchCriteria(ElasticSearchCriteria left, ElasticSearchCriteria right) satisfies ElasticSearchCriteria {
+	toQueryString() => "(``left.toQueryString()`` OR ``right.toQueryString()``)";
+}
+
+final shared class ElasticSortOrder(shared String orderField, shared Boolean ascending = true) {
+	value order => ascending then  "asc" else "desc";
+	shared String toOrderString() => "``orderField``:``order``";
+}
+
+shared object elasticSearchCriteriaBuilder {
+	
+	shared ElasticSearchCriteria term(String name, String term) => FieldSearchCriteria(name, term);
+	shared ElasticSearchCriteria and(ElasticSearchCriteria left, ElasticSearchCriteria right) => AndSearchCriteria(left, right);
+	shared ElasticSearchCriteria or(ElasticSearchCriteria left, ElasticSearchCriteria right) => OrSearchCriteria(left, right);
+	
+	shared ElasticSortOrder asc(String name) => ElasticSortOrder(name, true);
+	shared ElasticSortOrder desc(String name) => ElasticSortOrder(name, false);
+}
 
 final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 	value idPadding = 1000000000; 
@@ -105,6 +140,18 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 	
 	shared void listDocuments(String index, Integer offset, Integer maxCount, void handleResponse({<Integer->JsonObject>*}|Throwable result)) {
 		value url = "``baseUrl``/backgammon-``index``/doc/_search?sort=_id&from=``offset``&size=``maxCount``&filter_path=hits.hits._id,hits.hits._source";
+		get(url, (result) {
+			if (is Throwable result) {
+				handleResponse(result);
+			} else {
+				handleResponse(parseHits(result.toJsonObject()));
+			}
+		});
+	}
+	
+	shared void queryDocuments(String index, ElasticSearchCriteria criteria, ElasticSortOrder order, Integer offset, Integer maxCount, void handleResponse({<Integer->JsonObject>*}|Throwable result)) {
+		
+		value url = "``baseUrl``/backgammon-``index``/doc/_search?q=``criteria.toQueryString()``&sort=``order.toOrderString()``&track_scores=false&from=``offset``&size=``maxCount``&filter_path=hits.hits._id,hits.hits._source";
 		get(url, (result) {
 			if (is Throwable result) {
 				handleResponse(result);

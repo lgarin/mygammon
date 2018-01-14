@@ -39,7 +39,7 @@ import backgammon.shared {
 	PlayerStateRequestMessage,
 	PlayerStateMessage,
 	RoomActionResponseMessage,
-	PlayerRosterInboundMessage,
+	InboundPlayerRosterMessage,
 	PlayerStatisticUpdateMessage,
 	MatchId,
 	PingMatchMessage,
@@ -50,7 +50,7 @@ import ceylon.time {
 	Instant
 }
 
-shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander, Anything(PlayerRosterInboundMessage) playerRepository) {
+shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundRoomMessage|OutboundTableMessage|OutboundMatchMessage) messageBroadcaster, Anything(InboundGameMessage) gameCommander, Anything(InboundPlayerRosterMessage) playerRepository) {
 	
 	value lock = ObtainableLock("MatchRoom ``configuration.roomId``"); 
 	value room = Room(configuration.roomId, configuration.roomSize, configuration.matchBet, messageBroadcaster);

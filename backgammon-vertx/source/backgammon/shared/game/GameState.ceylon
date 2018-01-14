@@ -98,6 +98,6 @@ shared GameState parseGameState(JsonObject json) {
 	result.whiteJocker = json.getInteger("whiteJocker");
 	result.blackCheckerCounts = json.getArray("blackCheckerCounts").narrow<Integer>().sequence();
 	result.whiteCheckerCounts = json.getArray("whiteCheckerCounts").narrow<Integer>().sequence();
-	result.currentMoves = json.getArray("currentMoves").narrow<JsonObject>().collect((element) => parseGameMove(element));
+	result.currentMoves = json.getArray("currentMoves").narrow<JsonObject>().collect(parseGameMove);
 	return result;
 }

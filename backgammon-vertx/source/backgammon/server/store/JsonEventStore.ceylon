@@ -9,11 +9,19 @@ import io.vertx.ceylon.core {
 
 import backgammon.server.remote {
 
-	ElasticSearchClient
+	ElasticSearchClient,
+	ElasticSearchCriteria,
+	ElasticSortOrder,
+	elasticSearchCriteriaBuilder
 }
 import io.vertx.ceylon.core.shareddata {
 
 	Counter
+}
+
+final shared class EventSearchCriteria(shared String searchField, shared String searchValue, shared String orderField, shared Boolean ascending = true) {
+	shared ElasticSearchCriteria toElasticSearchCriteria() => elasticSearchCriteriaBuilder.term(searchField, searchValue);
+	shared ElasticSortOrder toElasticSortOrder() => ascending then elasticSearchCriteriaBuilder.asc(orderField) else elasticSearchCriteriaBuilder.desc(orderField);
 }
 
 shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer replayPageSize) {
@@ -126,5 +134,17 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 				handler(result);
 			}
 		});
+	}
+
+	shared void queryEvents(String type, EventSearchCriteria criteria, void handleResponse({<JsonObject>*}|Throwable result)) {
+		
+		void mapResponse({<Integer->JsonObject>*}|Throwable result) {
+			if (is Throwable result) {
+				handleResponse(result);
+			} else {
+				handleResponse(result.map(Entry.item));
+			}
+		}
+		eventIndexClient.queryDocuments(type, criteria.toElasticSearchCriteria(), criteria.toElasticSortOrder(), 0, replayPageSize, mapResponse);
 	}
 }

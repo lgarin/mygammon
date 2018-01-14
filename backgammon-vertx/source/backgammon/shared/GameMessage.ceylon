@@ -121,7 +121,9 @@ EndGameMessage parseEndGameMessage(Object json) {
 	return EndGameMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class GameStateRequestMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {}
+shared final class GameStateRequestMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {
+	mutation => false;
+}
 GameStateRequestMessage parseGameStateRequestMessage(Object json) {
 	return GameStateRequestMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), Instant(json.getInteger("timestamp")));
 }

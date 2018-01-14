@@ -16,7 +16,7 @@ import ceylon.json {
 	Object
 }
 
-class PlayerListModel(String hiddenClass) {
+final class PlayerListModel(String hiddenClass) {
 
 	value playerMap = HashMap<PlayerId, PlayerState>(linked);
 	

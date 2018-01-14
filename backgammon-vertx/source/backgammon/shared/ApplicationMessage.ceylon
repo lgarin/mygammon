@@ -14,6 +14,7 @@ import ceylon.language.meta {
 shared sealed interface ApplicationMessage {
 	shared formal Object toJson();
 	string => toJson().string;
+	shared default Boolean mutation => true;
 }
 
 shared object applicationMessages {
@@ -43,7 +44,9 @@ shared object applicationMessages {
 	
 	registerParser(parsePlayerLoginMessage);
 	registerParser(parsePlayerStatisticUpdateMessage);
+	registerParser(parsePlayerDetailRequestMessage);
 	registerParser(parsePlayerStatisticOutputMessage);
+	registerParser(parsePlayerDetailOutputMessage);
 	
 	registerParser(parseEnterRoomMessage);
 	registerParser(parseLeaveRoomMessage);

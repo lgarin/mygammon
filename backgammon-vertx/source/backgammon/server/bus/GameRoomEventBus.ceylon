@@ -65,13 +65,17 @@ final shared class GameRoomEventBus(Vertx vertx, ServerConfiguration configurati
 
 	void storeAndSendMessage<OutboundMessage>(String indexName, InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies RoomMessage {
 		value formattedMessage = applicationMessages.format(message);
-		eventStore.storeEvent(indexName, formattedMessage, (result) {
-			if (is Throwable result) {
-				responseHandler(result);
-			} else {
-				sendMessage(message, responseHandler);
-			}
-		});
+		if (message.mutation) {
+			eventStore.storeEvent(indexName, formattedMessage, (result) {
+				if (is Throwable result) {
+					responseHandler(result);
+				} else {
+					sendMessage(message, responseHandler);
+				}
+			});
+		} else {
+			sendMessage(message, responseHandler);
+		}
 	}
 
 	shared void sendInboundMessage<OutboundMessage>(InboundRoomMessage|InboundTableMessage|InboundMatchMessage|InboundGameMessage message, void responseHandler(Throwable|OutboundMessage response)) given OutboundMessage satisfies RoomMessage {

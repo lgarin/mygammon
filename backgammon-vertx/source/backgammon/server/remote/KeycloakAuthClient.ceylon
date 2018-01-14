@@ -72,26 +72,18 @@ final shared class KeycloakAuthClient(Vertx vertx, String baseUrl) {
 			return null;
 		}
 	}
-	
-	function buildUserInfo(Object json) {
-		try {
-			return KeycloakUserInfo(json);
-		} catch (Exception e) {
-			return Exception("Cannot parse user info: ``json``", e);
-		}
-	}
-	
+
 	shared void fetchUserInfo(RoutingContext context, void handler(KeycloakUserInfo|Throwable result)) {
 		if (exists token = context.user()) {
 			if (is Object userInfo = decodeUserInfo(token.principal().getString("access_token"))) {
-				handler(buildUserInfo(userInfo));
+				handler(KeycloakUserInfo(userInfo));
 			} else {
 				makeRestCall {
 					url = "``baseUrl``/userinfo";
 					token = token.principal().getString("access_token");
 					void bodyHandler(Buffer|Throwable result) {
 						if (is Buffer result) {
-							handler(buildUserInfo(result.toJsonObject()));
+							handler(KeycloakUserInfo(result.toJsonObject()));
 						} else {
 							handler(result);
 						}

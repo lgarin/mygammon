@@ -2,12 +2,15 @@ import backgammon.server {
 	ServerConfiguration
 }
 import backgammon.server.store {
-	JsonEventStore
+	JsonEventStore,
+	EventSearchCriteria
 }
 import backgammon.shared {
-	PlayerRosterOutboundMessage,
-	PlayerRosterInboundMessage,
-	applicationMessages
+	OutboundPlayerRosterMessage,
+	InboundPlayerRosterMessage,
+	applicationMessages,
+	PlayerId,
+	PlayerStatisticUpdateMessage
 }
 
 import ceylon.json {
@@ -25,18 +28,22 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 	value eventBus = JsonEventBus(vertx);
 	value eventStore = JsonEventStore(vertx, configuration.elasticIndexUrl, configuration.replayPageSize);
 	
-	shared void sendInboundMessage<OutputMessage>(PlayerRosterInboundMessage message, void responseHandler(Throwable|OutputMessage response)) given OutputMessage satisfies PlayerRosterOutboundMessage {
+	shared void sendInboundMessage<OutputMessage>(InboundPlayerRosterMessage message, void responseHandler(Throwable|OutputMessage response)) given OutputMessage satisfies OutboundPlayerRosterMessage {
 		if (disableOutput) {
 			return;
 		}
-		value formattedMessage = applicationMessages.format(message); 
-		eventStore.storeEvent("player-roster", formattedMessage, (result) {
-			if (is Throwable result) {
-				responseHandler(result);
-			} else {
-				eventBus.sendMessage(formattedMessage, "PlayerRosterMessage", applicationMessages.parse<OutputMessage>, responseHandler);
-			}
-		});
+		value formattedMessage = applicationMessages.format(message);
+		if (message.mutation) {
+			eventStore.storeEvent("player-roster", formattedMessage, (result) {
+				if (is Throwable result) {
+					responseHandler(result);
+				} else {
+					eventBus.sendMessage(formattedMessage, "PlayerRosterMessage", applicationMessages.parse<OutputMessage>, responseHandler);
+				}
+			});
+		} else {
+			eventBus.sendMessage(formattedMessage, "PlayerRosterMessage", applicationMessages.parse<OutputMessage>, responseHandler);
+		}
 	}
 
 	void rethrowExceptionHandler(Anything result) {
@@ -45,16 +52,16 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 		}
 	}
 
-	shared void queueInputMessage(PlayerRosterInboundMessage message) {
+	shared void queueInputMessage(InboundPlayerRosterMessage message) {
 		if (disableOutput) {
 			return;
 		}
 		vertx.runOnContext(() => sendInboundMessage(message, rethrowExceptionHandler));
 	}
 
-	shared void registerConsumer(PlayerRosterOutboundMessage process(PlayerRosterInboundMessage request)) {
+	shared void registerConsumer(OutboundPlayerRosterMessage process(InboundPlayerRosterMessage request)) {
 		eventBus.registerConsumer("PlayerRosterMessage", function (JsonObject msg) {
-			if (exists request = applicationMessages.parse<PlayerRosterInboundMessage>(msg)) {
+			if (exists request = applicationMessages.parse<InboundPlayerRosterMessage>(msg)) {
 				return applicationMessages.format(process(request));
 			} else {
 				throw Exception("Invalid request: ``msg``");
@@ -62,7 +69,18 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 		});
 	}
 	
-	shared void replayAllEvents(void process(PlayerRosterInboundMessage message), void completion(Integer|Throwable result)) {
-		eventStore.replayAllEvents("player-roster", applicationMessages.parse<PlayerRosterInboundMessage>, process, completion);
+	shared void replayAllEvents(void process(InboundPlayerRosterMessage message), void completion(Integer|Throwable result)) {
+		eventStore.replayAllEvents("player-roster", applicationMessages.parse<InboundPlayerRosterMessage>, process, completion);
+	}
+	
+	shared void queryPlayerTransactions(PlayerId playerId, void completion({PlayerStatisticUpdateMessage*}|Throwable result)) {
+		void mapResult({JsonObject*}|Throwable result) {
+			if (is Throwable result) {
+				completion(result);
+			} else {
+				completion(result.map(applicationMessages.parse<InboundPlayerRosterMessage>).narrow<PlayerStatisticUpdateMessage>());
+			}
+		}
+		eventStore.queryEvents("player-roster", EventSearchCriteria("playerInfo.id", playerId.string, "timestamp", false), mapResult);
 	}
 }

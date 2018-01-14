@@ -1,6 +1,7 @@
 import backgammon.client {
 	BasePage,
-	EventBusClient
+	EventBusClient,
+	PlayerStatusModel
 }
 import backgammon.client.board {
 	TableClient
@@ -33,7 +34,11 @@ import backgammon.shared {
 	JoinedTableMessage,
 	LeftTableMessage,
 	PlayerState,
-	PlayerStateMessage
+	PlayerStateMessage,
+	OutboundPlayerRosterMessage,
+	PlayerDetailOutputMessage,
+	PlayerStatisticOutputMessage,
+	PlayerDetailRequestMessage
 }
 
 import ceylon.time {
@@ -79,6 +84,9 @@ shared final class RoomPage() extends BasePage() {
 			}
 		} else if (target.id == gui.joinButtonId, exists currentRoomId = extractRoomId(), exists tableId = tableClient?.tableId) {
 			gameCommander(JoinTableMessage(currentPlayerId, tableId));
+			return true;
+		} else if (target.id == gui.statusButtonId) {
+			rosterCommander(PlayerDetailRequestMessage(currentPlayerId));
 			return true;
 		} else if (target.id == gui.exitButtonId, exists currentRoomId = extractRoomId()) {
 			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
@@ -283,6 +291,18 @@ shared final class RoomPage() extends BasePage() {
 			return currentClient.handleGameMessage(message);
 		} else {
 			return false;
+		}
+	}
+	
+	shared actual Boolean handleRosterMessage(OutboundPlayerRosterMessage message) {
+		switch (message)
+		case (is PlayerStatisticOutputMessage) {
+			return false;
+		}
+		case (is PlayerDetailOutputMessage) {
+			value model = PlayerStatusModel(message.playerInfo, message.statistic, message.transactions);
+			gui.showPlayerStatus(model.buildStatisticData(), model.buildTransactionList());
+			return true;
 		}
 	}
 	
