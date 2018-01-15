@@ -39,7 +39,11 @@ import ceylon.time {
 	now,
 	Duration
 }
-shared class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? playerColor, BoardGui gui, Anything(InboundGameMessage) messageBroadcaster) {
+import backgammon.client {
+
+	TableGui
+}
+shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? playerColor, TableGui gui, Anything(InboundGameMessage) messageBroadcaster) {
 	
 	// TODO should be part of configuration
 	value initialRollDelay = Duration(2000);

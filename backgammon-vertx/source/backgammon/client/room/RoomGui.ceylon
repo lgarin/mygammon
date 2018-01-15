@@ -13,7 +13,7 @@ import ceylon.json {
 	Object,
 	Array
 }
-class RoomGui(Document document) extends BoardGui(document) {
+shared class RoomGui(Document document) extends BoardGui(document) {
 	
 	shared String playButtonId = "play";
 	shared String newButtonId = "new";

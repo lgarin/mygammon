@@ -3,7 +3,15 @@ import backgammon.client.browser {
 	Element,
 	Document
 }
-shared abstract class BaseGui(Document document) {
+shared abstract class BaseGui {
+	
+	shared static String hiddenClass = "hidden";
+	
+	Document document;
+	
+	shared new(Document document) {
+		this.document = document;
+	}
 	
 	shared void resetClass(Element element, String* classNames) {
 		value classList = element.classList;

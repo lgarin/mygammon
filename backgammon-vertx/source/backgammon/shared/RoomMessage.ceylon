@@ -65,7 +65,9 @@ RoomStateRequestMessage parseRoomStateRequestMessage(Object json) {
 	return RoomStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class PlayerStateRequestMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Instant timestamp = now()) satisfies InboundRoomMessage {}
+shared final class PlayerStateRequestMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared actual Instant timestamp = now()) satisfies InboundRoomMessage {
+	mutation => false;
+}
 PlayerStateRequestMessage parsePlayerStateRequestMessage(Object json) {
 	return PlayerStateRequestMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), Instant(json.getInteger("timestamp")));
 }

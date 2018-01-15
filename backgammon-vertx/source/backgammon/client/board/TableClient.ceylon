@@ -23,8 +23,12 @@ import backgammon.shared.game {
 import ceylon.time {
 	Instant
 }
+import backgammon.client {
 
-shared final class TableClient(shared PlayerId playerId, shared TableId tableId, BoardGui gui, shared variable Boolean followNextMatch, Anything(InboundGameMessage|InboundMatchMessage|InboundTableMessage) messageBroadcaster) {
+	TableGui
+}
+
+shared final class TableClient(shared PlayerId playerId, shared TableId tableId, TableGui gui, shared variable Boolean followNextMatch, Anything(InboundGameMessage|InboundMatchMessage|InboundTableMessage) messageBroadcaster) {
 	
 	variable MatchClient? matchClient = null;
 	

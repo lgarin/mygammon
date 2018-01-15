@@ -89,6 +89,13 @@ abstract shared class BasePage() {
 		return null;
 	}
 	
+	
+	shared void onServerError(String messageString) {
+		print(messageString);
+		window.alert("An unexpected error occured.\r\nThe page will be reloaded.\r\n\r\nTimestamp:``now()``\r\nDetail:\r\n``messageString``");
+		window.location.reload();
+	}
+	
 	shared void onServerMessage(String messageString) {
 		print(messageString);
 		if (is Object json = parse(messageString)) {
@@ -98,12 +105,6 @@ abstract shared class BasePage() {
 		} else {
 			onServerError("Cannot parse server response: ``messageString``");
 		}
-	}
-	
-	shared void onServerError(String messageString) {
-		print(messageString);
-		window.alert("An unexpected error occured.\r\nThe page will be reloaded.\r\n\r\nTimestamp:``now()``\r\nDetail:\r\n``messageString``");
-		window.location.reload();
 	}
 	
 	shared void makeApiRequest(String url) {
