@@ -40,11 +40,7 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 	}
 	
 	isBoardPreview() => window.location.href.endsWith("view");
-	
-	void logout() {
-		window.location.\iassign("/logout");
-	}
-	
+
 	shared Boolean onStartDrag(HTMLElement source) {
 		draggedElementStyle = source.getAttribute("style");
 		if (exists gameClient = tableClient?.gameClient) {
@@ -131,7 +127,7 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 	shared actual Boolean handleRoomMessage(OutboundRoomMessage message) {
 		
 		if (!message.success) {
-			window.location.\iassign("/start");
+			window.location.reload();
 			return true;
 		}
 		
@@ -150,7 +146,7 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 	shared actual Boolean handleTableMessage(OutboundTableMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
-			window.location.\iassign("/start");
+			window.location.reload();
 			return true;
 		}
 		
@@ -204,7 +200,7 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 		if (exists currentTableId = extractTableId(), exists currentPlayerId = extractPlayerId()) {
 			roomCommander(PlayerStateRequestMessage(currentPlayerId, RoomId(currentTableId.roomId)));
 		} else {
-			logout();
+			restart();
 		}
 	}
 }

@@ -114,7 +114,7 @@ abstract shared class BasePage() {
 			if (request.status == 200) {
 				onServerMessage(request.responseText);
 			} else if (request.status == 401) {
-				window.location.\iassign("/start");
+				window.location.reload();
 			} else {
 				onServerError(request.statusText);
 			}

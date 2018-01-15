@@ -150,7 +150,7 @@ shared final class RoomPage() extends TablePage<RoomGui>(RoomGui(document)) {
 	shared actual Boolean handleRoomMessage(OutboundRoomMessage message) {
 		
 		if (!message.success) {
-			window.location.\iassign("/start");
+			window.location.reload();
 			return true;
 		}
 		
@@ -185,7 +185,7 @@ shared final class RoomPage() extends TablePage<RoomGui>(RoomGui(document)) {
 	shared actual Boolean handleTableMessage(OutboundTableMessage message) {
 		
 		if (is RoomResponseMessage message, !message.success) {
-			window.location.\iassign("/start");
+			window.location.reload();
 			return true;
 		}
 		
@@ -226,7 +226,7 @@ shared final class RoomPage() extends TablePage<RoomGui>(RoomGui(document)) {
 		if (exists currentRoomId = extractRoomId(), exists currentPlayerId = extractPlayerId()) {
 			roomCommander(PlayerStateRequestMessage(currentPlayerId, currentRoomId));
 		} else {
-			window.location.\iassign("/start");
+			restart();
 		}
 	}
 }

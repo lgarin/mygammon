@@ -34,7 +34,7 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 	
 	shared void openTableClient(TableId tableId) {
 		_tableClient = TableClient(currentPlayerId, tableId, gui, isBoardPreview(), gameCommander);
-		_eventBusClient?.addAddress("OutboundTableMessage-``tableId``");
+		eventBusClient.addAddress("OutboundTableMessage-``tableId``");
 		gameCommander(TableStateRequestMessage(currentPlayerId, tableId, isBoardPreview()));
 	}
 	
@@ -54,6 +54,10 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 	
 	shared void logout() {
 		window.location.\iassign("/logout");
+	}
+	
+	shared void restart() {
+		window.location.\iassign("/start");
 	}
 	
 	shared Boolean onLogoutConfirmed() {
