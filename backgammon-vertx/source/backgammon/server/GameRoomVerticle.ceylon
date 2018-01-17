@@ -48,8 +48,19 @@ final class GameRoomVerticle() extends Verticle() {
 		value rosterEventBus = PlayerRosterEventBus(vertx, roomConfig);
 		value roomEventBus = GameRoomEventBus(vertx, roomConfig);
 		
-		value matchRoom = MatchRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage, rosterEventBus.queueInputMessage);
-		value gameRoom = GameRoom(roomConfig, roomEventBus.publishOutboundMessage, roomEventBus.queueInboundMessage, roomEventBus.storeGameEventMessage);
+		value matchRoom = MatchRoom {
+			configuration = roomConfig;
+			messageBroadcaster = roomEventBus.publishOutboundMessage;
+			gameCommander = roomEventBus.queueInboundMessage;
+			playerRepository = rosterEventBus.queueInputMessage;
+		};
+		
+		value gameRoom = GameRoom {
+			configuration = roomConfig;
+			messageBroadcaster = roomEventBus.publishOutboundMessage;
+			matchCommander = roomEventBus.queueInboundMessage;
+			eventRecorder = roomEventBus.storeGameEventMessage;
+		};
 		
 		void finishStartup() {
 			roomEventBus.registerInboundRoomMessageConsumer(roomConfig.roomId, matchRoom.processRoomMessage);

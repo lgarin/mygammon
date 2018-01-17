@@ -16,14 +16,12 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 		values.add(secondValue);
 	}
 	
+	shared Integer dicePoints => isPair then firstValue * 4 else firstValue + secondValue;
+	
 	shared Integer getValue(CheckerColor color) {
-		switch (color)
-		case (black) {
-			return firstValue;
-		}
-		case (white) {
-			return secondValue;
-		}
+		return switch (color)
+			case (black) firstValue
+			case (white) secondValue;
 	}
 	
 	shared [<Integer->Boolean>*] state {

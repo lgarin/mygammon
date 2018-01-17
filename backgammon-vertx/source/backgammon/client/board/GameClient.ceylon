@@ -202,7 +202,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	function showPlayerReady(PlayerReadyMessage message) {
-		if (game.begin(message.playerColor)) {
+		if (game.begin(message.playerColor, now())) {
 			gui.showPlayerMessage(message.playerColor, gui.readyTextKey, false);
 			nextActions = [PlayerBeginMessage(message.matchId, message.playerId, Instant(0))];
 			return true;
@@ -215,9 +215,9 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 		
 		if (nextActions.narrow<PlayerBeginMessage>().empty) {
 			if (game.isCurrentColor(message.playerColor)) {
-				game.takeTurn(message.playerColor);
+				game.takeTurn(message.playerColor, now());
 			} else {
-				game.endTurn(message.playerColor.oppositeColor);
+				game.endTurn(message.playerColor.oppositeColor, now());
 			}
 		}
 		

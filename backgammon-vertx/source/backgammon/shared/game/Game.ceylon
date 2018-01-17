@@ -22,6 +22,8 @@ shared class Game(variable Instant nextTimeout) {
 		assert (board.putNewCheckers(element.key + blackGraveyardPosition, black, element.item));
 	}
 
+	value jockerCount = 1;
+
 	variable CheckerColor? _currentColor = null;
 	variable DiceRoll? _currentRoll = null;
 
@@ -32,8 +34,10 @@ shared class Game(variable Instant nextTimeout) {
 	variable Boolean blackReady = false;
 	variable Boolean whiteReady = false;
 	
-	variable Integer blackJocker = 1;
-	variable Integer whiteJocker = 1;
+	variable Integer blackJocker = jockerCount;
+	variable Integer whiteJocker = jockerCount;
+	
+	value statistic = GameStatistic(board.remainingDistance(black), checkerCount);
 	
 	function initialColor(DiceRoll diceRoll) {
 		if (diceRoll.getValue(black) > diceRoll.getValue(white)) {
@@ -124,6 +128,7 @@ shared class Game(variable Instant nextTimeout) {
 		remainingUndo = maxUndo;
 		_currentRoll = roll;
 		nextTimeout = timestamp.plus(maxDuration);
+		statistic.side(player).turnStarted(roll, timestamp);
 		return true;
 	}
 	
@@ -177,7 +182,9 @@ shared class Game(variable Instant nextTimeout) {
 	
 	shared Boolean moveChecker(CheckerColor color, Integer source, Integer target) {
 		if (isLegalMove(color, source, target), exists roll = currentRoll) {
-			currentMoves.push(makeLegalMove(color, roll, source, target));
+			value move = makeLegalMove(color, roll, source, target);
+			currentMoves.push(move);
+			statistic.side(color).movedChecker(move.distance, move.hitBlot);
 			return true;
 		} else {
 			return false;
@@ -190,6 +197,7 @@ shared class Game(variable Instant nextTimeout) {
 		if (move.hitBlot) {
 			assert (board.moveChecker(color.oppositeColor, board.graveyardPosition(color.oppositeColor), move.targetPosition));
 		}
+		statistic.side(color).movedChecker(-move.distance, move.hitBlot);
 	}
 	
 	shared Boolean undoTurnMoves(CheckerColor color) {
@@ -287,29 +295,31 @@ shared class Game(variable Instant nextTimeout) {
 
 	shared Boolean hasWon(CheckerColor color)=> board.countCheckers(board.homePosition(color), color) == checkerCount;
 	
-	function switchTurn(CheckerColor currentColor, CheckerColor nextColor) {
+	function switchTurn(CheckerColor currentColor, CheckerColor nextColor, Instant timestamp) {
 		if (!isCurrentColor(currentColor)) {
 			return false;
 		} else if (hasWon(currentColor)) {
 			currentMoves.clear();
 			_currentColor = null;
+			statistic.side(currentColor).turnEnded(timestamp, false);
 			return false;
 		} else {
 			currentMoves.clear();
 			_currentColor = nextColor;
+			statistic.side(currentColor).turnEnded(timestamp, nextColor == currentColor);
 			return true;
 		}
 	}
 	
-	shared Boolean endTurn(CheckerColor color) {
-		return switchTurn(color, color.oppositeColor);
+	shared Boolean endTurn(CheckerColor color, Instant timestamp) {
+		return switchTurn(color, color.oppositeColor, timestamp);
 	}
 
-	shared Boolean takeTurn(CheckerColor color) {
-		if (color == black && blackJocker > 0 && switchTurn(color, color)) {
+	shared Boolean takeTurn(CheckerColor color, Instant timestamp) {
+		if (color == black && blackJocker > 0 && switchTurn(color, color, timestamp)) {
 			blackJocker--;
 			return true;
-		} else if (color == white && whiteJocker > 0 && switchTurn(color, color)) {
+		} else if (color == white && whiteJocker > 0 && switchTurn(color, color, timestamp)) {
 			whiteJocker--;
 			return true;
 		} else {
@@ -317,7 +327,7 @@ shared class Game(variable Instant nextTimeout) {
 		}
 	}
 	
-	shared Boolean begin(CheckerColor color) {
+	shared Boolean begin(CheckerColor color, Instant timestamp) {
 		if (currentColor exists) {
 			return false;
 		} else if (!blackReady && color == black) {
@@ -330,11 +340,16 @@ shared class Game(variable Instant nextTimeout) {
 		
 		if (blackReady && whiteReady, exists roll = currentRoll) {
 			_currentColor = initialColor(roll);
+			statistic.gameStarted(timestamp);
 		}
 		return true;
 	}
 	
-	shared Boolean end() {
+	shared Boolean end(Instant timestamp) {
+		statistic.side(black).remainingDistance = board.remainingDistance(black);
+		statistic.side(white).remainingDistance = board.remainingDistance(white);
+		statistic.gameEnded(timestamp);
+		
 		blackReady = false;
 		whiteReady = false;
 		_currentColor = null;
@@ -345,9 +360,7 @@ shared class Game(variable Instant nextTimeout) {
 	
 	shared Boolean ended => nextTimeout.millisecondsOfEpoch == 0;
 	
-	shared Integer score {
-		return (board.score(black) - board.score(white)).magnitude;
-	}
+	shared Integer score => (board.remainingDistance(black) - board.remainingDistance(white)).magnitude;
 	
 	shared [Integer*] checkerCounts(CheckerColor color) => board.checkerCounts(color);
 	

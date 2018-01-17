@@ -56,13 +56,9 @@ shared final class MatchState(shared MatchId id, shared PlayerInfo player1, shar
 	}
 	
 	Boolean isReady(CheckerColor color) {
-		switch (color)
-		case (black) {
-			return player1Ready; 
-		}
-		case (white) {
-			return player2Ready;
-		}
+		return switch (color)
+			case (black) player1Ready 
+			case (white) player2Ready;
 	}
 	
 	Integer balanceDelta(CheckerColor color) {

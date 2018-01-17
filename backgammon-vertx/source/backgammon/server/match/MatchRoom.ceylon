@@ -204,9 +204,9 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 			if (match.gameStarted) {
 				handlePlayerChange(match.player1);
 				handlePlayerChange(match.player2);
-				gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
+				gameCommander(StartGameMessage(match.id, player.info, match.player1.id, match.player2.id));
 			} else {
-				gameCommander(StartGameMessage(match.id, match.player1.id, match.player2.id));
+				gameCommander(StartGameMessage(match.id, player.info, match.player1.id, match.player2.id));
 			}
 			return AcceptedMatchMessage(message.playerId, message.matchId, true);
 		} else {

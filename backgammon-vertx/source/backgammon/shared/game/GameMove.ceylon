@@ -24,6 +24,8 @@ shared class GameMove(shared Integer sourcePosition, shared Integer targetPositi
 	}
 	
 	string => toJson().string;
+	
+	shared Integer distance => (targetPosition - sourcePosition).magnitude;
 }
 
 shared final class GameMoveInfo(Integer sourcePosition, Integer targetPosition, shared Integer rollValue, shared Boolean hitBlot) extends GameMove(sourcePosition, targetPosition) {

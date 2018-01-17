@@ -195,24 +195,24 @@ class GameBoardTest() {
 	
 	test
 	shared void scoreWithEmptyBoard() {
-		assert (0 == board.score(black));
-		assert (0 == board.score(white));
+		assert (0 == board.remainingDistance(black));
+		assert (0 == board.remainingDistance(white));
 	}
 	
 	test
 	shared void scoreWithHomeCheckers() {
 		board.putNewCheckers(blackHomePosition, black, 2);
 		board.putNewCheckers(whiteHomePosition, white, 5);
-		assert (0 == board.score(black));
-		assert (0 == board.score(white));
+		assert (0 == board.remainingDistance(black));
+		assert (0 == board.remainingDistance(white));
 	}
 	
 	test
 	shared void scoreWithGraveyardCheckers() {
 		board.putNewCheckers(blackGraveyardPosition, black, 2);
 		board.putNewCheckers(whiteGraveyardPosition, white, 5);
-		assert (2 * (boardPointCount-1) == board.score(black));
-		assert (5 * (boardPointCount-1) == board.score(white));
+		assert (2 * (boardPointCount-1) == board.remainingDistance(black));
+		assert (5 * (boardPointCount-1) == board.remainingDistance(white));
 	}
 	
 	void addCheckers(CheckerColor color, Integer relativePosition, Integer checkerCount) {
@@ -227,7 +227,7 @@ class GameBoardTest() {
 		addCheckers(white, 2, 1);
 		addCheckers(white, 3, 2);
 		addCheckers(white, 6, 1);
-		assert (14 == board.score(black));
-		assert (14 == board.score(white));
+		assert (14 == board.remainingDistance(black));
+		assert (14 == board.remainingDistance(white));
 	}
 }

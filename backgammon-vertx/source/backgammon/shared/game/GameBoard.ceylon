@@ -60,33 +60,33 @@ shared final class GameBoard() {
 	value blackPlayRange = blackGraveyardPosition..blackHomePosition - 1;
 
 	shared Integer graveyardPosition(CheckerColor color) {
-		switch (color)
-		case (white) { return whiteGraveyardPosition; }
-		case (black) { return blackGraveyardPosition; }
+		return switch (color)
+			case (white) whiteGraveyardPosition
+			case (black) blackGraveyardPosition;
 	}
 	
 	shared Integer homePosition(CheckerColor color) {
-		switch (color)
-		case (white) { return whiteHomePosition; }
-		case (black) { return blackHomePosition; }
+		return switch (color)
+			case (white) whiteHomePosition
+			case (black) blackHomePosition;
 	}
 	
 	shared Range<Integer> outsideRange(CheckerColor color) {
-		switch (color)
-		case (white) { return whiteOutsideRange; }
-		case (black) { return blackOutsideRange; }
+		return switch (color)
+			case (white) whiteOutsideRange
+			case (black) blackOutsideRange;
 	}
 	
 	shared Range<Integer> playRange(CheckerColor color) {
-		switch (color)
-		case (white) { return whitePlayRange; }
-		case (black) { return blackPlayRange; }
+		return switch (color)
+			case (white) whitePlayRange
+			case (black) blackPlayRange;
 	}
 	
 	shared Integer directionSign(CheckerColor color) {
-		switch (color)
-		case (white) { return -1; }
-		case (black) { return +1; }
+		return switch (color)
+			case (white) -1
+			case (black) +1;
 	}
 	
 	shared [Integer*] targetRange(CheckerColor color, Integer sourcePosition, Integer maxDistance) {
@@ -160,7 +160,7 @@ shared final class GameBoard() {
 		return outsideRange(color).any((element) => hasChecker(element, color));
 	}
 	
-	shared Integer score(CheckerColor color) {
+	shared Integer remainingDistance(CheckerColor color) {
 		return playRange(color).fold(0)((partial, position) => distance(position, homePosition(color)) * countCheckers(position, color) + partial);
 	}
 	

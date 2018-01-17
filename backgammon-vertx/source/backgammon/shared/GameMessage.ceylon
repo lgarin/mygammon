@@ -27,15 +27,16 @@ shared sealed interface OutboundGameMessage of InitialRollMessage | PlayerReadyM
 	shared actual default Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "playerColor" -> playerColor.name };
 }
 
-shared final class StartGameMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared PlayerId opponentId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {
-	toJson() => toExtendedJson({"opponentId" -> opponentId.toJson()});
+shared final class StartGameMessage(shared actual MatchId matchId, shared PlayerInfo playerInfo, shared PlayerId player1Id, shared PlayerId player2Id, shared actual Instant timestamp = now()) satisfies InboundGameMessage {
+	shared actual PlayerId playerId = PlayerId(playerInfo.id);
+	toJson() => toExtendedJson {"playerInfo" -> playerInfo.toJson(), "player1Id" -> player1Id.toJson(), "player2Id" -> player2Id.toJson()};
 }
 StartGameMessage parseStartGameMessage(Object json) {
-	return StartGameMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parsePlayerId(json.getString("opponentId")), Instant(json.getInteger("timestamp")));
+	return StartGameMessage(parseMatchId(json.getObject("matchId")), parsePlayerInfo(json.getObject("playerInfo")), parsePlayerId(json.getString("player1Id")), parsePlayerId(json.getString("player2Id")), Instant(json.getInteger("timestamp")));
 }
 
 shared final class InitialRollMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared Integer diceValue, shared DiceRoll roll, shared Duration maxDuration) satisfies OutboundGameMessage {
-	toJson() => toExtendedJson({"diceValue" -> diceValue, "rollValue1" -> roll.firstValue, "rollValue2" -> roll.secondValue, "maxDuration" -> maxDuration.milliseconds });
+	toJson() => toExtendedJson {"diceValue" -> diceValue, "rollValue1" -> roll.firstValue, "rollValue2" -> roll.secondValue, "maxDuration" -> maxDuration.milliseconds};
 }
 InitialRollMessage parseInitialRollMessage(Object json) {
 	return InitialRollMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getInteger("diceValue"), DiceRoll(json.getInteger("rollValue1"), json.getInteger("rollValue2")), Duration(json.getInteger("maxDuration")));
@@ -52,21 +53,21 @@ PlayerReadyMessage parsePlayerReadyMessage(Object json) {
 }
 
 shared final class StartTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared DiceRoll roll, shared Duration maxDuration, shared Integer maxUndo) satisfies OutboundGameMessage {
-	toJson() => toExtendedJson({"rollValue1" -> roll.firstValue, "rollValue2" -> roll.secondValue, "maxDuration" -> maxDuration.milliseconds, "maxUndo" -> maxUndo });
+	toJson() => toExtendedJson {"rollValue1" -> roll.firstValue, "rollValue2" -> roll.secondValue, "maxDuration" -> maxDuration.milliseconds, "maxUndo" -> maxUndo };
 }
 StartTurnMessage parseStartTurnMessage(Object json) {
 	return StartTurnMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), DiceRoll(json.getInteger("rollValue1"), json.getInteger("rollValue2")), Duration(json.getInteger("maxDuration")), json.getInteger("maxUndo"));
 }
 
 shared final class MakeMoveMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared Integer sourcePosition, shared Integer targetPosition, shared actual Instant timestamp = now()) satisfies InboundGameMessage {
-	toJson() => toExtendedJson({"sourcePosition" -> sourcePosition, "targetPosition" -> targetPosition});
+	toJson() => toExtendedJson {"sourcePosition" -> sourcePosition, "targetPosition" -> targetPosition};
 }
 MakeMoveMessage parseMakeMoveMessage(Object json) {
 	return MakeMoveMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), json.getInteger("sourcePosition"), json.getInteger("targetPosition"), Instant(json.getInteger("timestamp")));
 }
 
 shared final class PlayedMoveMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared Integer sourcePosition, shared Integer targetPosition) satisfies OutboundGameMessage {
-	toJson() => toExtendedJson({"sourcePosition" -> sourcePosition, "targetPosition" -> targetPosition});
+	toJson() => toExtendedJson {"sourcePosition" -> sourcePosition, "targetPosition" -> targetPosition};
 }
 PlayedMoveMessage parsePlayedMoveMessage(Object json) {
 	return PlayedMoveMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getInteger("sourcePosition"), json.getInteger("targetPosition"));
@@ -83,7 +84,7 @@ UndoneMovesMessage parseUndoneMovesMessage(Object json) {
 }
 
 shared final class InvalidMoveMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared Integer sourcePosition, shared Integer targetPosition) satisfies OutboundGameMessage {
-	toJson() => toExtendedJson({"sourcePosition" -> sourcePosition, "targetPosition" -> targetPosition});
+	toJson() => toExtendedJson {"sourcePosition" -> sourcePosition, "targetPosition" -> targetPosition};
 }
 InvalidMoveMessage parseInvalidMoveMessage(Object json) {
 	return InvalidMoveMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getInteger("sourcePosition"), json.getInteger("targetPosition"));
@@ -95,7 +96,7 @@ TurnTimedOutMessage parseTurnTimedOutMessage(Object json) {
 }
 
 shared final class DesynchronizedMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared GameState state) satisfies OutboundGameMessage {
-	toJson() => toExtendedJson({"state" -> state.toJson() });
+	toJson() => toExtendedJson {"state" -> state.toJson()};
 }
 DesynchronizedMessage parseDesynchronizedMessage(Object json) {
 	return DesynchronizedMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), parseGameState(json.getObject("state")));
@@ -129,7 +130,7 @@ GameStateRequestMessage parseGameStateRequestMessage(Object json) {
 }
 
 shared final class GameStateResponseMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared GameState state) satisfies OutboundGameMessage {
-	toJson() => toExtendedJson({"state" -> state.toJson()});
+	toJson() => toExtendedJson {"state" -> state.toJson()};
 	
 }
 GameStateResponseMessage parseGameStateResponseMessage(Object json) {
@@ -137,7 +138,7 @@ GameStateResponseMessage parseGameStateResponseMessage(Object json) {
 }
 
 shared final class GameActionResponseMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared actual Boolean success) satisfies OutboundGameMessage & RoomResponseMessage {
-	toJson() => toExtendedJson({"success" -> success});
+	toJson() => toExtendedJson {"success" -> success};
 }
 GameActionResponseMessage parseGameActionResponseMessage(Object json) {
 	return GameActionResponseMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getBoolean("success"));
