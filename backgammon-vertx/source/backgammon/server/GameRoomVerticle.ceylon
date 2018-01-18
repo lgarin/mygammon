@@ -1,6 +1,7 @@
 import backgammon.server.bus {
 	GameRoomEventBus,
-	PlayerRosterEventBus
+	PlayerRosterEventBus,
+	ScoreBoardEventBus
 }
 import backgammon.server.game {
 	GameRoom
@@ -47,12 +48,13 @@ final class GameRoomVerticle() extends Verticle() {
 		value roomConfig = ServerConfiguration(config);
 		value rosterEventBus = PlayerRosterEventBus(vertx, roomConfig);
 		value roomEventBus = GameRoomEventBus(vertx, roomConfig);
+		value scoreEventBus = ScoreBoardEventBus(vertx, roomConfig);
 		
 		value matchRoom = MatchRoom {
 			configuration = roomConfig;
 			messageBroadcaster = roomEventBus.publishOutboundMessage;
 			gameCommander = roomEventBus.queueInboundMessage;
-			playerRepository = rosterEventBus.queueInputMessage;
+			playerRepository = rosterEventBus.queueInboundMessage;
 		};
 		
 		value gameRoom = GameRoom {
@@ -60,6 +62,7 @@ final class GameRoomVerticle() extends Verticle() {
 			messageBroadcaster = roomEventBus.publishOutboundMessage;
 			matchCommander = roomEventBus.queueInboundMessage;
 			eventRecorder = roomEventBus.storeGameEventMessage;
+			statisticRecorder = scoreEventBus.storeScoreBoardMessage;
 		};
 		
 		void finishStartup() {
@@ -82,6 +85,7 @@ final class GameRoomVerticle() extends Verticle() {
 			
 			roomEventBus.disableOutput = false;
 			rosterEventBus.disableOutput = false;
+			scoreEventBus.disableOutput = false;
 			log.info("Started room : ``roomConfig.roomId``");
 			startFuture.complete();
 		}
@@ -118,6 +122,7 @@ final class GameRoomVerticle() extends Verticle() {
 		log.info("Starting room ``roomConfig.roomId``...");
 		roomEventBus.disableOutput = true;
 		rosterEventBus.disableOutput = true;
+		scoreEventBus.disableOutput = true;
 		replayMatchRoom();
 	}
 	

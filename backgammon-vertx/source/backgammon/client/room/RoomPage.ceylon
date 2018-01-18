@@ -10,7 +10,7 @@ import backgammon.shared {
 	RoomId,
 	OutboundRoomMessage,
 	PlayerListMessage,
-	RoomResponseMessage,
+	StatusResponseMessage,
 	OutboundTableMessage,
 	TableStateResponseMessage,
 	PlayerId,
@@ -184,7 +184,7 @@ shared final class RoomPage() extends TablePage<RoomGui>(RoomGui(document)) {
 	
 	shared actual Boolean handleTableMessage(OutboundTableMessage message) {
 		
-		if (is RoomResponseMessage message, !message.success) {
+		if (is StatusResponseMessage message, !message.success) {
 			window.location.reload();
 			return true;
 		}

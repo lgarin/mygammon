@@ -82,6 +82,18 @@ shared final class GamePlayerStatistic() extends Object() {
 		return result;
 	}
 	
+	shared void fromJson(JsonObject json) {
+		_startedTurn = json.getInteger("startedTurn");
+		_dicePoints = json.getInteger("dicePoints");
+		_validMoves = json.getInteger("validMoves");
+		_movedDistance = json.getInteger("movedDistance");
+		_undoneMoves = json.getInteger("undoneMoves");
+		_boltHits = json.getInteger("boltHits");
+		_playedJockers = json.getInteger("playedJockers");
+		remainingDistance = json.getInteger("remainingDistance");
+		_playTime = Duration(json.getInteger("playTime"));
+	}
+	
 	shared actual Boolean equals(Object that) {
 		if (is GamePlayerStatistic that) {
 			return _startedTurn==that._startedTurn && 
@@ -114,15 +126,25 @@ shared final class GamePlayerStatistic() extends Object() {
 		hash = 31*hash + _playTime.hash;
 		return hash;
 	}
-	
 }
 
-shared final class GameStatistic(shared Integer initialDistance, shared Integer checkerCount) extends Object() {
+
+shared final class GameStatistic extends Object {
+	
+	variable Integer _initialDistance = 0;
+	shared Integer initialDistance => _initialDistance;
+	variable Integer _checkerCount = 0;
+	shared Integer checkerCount => _checkerCount;
 	
 	value blackStatistic = GamePlayerStatistic();
 	value whiteStatistic = GamePlayerStatistic();
 	variable Instant _startTime = Instant(0);
 	variable Instant _endTime = _startTime;
+	
+	shared new(Integer initialDistance, Integer checkerCount) extends Object() {
+		_initialDistance = initialDistance;
+		_checkerCount = checkerCount;
+	}
 	
 	shared GamePlayerStatistic side(CheckerColor color) {
 		return switch (color)
@@ -155,20 +177,33 @@ shared final class GameStatistic(shared Integer initialDistance, shared Integer 
 		value result = JsonObject();
 		result.put("initialDistance", initialDistance);
 		result.put("checkerCount", checkerCount);
+		result.put("startTime", _startTime.millisecondsOfEpoch);
+		result.put("endTime", _endTime.millisecondsOfEpoch);
 		result.put("duration", duration.milliseconds);
 		result.put("winnerColor", winnerColor?.name else null);
 		result.put("winnerScore", winnerScore);
-		result.put("duration", duration.milliseconds);
 		result.put("blackStatistic", blackStatistic.toJson());
 		result.put("whiteStatistic", whiteStatistic.toJson());
 		return result;
 	}
 	
+	shared new fromJson(JsonObject json) extends Object() {
+		_initialDistance = json.getInteger("initialDistance");
+		_checkerCount = json.getInteger("checkerCount");
+		_startTime = Instant(json.getInteger("startTime"));
+		_endTime = Instant(json.getInteger("endTime"));
+		blackStatistic.fromJson(json.getObject("blackStatistic"));
+		whiteStatistic.fromJson(json.getObject("whiteStatistic"));
+	}
+	
+	// TODO optimize
+	shared GameStatistic copy() => fromJson(toJson());
+	
 	shared actual Boolean equals(Object that) {
 		if (is GameStatistic that) {
 			return _startTime==that._startTime && 
-				initialDistance==that.initialDistance && 
-				checkerCount==that.checkerCount && 
+				_initialDistance==that._initialDistance && 
+				_checkerCount==that._checkerCount && 
 				blackStatistic==that.blackStatistic && 
 				whiteStatistic==that.whiteStatistic && 
 				_endTime==that._endTime;
@@ -181,12 +216,11 @@ shared final class GameStatistic(shared Integer initialDistance, shared Integer 
 	shared actual Integer hash {
 		variable value hash = 1;
 		hash = 31*hash + _startTime.hash;
-		hash = 31*hash + initialDistance;
-		hash = 31*hash + checkerCount;
+		hash = 31*hash + _initialDistance;
+		hash = 31*hash + _checkerCount;
 		hash = 31*hash + blackStatistic.hash;
 		hash = 31*hash + whiteStatistic.hash;
 		hash = 31*hash + _endTime.hash;
 		return hash;
 	}
-	 
 }

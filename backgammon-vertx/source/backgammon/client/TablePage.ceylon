@@ -11,7 +11,7 @@ import backgammon.shared {
 	OutboundPlayerRosterMessage,
 	PlayerDetailOutputMessage,
 	MatchEndedMessage,
-	RoomResponseMessage,
+	StatusResponseMessage,
 	OutboundGameMessage,
 	OutboundMatchMessage
 }
@@ -102,7 +102,7 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 	
 	shared actual Boolean handleMatchMessage(OutboundMatchMessage message) {
 		
-		if (is RoomResponseMessage message, !message.success) {
+		if (is StatusResponseMessage message, !message.success) {
 			return false;
 		}
 		
@@ -122,7 +122,7 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 	
 	shared actual Boolean handleGameMessage(OutboundGameMessage message) {
 		
-		if (is RoomResponseMessage message, !message.success) {
+		if (is StatusResponseMessage message, !message.success) {
 			return false;
 		}
 		

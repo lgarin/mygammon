@@ -52,7 +52,7 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 		}
 	}
 
-	shared void queueInputMessage(InboundPlayerRosterMessage message) {
+	shared void queueInboundMessage(InboundPlayerRosterMessage message) {
 		if (disableOutput) {
 			return;
 		}

@@ -22,7 +22,7 @@ shared sealed interface InboundTableMessage of JoinTableMessage | LeaveTableMess
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "tableId" -> tableId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
 }
 
-shared final class JoinedTableMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared PlayerInfo? playerInfo) satisfies OutboundTableMessage & RoomResponseMessage {
+shared final class JoinedTableMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared PlayerInfo? playerInfo) satisfies OutboundTableMessage & StatusResponseMessage {
 	shared actual Boolean success => playerInfo exists;
 	toJson() => toExtendedJson {"playerInfo" -> playerInfo?.toJson()};
 }
@@ -30,7 +30,7 @@ JoinedTableMessage parseJoinedTableMessage(Object json) {
 	return JoinedTableMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), parseNullablePlayerInfo(json.getObjectOrNull("playerInfo")));
 }
 
-shared final class LeftTableMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared actual Boolean success = true) satisfies OutboundTableMessage & RoomResponseMessage {
+shared final class LeftTableMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared actual Boolean success = true) satisfies OutboundTableMessage & StatusResponseMessage {
 	toJson() => toExtendedJson {"success" -> success};
 }
 LeftTableMessage parseLeftTableMessage(Object json) {
@@ -63,7 +63,7 @@ TableStateRequestMessage parseTableStateRequestMessage(Object json) {
 	return TableStateRequestMessage(parsePlayerId(json.getString("playerId")), parseTableId(json.getObject("tableId")), json.getBoolean("current"), Instant(json.getInteger("timestamp")));
 }
 
-shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared MatchState? match, shared [PlayerInfo*] playerQueue, shared actual Boolean success) satisfies OutboundTableMessage & RoomResponseMessage {
+shared final class TableStateResponseMessage(shared actual PlayerId playerId, shared actual TableId tableId, shared MatchState? match, shared [PlayerInfo*] playerQueue, shared actual Boolean success) satisfies OutboundTableMessage & StatusResponseMessage {
 	toJson() => toExtendedJson {"match" -> match?.toJson(), "playerQueue" -> Array {for (e in playerQueue) e.toJson()}, "success" -> success};
 	shared Boolean gameStarted => match?.gameStarted else false;
 	shared Boolean isPlayerInQueue(PlayerId playerId) => playerQueue.any((item) => item.id == playerId.id);

@@ -33,7 +33,8 @@ import backgammon.shared {
 	systemPlayerId,
 	TakeTurnMessage,
 	PingMatchMessage,
-	PlayerInfo
+	PlayerInfo,
+	NewGameStatisticMessage
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -55,7 +56,7 @@ final class GamePlayerState(shared PlayerId id, shared CheckerColor color) {
 	shared variable Integer successiveTimeouts = 0;
 }
 
-final class GameManager(StartGameMessage startGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander) {
+final class GameManager(StartGameMessage startGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander, Anything(NewGameStatisticMessage) statisticRecorder) {
 	
 	shared MatchId matchId = startGameMessage.matchId;
 	
@@ -113,8 +114,10 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 	
 	function endGame(PlayerId playerId, Instant timestamp, PlayerId winnerId = systemPlayerId) {
 		if (game.end(timestamp)) {
-			// TODO write game statistics
 			matchCommander(EndMatchMessage(playerId, matchId, winnerId, game.score));
+			if (exists blackPlayer = toPlayer(black).info, exists whitePlayer = toPlayer(white).info) {
+				statisticRecorder(NewGameStatisticMessage(matchId, blackPlayer, whitePlayer, game.currentStatistic));
+			}
 			return true;
 		} else {
 			return false;
@@ -240,21 +243,24 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
+	function definePlayerInfo(PlayerId playerId, PlayerInfo playerInfo) {
+		if (playerId == player1.id) {
+			player1.info = playerInfo;
+		} else if (playerId == player2.id) {
+			player2.info = playerInfo;
+		}
+		return player1.info exists && player2.info exists;
+	}
+	
 	function handleMessage(InboundGameMessage message, CheckerColor playerColor) {
 		resetSuccessiveTimeoutCount(playerColor);
 		
 		switch (message) 
 		case (is StartGameMessage) {
-			if (message.playerId == player1.id) {
-				player1.info = message.playerInfo;
-			} else if (message.playerId == player2.id) {
-				player2.info = message.playerInfo;
-			}
-			
-			if (player1.info exists && player2.info exists) {
-				return GameActionResponseMessage(matchId, message.playerId, playerColor, false);
-			} else {
+			if (definePlayerInfo(message.playerId, message.playerInfo)) {
 				return GameActionResponseMessage(matchId, message.playerId, playerColor, sendInitialRoll(message.timestamp));
+			} else {
+				return GameActionResponseMessage(matchId, message.playerId, playerColor, false);
 			}
 		}
 		case (is PlayerBeginMessage) {

@@ -17,6 +17,10 @@ shared sealed interface ApplicationMessage {
 	shared default Boolean mutation => true;
 }
 
+shared sealed interface StatusResponseMessage {
+	shared formal Boolean success;
+}
+
 shared object applicationMessages {
 	value parserMap = HashMap<String,ApplicationMessage(Object)>();
 	
@@ -98,4 +102,7 @@ shared object applicationMessages {
 	registerParser(parseTakeTurnMessage);
 	registerParser(parseEndGameMessage);
 	registerParser(parseGameStateRequestMessage);
+	
+	registerParser(parseNewGameStatisticMessage);
+	registerParser(parseScoreBoardResponseMessage);
 }

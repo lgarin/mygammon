@@ -38,6 +38,7 @@ shared class Game(variable Instant nextTimeout) {
 	variable Integer whiteJocker = jockerCount;
 	
 	value statistic = GameStatistic(board.remainingDistance(black), checkerCount);
+	shared GameStatistic currentStatistic => statistic.copy();
 	
 	function initialColor(DiceRoll diceRoll) {
 		if (diceRoll.getValue(black) > diceRoll.getValue(white)) {

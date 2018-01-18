@@ -29,7 +29,7 @@ final class PlayerRosterVerticle() extends Verticle() {
 	shared actual void startAsync(Future<Anything> startFuture) {
 		value serverConfig = ServerConfiguration(config);
 		value repoEventBus = PlayerRosterEventBus(vertx, serverConfig);
-		value roster = PlayerRoster(serverConfig, repoEventBus.queueInputMessage);
+		value roster = PlayerRoster(serverConfig, repoEventBus.queueInboundMessage);
 		
 		repoEventBus.disableOutput = true;
 		log.info("Starting player roster...");

@@ -137,7 +137,7 @@ GameStateResponseMessage parseGameStateResponseMessage(Object json) {
 	return GameStateResponseMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), parseGameState(json.getObject("state")));
 }
 
-shared final class GameActionResponseMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared actual Boolean success) satisfies OutboundGameMessage & RoomResponseMessage {
+shared final class GameActionResponseMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared actual Boolean success) satisfies OutboundGameMessage & StatusResponseMessage {
 	toJson() => toExtendedJson {"success" -> success};
 }
 GameActionResponseMessage parseGameActionResponseMessage(Object json) {

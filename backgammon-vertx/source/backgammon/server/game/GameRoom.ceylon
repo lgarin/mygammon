@@ -16,7 +16,8 @@ import backgammon.shared {
 	GameEventMessage,
 	GameTimeoutMessage,
 	GameMessage,
-	StartGameMessage
+	StartGameMessage,
+	NewGameStatisticMessage
 }
 import backgammon.shared.game {
 	black
@@ -33,7 +34,7 @@ import backgammon.server.dice {
 	DiceRoller
 }
 
-shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander, Anything(GameEventMessage) eventRecorder) {
+shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander, Anything(GameEventMessage) eventRecorder, Anything(NewGameStatisticMessage) statisticRecorder) {
 	
 	value roomId = RoomId(configuration.roomId);
 	value lock = ObtainableLock("GameRoom ``configuration.roomId``"); 
@@ -56,7 +57,7 @@ shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGa
 			if (exists currentManager = managerMap[message.matchId]) {
 				return currentManager;
 			} else if (is StartGameMessage message) {
-				value manager = GameManager(message, configuration, messageBroadcaster, matchCommander);
+				value manager = GameManager(message, configuration, messageBroadcaster, matchCommander, statisticRecorder);
 				managerMap.put(message.matchId, manager);
 				_totalGameCount++;
 				return manager;	

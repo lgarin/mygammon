@@ -21,21 +21,21 @@ shared sealed interface InboundMatchMessage of AcceptMatchMessage | PingMatchMes
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
 }
 
-shared final class AcceptedMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
+shared final class AcceptedMatchMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared actual Boolean success = true) satisfies OutboundMatchMessage & StatusResponseMessage {
 	toJson() => toExtendedJson({"success" -> success});
 }
 AcceptedMatchMessage parseAcceptedMatchMessage(Object json) {
 	return AcceptedMatchMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), json.getBoolean("success"));
 }
 
-shared final class MatchActivityMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
+shared final class MatchActivityMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared actual Boolean success = true) satisfies OutboundMatchMessage & StatusResponseMessage {
 	toJson() => toExtendedJson({"success" -> success});
 }
 MatchActivityMessage parseMatchActivityMessage(Object json) {
 	return MatchActivityMessage(parsePlayerId(json.getString("playerId")), parseMatchId(json.getObject("matchId")), json.getBoolean("success"));
 }
 
-shared final class MatchEndedMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId, shared Integer score, shared actual Boolean success = true) satisfies OutboundMatchMessage & RoomResponseMessage {
+shared final class MatchEndedMessage(shared actual PlayerId playerId, shared actual MatchId matchId, shared PlayerId winnerId, shared Integer score, shared actual Boolean success = true) satisfies OutboundMatchMessage & StatusResponseMessage {
 	toJson() => toExtendedJson({"winnerId" -> winnerId.toJson(), "score" -> score, "success" -> success});
 	
 	shared Boolean isWinner(PlayerId id) => winnerId == id;

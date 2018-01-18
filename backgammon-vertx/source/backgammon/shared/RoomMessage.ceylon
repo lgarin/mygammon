@@ -28,11 +28,7 @@ shared sealed interface InboundRoomMessage of EnterRoomMessage | LeaveRoomMessag
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
 }
 
-shared sealed interface RoomResponseMessage {
-	shared formal Boolean success;
-}
-
-shared sealed interface OutboundRoomMessage of RoomActionResponseMessage | FoundMatchTableMessage | FoundEmptyTableMessage | PlayerListMessage | PlayerStateMessage satisfies RoomMessage & RoomResponseMessage {
+shared sealed interface OutboundRoomMessage of RoomActionResponseMessage | FoundMatchTableMessage | FoundEmptyTableMessage | PlayerListMessage | PlayerStateMessage satisfies RoomMessage & StatusResponseMessage {
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "success" -> success };
 }
 
