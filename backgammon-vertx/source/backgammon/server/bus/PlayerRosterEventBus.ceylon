@@ -9,8 +9,7 @@ import backgammon.shared {
 	OutboundPlayerRosterMessage,
 	InboundPlayerRosterMessage,
 	applicationMessages,
-	PlayerId,
-	PlayerStatisticUpdateMessage
+	PlayerId
 }
 
 import ceylon.json {
@@ -59,26 +58,35 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 		vertx.runOnContext(() => sendInboundMessage(message, rethrowExceptionHandler));
 	}
 
-	shared void registerConsumer(OutboundPlayerRosterMessage process(InboundPlayerRosterMessage request)) {
-		eventBus.registerConsumer("PlayerRosterMessage", function (JsonObject msg) {
+	shared void registerAsyncConsumer(Anything(InboundPlayerRosterMessage, Anything(OutboundPlayerRosterMessage|Throwable)) processAsync) {
+		void parseRequest(JsonObject msg, Anything(JsonObject|Throwable) completion) {
 			if (exists request = applicationMessages.parse<InboundPlayerRosterMessage>(msg)) {
-				return applicationMessages.format(process(request));
+				void formatResponse(OutboundPlayerRosterMessage|Throwable result) {
+					if (is Throwable result) {
+						completion(result);
+					} else {
+						completion(applicationMessages.format(result));
+					}
+				}
+				processAsync(request, formatResponse);
 			} else {
-				throw Exception("Invalid request: ``msg``");
+				completion(Exception("Invalid request: ``msg``"));
 			}
-		});
+		}
+		
+		eventBus.registerAsyncConsumer("PlayerRosterMessage", parseRequest);
 	}
 	
 	shared void replayAllEvents(void process(InboundPlayerRosterMessage message), void completion(Integer|Throwable result)) {
 		eventStore.replayAllEvents("player-roster", applicationMessages.parse<InboundPlayerRosterMessage>, process, completion);
 	}
 	
-	shared void queryPlayerTransactions(PlayerId playerId, void completion({PlayerStatisticUpdateMessage*}|Throwable result)) {
+	shared void queryInboundPlayerMessages(PlayerId playerId, void completion({InboundPlayerRosterMessage*}|Throwable result)) {
 		void mapResult({JsonObject*}|Throwable result) {
 			if (is Throwable result) {
 				completion(result);
 			} else {
-				completion(result.map(applicationMessages.parse<InboundPlayerRosterMessage>).narrow<PlayerStatisticUpdateMessage>());
+				completion(result.map(applicationMessages.parse<InboundPlayerRosterMessage>).narrow<InboundPlayerRosterMessage>());
 			}
 		}
 		eventStore.queryEvents("player-roster", EventSearchCriteria("playerInfo.id", playerId.string, "timestamp", false), mapResult);

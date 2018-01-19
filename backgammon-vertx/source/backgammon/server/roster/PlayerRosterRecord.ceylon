@@ -1,16 +1,12 @@
 import backgammon.shared {
 	PlayerStatistic,
-	parsePlayerStatistic,
 	PlayerId,
-	parsePlayerId
+	PlayerInfo
 }
 
-import ceylon.json {
-	JsonObject=Object
-}
-final class PlayerRosterRecord(shared PlayerId id, shared PlayerLogin login, shared PlayerStatistic stat) extends Object() {
+final class PlayerRosterRecord(shared PlayerInfo playerInfo, shared PlayerLogin login, shared PlayerStatistic stat) extends Object() {
 	
-	shared JsonObject toJson() => JsonObject {"id" -> id.toJson(), "login" -> login.toJson(), "stat" -> stat.toJson()};
+	shared PlayerId id = PlayerId(playerInfo.id);
 	
 	shared actual Boolean equals(Object that) {
 		if (is PlayerRosterRecord that) {
@@ -25,5 +21,3 @@ final class PlayerRosterRecord(shared PlayerId id, shared PlayerLogin login, sha
 	
 	shared actual Integer hash = id.hash;
 }
-
-PlayerRosterRecord parsePlayerRosterRecord(JsonObject json) => PlayerRosterRecord(parsePlayerId(json.getString("id")), parsePlayerLogin(json.getObject("login")), parsePlayerStatistic(json.getObject("stat")));

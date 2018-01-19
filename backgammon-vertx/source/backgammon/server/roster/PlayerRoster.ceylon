@@ -14,7 +14,8 @@ import backgammon.shared {
 	PlayerStatisticUpdateMessage,
 	PlayerInfo,
 	PlayerDetailRequestMessage,
-	PlayerDetailOutputMessage
+	PlayerDetailOutputMessage,
+	PlayerTransaction
 }
 
 import ceylon.collection {
@@ -39,15 +40,15 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 		return PlayerStatisticOutputMessage(record.id, record.stat + loginDelta);
 	}
 	
-	function initialLogin(PlayerInfo playerInfo, Instant timestamp)
-			=> PlayerLogin(playerInfo.name, 1, timestamp, timestamp.plus(config.balanceIncreaseDelay));
+	function initialLogin(Instant timestamp)
+			=> PlayerLogin(1, timestamp, timestamp.plus(config.balanceIncreaseDelay));
 	
 	function updatePlayerStatistic(PlayerStatisticUpdateMessage message) {
 		if (exists oldRecord = statisticMap[message.playerId]) {
-			value record = PlayerRosterRecord(oldRecord.id, oldRecord.login, oldRecord.stat + message.statisticDelta);
+			value record = PlayerRosterRecord(oldRecord.playerInfo, oldRecord.login, oldRecord.stat + message.statisticDelta);
 			return storeRecord(record);
 		} else {
-			value record = PlayerRosterRecord(message.playerId, initialLogin(message.playerInfo, message.timestamp), message.statisticDelta);
+			value record = PlayerRosterRecord(message.playerInfo, initialLogin(message.timestamp), message.statisticDelta);
 			return storeRecord(record);
 		}
 	}
@@ -57,29 +58,49 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 			value newLogin = oldRecord.login.renew(message.timestamp, config.balanceIncreaseDelay);
 			if (oldRecord.login.mustCredit(message.timestamp)) {
 				value loginDelta = PlayerStatistic(config.balanceIncreaseAmount);
-				value record = PlayerRosterRecord(oldRecord.id, newLogin, oldRecord.stat);
+				value record = PlayerRosterRecord(oldRecord.playerInfo, newLogin, oldRecord.stat);
 				return storeRecordWithLoginDelta(record, message.playerInfo, loginDelta);
 			} else {
-				value record = PlayerRosterRecord(oldRecord.id, newLogin, oldRecord.stat);
+				value record = PlayerRosterRecord(oldRecord.playerInfo, newLogin, oldRecord.stat);
 				return storeRecord(record);
 			}
 		} else {
-			value record = PlayerRosterRecord(message.playerId, initialLogin(message.playerInfo, message.timestamp), PlayerStatistic());
+			value record = PlayerRosterRecord(message.playerInfo, initialLogin(message.timestamp), PlayerStatistic());
 			value loginDelta = PlayerStatistic(config.initialPlayerBalance);
 			return storeRecordWithLoginDelta(record, message.playerInfo, loginDelta);
 		}
 	}
 	
-	// TODO cleanup later
-	function readStatistics(PlayerDetailRequestMessage message) {
+	
+	// TODO revisit later
+	function playerTransactionType(PlayerStatisticUpdateMessage update) {
+		if (update.isBet) {
+			return "Bet";
+		} else if (update.isWonGame) {
+			return "Game won";
+		} else if (update.isRefund) {
+			return "Refund";
+		} else if (update.isLogin) {
+			return "Login";
+		} else {
+			return "Unknown";
+		}
+	}
+	function toPlayerTransaction(PlayerStatisticUpdateMessage update) {
+		return PlayerTransaction(playerTransactionType(update), update.statisticDelta.balance, update.timestamp);
+	}
+
+	
+	function readStatistics(PlayerDetailRequestMessage message, {InboundPlayerRosterMessage*} history) {
 		if (exists record = statisticMap[message.playerId]) {
-			return PlayerDetailOutputMessage(PlayerInfo(record.id.string, record.login.name), record.stat, []);
+			value transactions = history.narrow<PlayerStatisticUpdateMessage>().filter(PlayerStatisticUpdateMessage.hasBalanceDelta).map(toPlayerTransaction);
+			return PlayerDetailOutputMessage(record.playerInfo, record.stat, transactions.sequence());
 		} else {
 			return PlayerDetailOutputMessage(PlayerInfo(message.playerId.string, ""), PlayerStatistic(), []);
 		}
 	}
 	
-	shared OutboundPlayerRosterMessage processInputMessage(InboundPlayerRosterMessage message) {
+	shared OutboundPlayerRosterMessage processInputMessage(InboundPlayerRosterMessage message, {InboundPlayerRosterMessage*} history = {}) {
 		try (lock) {
 			switch (message)
 			case (is PlayerStatisticUpdateMessage) {
@@ -89,7 +110,7 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 				return loginPlayer(message);
 			}
 			case (is PlayerDetailRequestMessage) {
-				return readStatistics(message);
+				return readStatistics(message, history);
 			}
 		}
 	}

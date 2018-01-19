@@ -1,5 +1,5 @@
 import ceylon.json {
-	Object
+	JsonObject
 }
 import ceylon.logging {
 	logger
@@ -28,9 +28,9 @@ final class JsonEventBus(Vertx vertx) {
 	
 	value log = logger(`package`);
 	
-	shared void sendMessage<OutboundMessage>(Object message, String address, Anything parseOutboundMessage(Object json), void responseHandler(Throwable|OutboundMessage response)) {
+	shared void sendMessage<OutboundMessage>(JsonObject message, String address, Anything parseOutboundMessage(JsonObject json), void responseHandler(Throwable|OutboundMessage response)) {
 		log.info("Req ``message.string``");
-		vertx.eventBus().send(address, message, void (Throwable|Message<Object?> result) {
+		vertx.eventBus().send(address, message, void (Throwable|Message<JsonObject?> result) {
 			if (is Throwable result) {
 				responseHandler(result);
 			} else if (exists body = result.body(), is OutboundMessage response = parseOutboundMessage(body)) {
@@ -41,18 +41,18 @@ final class JsonEventBus(Vertx vertx) {
 		});
 	}
 	
-	shared void registerParallelConsumer(WorkerExecutor executor, String address, Object process(Object msg)) {
-		vertx.eventBus().consumer(address, void (Message<Object?> message) {
+	shared void registerParallelConsumer(WorkerExecutor executor, String address, JsonObject process(JsonObject msg)) {
+		vertx.eventBus().consumer(address, void (Message<JsonObject?> message) {
 			if (exists body = message.body()) {
 				executor.executeBlocking(
-					void (Future<Object?> result) {
+					void (Future<JsonObject?> result) {
 						result.complete(process(body));
 					},
-					void (Throwable|Object|Null result) {
+					void (Throwable|JsonObject|Null result) {
 						if (is Throwable result) {
 							log.error("Failed processing for ``message.body() else message``", result);
 							message.fail(500, "Processing error: ``result.message``");
-						} else if (is Object result) {
+						} else if (is JsonObject result) {
 							log.info("Rep ``result.string``");
 							message.reply(result);
 						}
@@ -63,8 +63,8 @@ final class JsonEventBus(Vertx vertx) {
 		});
 	}
 	
-	shared void registerConsumer(String address, Object process(Object msg)) {
-		vertx.eventBus().consumer(address, void (Message<Object?> message) {
+	shared void registerConsumer(String address, JsonObject process(JsonObject msg)) {
+		vertx.eventBus().consumer(address, void (Message<JsonObject?> message) {
 			if (exists body = message.body()) {
 				try { 
 					value result = process(body);
@@ -80,7 +80,33 @@ final class JsonEventBus(Vertx vertx) {
 		});
 	}
 	
-	shared void publishMessage(Object message, String address) {
+	shared void registerAsyncConsumer(String address, void process(JsonObject msg, Anything(JsonObject|Throwable) callback)) {
+		
+		vertx.eventBus().consumer(address, void (Message<JsonObject?> message) {
+			void reply(JsonObject|Throwable result) {
+				if (is Throwable result) {
+					log.error("Failed processing for ``message.body() else message``", result);
+					message.fail(500, "Processing error: ``result.message``");
+				} else {
+					log.info("Res ``result.string``");
+					message.reply(result);
+				}
+			}
+			
+			if (exists body = message.body()) {
+				try { 
+					process(body, reply);
+				} catch (Exception exception) {
+					log.error("Failed processing for ``message.body() else message``", exception);
+					message.fail(500, "Processing error: ``exception.message``");
+				}
+			} else {
+				message.fail(500, "Invalid request: ``message``");
+			}
+		});
+	}
+	
+	shared void publishMessage(JsonObject message, String address) {
 		log.info("Pub ``message.string``");
 		vertx.eventBus().publish(address, message);
 	}
