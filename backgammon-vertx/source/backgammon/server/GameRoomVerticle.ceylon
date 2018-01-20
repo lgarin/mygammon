@@ -86,7 +86,6 @@ final class GameRoomVerticle() extends Verticle() {
 			roomEventBus.disableOutput = false;
 			rosterEventBus.disableOutput = false;
 			scoreEventBus.disableOutput = false;
-			log.info("Started room : ``roomConfig.roomId``");
 			startFuture.complete();
 		}
 		
@@ -101,7 +100,7 @@ final class GameRoomVerticle() extends Verticle() {
 				if (is Throwable result) {
 					startFuture.fail(result);
 				} else {
-					log.info("Replayed ``result`` events in game room ``roomConfig.roomId``");
+					log.info("Game room ``roomConfig.roomId`` events : ``result``");
 					finishStartup();
 				}
 			});
@@ -113,7 +112,7 @@ final class GameRoomVerticle() extends Verticle() {
 				if (is Throwable result) {
 					startFuture.fail(result);
 				} else {
-					log.info("Replayed ``result`` events in match room ``roomConfig.roomId``");
+					log.info("Match room ``roomConfig.roomId`` events : ``result``");
 					replayGameRoom();
 				}
 			});

@@ -101,7 +101,7 @@ PlayerListMessage parsePlayerListMessageMessage(Object json) {
 
 shared final class PlayerStateMessage(shared actual RoomId roomId, shared PlayerState? state, shared MatchState? match) satisfies OutboundRoomMessage {
 	shared actual Boolean success = state exists;
-	shared actual PlayerId playerId = systemPlayerId;
+	shared actual PlayerId playerId = state?.playerId else systemPlayerId;
 	shared Boolean hasGame => match?.hasGame else false;
 	toJson() => toExtendedJson {"state" -> state?.toJson(), "match" -> match?.toJson()};
 }

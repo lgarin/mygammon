@@ -13,7 +13,10 @@ import backgammon.shared {
 	MatchEndedMessage,
 	StatusResponseMessage,
 	OutboundGameMessage,
-	OutboundMatchMessage
+	OutboundMatchMessage,
+	OutboundScoreBoardMessage,
+	ScoreBoardResponseMessage,
+	GameStatisticResponseMessage
 }
 import ceylon.time {
 
@@ -97,6 +100,16 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 			value model = PlayerStatusModel(message.playerInfo, message.statistic, message.transactions);
 			gui.showPlayerStatus(model.buildStatisticData(), model.buildTransactionList());
 			return true;
+		}
+	}
+	
+	shared actual Boolean handleScoreMessage(OutboundScoreBoardMessage message) {
+		switch (message)
+		case (is ScoreBoardResponseMessage) {
+			return false;
+		}
+		case (is GameStatisticResponseMessage) {
+			return false;
 		}
 	}
 	

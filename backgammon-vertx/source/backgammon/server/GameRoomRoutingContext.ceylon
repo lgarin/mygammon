@@ -153,4 +153,8 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 	shared void failWithUnauthorized() {
 		rc.fail(401);
 	}
+	
+	shared void failWithServiceUnavailable() {
+		rc.fail(503);
+	}
 }

@@ -65,7 +65,7 @@ final class PlayerRosterVerticle() extends Verticle() {
 				});
 				
 				repoEventBus.disableOutput = false;
-				log.info("Replayed ``result`` events in player roster");
+				log.info("Player roster events : ``result``");
 				startFuture.complete();
 			}
 		});

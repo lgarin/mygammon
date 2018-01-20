@@ -17,7 +17,7 @@ import backgammon.shared {
 	GameTimeoutMessage,
 	GameMessage,
 	StartGameMessage,
-	NewGameStatisticMessage
+	GameStatisticMessage
 }
 import backgammon.shared.game {
 	black
@@ -34,7 +34,7 @@ import backgammon.server.dice {
 	DiceRoller
 }
 
-shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander, Anything(GameEventMessage) eventRecorder, Anything(NewGameStatisticMessage) statisticRecorder) {
+shared final class GameRoom(RoomConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander, Anything(GameEventMessage) eventRecorder, Anything(GameStatisticMessage) statisticRecorder) {
 	
 	value roomId = RoomId(configuration.roomId);
 	value lock = ObtainableLock("GameRoom ``configuration.roomId``"); 

@@ -15,7 +15,8 @@ import backgammon.shared {
 	PlayerInfo,
 	PlayerDetailRequestMessage,
 	PlayerDetailOutputMessage,
-	PlayerTransaction
+	PlayerTransaction,
+	PlayerStatisticRequestMessage
 }
 
 import ceylon.collection {
@@ -31,13 +32,13 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 
 	function storeRecord(PlayerRosterRecord record, [PlayerInfo,PlayerStatistic]? loginDelta = null) {
 		statisticMap.put(record.id, record);
-		return PlayerStatisticOutputMessage(record.id, record.stat);
+		return PlayerStatisticOutputMessage(record.playerInfo, record.stat);
 	}
 	
-	function storeRecordWithLoginDelta(PlayerRosterRecord record, PlayerInfo playerInfo, PlayerStatistic loginDelta) {
+	function storeRecordWithLoginDelta(PlayerRosterRecord record, PlayerStatistic loginDelta) {
 		statisticMap.put(record.id, record);
-		recordUpdate(PlayerStatisticUpdateMessage(playerInfo, loginDelta));
-		return PlayerStatisticOutputMessage(record.id, record.stat + loginDelta);
+		recordUpdate(PlayerStatisticUpdateMessage(record.playerInfo, loginDelta));
+		return PlayerStatisticOutputMessage(record.playerInfo, record.stat + loginDelta);
 	}
 	
 	function initialLogin(Instant timestamp)
@@ -55,19 +56,20 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 
 	function loginPlayer(PlayerLoginMessage message) {
 		if (exists oldRecord = statisticMap[message.playerId]) {
+			value playerLevel = oldRecord.stat.computeLevel(config.scoreLevels);
 			value newLogin = oldRecord.login.renew(message.timestamp, config.balanceIncreaseDelay);
 			if (oldRecord.login.mustCredit(message.timestamp)) {
 				value loginDelta = PlayerStatistic(config.balanceIncreaseAmount);
-				value record = PlayerRosterRecord(oldRecord.playerInfo, newLogin, oldRecord.stat);
-				return storeRecordWithLoginDelta(record, message.playerInfo, loginDelta);
+				value record = PlayerRosterRecord(oldRecord.playerInfo.withLevel(playerLevel), newLogin, oldRecord.stat);
+				return storeRecordWithLoginDelta(record, loginDelta);
 			} else {
-				value record = PlayerRosterRecord(oldRecord.playerInfo, newLogin, oldRecord.stat);
+				value record = PlayerRosterRecord(oldRecord.playerInfo.withLevel(playerLevel), newLogin, oldRecord.stat);
 				return storeRecord(record);
 			}
 		} else {
 			value record = PlayerRosterRecord(message.playerInfo, initialLogin(message.timestamp), PlayerStatistic());
 			value loginDelta = PlayerStatistic(config.initialPlayerBalance);
-			return storeRecordWithLoginDelta(record, message.playerInfo, loginDelta);
+			return storeRecordWithLoginDelta(record, loginDelta);
 		}
 	}
 	
@@ -91,12 +93,20 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 	}
 
 	
-	function readStatistics(PlayerDetailRequestMessage message, {InboundPlayerRosterMessage*} history) {
+	function readDetails(PlayerDetailRequestMessage message, {InboundPlayerRosterMessage*} history) {
 		if (exists record = statisticMap[message.playerId]) {
 			value transactions = history.narrow<PlayerStatisticUpdateMessage>().filter(PlayerStatisticUpdateMessage.hasBalanceDelta).map(toPlayerTransaction);
 			return PlayerDetailOutputMessage(record.playerInfo, record.stat, transactions.sequence());
 		} else {
 			return PlayerDetailOutputMessage(PlayerInfo(message.playerId.string, ""), PlayerStatistic(), []);
+		}
+	}
+	
+	function readStatistic(PlayerStatisticRequestMessage message) {
+		if (exists record = statisticMap[message.playerId]) {
+			return PlayerStatisticOutputMessage(record.playerInfo, record.stat);
+		} else {
+			return PlayerStatisticOutputMessage(PlayerInfo(message.playerId.string, ""), PlayerStatistic());
 		}
 	}
 	
@@ -110,7 +120,10 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 				return loginPlayer(message);
 			}
 			case (is PlayerDetailRequestMessage) {
-				return readStatistics(message, history);
+				return readDetails(message, history);
+			}
+			case (is PlayerStatisticRequestMessage) {
+				return readStatistic(message);
 			}
 		}
 	}
@@ -118,6 +131,7 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 	shared PlayerRepositoryStatistic statistic {
 		try (lock) {
 			variable Integer gameCount = 0;
+			
 			variable Integer totalBalance = 0;
 			variable Integer loginCount = 0;
 			for (record in statisticMap.items) {

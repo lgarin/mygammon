@@ -34,7 +34,7 @@ import backgammon.shared {
 	TakeTurnMessage,
 	PingMatchMessage,
 	PlayerInfo,
-	NewGameStatisticMessage
+	GameStatisticMessage
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -56,7 +56,7 @@ final class GamePlayerState(shared PlayerId id, shared CheckerColor color) {
 	shared variable Integer successiveTimeouts = 0;
 }
 
-final class GameManager(StartGameMessage startGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander, Anything(NewGameStatisticMessage) statisticRecorder) {
+final class GameManager(StartGameMessage startGameMessage, GameConfiguration configuration, Anything(OutboundGameMessage) messageBroadcaster, Anything(InboundMatchMessage) matchCommander, Anything(GameStatisticMessage) statisticRecorder) {
 	
 	shared MatchId matchId = startGameMessage.matchId;
 	
@@ -116,7 +116,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		if (game.end(timestamp)) {
 			matchCommander(EndMatchMessage(playerId, matchId, winnerId, game.score));
 			if (exists blackPlayer = toPlayer(black).info, exists whitePlayer = toPlayer(white).info) {
-				statisticRecorder(NewGameStatisticMessage(matchId, blackPlayer, whitePlayer, game.currentStatistic));
+				statisticRecorder(GameStatisticMessage(matchId, blackPlayer, whitePlayer, game.currentStatistic));
 			}
 			return true;
 		} else {

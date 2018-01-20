@@ -89,6 +89,8 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 				completion(result.map(applicationMessages.parse<InboundPlayerRosterMessage>).narrow<InboundPlayerRosterMessage>());
 			}
 		}
-		eventStore.queryEvents("player-roster", EventSearchCriteria("playerInfo.id", playerId.string, "timestamp", false), mapResult);
+		value playerIdTerm = EventSearchCriteria.term("playerInfo.id", playerId.string);
+		value query = playerIdTerm.ascendingOrder("timestamp");
+		eventStore.queryEvents("player-roster", query, mapResult);
 	}
 }

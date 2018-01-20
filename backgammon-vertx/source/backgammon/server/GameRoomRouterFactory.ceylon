@@ -50,7 +50,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		value context = GameRoomRoutingContext(routingContext);
 		roomEventBus.sendInboundMessage(EnterRoomMessage(playerInfo.playerId, RoomId(serverConfig.roomId), playerInfo, playerStat), void (Throwable|RoomActionResponseMessage result) {
 			if (is Throwable result) {
-				routingContext.fail(result);
+				context.fail(result);
 			} else {
 				context.sendRedirect("/room/``serverConfig.roomId``");
 			}
@@ -59,13 +59,13 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 	
 	void completeLogin(RoutingContext routingContext, PlayerInfo playerInfo) {
 		value context = GameRoomRoutingContext(routingContext);
-		context.setCurrentPlayerInfo(playerInfo);
 		repoEventBus.sendInboundMessage(PlayerLoginMessage(playerInfo), void (Throwable|PlayerStatisticOutputMessage result) {
 			if (is Throwable result) {
-				routingContext.fail(result);
+				context.clearUser();
+				context.fail(result);
 			} else {
-				value playerLevel = result.statistic.computeLevel(serverConfig.scoreLevels);
-				enterRoom(routingContext, playerInfo.withLevel(playerLevel), result.statistic);
+				context.setCurrentPlayerInfo(result.playerInfo);
+				enterRoom(routingContext, result.playerInfo, result.statistic);
 			}
 		});
 	}
@@ -74,8 +74,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		value context = GameRoomRoutingContext(routingContext);
 		void handler(KeycloakUserInfo|Throwable result) {
 			if (is KeycloakUserInfo result) {
-				value playerInfo = PlayerInfo(result.userId, result.displayName);
-				completeLogin(routingContext, playerInfo);
+				completeLogin(routingContext, PlayerInfo(result.userId, result.displayName));
 			} else {
 				context.clearUser();
 				context.fail(result);
@@ -102,11 +101,11 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		if (exists playerId = context.getCurrentPlayerId(false), exists roomId = context.getRequestRoomId(false)) {
 			roomEventBus.sendInboundMessage(FindMatchTableMessage(playerId, roomId), void (Throwable|FoundMatchTableMessage result) {
 				if (is Throwable result) {
-					routingContext.fail(result);
+					context.fail(result);
 				} else if (exists table = result.table) {
 					context.sendRedirect("/room/``roomId``/table/``table``/play");
 				} else {
-					routingContext.fail(503);
+					context.failWithServiceUnavailable();
 				}
 			});
 		} else {

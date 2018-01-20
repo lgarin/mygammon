@@ -26,7 +26,10 @@ final class HttpServerVerticle() extends Verticle() {
 		value authRouterFactory = KeycloakAuthRouterFactory(vertx, serverConfig.hostname, serverConfig.port);
 		value roomRouterFactory = GameRoomRouterFactory(vertx, serverConfig);
 		value rosterRouterFactory = PlayerRosterRouterFactory(vertx, serverConfig);
+		value scoreRouterFactory = ScoreBoardRouterFactory(vertx, serverConfig);
 		value router = routerFactory.router(vertx);
+		
+		log.info("Starting web server...");
 		
 		router.route("/logs/*").handler(staticHandler.create("logs").setCachingEnabled(false).setDirectoryListing(true).handle);
 		router.route("/static/*").handler(staticHandler.create("static").handle);
@@ -37,6 +40,7 @@ final class HttpServerVerticle() extends Verticle() {
 		router.mountSubRouter("/eventbus", roomRouterFactory.createEventBusRouter());
 		router.mountSubRouter("/api/room", roomRouterFactory.createApiRouter());
 		router.mountSubRouter("/api/roster", rosterRouterFactory.createApiRouter());
+		router.mountSubRouter("/api/score", scoreRouterFactory.createApiRouter());
 		
 		router.mountSubRouter("/", authRouterFactory.createLoginRouter());
 		router.mountSubRouter("/", roomRouterFactory.createRootRouter());
@@ -44,7 +48,7 @@ final class HttpServerVerticle() extends Verticle() {
 		vertx.createHttpServer().requestHandler(router.accept).listen(serverConfig.port, (result) {
 			if (is HttpServer result) {
 				server = result;
-				log.info("Started webserver : http://``serverConfig.hostname``:``serverConfig.port``");
+				log.info("Web server address : http://``serverConfig.hostname``:``serverConfig.port``");
 				startFuture.complete();
 			} else {
 				startFuture.fail(result);
@@ -53,10 +57,9 @@ final class HttpServerVerticle() extends Verticle() {
 	}
 	
 	shared actual void stop() {
-		value serverConfig = ServerConfiguration(config);
 		if (exists currentServer = server) {
 			currentServer.close();
 		}
-		log.info("Stopped webserver : http://``serverConfig.hostname``:``serverConfig.port``");
+		log.info("Stopped web server");
 	}
 }

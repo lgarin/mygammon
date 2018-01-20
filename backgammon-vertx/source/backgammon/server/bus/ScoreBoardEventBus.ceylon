@@ -1,25 +1,25 @@
-import io.vertx.ceylon.core {
-
-	Vertx
-}
 import backgammon.server {
-
 	ServerConfiguration
 }
 import backgammon.server.store {
-
-	JsonEventStore
+	JsonEventStore,
+	EventSearchCriteria
 }
 import backgammon.shared {
-
 	applicationMessages,
 	InboundScoreBoardMessage,
 	OutboundScoreBoardMessage,
-	ScoreBoardMessage
+	ScoreBoardMessage,
+	PlayerId,
+	GameStatisticMessage
 }
-import ceylon.json {
 
+import ceylon.json {
 	JsonObject
+}
+
+import io.vertx.ceylon.core {
+	Vertx
 }
 final shared class ScoreBoardEventBus(Vertx vertx, ServerConfiguration configuration) {
 	
@@ -58,15 +58,40 @@ final shared class ScoreBoardEventBus(Vertx vertx, ServerConfiguration configura
 		}
 		vertx.runOnContext(() => sendInboundMessage(message, rethrowExceptionHandler));
 	}
-	
-	shared void registerConsumer(OutboundScoreBoardMessage process(InboundScoreBoardMessage request)) {
-		eventBus.registerConsumer("ScoreBoardMessage", function (JsonObject msg) {
+
+	shared void registerAsyncConsumer(Anything(InboundScoreBoardMessage, Anything(OutboundScoreBoardMessage|Throwable)) processAsync) {
+		void parseRequest(JsonObject msg, Anything(JsonObject|Throwable) completion) {
 			if (exists request = applicationMessages.parse<InboundScoreBoardMessage>(msg)) {
-				return applicationMessages.format(process(request));
+				void formatResponse(OutboundScoreBoardMessage|Throwable result) {
+					if (is Throwable result) {
+						completion(result);
+					} else {
+						completion(applicationMessages.format(result));
+					}
+				}
+				processAsync(request, formatResponse);
 			} else {
-				throw Exception("Invalid request: ``msg``");
+				completion(Exception("Invalid request: ``msg``"));
 			}
-		});
+		}
+		
+		eventBus.registerAsyncConsumer("ScoreBoardMessage", parseRequest);
+	}
+
+	shared void queryGameStatisticMessages(PlayerId playerId, void completion({GameStatisticMessage*}|Throwable result)) {
+		void mapResult({JsonObject*}|Throwable result) {
+			if (is Throwable result) {
+				completion(result);
+			} else {
+				completion(result.map(applicationMessages.parse<GameStatisticMessage>).narrow<GameStatisticMessage>());
+			}
+		}
+		value classTerm = EventSearchCriteria.term("class", `GameStatisticMessage`.declaration.name);
+		value blackPlayerTerm = EventSearchCriteria.term("blackPlayer.id", playerId.string);
+		value whitePlayerTerm = EventSearchCriteria.term("whitePlayer.id", playerId.string);
+		value playerCondition = EventSearchCriteria.or(blackPlayerTerm, whitePlayerTerm);
+		value query = EventSearchCriteria.and(classTerm, playerCondition).ascendingOrder("timestamp");
+		eventStore.queryEvents("score-board", query, mapResult);
 	}
 	
 	shared void storeScoreBoardMessage(ScoreBoardMessage message) {

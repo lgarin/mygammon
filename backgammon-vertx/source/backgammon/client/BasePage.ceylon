@@ -40,7 +40,12 @@ import backgammon.shared {
 	InboundPlayerRosterMessage,
 	PlayerLoginMessage,
 	PlayerStatisticUpdateMessage,
-	PlayerDetailRequestMessage
+	PlayerDetailRequestMessage,
+	PlayerStatisticRequestMessage,
+	OutboundScoreBoardMessage,
+	InboundScoreBoardMessage,
+	QueryGameStatisticMessage,
+	GameStatisticMessage
 }
 
 import ceylon.json {
@@ -60,6 +65,7 @@ abstract shared class BasePage() {
 	shared formal Boolean handleMatchMessage(OutboundMatchMessage message);
 	shared formal Boolean handleGameMessage(OutboundGameMessage message);
 	shared formal Boolean handleRosterMessage(OutboundPlayerRosterMessage message);
+	shared formal Boolean handleScoreMessage(OutboundScoreBoardMessage message);
 	
 	function handleServerMessage(Object json)  {
 		
@@ -73,6 +79,8 @@ abstract shared class BasePage() {
 			return handleGameMessage(message);
 		} else if (exists message = applicationMessages.parse<OutboundPlayerRosterMessage>(json)) {
 			return handleRosterMessage(message);
+		} else if (exists message = applicationMessages.parse<OutboundScoreBoardMessage>(json)) {
+			return handleScoreMessage(message);
 		} else {
 			return false;
 		}
@@ -213,6 +221,19 @@ abstract shared class BasePage() {
 		}
 		case (is PlayerDetailRequestMessage) {
 			makeApiRequest("/api/roster/playerdetail");
+		}
+		case (is PlayerStatisticRequestMessage) {
+			makeApiRequest("/api/roster/playerstatistic");
+		}
+	}
+	
+	shared void scoreCommander(InboundScoreBoardMessage message) {
+		switch (message)
+		case (is GameStatisticMessage) {
+			// ignore
+		}
+		case (is QueryGameStatisticMessage) {
+			makeApiRequest("/api/score/playerdetail");
 		}
 	}
 }

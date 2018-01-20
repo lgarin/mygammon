@@ -10,6 +10,10 @@ import ceylon.language.meta {
 
 	type
 }
+import ceylon.language.meta.model {
+
+	ClassOrInterface
+}
 
 shared sealed interface ApplicationMessage {
 	shared formal Object toJson();
@@ -25,7 +29,12 @@ shared object applicationMessages {
 	value parserMap = HashMap<String,ApplicationMessage(Object)>();
 	
 	void registerParser<MessageClass>(MessageClass(Object) parser) given MessageClass satisfies ApplicationMessage {
-		parserMap.put(`MessageClass`.string.substring(`module`.name.size + 2), parser);
+		value messageType = `MessageClass`;
+		if (is ClassOrInterface<MessageClass> messageType) {
+			parserMap.put(messageType.declaration.name, parser);
+		} else {
+			throw Exception("Union and intersection types are not supported");
+		}
 	}
 	
 	shared MessageClass? parse<out MessageClass>(Object json) given MessageClass satisfies ApplicationMessage {
@@ -103,6 +112,8 @@ shared object applicationMessages {
 	registerParser(parseEndGameMessage);
 	registerParser(parseGameStateRequestMessage);
 	
-	registerParser(parseNewGameStatisticMessage);
+	registerParser(parseGameStatisticMessage);
 	registerParser(parseScoreBoardResponseMessage);
+	registerParser(parseQueryGameStatisticMessage);
+	registerParser(parseGameStatisticResponseMessage);
 }

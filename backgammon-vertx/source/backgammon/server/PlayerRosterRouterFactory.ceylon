@@ -17,7 +17,8 @@ import backgammon.shared {
 	applicationMessages,
 	InboundPlayerRosterMessage,
 	OutboundPlayerRosterMessage,
-	PlayerDetailRequestMessage
+	PlayerDetailRequestMessage,
+	PlayerStatisticRequestMessage
 }
 
 final class PlayerRosterRouterFactory(Vertx vertx, ServerConfiguration serverConfig) {
@@ -42,9 +43,18 @@ final class PlayerRosterRouterFactory(Vertx vertx, ServerConfiguration serverCon
 		}
 	}
 	
+	void handlePlayerStatisticRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		
+		if (exists playerId = context.getCurrentPlayerId()) {
+			forwardResponse(context, PlayerStatisticRequestMessage(playerId));
+		}
+	}
+	
 	shared Router createApiRouter() {
 		value restApi = routerFactory.router(vertx);
 		restApi.get("/playerdetail").handler(handlePlayerDetailRequest);
+		restApi.get("/playerstatistic").handler(handlePlayerStatisticRequest);
 		return restApi;
 	}
 }

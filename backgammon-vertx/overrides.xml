@@ -13,6 +13,12 @@
 	</module>
     <module module="io.vertx.ceylon.web" version="3.5.0.Beta1">
     	<remove module="io.vertx.vertx-web"/>
+    	<remove module="io.vertx.vertx-web-templ-freemaker"/>
+    	<remove module="io.vertx.vertx-web-templ-handlebars"/>
+    	<remove module="io.vertx.vertx-web-templ-jade"/>
+    	<remove module="io.vertx.vertx-web-templ-mvel"/>
+    	<remove module="io.vertx.vertx-web-templ-pebble"/>
+    	<remove module="io.vertx.vertx-web-templ-thymeleaf"/>
 	</module>
 	<module module="io.vertx.ceylon.auth.common" version="3.5.0.Beta1">
     	<remove module="io.vertx.vertx-auth-common"/>
