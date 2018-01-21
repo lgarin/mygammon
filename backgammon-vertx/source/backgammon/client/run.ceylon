@@ -2,6 +2,10 @@ import backgammon.client.board {
 
 	BoardPage
 }
+import backgammon.client.account {
+
+	AccountPage
+}
 import backgammon.client.room {
 
 	RoomPage
@@ -17,4 +21,10 @@ shared RoomPage createRoom() {
 	value room = RoomPage();
 	room.run();
 	return room;
+}
+
+shared AccountPage createAccount() {
+	value account = AccountPage();
+	account.run();
+	return account;
 }

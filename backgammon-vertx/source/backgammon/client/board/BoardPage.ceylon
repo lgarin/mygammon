@@ -84,6 +84,9 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 			} else {
 				return onLeaveConfirmed();
 			}
+		} else if (target.id == gui.accountButtonId, exists tableId = extractTableId()) {
+			window.location.\iassign("/room/``tableId.roomId``/account");
+			return true;
 		}
 		
 		return false;

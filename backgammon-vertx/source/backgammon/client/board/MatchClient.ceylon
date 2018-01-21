@@ -75,7 +75,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Table
 		}
 		
 		if (exists [player,balance] = match.playerInfoWithCurrentBalance(playerId)){
-			gui.showStatusText(player.name, balance);
+			gui.showAccountStatus(player.name, balance);
 		}
 	}
 	
@@ -113,7 +113,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Table
 			gui.hideSubmitButton();
 			gui.hideJockerButton();
 			gui.hideUndoButton();
-			gui.showStatusText(player.name, balance);
+			gui.showAccountStatus(player.name, balance);
 		}
 	}
 	

@@ -18,12 +18,11 @@ shared class TableGui(Document document) extends GameGui(document) {
 	shared String submitButtonId = "submit";
 	shared String jockerButtonId = "jocker";
 	shared String exitButtonId = "exit";
-	shared String statusTextId = "status";
 	shared String statusUserId = "currentUser";
 	shared String statusBalanceId = "currentBalance";
 	shared String matchPotId = "matchPot";
 	shared String matchPotAmountId = "matchPotAmount";
-	shared String statusButtonId = "status";
+	shared String accountButtonId = "account";
 	
 	shared void hideUndoButton() {
 		addClass(undoButtonId, hiddenClass);
@@ -63,18 +62,18 @@ shared class TableGui(Document document) extends GameGui(document) {
 		removeClass(jockerButtonId, hiddenClass);
 	}
 	
-	shared void showStatusText(String user, Integer balance) {
+	shared void showAccountStatus(String user, Integer balance) {
 		if (exists statusUserText = document.getElementById(statusUserId)) {
 			statusUserText.innerHTML = user;
 		}
 		if (exists statusBalanceText = document.getElementById(statusBalanceId)) {
 			statusBalanceText.innerHTML = balance.string;
 		}
-		removeClass(statusTextId, hiddenClass);
+		removeClass(accountButtonId, hiddenClass);
 	}
 	
-	shared void hideStatusText() {
-		addClass(statusTextId, hiddenClass);
+	shared void hideAccountStatus() {
+		addClass(accountButtonId, hiddenClass);
 	}
 	
 	shared void showMatchPot(Integer matchPot) {
@@ -155,7 +154,7 @@ shared class TableGui(Document document) extends GameGui(document) {
 	
 	shared default void showBeginState(PlayerState playerState) {
 		showExitButton();
-		showStatusText(playerState.info.name, playerState.statistic.balance);
+		showAccountStatus(playerState.info.name, playerState.statistic.balance);
 		showEmptyGame();
 	}
 }

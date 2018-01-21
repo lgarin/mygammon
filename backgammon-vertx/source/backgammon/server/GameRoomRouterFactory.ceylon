@@ -113,6 +113,10 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		}
 	}
 	
+	void handleAccount(RoutingContext routingContext) {
+		routingContext.reroute("static/account.html");
+	}
+	
 	void handleTable(RoutingContext routingContext) {
 		routingContext.reroute("static/board.html");
 	}
@@ -142,6 +146,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		router.route("/logout").handler(handleLogout);
 		router.route("/room/:roomId").handler(handleRoom);
 		router.route("/room/:roomId/play").handler(handlePlay);
+		router.route("/room/:roomId/account").handler(handleAccount);
 		router.route("/room/:roomId/table/:tableId/view").handler(handleTable);
 		router.route("/room/:roomId/table/:tableId/play").handler(handleTable);
 		return router;

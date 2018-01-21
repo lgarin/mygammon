@@ -6,17 +6,12 @@ import backgammon.shared {
 
 	TableStateRequestMessage,
 	TableId,
-	PlayerDetailRequestMessage,
-	PlayerStatisticOutputMessage,
 	OutboundPlayerRosterMessage,
-	PlayerDetailOutputMessage,
 	MatchEndedMessage,
 	StatusResponseMessage,
 	OutboundGameMessage,
 	OutboundMatchMessage,
-	OutboundScoreBoardMessage,
-	ScoreBoardResponseMessage,
-	GameStatisticResponseMessage
+	OutboundScoreBoardMessage
 }
 import ceylon.time {
 
@@ -75,10 +70,6 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 			return gameClient.handleUndoEvent();
 		} else if (target.id == gui.jockerButtonId, exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleJockerEvent();
-		} else if (target.id == gui.statusButtonId) {
-			//window.location.\iassign("/status");
-			rosterCommander(PlayerDetailRequestMessage(currentPlayerId));
-			return true;
 		} else if (target.id == gui.exitButtonId) {
 			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
 				gui.showDialog("dialog-logout");
@@ -91,26 +82,12 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 		return false;
 	}
 	
-	shared actual Boolean handleRosterMessage(OutboundPlayerRosterMessage message) {
-		switch (message)
-		case (is PlayerStatisticOutputMessage) {
-			return false;
-		}
-		case (is PlayerDetailOutputMessage) {
-			value model = PlayerStatusModel(message.playerInfo, message.statistic, message.transactions);
-			gui.showPlayerStatus(model.buildStatisticData(), model.buildTransactionList());
-			return true;
-		}
+	shared actual default Boolean handleRosterMessage(OutboundPlayerRosterMessage message) {
+		return false;
 	}
 	
 	shared actual Boolean handleScoreMessage(OutboundScoreBoardMessage message) {
-		switch (message)
-		case (is ScoreBoardResponseMessage) {
-			return false;
-		}
-		case (is GameStatisticResponseMessage) {
-			return false;
-		}
+		return false;
 	}
 	
 	shared actual Boolean handleMatchMessage(OutboundMatchMessage message) {
