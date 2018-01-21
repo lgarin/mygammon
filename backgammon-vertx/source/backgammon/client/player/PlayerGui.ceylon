@@ -9,7 +9,9 @@ import backgammon.shared {
 	TableId,
 	PlayerInfo,
 	PlayerStatistic,
-	PlayerTransaction
+	GameStatisticMessage,
+	PlayerId,
+	RoomId
 }
 
 import ceylon.json {
@@ -17,10 +19,10 @@ import ceylon.json {
 	JsonArray
 }
 import ceylon.time {
-
-	DateTime
+	Instant,
+	Duration
 }
-shared class AccountGui(Document document) extends BoardGui(document) {
+shared class PlayerGui(Document document) extends BoardGui(document) {
 	
 	shared String playButtonId = "play";
 	
@@ -62,36 +64,52 @@ shared class AccountGui(Document document) extends BoardGui(document) {
 	
 	function formatTwoDigitInteger(Integer integer) => integer < 10 then "0" + integer.string else integer.string;
 	
-	function formatTimestamp(DateTime dateTime) {
+	function formatTimestamp(Instant timestamp) {
+		value dateTime = timestamp.dateTime();
 		return "``formatTwoDigitInteger(dateTime.day)``.``formatTwoDigitInteger(dateTime.month.integer)``.``dateTime.year`` ``formatTwoDigitInteger(dateTime.hours)``:``formatTwoDigitInteger(dateTime.minutes)``:``formatTwoDigitInteger(dateTime.seconds)``";
 	}
 	
-	function buildTransactionArray([PlayerTransaction*] transactions) {
-		
-		return JsonArray {for (t in transactions) JsonObject { "type" -> t.type, "amount" -> t.amount, "dateTime" -> formatTimestamp(t.timestamp.dateTime()), "timestamp" -> t.timestamp.millisecondsOfEpoch }};
+	function formatDuration(Duration duration) {
+		value period = duration.period.normalized();
+		return "``formatTwoDigitInteger(period.hours)``:``formatTwoDigitInteger(period.minutes)``:``formatTwoDigitInteger(period.seconds)``";
+	}
+	
+	function formatInteger(Integer integer) {
+		return "``integer < 0 then "-" else "+"````integer``";
+	}
+	
+	function buildGameData(RoomId roomId, PlayerId playerId, GameStatisticMessage game) {
+		if (exists opponent = game.opponent(playerId), exists color = game.color(playerId)) {
+			return JsonObject { "opponent" -> opponent.name, "opponent-link" -> "/room/``roomId``/player?id=``opponent.id``", "score" -> formatInteger(game.statistic.score(color)), "diceDetla" -> formatInteger(game.statistic.diceDelta(color)), "duration" -> formatDuration(game.statistic.duration), "dateTime" -> formatTimestamp(game.statistic.startTime), "timestamp" -> game.statistic.startTime.millisecondsOfEpoch };
+		} else {
+			return JsonObject {  } ;
+		}
+	}
+	
+	function buildGameArray(RoomId roomId, PlayerId playerId, [GameStatisticMessage*] games) {
+		return JsonArray {for (g in games) buildGameData(roomId, playerId, g)};
 	}
 
 	shared actual void showBeginState(PlayerState playerState) {
 		super.showBeginState(playerState);
 		showPlayButton();
 		hideTablePreview();
-		showAccountData(playerState.info, playerState.statistic);
 	}
 	
-	shared void showAccountData(PlayerInfo info, PlayerStatistic statistic) {
+	shared void showPlayer(PlayerInfo info, PlayerStatistic statistic) {
 		value accountData = buildAccountData(info, statistic); 
 		dynamic {
-			jQuery("#account-info").loadTemplate(jQuery("#account-info-template"), JSON.parse(accountData.string));
+			jQuery("#player-info").loadTemplate(jQuery("#player-info-template"), JSON.parse(accountData.string));
 		}
-		removeClass("account-info", hiddenClass);
+		removeClass("player-info", hiddenClass);
 	}
 	
-	shared void showTransactions([PlayerTransaction*] transactions) {
-		value transactionArray = buildTransactionArray(transactions);
+	shared void showGames(RoomId roomId, PlayerId playerId, [GameStatisticMessage*] games) {
+		value gameArray = buildGameArray(roomId, playerId, games);
 		dynamic {
-			jQuery("#transaction-table tbody").loadTemplate(jQuery("#transaction-row-template"), JSON.parse(transactionArray.string));
-			jQuery("#transaction-table").dataTable();
+			jQuery("#game-table tbody").loadTemplate(jQuery("#game-row-template"), JSON.parse(gameArray.string));
+			jQuery("#game-table").dataTable();
 		}
-		removeClass("transaction-table", hiddenClass);
+		removeClass("game-table", hiddenClass);
 	}
 }

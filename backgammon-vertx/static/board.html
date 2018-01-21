@@ -83,18 +83,6 @@
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
-	                $("#dialog-status").dialog({
-		            	autoOpen: false,
-		                modal: true,
-		                width:520,
-		                open: function(event, ui) { $("#transaction-table").dataTable(
-		                		{"searching" : false,
-		                		 "paging": "simple",
-		                		 "lengthChange": false,
-		                		 "pageLength": 10})
-		                },
-		                buttons: { "Close": function() { $(this).dialog("close") } }
-	            	});
 	                $("#dialog-logout").dialog({
 	                	autoOpen: false,
 	                    modal: true,
@@ -307,50 +295,6 @@
 				<td data-content="dateTime" data-template-bind='[{"attribute": "data-order", "value": "timestamp"}]' class="text-right"></td>
 			</tr>
 	</script>
-	
-	<script type="text/html" id="dialog-status-template">
-			<table>
-				<tr>
-					<td class="col-xs-3"><span data-class="levelClass"></span></td>
-					<td class="col-xs-9"><h3 data-content="name"></h3></td>
-				</tr>
-			</table>
-			<table>
-				<tr>
-					<td class="col-xs-6"><b>Score</b></td>
-					<td class="col-xs-6" data-content="score"></td>
-				</tr>
-				<tr>
-					<td class="col-xs-6"><b>Win&nbsp;%</b></td>
-					<td class="col-xs-6" data-content="win"></td>
-				</tr>
-				<tr>
-					<td class="col-xs-6"><b>Lost&nbsp;%</b></td>
-					<td class="col-xs-6" data-content="lost"></td>
-				</tr>
-				<tr>
-					<td class="col-xs-6"><b>Games</b></td>
-					<td class="col-xs-6" data-content="games"></td>
-				</tr>
-			</table>
-			<br></br>
-			<div class="table-responsive">
-			<table id="transaction-table" class="table table-striped">
-				<thead>
-					<tr>
-						<th class="col-md-5">Type</th>
-	       				<th class="col-md-2">Amount</th>
-	       				<th class="col-md-5">Date/Time</th>
-	       			</tr>
-       			</thead>
-				<tbody>
-				</tbody>
-			</table>
-			</div>
-	</script>
-	
-	<div id="dialog-status" title="Status" style="display: none">
-	</div>
 
     <div id="dialog-won" title="Game won" style="display: none">
 	  <p>

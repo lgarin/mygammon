@@ -126,7 +126,7 @@ shared final class AccountPage() extends TablePage<AccountGui>(AccountGui(docume
 				return false;
 			}
 		} else {
-			return false;
+			return true;
 		}
 	}
 	

@@ -1,33 +1,31 @@
-import io.vertx.ceylon.core {
-
-	Verticle
+import backgammon.server.bus {
+	PlayerRosterEventBus,
+	ScoreBoardEventBus
 }
-import ceylon.logging {
-
-	logger
+import backgammon.server.score {
+	ScoreBoard
 }
 import backgammon.shared {
-
 	InboundScoreBoardMessage,
 	OutboundScoreBoardMessage,
 	GameStatisticMessage,
 	PlayerStatisticRequestMessage,
 	PlayerStatisticOutputMessage
 }
-import backgammon.server.bus {
 
-	PlayerRosterEventBus,
-	ScoreBoardEventBus
+import ceylon.logging {
+	logger
 }
-import backgammon.server.score {
 
-	ScoreBoard
+import io.vertx.ceylon.core {
+	Verticle,
+	Future
 }
 final class ScoreBoardVerticle() extends Verticle() {
 	
 	value log = logger(`package`);
 	
-	shared actual void start() {
+	shared actual void startAsync(Future<Anything> startFuture) {
 		value serverConfig = ServerConfiguration(config);
 		value scoreEventBus = ScoreBoardEventBus(vertx, serverConfig);
 		value rosterEventBus = PlayerRosterEventBus(vertx, serverConfig);
@@ -58,8 +56,19 @@ final class ScoreBoardVerticle() extends Verticle() {
 			}
 		}
 		
+		scoreEventBus.disableOutput = true;
 		log.info("Starting score board...");
-		scoreEventBus.registerAsyncConsumer(processInputMessage);
+		scoreEventBus.replayAllEvents(scoreBoard.processInputMessage, (result) {
+			if (is Throwable result) {
+				startFuture.fail(result);
+			} else {
+				scoreEventBus.registerAsyncConsumer(processInputMessage);
+				
+				scoreEventBus.disableOutput = false;
+				log.info("Score board events : ``result``");
+				startFuture.complete();
+			}
+		});
 	}
 	
 	shared actual void stop() {

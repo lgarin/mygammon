@@ -26,16 +26,14 @@
 			require(
 				[ 'backgammon/client/2.0.6/backgammon.client-2.0.6' ],
 				function(app) {
-					var room = app.createRoom();
-					$(".btn").on("click", function(event) { return room.onButton(event.currentTarget); });
-					$("#table-info").on("click", ".btn", function(event) { return room.onButton(event.currentTarget); });
-					$("#player-list tbody").on("click", ".player-row-button", function(event) { return room.onPlayerClick($(this).attr('id')); });
+					var player = app.createPlayer();
+					$(".btn").on("click", function(event) { return player.onButton(event.currentTarget); });
 					$("#dialog-logout").dialog({
 		            	autoOpen: false,
 		                modal: true,
 		                buttons: [{
 		                	text: $("#i18n #_logout").text(),
-		                	click: function() { $(this).dialog("close"); return room.onLogoutConfirmed(); }
+		                	click: function() { $(this).dialog("close"); return player.onLogoutConfirmed(); }
 		                }, {
 		                  	text: $("#i18n #_cancel").text(),
 		            	  	click: function() { $(this).dialog("close"); return true; }
@@ -46,7 +44,7 @@
 	                    modal: true,
 	                    buttons: [{
 	                    	text: $("#i18n #_play").text(),
-	                    	click: function() { $(this).dialog("close"); return room.onAcceptMatch(); }
+	                    	click: function() { $(this).dialog("close"); return player.onAcceptMatch(); }
 	                    }, {
 	                      	text: $("#i18n #_cancel").text(),
 	                	  	click: function() { $(this).dialog("close"); return true; }
@@ -57,7 +55,7 @@
 	                    modal: true,
 	                    buttons: [{
 	                    	text: $("#i18n #_leave").text(),
-	                    	click: function() { $(this).dialog("close"); return room.onLeaveConfirmed(); }
+	                    	click: function() { $(this).dialog("close"); return player.onLeaveConfirmed(); }
 	                    }, {
 	                      	text: $("#i18n #_cancel").text(),
 	                	  	click: function() { $(this).dialog("close"); return true; }
@@ -87,7 +85,6 @@
                     		click: function() { $(this).dialog("close"); return true; }
                     	}]
 	                });
-	            	window.setInterval(function() { return room.onTimer(); }, 100);
 				}
 			);
 		</script>
@@ -106,7 +103,7 @@
 				</div>
 				<div class="collapse navbar-collapse" id="menu">
 					<ul class="nav navbar-nav">
-						<li id="home" class="active btn btn-default navbar-btn">
+						<li id="home" class="btn btn-default navbar-btn">
 							<span class="glyphicon glyphicon-home"></span>
 							Room
 						</li>
@@ -114,17 +111,9 @@
 							<span class="glyphicon glyphicon-triangle-right"></span>
 							Game
 						</li>
-						<li id="new" class="btn btn-default navbar-btn hidden">
-							<span class="glyphicon glyphicon-plus-sign"></span>
-							Open table
-						</li>
-						<li id="leave" class="btn btn-default navbar-btn hidden">
-							<span class="glyphicon glyphicon-minus-sign"></span>
-							Leave table
-						</li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
-						<li id="account" class="btn hidden">
+						<li id="account" class="active btn hidden">
 							<p class="navbar-text">
 								<span id="currentUser"></span>&nbsp;<span id="currentBalance" class="badge"></span>
 							</p>
@@ -143,16 +132,18 @@
 		<div id="gui" class="container-fluid">
 			<div class="row content">
 				<div class="col-md-6 sidenav">
-					<table id="player-list" class="table">
+					<div id="player-info" class="hidden">
+					</div>
+					<br></br>
+					<table id="game-table" class="hidden table table-striped" data-page-length="10" data-length-change="false" data-searching="false" data-paging="simple">
 						<thead>
 							<tr>
-								<th class="col-xs-8">Name</th>
-								<th class="col-xs-1">Table</th>
-								<th class="col-xs-1">Score</th>
-								<th class="col-xs-1 hidden-sm hidden-xs">Win&nbsp;%</th>
-								<th class="col-xs-1 hidden-md hidden-sm hidden-xs">Games</th>
-							</tr>
-						</thead>
+								<th class="col-lg-5 col-xs-6">Opponent</th>
+			       				<th class="col-xs-1 text-right">Score</th>
+			       				<th class="col-lg-4 col-xs-5 text-right">Date/Time</th>
+			       				<th class="col-lg-2 hidden-md hidden-sm hidden-xs text-right">Duration</th>
+			       			</tr>
+		       			</thead>
 						<tbody>
 						</tbody>
 					</table>
@@ -287,25 +278,41 @@
 
 		</div><!-- end of gui -->
 
+			
 
-		<script type="text/html" id="player-empty-template">
-			<tr class="empty-row">
-				<td colspan="4">No active player in this room for the moment</td>
-			</tr>
+		<script type="text/html" id="player-info-template">
+			<table>
+				<tr>
+					<td class="col-xs-3"><span data-class="levelClass"></span></td>
+					<td class="col-xs-9"><h3 data-content="name"></h3></td>
+				</tr>
+			</table>
+			<table>
+				<tr>
+					<td class="col-xs-6"><b>Score</b></td>
+					<td class="col-xs-6" data-content="score"></td>
+				</tr>
+				<tr>
+					<td class="col-xs-6"><b>Win&nbsp;%</b></td>
+					<td class="col-xs-6" data-content="win"></td>
+				</tr>
+				<tr>
+					<td class="col-xs-6"><b>Lost&nbsp;%</b></td>
+					<td class="col-xs-6" data-content="lost"></td>
+				</tr>
+				<tr>
+					<td class="col-xs-6"><b>Games</b></td>
+					<td class="col-xs-6" data-content="games"></td>
+				</tr>
+			</table>
 		</script>
 
-		<script type="text/html" id="player-row-template">
-			<tr class="player-row">
-				<td class="player-name">
-					<span data-class="levelClass"></span>
-					<a style="margin-left:10px" data-content="name" data-href="link"></a>
-				</td>
-				<td>
-					<button data-class="viewButtonClass" type="button" class="player-row-button btn btn-default btn-xs" data-id="id">View</i></button>
-				</td>
-				<td data-content="score"></td>
-				<td class="hidden-sm hidden-xs" data-content="win"></td>
-				<td class="hidden-md hidden-sm hidden-xs" data-content="games"></td>
+		<script type="text/html" id="game-row-template">
+			<tr>
+				<td><a data-href="opponent-link" data-content="opponent"></a></td>
+				<td data-content="score" class="text-right"></td>
+				<td data-content="dateTime" data-template-bind='[{"attribute": "data-order", "value": "timestamp"}]' class="text-right"></td>
+				<td class="hidden-md hidden-sm hidden-xs text-right" data-content="duration"></td>
 			</tr>
 		</script>
 		
@@ -319,7 +326,7 @@
        			</thead>
        		</table>
 		</script>
-
+	
 		<div id="dialog-accept" title="Join the game?" style="display: none">
 		  <p>
 		    <b>Do you accept to play this game?</b>

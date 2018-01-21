@@ -4,7 +4,8 @@ import backgammon.shared {
 	TableId,
 	PlayerId,
 	PlayerInfo,
-	PlayerStatistic
+	PlayerStatistic,
+	RoomId
 }
 
 import ceylon.collection {
@@ -26,7 +27,7 @@ final class PlayerListModel(String hiddenClass) {
 		playerMap.putAll({for (p in message.updatedPlayers) p.playerId -> p});
 	}
 	
-	function toRowData(Boolean hideButtons)(PlayerState state) {
+	function toRowData(RoomId roomId, Boolean hideButtons)(PlayerState state) {
 		
 		String buttonClass;
 		if (hideButtons && state.tableId exists) {
@@ -37,7 +38,7 @@ final class PlayerListModel(String hiddenClass) {
 			buttonClass = hiddenClass;
 		}
 		value levelClass = if (exists level = state.info.level) then "player-level level-``level``" else "hidden";
-		return Object {"id" -> state.info.id, "name" -> state.info.name, "viewButtonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "levelClass" -> levelClass, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "lost" -> state.statistic.lostPercentage, "games" -> state.statistic.playedGames, "balance" -> state.statistic.balance};
+		return Object {"id" -> state.info.id, "name" -> state.info.name, "link" -> "/room/``roomId``/player?id=``state.info.id``", "viewButtonClass" -> buttonClass, "tableId" -> state.tableId?.toJson(), "levelClass" -> levelClass, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "games" -> state.statistic.playedGames };
 	}
 	
 	shared TableId? findTable(PlayerId playerId) {
@@ -52,7 +53,7 @@ final class PlayerListModel(String hiddenClass) {
 	
 	shared PlayerState? findPlayer(PlayerId playerId) => playerMap[playerId];
 	
- 	shared Array toTemplateData(Boolean hideButtons) => Array(playerMap.items.sort(comparePlayer).map(toRowData(hideButtons)));
+ 	shared Array toTemplateData(RoomId roomId, Boolean hideButtons) => Array(playerMap.items.sort(comparePlayer).map(toRowData(roomId, hideButtons)));
 	
 	shared Boolean empty => playerMap.empty;
 	

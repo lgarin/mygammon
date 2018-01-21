@@ -62,7 +62,7 @@ final class GameRoomVerticle() extends Verticle() {
 			messageBroadcaster = roomEventBus.publishOutboundMessage;
 			matchCommander = roomEventBus.queueInboundMessage;
 			eventRecorder = roomEventBus.storeGameEventMessage;
-			statisticRecorder = scoreEventBus.storeScoreBoardMessage;
+			statisticRecorder = scoreEventBus.queueInboundMessage;
 		};
 		
 		void finishStartup() {

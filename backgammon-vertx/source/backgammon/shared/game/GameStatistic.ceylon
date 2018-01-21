@@ -139,7 +139,9 @@ shared final class GameStatistic extends Object {
 	value blackStatistic = GamePlayerStatistic();
 	value whiteStatistic = GamePlayerStatistic();
 	variable Instant _startTime = Instant(0);
+	shared Instant startTime => _startTime;
 	variable Instant _endTime = _startTime;
+	shared Instant endTime => _endTime;
 	
 	shared new(Integer initialDistance, Integer checkerCount) extends Object() {
 		_initialDistance = initialDistance;
@@ -172,6 +174,24 @@ shared final class GameStatistic extends Object {
 		}
 	}
 	shared Integer winnerScore => if (winnerColor exists) then (blackStatistic.remainingDistance - whiteStatistic.remainingDistance).magnitude else 0;
+
+	shared Integer score(CheckerColor color) {
+		if (exists winner = winnerColor) {
+			if (color == winner) {
+				return winnerScore;
+			} else {
+				return -winnerScore; 
+			}
+		} else {
+			return winnerScore;
+		}
+	}
+
+	shared Integer diceDelta(CheckerColor color) {
+		return switch (color)
+			case (black) (blackStatistic.dicePoints - whiteStatistic.dicePoints) 
+			case (white) (whiteStatistic.dicePoints - blackStatistic.dicePoints);
+	}
 	
 	shared JsonObject toJson() {
 		value result = JsonObject();

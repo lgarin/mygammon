@@ -9,7 +9,6 @@ import backgammon.shared {
 	applicationMessages,
 	InboundScoreBoardMessage,
 	OutboundScoreBoardMessage,
-	ScoreBoardMessage,
 	PlayerId,
 	GameStatisticMessage
 }
@@ -38,7 +37,7 @@ final shared class ScoreBoardEventBus(Vertx vertx, ServerConfiguration configura
 				if (is Throwable result) {
 					responseHandler(result);
 				} else {
-					eventBus.sendMessage(formattedMessage, "PlayerRosterMessage", applicationMessages.parse<OutputMessage>, responseHandler);
+					eventBus.sendMessage(formattedMessage, "ScoreBoardMessage", applicationMessages.parse<OutputMessage>, responseHandler);
 				}
 			});
 		} else {
@@ -94,15 +93,7 @@ final shared class ScoreBoardEventBus(Vertx vertx, ServerConfiguration configura
 		eventStore.queryEvents("score-board", query, mapResult);
 	}
 	
-	shared void storeScoreBoardMessage(ScoreBoardMessage message) {
-		if (disableOutput) {
-			return;
-		}
-		value formattedMessage = applicationMessages.format(message);
-		eventStore.storeEvent("score-board", formattedMessage, (result) {
-			if (is Throwable result) {
-				throw Exception("Failed to store message ``formattedMessage``");
-			}
-		});
+	shared void replayAllEvents(void process(InboundScoreBoardMessage message), void completion(Integer|Throwable result)) {
+		eventStore.replayAllEvents("score-board", applicationMessages.parse<InboundScoreBoardMessage>, process, completion);
 	}
 }

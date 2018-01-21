@@ -233,7 +233,7 @@ abstract shared class BasePage() {
 			// ignore
 		}
 		case (is QueryGameStatisticMessage) {
-			makeApiRequest("/api/score/playerdetail");
+			makeApiRequest("/api/score/playerdetail/``message.playerId``");
 		}
 	}
 }

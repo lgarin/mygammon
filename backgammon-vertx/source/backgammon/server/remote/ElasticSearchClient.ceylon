@@ -28,11 +28,11 @@ shared class FieldSearchCriteria(shared String searchField, shared String search
 }
 
 shared class AndSearchCriteria(ElasticSearchCriteria left, ElasticSearchCriteria right) satisfies ElasticSearchCriteria {
-	toQueryString() => "(``left.toQueryString()`` AND ``right.toQueryString()``)";
+	toQueryString() => "(``left.toQueryString()``%20AND%20``right.toQueryString()``)";
 }
 
 shared class OrSearchCriteria(ElasticSearchCriteria left, ElasticSearchCriteria right) satisfies ElasticSearchCriteria {
-	toQueryString() => "(``left.toQueryString()`` OR ``right.toQueryString()``)";
+	toQueryString() => "(``left.toQueryString()``%20OR%20``right.toQueryString()``)";
 }
 
 final shared class ElasticSortOrder(shared String orderField, shared Boolean ascending = true) {

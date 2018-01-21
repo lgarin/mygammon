@@ -58,6 +58,7 @@ shared object applicationMessages {
 	registerParser(parsePlayerLoginMessage);
 	registerParser(parsePlayerStatisticUpdateMessage);
 	registerParser(parsePlayerDetailRequestMessage);
+	registerParser(parsePlayerStatisticRequestMessage);
 	registerParser(parsePlayerStatisticOutputMessage);
 	registerParser(parsePlayerDetailOutputMessage);
 	

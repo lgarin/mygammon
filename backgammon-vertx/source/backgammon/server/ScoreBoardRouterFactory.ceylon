@@ -33,14 +33,14 @@ final class ScoreBoardRouterFactory(Vertx vertx, ServerConfiguration serverConfi
 	void handlePlayerDetailRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		
-		if (exists playerId = context.getCurrentPlayerId()) {
+		if (exists playerId = context.getRequestPlayerId()) {
 			forwardResponse(context, QueryGameStatisticMessage(playerId));
 		}
 	}
 	
 	shared Router createApiRouter() {
 		value restApi = routerFactory.router(vertx);
-		restApi.get("/playerdetail").handler(handlePlayerDetailRequest);
+		restApi.get("/playerdetail/:playerId").handler(handlePlayerDetailRequest);
 		return restApi;
 	}
 }

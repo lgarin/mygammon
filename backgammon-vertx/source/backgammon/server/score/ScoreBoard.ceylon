@@ -11,7 +11,8 @@ import backgammon.shared {
 	QueryGameStatisticMessage,
 	ScoreBoardResponseMessage,
 	GameStatisticResponseMessage,
-	PlayerStatistic
+	PlayerStatistic,
+	PlayerInfo
 }
 import backgammon.server.util {
 
@@ -29,9 +30,10 @@ shared final class ScoreBoard(ServerConfiguration config) {
 			}
 			case (is QueryGameStatisticMessage) {
 				if (exists playerStatistic, exists gameHistory) {
-					return GameStatisticResponseMessage(playerStatistic.statistic, gameHistory.sequence());
+					return GameStatisticResponseMessage(playerStatistic.playerInfo, playerStatistic.statistic, gameHistory.sequence());
 				} else {
-					return GameStatisticResponseMessage(PlayerStatistic(), []);
+					// TODO cleanup
+					return GameStatisticResponseMessage(PlayerInfo(message.playerId.id, ""), PlayerStatistic(), []);
 				}
 			}
 		}

@@ -86,7 +86,7 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 		return false;
 	}
 	
-	shared actual Boolean handleScoreMessage(OutboundScoreBoardMessage message) {
+	shared actual default Boolean handleScoreMessage(OutboundScoreBoardMessage message) {
 		return false;
 	}
 	
