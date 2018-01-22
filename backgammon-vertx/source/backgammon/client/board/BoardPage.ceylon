@@ -7,7 +7,6 @@ import backgammon.client.browser {
 	document
 }
 import backgammon.shared {
-	StatusResponseMessage,
 	LeaveTableMessage,
 	TableId,
 	OutboundTableMessage,
@@ -129,12 +128,9 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 	
 	shared actual Boolean handleRoomMessage(OutboundRoomMessage message) {
 		
-		if (!message.success) {
-			window.location.reload();
-			return true;
-		}
-		
-		if (is PlayerStateMessage message) {
+		if (!super.handleRoomMessage(message)) {
+			return false;
+		} else if (is PlayerStateMessage message) {
 			if (exists state = message.state, exists currentTableId = extractTableId()) {
 				login(state, currentTableId);
 				return true;
@@ -147,13 +143,10 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 	}
 	
 	shared actual Boolean handleTableMessage(OutboundTableMessage message) {
-		
-		if (is StatusResponseMessage message, !message.success) {
-			window.location.reload();
-			return true;
-		}
-		
-		if (is TableStateResponseMessage message) {
+
+		if (!super.handleTableMessage(message)) {
+			return false;
+		} else if (is TableStateResponseMessage message) {
 			if (message.isPlayerInQueue(currentPlayerId)) {
 				gui.hideJoinButton();
 				gui.showLeaveButton();

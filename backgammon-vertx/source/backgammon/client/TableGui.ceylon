@@ -1,16 +1,14 @@
+import backgammon.client.browser {
+	Document
+}
+import backgammon.shared {
+	PlayerState,
+	PlayerInfo
+}
 import backgammon.shared.game {
-
 	black,
 	CheckerColor,
 	white
-}
-import backgammon.shared {
-
-	PlayerState
-}
-import backgammon.client.browser {
-
-	Document
 }
 shared class TableGui(Document document) extends GameGui(document) {
 	
@@ -103,11 +101,19 @@ shared class TableGui(Document document) extends GameGui(document) {
 		}
 	}
 	
-	shared void showPlayerInfo(CheckerColor color, String? name, Integer? level) {
-		if (exists playerLabel = document.getElementById("``color``PlayerName")) {
-			playerLabel.innerHTML = name else defaultPlayerName;
+	shared void showPlayerInfo(CheckerColor color, String? roomId, PlayerInfo? playerInfo) {
+		if (exists playerLink = document.getElementById("``color``PlayerName")) {
+			if (exists playerInfo, exists roomId) {
+				playerLink.setAttribute("href", "/room/``roomId``/player?id=``playerInfo.id``");
+				playerLink.innerHTML = playerInfo.name;
+				removeClass("``color``PlayerName", hiddenClass);
+			} else {
+				playerLink.setAttribute("href", "#");
+				playerLink.innerHTML = defaultPlayerName;
+				addClass("``color``PlayerName", hiddenClass);
+			}
 		}
-		if (exists playerLevel = level) {
+		if (exists playerLevel = playerInfo?.level) {
 			setClass("``color``PlayerLevel", "player-level", "level-``playerLevel``");
 		} else {
 			setClass("``color``PlayerLevel", hiddenClass);

@@ -11,7 +11,10 @@ import backgammon.shared {
 	StatusResponseMessage,
 	OutboundGameMessage,
 	OutboundMatchMessage,
-	OutboundScoreBoardMessage
+	OutboundScoreBoardMessage,
+	OutboundRoomMessage,
+	PlayerStateMessage,
+	OutboundTableMessage
 }
 import ceylon.time {
 
@@ -90,6 +93,27 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 		return false;
 	}
 	
+	shared actual default Boolean handleRoomMessage(OutboundRoomMessage message) {
+		
+		if (is PlayerStateMessage message, !message.success) {
+			logout();
+			return true;
+		} else if (!message.success) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	shared actual default Boolean handleTableMessage(OutboundTableMessage message) {
+		
+		if (is StatusResponseMessage message, !message.success) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+
 	shared actual Boolean handleMatchMessage(OutboundMatchMessage message) {
 		
 		if (is StatusResponseMessage message, !message.success) {

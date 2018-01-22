@@ -119,8 +119,8 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Table
 	
 	void showState() {
 		gui.showEmptyGame();
-		gui.showPlayerInfo(player1Color, match.player1.name, match.player1.level);
-		gui.showPlayerInfo(player2Color, match.player2.name, match.player2.level);
+		gui.showPlayerInfo(player1Color, match.id.roomId, match.player1);
+		gui.showPlayerInfo(player2Color, match.id.roomId, match.player2);
 		if (match.gameEnded, exists leaverId = match.leaverId, exists winnerId = match.winnerId) {
 			showMatchEnd(leaverId, winnerId, match.score);
 		} else if (match.gameStarted) {

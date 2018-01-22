@@ -10,7 +10,6 @@ import backgammon.shared {
 	RoomId,
 	OutboundRoomMessage,
 	PlayerListMessage,
-	StatusResponseMessage,
 	OutboundTableMessage,
 	TableStateResponseMessage,
 	PlayerId,
@@ -155,12 +154,9 @@ shared final class RoomPage() extends TablePage<RoomGui>(RoomGui(document)) {
 
 	shared actual Boolean handleRoomMessage(OutboundRoomMessage message) {
 		
-		if (!message.success) {
-			window.location.reload();
-			return true;
-		}
-		
-		if (is PlayerListMessage message) {
+		if (!super.handleRoomMessage(message)) {
+			return false;
+		} else if (is PlayerListMessage message) {
 			playerList.update(message);
 			if (!playerList.findPlayer(currentPlayerId) exists) {
 				logout();
@@ -189,13 +185,10 @@ shared final class RoomPage() extends TablePage<RoomGui>(RoomGui(document)) {
 	}
 	
 	shared actual Boolean handleTableMessage(OutboundTableMessage message) {
-		
-		if (is StatusResponseMessage message, !message.success) {
-			window.location.reload();
-			return true;
-		}
-		
-		if (is TableStateResponseMessage message, exists currentMatch = message.match) {
+
+		if (!super.handleTableMessage(message)) {
+			return false;
+		} else if (is TableStateResponseMessage message, exists currentMatch = message.match) {
 			// TODO some changes may occur on the state between the response and the registration
 			eventBusClient.removeAddresses((a) => a.startsWith("OutboundGameMessage-"));
 			eventBusClient.addAddress("OutboundGameMessage-``currentMatch.id``");

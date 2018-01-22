@@ -305,14 +305,17 @@ body {
   opacity: 1;
 }
 
-.player-picture {
-	 margin-top: 10px;
-	 margin-bottom: 20px;
-	 margin-left:auto;
-	 margin-right:auto;
-	 padding:5px;
-	 height:105px;
-	 width:105px;
+.player a {
+	color: white;
+	padding: 5px;
+}
+
+.player div {
+	padding: 5px;
+}
+
+.player a:hover {
+	background-color: #DF9006;
 }
 
 .player-unknown {
@@ -351,27 +354,27 @@ body {
 }
 
 .level-0 {
-    background-position: -75px 0px;
+    background-position: 0px 0px;
 }
 
 .level-1 {
-    background-position: -150px 0px;
+    background-position: -75px 0px;
 }
 
 .level-2 {
-    background-position: -225px 0px;
+    background-position: -150px 0px;
 }
 
 .level-3 {
-    background-position: -300px 0px;
+    background-position: -225px 0px;
 }
 
 .level-4 {
-    background-position: -375px 0px;
+    background-position: -300px 0px;
 }
 
 .level-5 {
-    background-position: -450px 0px;
+    background-position: -375px 0px;
 }
 
 .white-small-checker {
