@@ -6,7 +6,6 @@ import backgammon.client.browser {
 }
 import backgammon.shared {
 	PlayerState,
-	TableId,
 	PlayerInfo,
 	PlayerStatistic,
 	GameStatisticMessage,
@@ -43,20 +42,7 @@ shared class PlayerGui(Document document) extends BoardGui(document) {
 	shared void showTablePreview() {
 		removeClass(tablePreviewId, hiddenClass);
 	}
-	
-	shared void showTableInfo(TableId tableId, PlayerState? currentPlayerState) {
-		value baseTableLink = "/room/``tableId.roomId``/table/``tableId.table``"; 
-		value sitted = currentPlayerState?.isAtTable(tableId) else false;
-		value buttonClass = if (sitted) then hiddenClass else "";
-		value playing = currentPlayerState?.isPlayingAtTable(tableId) else false;
-		value tableLink =  if (playing) then "``baseTableLink``/play" else "``baseTableLink``/view";
-		
-		value data = JsonObject {"tableLink" -> tableLink, "tableId" -> tableId.table, "joinButtonClass" -> buttonClass}.string;
-		dynamic {
-			jQuery("#table-info").loadTemplate(jQuery("#table-info-template"), JSON.parse(data));
-		}
-	}
-	
+
 	function buildAccountData(PlayerInfo info, PlayerStatistic statistic) {
 		value levelClass = if (exists level = info.level) then "player-level level-``level``" else "hidden";
 		return JsonObject {"id" -> info.id, "name" -> info.name, "levelClass" -> levelClass, "score" -> statistic.score, "win" -> statistic.winPercentage, "lost" -> statistic.lostPercentage, "games" -> statistic.playedGames, "balance" -> statistic.balance};

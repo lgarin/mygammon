@@ -34,9 +34,7 @@ shared final class RoomPage() extends TablePage<RoomGui>(RoomGui(document)) {
 	
 	function extractRoomId() {
 		if (!roomId exists) {
-			if (exists id = splitString(window.location.href, "/room/", "#")) {
-				roomId = RoomId(id);
-			} else if (exists id = splitString(window.location.href, "/room/")) {
+			if (exists id = splitString(window.location.href, "/room/")) {
 				roomId = RoomId(id);
 			}
 		}
@@ -122,7 +120,7 @@ shared final class RoomPage() extends TablePage<RoomGui>(RoomGui(document)) {
 	shared Boolean onAcceptMatch() {
 		
 		if (exists currentTableClient = tableClient) {
-			window.location.\iassign("/room/``currentTableClient.tableId.roomId``/table/``currentTableClient.tableId.table``/play");
+			window.location.\iassign("/room/``currentTableClient.tableId.roomId``/table?id=``currentTableClient.tableId.table``&action=play");
 			return true;
 		} else {
 			return false;

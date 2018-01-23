@@ -117,7 +117,7 @@ shared final class PlayerPage() extends TablePage<PlayerGui>(PlayerGui(document)
 	shared Boolean onAcceptMatch() {
 		
 		if (exists currentTableClient = tableClient) {
-			window.location.\iassign("/room/``currentTableClient.tableId.roomId``/table/``currentTableClient.tableId.table``/play");
+			window.location.\iassign("/room/``currentTableClient.tableId.roomId``/table?id=``currentTableClient.tableId.table``&action=play");
 			return true;
 		} else {
 			return false;

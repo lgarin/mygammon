@@ -103,7 +103,7 @@ shared final class AccountPage() extends TablePage<AccountGui>(AccountGui(docume
 	shared Boolean onAcceptMatch() {
 		
 		if (exists currentTableClient = tableClient) {
-			window.location.\iassign("/room/``currentTableClient.tableId.roomId``/table/``currentTableClient.tableId.table``/play");
+			window.location.\iassign("/room/``currentTableClient.tableId.roomId``/table?id=``currentTableClient.tableId.table``&action=play");
 			return true;
 		} else {
 			return false;

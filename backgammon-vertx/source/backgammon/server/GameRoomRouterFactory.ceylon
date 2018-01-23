@@ -103,7 +103,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 				if (is Throwable result) {
 					context.fail(result);
 				} else if (exists table = result.table) {
-					context.sendRedirect("/room/``roomId``/table/``table``/play");
+					context.sendRedirect("/room/``roomId``/table?id=``table``&action=play");
 				} else {
 					context.failWithServiceUnavailable();
 				}
@@ -152,9 +152,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		router.route("/room/:roomId/play").handler(handlePlay);
 		router.route("/room/:roomId/account").handler(handleAccount);
 		router.route("/room/:roomId/player").handler(handlePlayer);
-		// TODO table id should be a query parameter
-		router.route("/room/:roomId/table/:tableId/view").handler(handleTable);
-		router.route("/room/:roomId/table/:tableId/play").handler(handleTable);
+		router.route("/room/:roomId/table").handler(handleTable);
 		return router;
 	}
 	

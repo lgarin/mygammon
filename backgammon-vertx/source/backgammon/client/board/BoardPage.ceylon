@@ -29,7 +29,7 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 	function extractTableId() {
 		if (!tableId exists) {
 			value url = window.location.href;
-			if (exists roomId = splitString(url, "/room/", "/table/"), exists table = splitString(url, "/table/", "/") else splitString(url, "/table/")) {
+			if (exists roomId = splitString(url, "/room/", "/table"), exists table = splitString(url, "id=", "&") else splitString(url, "id=")) {
 				if (exists tableIndex = parseInteger(table)) {
 					tableId = TableId(roomId, tableIndex);
 				} 
@@ -155,8 +155,7 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 				gui.showJoinButton();
 			}
 		} else if (is JoinedTableMessage message, message.playerId == currentPlayerId) {
-			gui.hideJoinButton();
-			gui.showLeaveButton();
+			window.location.\iassign("/room/``message.tableId.roomId``/table?id=``message.tableId.table``&action=play");
 		} else if (is LeftTableMessage message, message.playerId == currentPlayerId) {
 			gui.hideLeaveButton();
 			gui.showJoinButton();
@@ -164,14 +163,14 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 		
 		if (is TableStateResponseMessage message, exists currentMatch = message.match) {
 			if (currentMatch.hasPlayer(currentPlayerId) && isBoardPreview()) {
-				window.location.\iassign("/room/``message.tableId.roomId``/table/``message.tableId.table``/play");
+				window.location.\iassign("/room/``message.tableId.roomId``/table?id=``message.tableId.table``&action=play");
 			} else {
 				// TODO some changes may occur on the state between the response and the registration
 				eventBusClient.addAddress("OutboundGameMessage-``currentMatch.id``");
 			}
 		} else if (is CreatedMatchMessage message) {
 			if (message.hasPlayer(currentPlayerId) && isBoardPreview()) {
-				window.location.\iassign("/room/``message.tableId.roomId``/table/``message.tableId.table``/play");
+				window.location.\iassign("/room/``message.tableId.roomId``/table?id=``message.tableId.table``&action=play");
 			} else {
 				eventBusClient.addAddress("OutboundGameMessage-``message.matchId``");
 			}

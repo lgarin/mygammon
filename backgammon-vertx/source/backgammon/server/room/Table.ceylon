@@ -94,7 +94,7 @@ final shared class Table(shared Integer index, shared RoomId roomId, shared Inte
 	}
 	
 	shared Boolean removePlayer(Player player) {
-		if (player.isAtTable(id)) {
+		if (playerQueue.defines(player.id)) {
 			if (exists currentMatch = _match, currentMatch.findPlayer(player.id) exists) {
 				return removeMatchPlayer(currentMatch, player);
 			} else {
