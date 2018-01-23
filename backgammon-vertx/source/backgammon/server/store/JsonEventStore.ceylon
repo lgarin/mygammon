@@ -127,13 +127,21 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 			}
 		}
 		
+		void completeNewIndex(Throwable? error) {
+			if (is Throwable error) {
+				completion(error);
+			} else {
+				completion(0);
+			}
+		}
+		
 		eventIndexClient.checkIndexExistence(type, (result) {
 			if (is Throwable result) {
 				completion(result);
 			} else if (result) {
 				processAllDocuments(type, parseAndProcess, storeNextId);
 			} else {
-				completion(0);
+				eventIndexClient.createIndex(type, completeNewIndex);
 			}
 		});
 	}

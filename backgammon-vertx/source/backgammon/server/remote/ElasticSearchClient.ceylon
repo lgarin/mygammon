@@ -138,6 +138,22 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 		request.end();
 	}
 	
+	shared void createIndex(String index, void handleResponse(Throwable? error)) {
+		value url = "``baseUrl``/backgammon-``index``";
+		value request = httpClient.putAbs(url);
+		request.exceptionHandler(handleResponse);
+		request.handler {
+			void handler(HttpClientResponse res) {
+				if (res.statusCode() == 200) {
+					handleResponse(null);
+				} else {
+					handleResponse(Exception("PUT to ``url`` returned ``res.statusCode()`` : ``res.statusMessage()``"));
+				}
+			}
+		};
+		request.end();
+	}
+	
 	shared void listDocuments(String index, Integer offset, Integer maxCount, void handleResponse({<Integer->JsonObject>*}|Throwable result)) {
 		value url = "``baseUrl``/backgammon-``index``/doc/_search?sort=_id&from=``offset``&size=``maxCount``&filter_path=hits.hits._id,hits.hits._source";
 		get(url, (result) {
