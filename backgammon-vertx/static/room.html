@@ -29,7 +29,7 @@
 					var room = app.createRoom();
 					$(".btn").on("click", function(event) { return room.onButton(event.currentTarget); });
 					$("#table-info").on("click", ".btn", function(event) { return room.onButton(event.currentTarget); });
-					$("#player-list tbody").on("click", ".player-row-button", function(event) { return room.onPlayerClick($(this).attr('id')); });
+					$("#player-list tbody").on("click", ".player-row-button", function(event) { return room.onPlayerClick($(this).attr('href')); });
 					$("#dialog-logout").dialog({
 		            	autoOpen: false,
 		                modal: true,
@@ -143,7 +143,7 @@
 		<div id="gui" class="container-fluid">
 			<div class="row content">
 				<div class="col-md-6 sidenav">
-					<table id="player-list" class="table">
+					<table id="player-list" class="table" data-page-length="10" data-order='[[ 2, "desc" ]]' data-length-change="false" data-paging="simple">
 						<thead>
 							<tr>
 								<th class="col-xs-8">Name</th>
@@ -287,13 +287,6 @@
 
 		</div><!-- end of gui -->
 
-
-		<script type="text/html" id="player-empty-template">
-			<tr class="empty-row">
-				<td colspan="4">No active player in this room for the moment</td>
-			</tr>
-		</script>
-
 		<script type="text/html" id="player-row-template">
 			<tr class="player-row">
 				<td class="player-name">
@@ -301,11 +294,17 @@
 					<a style="margin-left:10px" data-content="name" data-href="link"></a>
 				</td>
 				<td>
-					<button data-class="viewButtonClass" type="button" class="player-row-button btn btn-default btn-xs" data-id="id">View</i></button>
+					<button data-class="viewButtonClass" type="button" class="player-row-button btn btn-default btn-xs" data-href="playerId" data-content="table">View</i></button>
 				</td>
 				<td data-content="score"></td>
 				<td class="hidden-sm hidden-xs" data-content="win"></td>
 				<td class="hidden-md hidden-sm hidden-xs" data-content="games"></td>
+			</tr>
+		</script>
+		
+		<script type="text/html" id="player-empty-template">
+			<tr class="empty-row">
+				<td colspan="4">No active player in this room for the moment</td>
 			</tr>
 		</script>
 		

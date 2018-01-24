@@ -79,8 +79,8 @@ shared final class MatchRoom(RoomConfiguration configuration, Anything(OutboundR
 	}
 	
 	void handlePlayerChange(Player player) {
+		room.registerPlayerChange(player);
 		if (exists delta = player.applyStatisticDelta()) {
-			room.registerPlayerChange(player);
 			playerRepository(PlayerStatisticUpdateMessage(player.info, delta));
 		}
 	}
