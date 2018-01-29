@@ -143,14 +143,14 @@
 		<div id="gui" class="container-fluid">
 			<div class="row content">
 				<div class="col-md-6 sidenav">
-					<table id="player-list" class="table" data-page-length="10" data-order='[[ 2, "desc" ]]' data-length-change="false" data-paging="simple">
+					<table id="player-list" class="table" data-row-id="playerId" data-state-save="true" data-state-duration="-1" data-page-length="10" data-order='[[ 2, "desc" ]]' data-length-change="false" data-paging="simple">
 						<thead>
 							<tr>
 								<th class="col-xs-8">Name</th>
-								<th class="col-xs-1">Table</th>
-								<th class="col-xs-1">Score</th>
-								<th class="col-xs-1 hidden-sm hidden-xs">Win&nbsp;%</th>
-								<th class="col-xs-1 hidden-md hidden-sm hidden-xs">Games</th>
+								<th data-searchable="false" class="col-xs-1">Table</th>
+								<th data-searchable="false" class="col-xs-1">Score</th>
+								<th data-searchable="false" class="col-xs-1 hidden-sm hidden-xs">Win&nbsp;%</th>
+								<th data-searchable="false" class="col-xs-1 hidden-md hidden-sm hidden-xs">Games</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -288,7 +288,7 @@
 		</div><!-- end of gui -->
 
 		<script type="text/html" id="player-row-template">
-			<tr class="player-row">
+			<tr class="player-row" data-id="playerId">
 				<td class="player-name">
 					<span data-class="levelClass"></span>
 					<a style="margin-left:10px" data-content="name" data-href="link"></a>

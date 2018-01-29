@@ -13,8 +13,8 @@ import ceylon.collection {
 	linked
 }
 import ceylon.json {
-	Array,
-	Object
+	JsonObject,
+	JsonArray
 }
 
 final class PlayerListModel(String hiddenClass) {
@@ -38,7 +38,7 @@ final class PlayerListModel(String hiddenClass) {
 			buttonClass = hiddenClass;
 		}
 		value levelClass = if (exists level = state.info.level) then "player-level level-``level``" else "hidden";
-		return Object {"playerId" -> state.info.id, "name" -> state.info.name, "link" -> "/room/``roomId``/player?id=``state.info.id``", "viewButtonClass" -> buttonClass, "table" -> state.tableId?.table, "levelClass" -> levelClass, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "games" -> state.statistic.playedGames };
+		return JsonObject {"playerId" -> state.info.id, "name" -> state.info.name, "link" -> "/room/``roomId``/player?id=``state.info.id``", "viewButtonClass" -> buttonClass, "table" -> state.tableId?.table, "levelClass" -> levelClass, "score" -> state.statistic.score, "win" -> state.statistic.winPercentage, "games" -> state.statistic.playedGames };
 	}
 	
 	shared TableId? findTable(PlayerId playerId) {
@@ -49,11 +49,9 @@ final class PlayerListModel(String hiddenClass) {
 		}
 	}
 	
-	function comparePlayer(PlayerState first, PlayerState second) => first.statistic.score.compare(second.statistic.score);
-	
 	shared PlayerState? findPlayer(PlayerId playerId) => playerMap[playerId];
 	
- 	shared Array toTemplateData(RoomId roomId, Boolean hideButtons) => Array(playerMap.items.sort(comparePlayer).map(toRowData(roomId, hideButtons)));
+ 	shared JsonArray toTemplateData(RoomId roomId, Boolean hideButtons) => JsonArray(playerMap.items.map(toRowData(roomId, hideButtons)));
 	
 	shared Boolean empty => playerMap.empty;
 	

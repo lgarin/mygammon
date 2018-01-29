@@ -9,7 +9,7 @@ import backgammon.shared {
 }
 
 import ceylon.json {
-	Array
+	JsonArray
 }
 shared class RoomGui(Document document) extends BoardGui(document) {
 	
@@ -42,9 +42,11 @@ shared class RoomGui(Document document) extends BoardGui(document) {
 		removeClass(tablePreviewId, hiddenClass);
 	}
 	
-	shared void showPlayerList(Array data) {
+	shared void showPlayerList(JsonArray data) {
 		dynamic {
+			jQuery("#player-list").dataTable().api().destroy();
 			jQuery("#player-list tbody").loadTemplate(jQuery("#player-row-template"), JSON.parse(data.string));
+			jQuery("#player-list").dataTable().api().rows().invalidate("dom").draw();
 		}
 	}
 	
