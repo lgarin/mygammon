@@ -10,19 +10,19 @@
 		<dependency>
 			<groupId>org.keycloak</groupId>
 			<artifactId>keycloak-server-spi</artifactId>
-			<version>3.0.0.Final</version>
+			<version>3.4.3.Final</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.keycloak</groupId>
 			<artifactId>keycloak-server-spi-private</artifactId>
-			<version>3.0.0.Final</version>
+			<version>3.4.3.Final</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.keycloak</groupId>
 			<artifactId>keycloak-services</artifactId>
-			<version>3.0.0.Final</version>
+			<version>3.4.3.Final</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -34,7 +34,7 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.6.2</version>
+			<version>3.9.1</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -53,7 +53,12 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<configuration>
-					<outputDirectory>C:/Dev/wildfly-10.1.0.Final/providers</outputDirectory>
+					<archive>
+						<manifestEntries>
+							<Dependencies>org.keycloak.keycloak-services</Dependencies>
+						</manifestEntries>
+					</archive>
+					<outputDirectory>C:/Dev/wildfly-11.0.0.Final/standalone/deployments</outputDirectory>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -66,7 +71,7 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>C:/Dev/wildfly-10.1.0.Final/themes/mygammon</outputDirectory>
+							<outputDirectory>C:/Dev/wildfly-11.0.0.Final/themes/mygammon</outputDirectory>
 							<resources>
 								<resource>
 									<directory>src/main/resources/theme/mygammon</directory>

@@ -54,7 +54,7 @@ public class CompleteProfile implements RequiredActionProvider, RequiredActionFa
         RealmModel realm = context.getRealm();
 
 
-        List<FormMessage> errors = Validation.validateUpdateProfileForm(realm.isEditUsernameAllowed(), formData);
+        List<FormMessage> errors = Validation.validateUpdateProfileForm(realm, formData);
         
         if (Validation.isBlank(formData.getFirst((FIELD_BIRTHDATE)))) {
             errors.add(new FormMessage(FIELD_BIRTHDATE, MISSING_BIRTHDATE));
