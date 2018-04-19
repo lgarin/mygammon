@@ -13,7 +13,7 @@
 	</module>
     <module module="io.vertx.ceylon.web" version="3.5.0.Beta1">
     	<remove module="io.vertx.vertx-web"/>
-    	<remove module="io.vertx.vertx-web-templ-freemaker"/>
+    	<remove module="io.vertx.vertx-web-templ-freemarker"/>
     	<remove module="io.vertx.vertx-web-templ-handlebars"/>
     	<remove module="io.vertx.vertx-web-templ-jade"/>
     	<remove module="io.vertx.vertx-web-templ-mvel"/>

@@ -14,7 +14,7 @@ shared class Game(variable Instant nextTimeout) {
 	value currentMoves = ArrayList<GameMoveInfo>();
 	
 	"http://www.backgammon-play.net/GameBasic.htm"
-	value initialPositionCounts = { 1 -> 2, 12 -> 5, 17 -> 3, 19 -> 5 };
+	value initialPositionCounts = { 1 -> 12 };
 	value checkerCount = sum(initialPositionCounts.map((Integer->Integer element) => element.item)); 
 	
 	for (value element in initialPositionCounts) {

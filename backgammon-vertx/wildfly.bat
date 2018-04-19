@@ -1,2 +1,2 @@
-cd C:\Dev\wildfly-10.1.0.Final\standalone\data
-C:\Dev\wildfly-10.1.0.Final\bin\standalone.bat
+cd C:\Dev\wildfly-11.0.0.Final\standalone\data
+C:\Dev\wildfly-11.0.0.Final\bin\standalone.bat
