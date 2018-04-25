@@ -34,7 +34,7 @@ shared dynamic Window {
     shared formal void alert(String message = "");
     shared formal Boolean confirm(String message = "");
     shared formal String? prompt(String message = "", String default = "");
-    shared formal void print();
+    //shared formal void print();
 }
 
 shared dynamic Location {
