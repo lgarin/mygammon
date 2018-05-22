@@ -16,7 +16,8 @@ import io.vertx.ceylon.core {
 import io.vertx.ceylon.web {
 	routerFactory=router,
 	Router,
-	Route
+	Route,
+	RoutingContext
 }
 import io.vertx.ceylon.web.handler {
 	userSessionHandler,
@@ -74,8 +75,18 @@ final class KeycloakAuthRouterFactory(Vertx vertx, String hostname, Integer port
 			return router;
 		}
 		
+		void checkUserAgent(RoutingContext routingContext) {
+			value userAgent = routingContext.request().getHeader("User-Agent"); 
+			if (exists userAgent, userAgent.containsAny(["Trident", "Edge"])) {
+				routingContext.fail(406);
+			} else {
+				routingContext.next();
+			}
+		}
+		
 		shared Router createLoginRouter() {
 			value router = routerFactory.router(vertx);
+			router.route().handler(checkUserAgent);
 			router.route().handler(createAuthHandler().handle);
 			return router;
 		}
