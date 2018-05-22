@@ -11,7 +11,6 @@ if [[ -z "$V_MAJOR" || -z "$V_MINOR" || -z "$V_PATCH" ]] ; then
 fi 
 VERSION_DIR="$DIST_DIR/dist-$V_MAJOR.$V_MINOR.$V_PATCH"
 NEW_VERSION="$V_MAJOR.$V_MINOR.$((V_PATCH + 1))"
-NEW_VERSION="2.1.0"
 
 echo "Building version $CURRENT_VERSION"
 mkdir $VERSION_DIR
