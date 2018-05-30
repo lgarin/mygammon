@@ -198,7 +198,6 @@ shared class Game(variable Instant nextTimeout) {
 		if (move.hitBlot) {
 			assert (board.moveChecker(color.oppositeColor, board.graveyardPosition(color.oppositeColor), move.targetPosition));
 		}
-		statistic.side(color).movedChecker(-move.distance, move.hitBlot);
 	}
 	
 	shared Boolean undoTurnMoves(CheckerColor color) {
@@ -207,6 +206,7 @@ shared class Game(variable Instant nextTimeout) {
 		} else if (exists roll = currentRoll, !currentMoves.empty) {
 			while (exists move = currentMoves.pop()) {
 				undoMove(move, roll, color);
+				statistic.side(color).movedChecker(-move.distance, move.hitBlot);
 			}
 			remainingUndo--;
 			return true;
