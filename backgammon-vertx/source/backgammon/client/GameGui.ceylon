@@ -3,11 +3,13 @@ import backgammon.shared.game {
 	black,
 	white,
 	GameBoard,
-	boardPointCount,
 	whiteGraveyardPosition,
 	whiteHomePosition,
 	blackGraveyardPosition,
-	blackHomePosition
+	blackHomePosition,
+	blackStartPosition,
+	whiteStartPosition,
+	wholePlayRange
 }
 import ceylon.time {
 	Duration
@@ -78,6 +80,8 @@ shared class GameGui(Document document) extends BaseGui(document) {
 			return "point-``color``-graveyard";
 		} else if (point == board.homePosition(color)) {
 			return "point-``color``-home";
+		} else if (point == board.startPosition(color)) {
+			return "point-``color``-start";
 		} else {
 			return "point-``point``";
 		}
@@ -90,10 +94,14 @@ shared class GameGui(Document document) extends BaseGui(document) {
 			return whiteGraveyardPosition;
 		} else if (domId == "point-white-home") {
 			return whiteHomePosition;
+		} else if (domId == "point-white-start") {
+			return whiteStartPosition;
 		} else if (domId == "point-black-graveyard") {
 			return blackGraveyardPosition;
 		} else if (domId == "point-black-home") {
 			return blackHomePosition;
+		} else if (domId == "point-black-start") {
+			return blackStartPosition;
 		} else if (domId.startsWith("point-")){
 			return parseInteger(String(domId.sublistFrom("point-".size)));
 		} else {
@@ -130,13 +138,28 @@ shared class GameGui(Document document) extends BaseGui(document) {
 		}
 	}
 	
+	shared void resetCheckerCount(CheckerColor color, Integer count) {
+		if (exists checkerCount = document.getElementById("``color``-start-checker-count")) {
+			checkerCount.innerHTML = "``count``";
+		}
+		if (count > 0) {
+			removeClass("``color``-start-checker" , "hidden");
+			removeClass("``color``-start-checker-count" , "hidden");
+		} else {
+			addClass("``color``-start-checker" , "hidden");
+			addClass("``color``-start-checker-count" , "hidden");
+		}
+	}
+	
 	void redrawNonEmptyPoints(GameBoard board, CheckerColor color) {
-		for (position in 0:boardPointCount) {
+		for (position in wholePlayRange) {
 			value domId = getDomIdUsingPoint(board, color, position);
 			if (exists point = document.getElementById(domId)) {
 				value count = board.countCheckers(position, color);
 				if (position == board.homePosition(color)) {
 					resetCheckers(point, "topdown-checker", "topdown-``color``", count);
+				} else if (position == board.startPosition(color)) {
+					resetCheckerCount(color, count);
 				} else if (count > 0) {
 					resetCheckers(point, "checker", "checker-``color``", count);
 				}
@@ -232,7 +255,7 @@ shared class GameGui(Document document) extends BaseGui(document) {
 	}
 	
 	shared Integer? getPosition(Element element) {
-		if (element.classList.contains("point")) {
+		if (element.id.startsWith("point-")) {
 			return getPointUsingDomId(element.id);
 		} else if (element.classList.contains("checker"), exists parent = element.parentElement) {
 			return getPosition(parent);

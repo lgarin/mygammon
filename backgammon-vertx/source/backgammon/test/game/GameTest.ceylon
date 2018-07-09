@@ -8,7 +8,11 @@ import backgammon.shared.game {
 	white,
 	black,
 	GameMove,
-	GameState
+	GameState,
+	whiteStartPosition,
+	whiteGraveyardPosition,
+	blackGraveyardPosition,
+	blackStartPosition
 }
 import ceylon.time {
 	now,
@@ -26,8 +30,8 @@ class GameTest() {
 		assert (!game.isCurrentColor(black));
 		assert (!game.isCurrentColor(white));
 		assert (game.currentRoll is Null);
-		assert ([0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 0, 0] == game.board.checkerCounts(black));
-		assert ([0, 0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0] == game.board.checkerCounts(white));
+		assert ([12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] == game.board.checkerCounts(black));
+		assert ([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12] == game.board.checkerCounts(white));
 		assert (!game.mustRollDice(black));
 		assert (!game.mustRollDice(white));
 		assert (!game.canUndoMoves(white));
@@ -41,8 +45,8 @@ class GameTest() {
 		value state = game.buildState(timestamp);
 		assert (state.currentColor is Null);
 		assert (state.currentRoll is Null);
-		assert (state.blackCheckerCounts.sequence() == [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 0, 0]);
-		assert (state.whiteCheckerCounts.sequence() == [0, 0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0]);
+		assert (state.blackCheckerCounts.sequence() == [12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+		assert (state.whiteCheckerCounts.sequence() == [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12]);
 		assert (!state.blackReady);
 		assert (!state.whiteReady);
 		assert (state.remainingUndo == 0);
@@ -53,39 +57,32 @@ class GameTest() {
 	test
 	shared void computeInitalBlackMoves() {
 		value moves = game.computeNextMoves(black, DiceRoll(3, 1));
-		assert (moves.contains(GameMoveInfo(1, 2, 1, false)));
-		assert (moves.contains(GameMoveInfo(1, 4, 3, false)));
-		assert (moves.contains(GameMoveInfo(12, 15, 3, false)));
-		assert (moves.contains(GameMoveInfo(17, 18, 1, false)));
-		assert (moves.contains(GameMoveInfo(17, 20, 3, false)));
-		assert (moves.contains(GameMoveInfo(19, 20, 1, false)));
-		assert (moves.contains(GameMoveInfo(19, 22, 3, false)));
-		assert (moves.size == 7);
+		assert (moves.contains(GameMove(blackStartPosition, blackGraveyardPosition + 1)));
+		assert (moves.contains(GameMove(blackStartPosition, blackGraveyardPosition + 3)));
+		assert (moves.size == 2);
 	}
 	
 	test
 	shared void computeInitalWhiteMoves() {
 		value moves = game.computeNextMoves(white, DiceRoll(1, 5));
-		assert (moves.contains(GameMoveInfo(24, 23, 1, false)));
-		assert (moves.contains(GameMoveInfo(13, 8, 5, false)));
-		assert (moves.contains(GameMoveInfo(8, 7, 1, false)));
-		assert (moves.contains(GameMoveInfo(8, 3, 5, false)));
-		assert (moves.contains(GameMoveInfo(6, 5, 1, false)));
-		assert (moves.size == 5);
-	}
-	
-	test
-	shared void computeAllMoves() {
-		value moves = game.computeAllMoves(white, DiceRoll(1, 5), 24).keys;
-		assert (moves.contains(GameMove(24, 23)));
-		assert (moves.contains(GameMove(24, 18)));
+		assert (moves.contains(GameMove(whiteStartPosition, whiteGraveyardPosition - 1)));
+		assert (moves.contains(GameMove(whiteStartPosition, whiteGraveyardPosition - 5)));
 		assert (moves.size == 2);
 	}
 	
 	test
+	shared void computeAllMoves() {
+		value moves = game.computeAllMoves(white, DiceRoll(1, 5), whiteStartPosition).keys;
+		assert (moves.contains(GameMove(whiteStartPosition, whiteGraveyardPosition - 1)));
+		assert (moves.contains(GameMove(whiteStartPosition, whiteGraveyardPosition - 5)));
+		assert (moves.contains(GameMove(whiteStartPosition, whiteGraveyardPosition - 6)));
+		assert (moves.size == 3);
+	}
+	
+	test
 	shared void computeBestMoveSequence() {
-		value sequence = game.computeBestMoveSequence(white, DiceRoll(1, 5), 24, 18);
-		assert (sequence == [GameMoveInfo(24, 23, 1, false), GameMoveInfo(23, 18, 5, false)]);
+		value sequence = game.computeBestMoveSequence(white, DiceRoll(1, 5), whiteStartPosition, whiteGraveyardPosition - 6);
+		assert (sequence == [GameMoveInfo(whiteStartPosition, whiteGraveyardPosition - 1, 1, false), GameMoveInfo(whiteGraveyardPosition - 1, whiteGraveyardPosition - 6, 5, false)]);
 	}
 	
 	test
@@ -97,21 +94,21 @@ class GameTest() {
 	test
 	shared void computeBestMoveSequenceFromGraveyard() {
 		value state = GameState();
-		state.blackCheckerCounts = [1, 0];
-		state.whiteCheckerCounts = [0, 0, 1];
+		state.blackCheckerCounts = [0, 1, 0, 0];
+		state.whiteCheckerCounts = [0, 0, 0, 1];
 		game.resetState(state, timestamp);
 		
-		value sequence = game.computeBestMoveSequence(black, DiceRoll(2, 1), 0, 3);
-		assert (sequence == [GameMoveInfo(0, 2, 2, true), GameMoveInfo(2, 3, 1, false)]);
+		value sequence = game.computeBestMoveSequence(black, DiceRoll(2, 1), blackGraveyardPosition, blackGraveyardPosition + 3);
+		assert (sequence == [GameMoveInfo(blackGraveyardPosition, blackGraveyardPosition+2, 2, true), GameMoveInfo(blackGraveyardPosition+2, blackGraveyardPosition+3, 1, false)]);
 		
-		value sequence2 = game.computeBestMoveSequence(black, DiceRoll(2, 1), 0, 1);
-		assert (sequence2 == [GameMoveInfo(0, 1, 1, false)]);
+		value sequence2 = game.computeBestMoveSequence(black, DiceRoll(2, 1), blackGraveyardPosition, blackGraveyardPosition+1);
+		assert (sequence2 == [GameMoveInfo(blackGraveyardPosition, blackGraveyardPosition+1, 1, false)]);
 	}
 	
 	test
 	shared void computeBestMoveSequenceFromMidpoint() {
 		value state = GameState();
-		state.blackCheckerCounts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+		state.blackCheckerCounts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
 		state.whiteCheckerCounts = [];
 		game.resetState(state, timestamp);
 		

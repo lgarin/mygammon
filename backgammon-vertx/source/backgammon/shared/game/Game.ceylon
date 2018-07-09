@@ -13,14 +13,9 @@ shared class Game(variable Instant nextTimeout) {
 	shared GameBoard board = GameBoard();
 	value currentMoves = ArrayList<GameMoveInfo>();
 	
-	"http://www.backgammon-play.net/GameBasic.htm"
-	value initialPositionCounts = { 1 -> 12 };
-	value checkerCount = sum(initialPositionCounts.map((Integer->Integer element) => element.item)); 
-	
-	for (value element in initialPositionCounts) {
-		assert (board.putNewCheckers(whiteGraveyardPosition - element.key, white, element.item));
-		assert (board.putNewCheckers(element.key + blackGraveyardPosition, black, element.item));
-	}
+	value checkerCount = 12; 
+	board.putNewCheckers(whiteStartPosition, white, checkerCount);
+	board.putNewCheckers(blackStartPosition, black, checkerCount);
 
 	value jockerCount = 1;
 

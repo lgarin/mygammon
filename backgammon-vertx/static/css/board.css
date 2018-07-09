@@ -82,6 +82,18 @@ body {
   width: 50px;
 }
 
+.home {
+  position: absolute;
+  height: 180px;
+  width: 40px;
+}
+
+.start {
+  position: absolute;
+  height: 50px;
+  width: 50px;
+}
+
 .temp {
     opacity: 0.3;
 }
@@ -203,6 +215,16 @@ body {
 
 .topdown-black {
     background-position: 0px -17px;
+}
+
+.checker-count {
+	position:absolute;
+	top:14px;
+	left:14px;
+	height:16px;
+	width:22px;
+	text-align:center;
+	pointer-events:none;
 }
 
 .button {

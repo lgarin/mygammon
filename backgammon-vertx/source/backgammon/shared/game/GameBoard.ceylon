@@ -6,7 +6,12 @@ final class BoardPoint(shared Integer position) {
 	variable Integer whiteCount = 0;
 	variable Integer blackCount = 0;
 	
-	shared void putChecker(CheckerColor color, Integer count) => resetChecker(color, countCheckers(color) + count);
+	shared void putChecker(CheckerColor color, Integer count) {
+		assert (count >= 0);
+		switch (color)
+		case (black) {blackCount += count;}
+		case (white) {whiteCount += count;}
+	}
 	
 	shared void resetChecker(CheckerColor color, Integer count) {
 		switch (color)
@@ -43,21 +48,31 @@ final class BoardPoint(shared Integer position) {
 	}
 }
 
-shared Integer boardPointCount = 26;
+shared Integer boardPointCount = 24;
 
-shared Integer whiteGraveyardPosition = boardPointCount - 1;
 shared Integer whiteHomePosition = 0;
+shared Integer whiteGraveyardPosition = boardPointCount + 1;
+shared Integer whiteStartPosition = boardPointCount + 2;
 
+shared Integer blackStartPosition = -1;
 shared Integer blackGraveyardPosition = 0;
-shared Integer blackHomePosition = boardPointCount - 1;
+shared Integer blackHomePosition = boardPointCount + 1;
+
+shared Range<Integer> wholePlayRange = blackStartPosition..whiteStartPosition;
 
 shared final class GameBoard() {
 
-	value whiteOutsideRange = whiteGraveyardPosition..7;
-	value blackOutsideRange = blackGraveyardPosition..18;
+	value whiteOutsideRange = whiteStartPosition..7;
+	value blackOutsideRange = blackStartPosition..17;
 	
-	value whitePlayRange = whiteGraveyardPosition..whiteHomePosition + 1;
-	value blackPlayRange = blackGraveyardPosition..blackHomePosition - 1;
+	value whitePlayRange = whiteStartPosition..whiteHomePosition+1;
+	value blackPlayRange = blackStartPosition..blackHomePosition-1;
+
+	shared Integer startPosition(CheckerColor color) {
+		return switch (color)
+		case (white) whiteStartPosition
+		case (black) blackStartPosition;
+	}
 
 	shared Integer graveyardPosition(CheckerColor color) {
 		return switch (color)
@@ -92,7 +107,10 @@ shared final class GameBoard() {
 	shared [Integer*] targetRange(CheckerColor color, Integer sourcePosition, Integer maxDistance) {
 		if (maxDistance < 1 || maxDistance >= boardPointCount) {
 			return [];
+		} else if (sourcePosition == startPosition(color)) {
+			return targetRange(color, graveyardPosition(color), maxDistance);
 		}
+		
 		switch (color)
 		case (white) {
 			if (sourcePosition <= whiteHomePosition || sourcePosition > whiteGraveyardPosition) {
@@ -110,7 +128,7 @@ shared final class GameBoard() {
 				return [];
 			}
 			value endPosition = sourcePosition+maxDistance;
-			if (endPosition < boardPointCount) {  
+			if (endPosition < blackHomePosition) {  
 				return sourcePosition+1..endPosition; 
 			} else {
 				return sourcePosition+1..blackHomePosition;
@@ -118,19 +136,21 @@ shared final class GameBoard() {
 		}
 	}
 	
-	shared Boolean isInRange(Integer position) {
-		return 0 <= position < boardPointCount; 
-	}
-
-	ArrayList<BoardPoint> points = ArrayList<BoardPoint>(boardPointCount);
-	for (i in 0:boardPointCount) {
+	ArrayList<BoardPoint> points = ArrayList<BoardPoint>(wholePlayRange.size);
+	for (i in wholePlayRange) {
 		points.add(BoardPoint(i));
+	}
+	
+	function getPoint(Integer position) => points[position + 1];
+	
+	shared Boolean isInRange(Integer position) {
+		return wholePlayRange.contains(position);
 	}
 
 	shared Boolean putNewCheckers(Integer position, CheckerColor color, Integer count) {
-		if (count <= 0) {
-			return false; 
-		} else if (exists boardPoint = points[position]) {
+		if (count < 0) {
+			return false;
+		} else if (exists boardPoint = getPoint(position)) {
 			boardPoint.putChecker(color, count);
 			return true;
 		} else {
@@ -139,7 +159,7 @@ shared final class GameBoard() {
 	}
 	
 	shared Integer countCheckers(Integer position, CheckerColor color) {
-		if (exists boardPoint = points[position]) {
+		if (exists boardPoint = getPoint(position)) {
 			return boardPoint.countCheckers(color);
 		} else {
 			return 0;
@@ -147,7 +167,7 @@ shared final class GameBoard() {
 	}
 	
 	function hasChecker(Integer position, CheckerColor color) {
-		if (exists boardPoint = points[position]) {
+		if (exists boardPoint = getPoint(position)) {
 			return boardPoint.hasChecker(color);
 		} else {
 			return false;
@@ -165,7 +185,7 @@ shared final class GameBoard() {
 	}
 	
 	shared Boolean moveChecker(CheckerColor color, Integer sourcePosition, Integer targetPosition) {
-		if (exists sourcePoint = points[sourcePosition], exists targetPoint = points[targetPosition]) {
+		if (exists sourcePoint = getPoint(sourcePosition), exists targetPoint = getPoint(targetPosition)) {
 			if (sourcePoint.removeChecker(color)) {
 				targetPoint.putChecker(color, 1);
 				return true;
@@ -177,7 +197,15 @@ shared final class GameBoard() {
 		}
 	}
 	
-	shared Integer distance(Integer sourcePosition, Integer targetPosition) => (targetPosition - sourcePosition).magnitude;
+	shared Integer distance(Integer sourcePosition, Integer targetPosition) {
+		if (sourcePosition == whiteStartPosition) {
+			return distance(whiteGraveyardPosition, targetPosition);
+		} else if (sourcePosition == blackStartPosition) {
+			return distance(blackGraveyardPosition, targetPosition);
+		} else {
+			return (targetPosition - sourcePosition).magnitude;
+		}
+	}
 	
 	shared void removeAllCheckers() {
 		for (p in points) {

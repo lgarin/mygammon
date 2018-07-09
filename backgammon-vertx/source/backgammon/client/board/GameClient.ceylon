@@ -471,7 +471,11 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 		if (exists color = playerColor, exists roll = game.currentRoll, nonempty moves = game.computeBestMoveSequence(color, roll, sourcePosition, targetPosition)) {
 			gui.showSelectedChecker(null);
 			gui.hidePossibleMoves();
-			gui.hideChecker(checker);
+			if (game.board.startPosition(color) == sourcePosition) {
+				gui.resetCheckerCount(color, game.board.countCheckers(sourcePosition, color) - 1);
+			} else {
+				gui.hideChecker(checker);
+			}
 			value actions = moves.collect((element) => MakeMoveMessage(matchId, playerId, element.sourcePosition, element.targetPosition));
 			nextActions = actions.rest;
 			messageBroadcaster(actions.first);
