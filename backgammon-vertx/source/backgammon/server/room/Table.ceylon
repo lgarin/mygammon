@@ -61,10 +61,10 @@ final shared class Table(shared Integer index, shared RoomId roomId, shared Inte
 		if (player.balance < playerBet) {
 			return false;
 		} else if (playerQueue.defines(player.id)) {
-			return false;
+			return true;
 		} else if (player.joinTable(id)) {
-			messageBroadcaster(JoinedTableMessage(player.id, id, player.info));
 			playerQueue.put(player.id, player);
+			messageBroadcaster(JoinedTableMessage(player.id, id, player.info));
 			return true;
 		} else {
 			return false;
