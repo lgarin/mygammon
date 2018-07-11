@@ -62,7 +62,7 @@ class TableTest() {
 		table.sitPlayer(player);
 		value result = table.sitPlayer(player);
 		assert (result);
-		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 1);
+		assert (messageList.count((TableMessage element) => element is JoinedTableMessage) == 2);
 		assert (table.queueSize == 1);
 		assert (!table.newMatch(timestamp, matchPot) exists);
 	}
