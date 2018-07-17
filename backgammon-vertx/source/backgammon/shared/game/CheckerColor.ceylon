@@ -26,4 +26,4 @@ shared CheckerColor parseCheckerColor(String name) {
 	}
 }
 
-shared CheckerColor? parseNullableCheckerColoer(String? name) => if (exists name) then parseCheckerColor(name) else null; 
+shared CheckerColor? parseNullableCheckerColor(String? name) => if (exists name) then parseCheckerColor(name) else null; 

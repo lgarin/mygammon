@@ -23,7 +23,9 @@ import backgammon.shared {
 	InboundGameMessage,
 	TakeTurnMessage,
 	InvalidRollMessage,
-	ControlRollMessage
+	ControlRollMessage,
+	takeTurnJoker,
+	controlRollJoker
 }
 import backgammon.shared.game {
 	Game,
@@ -216,10 +218,14 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	function showTurnStart(StartTurnMessage message) {
 		
 		if (nextActions.narrow<PlayerBeginMessage>().empty) {
-			// TODO check for joker
-			if (game.isCurrentColor(message.playerColor)) {
+			switch (message.joker)
+			case (takeTurnJoker) {
 				game.takeTurn(message.playerColor, now());
-			} else {
+			}
+			case (controlRollJoker) {
+				game.controlRoll(message.playerColor.oppositeColor, now());
+			}
+			case (null) {
 				game.endTurn(message.playerColor.oppositeColor, now());
 			}
 		}

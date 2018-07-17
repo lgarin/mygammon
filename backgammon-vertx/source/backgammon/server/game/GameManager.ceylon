@@ -36,7 +36,10 @@ import backgammon.shared {
 	PlayerInfo,
 	GameStatisticMessage,
 	ControlRollMessage,
-	InvalidRollMessage
+	InvalidRollMessage,
+	GameJoker,
+	takeTurnJoker,
+	controlRollJoker
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -136,7 +139,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
-	function beginNextTurn(Instant timestamp, DiceRoll? nextRoll = null) {
+	function beginNextTurn(Instant timestamp, GameJoker? joker = null, DiceRoll? nextRoll = null) {
 		value nextColor = game.currentColor;
 		assert (exists nextColor);
 		value roll = nextRoll else diceRollQueue.takeNextRoll();
@@ -144,7 +147,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		value turnDuration = game.hasAvailableMove(nextColor, roll) then configuration.maxTurnDuration.scale(factor) else configuration.maxEmptyTurnDuration;
 		value maxUndo = configuration.maxUndoPerTurn * factor;
 		assert (game.beginTurn(nextColor, roll, timestamp, turnDuration, maxUndo));
-		messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, maxUndo));
+		messageBroadcaster(StartTurnMessage(matchId, toPlayerId(nextColor), nextColor, roll, turnDuration, maxUndo, joker));
 		return true;
 	}
 	
@@ -237,7 +240,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
 		} else if (game.takeTurn(playerColor, timestamp)) {
-			return beginNextTurn(timestamp);
+			return beginNextTurn(timestamp, takeTurnJoker);
 		} else if (game.hasWon(playerColor)) {
 			return endGame(toPlayerId(playerColor), timestamp, toPlayerId(playerColor));
 		} else {
@@ -256,7 +259,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 			messageBroadcaster(InvalidRollMessage(matchId, toPlayerId(playerColor), playerColor, nextRoll));
 			return false;
 		} else if (game.controlRoll(playerColor, timestamp)) {
-			return beginNextTurn(timestamp, nextRoll);
+			return beginNextTurn(timestamp, controlRollJoker, nextRoll);
 		} else if (game.hasWon(playerColor)) {
 			return endGame(toPlayerId(playerColor), timestamp, toPlayerId(playerColor));
 		} else {
