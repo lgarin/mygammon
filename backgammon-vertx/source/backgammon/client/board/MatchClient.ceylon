@@ -64,7 +64,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Table
 		showMatchEndMessage(leaverId, winnerId, player1Color);
 		showMatchEndMessage(leaverId, winnerId, player2Color);
 		gui.hideSubmitButton();
-		gui.hideJockerButton();
+		gui.hideJokerButton();
 		gui.hideUndoButton();
 		if (playerId == winnerId) {
 			gui.showDialog("dialog-won", {"game-score" -> score.string});
@@ -89,7 +89,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Table
 		} else {
 			gui.hideSubmitButton();
 		}
-		gui.hideJockerButton();
+		gui.hideJokerButton();
 		gui.hideUndoButton();
 	}
 	
@@ -99,7 +99,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Table
 		gui.showPlayerMessage(player1Color, gui.loadingTextKey, true);
 		gui.showPlayerMessage(player2Color, gui.loadingTextKey, true);
 		gui.hideSubmitButton();
-		gui.hideJockerButton();
+		gui.hideJokerButton();
 		gui.hideUndoButton();
 	}
 	
@@ -111,7 +111,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Table
 		if (message.playerId == playerId, exists [player,balance] = match.playerInfoWithCurrentBalance(playerId)) {
 			gui.showCurrentPlayer(null);
 			gui.hideSubmitButton();
-			gui.hideJockerButton();
+			gui.hideJokerButton();
 			gui.hideUndoButton();
 			gui.showAccountStatus(player.name, balance);
 		}
@@ -187,7 +187,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Table
 			return currentGameClient.handleSubmitEvent();
 		} else if (match.mustStartMatch(playerId)) {
 			gui.hideSubmitButton();
-			gui.hideJockerButton();
+			gui.hideJokerButton();
 			gui.hideUndoButton();
 			messageBroadcaster(AcceptMatchMessage(playerId, matchId));
 			return true;

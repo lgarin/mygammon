@@ -17,8 +17,6 @@ shared class Game(variable Instant nextTimeout) {
 	board.putNewCheckers(whiteStartPosition, white, checkerCount);
 	board.putNewCheckers(blackStartPosition, black, checkerCount);
 
-	value jockerCount = 1;
-
 	variable CheckerColor? _currentColor = null;
 	variable DiceRoll? _currentRoll = null;
 
@@ -29,8 +27,8 @@ shared class Game(variable Instant nextTimeout) {
 	variable Boolean blackReady = false;
 	variable Boolean whiteReady = false;
 	
-	variable Integer blackJocker = jockerCount;
-	variable Integer whiteJocker = jockerCount;
+	variable Integer blackJoker = 0;
+	variable Integer whiteJoker = 0;
 	
 	value statistic = GameStatistic(board.remainingDistance(black), checkerCount);
 	shared GameStatistic currentStatistic => statistic.copy();
@@ -83,15 +81,11 @@ shared class Game(variable Instant nextTimeout) {
 		}
 	}
 	
-	shared Boolean canTakeTurn(CheckerColor playerColor) {
-		if (playerColor == black && blackJocker > 0 && isCurrentColor(playerColor)) {
-			return true;
-		} else if (playerColor == white && whiteJocker > 0 && isCurrentColor(playerColor)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
+	shared Boolean canPlayJoker(CheckerColor playerColor) => remainingJoker(playerColor) > 0 && isCurrentColor(playerColor);
+	
+	shared Boolean canTakeTurn(CheckerColor playerColor) => canPlayJoker(playerColor);
+	
+	shared Boolean canControlRoll(CheckerColor playerColor) => canPlayJoker(playerColor);
 	
 	function isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
 		if (!board.isInRange(source) || !board.isInRange(target)) {
@@ -312,24 +306,38 @@ shared class Game(variable Instant nextTimeout) {
 	}
 
 	shared Boolean takeTurn(CheckerColor color, Instant timestamp) {
-		if (color == black && blackJocker > 0 && switchTurn(color, color, timestamp)) {
-			blackJocker--;
+		if (color == black && blackJoker > 0 && switchTurn(color, color, timestamp)) {
+			blackJoker--;
 			return true;
-		} else if (color == white && whiteJocker > 0 && switchTurn(color, color, timestamp)) {
-			whiteJocker--;
+		} else if (color == white && whiteJoker > 0 && switchTurn(color, color, timestamp)) {
+			whiteJoker--;
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
-	shared Boolean begin(CheckerColor color, Instant timestamp) {
+	shared Boolean controlRoll(CheckerColor color, Instant timestamp) {
+		if (color == black && blackJoker > 0 && switchTurn(color, color.oppositeColor, timestamp)) {
+			blackJoker--;
+			return true;
+		} else if (color == white && whiteJoker > 0 && switchTurn(color, color.oppositeColor, timestamp)) {
+			whiteJoker--;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean begin(CheckerColor color, Instant timestamp, Integer jokerCount) {
 		if (currentColor exists) {
 			return false;
 		} else if (!blackReady && color == black) {
 			blackReady = true;
+			blackJoker = jokerCount;
 		} else if (!whiteReady && color == white) {
 			whiteReady = true;
+			whiteJoker = jokerCount;
 		} else {
 			return false;
 		}
@@ -375,8 +383,8 @@ shared class Game(variable Instant nextTimeout) {
 		result.blackReady = blackReady;
 		result.whiteReady = whiteReady;
 		result.remainingTime = remainingTime(timestamp);
-		result.blackJocker = blackJocker;
-		result.whiteJocker = whiteJocker;
+		result.blackJoker = blackJoker;
+		result.whiteJoker = whiteJoker;
 		result.blackCheckerCounts = board.checkerCounts(black);
 		result.whiteCheckerCounts = board.checkerCounts(white);
 		result.currentMoves = currentMoves.sequence();
@@ -394,18 +402,18 @@ shared class Game(variable Instant nextTimeout) {
 		} else {
 			nextTimeout = Instant(0);
 		}
-		blackJocker = state.blackJocker;
-		whiteJocker = state.whiteJocker;
+		blackJoker = state.blackJoker;
+		whiteJoker = state.whiteJoker;
 		board.setCheckerCounts(black, state.blackCheckerCounts);
 		board.setCheckerCounts(white, state.whiteCheckerCounts);
 		currentMoves.clear();
 		currentMoves.addAll(state.currentMoves);
 	}
 	
-	shared Integer remainingJocker(CheckerColor color) {
+	shared Integer remainingJoker(CheckerColor color) {
 		return switch (color)
-			case (black) blackJocker
-			case (white) whiteJocker;
+			case (black) blackJoker
+			case (white) whiteJoker;
 	}
 }
 

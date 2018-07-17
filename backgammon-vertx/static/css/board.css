@@ -152,6 +152,17 @@ body {
     opacity: 0.3;
 }
 
+.dice-choice {
+	display: inline-block;
+    width: 64px;
+    height: 64px;
+    background-image: url("../images/dices.png");
+    zoom: 75%; 
+    -moz-transform: scale(0.75); 
+    -webkit-zoom: 0.75; 
+    -ms-zoom: 0.75;
+}
+
 .white-1 {
     background-position: -64px 0px;
 }
@@ -245,6 +256,11 @@ body {
 .button:hover {
     opacity: 1;
 }
+.button.selected {
+	opacity: 1;
+	border-radius:5px;
+  	background-color: #804000;
+}
 
 .undo {
     width: 101px;
@@ -259,11 +275,26 @@ body {
     background-image: url("../images/buttons.png");
     background-position: -101px 0px;
 }
-.jocker {
+
+.joker {
+    width: 101px;
+    height: 111px;
+    background-image: url("../images/buttons.png");
+    background-position: -404px 0px;
+}
+
+.take-turn {
     width: 101px;
     height: 111px;
     background-image: url("../images/buttons.png");
     background-position: -202px 0px;
+}
+
+.load-dices {
+    width: 101px;
+    height: 111px;
+    background-image: url("../images/buttons.png");
+    background-position: -505px 0px;
 }
 
 .small_button {

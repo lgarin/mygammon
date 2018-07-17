@@ -17,12 +17,12 @@ import ceylon.time {
 
 shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage | GameEventMessage satisfies MatchMessage {}
 
-shared sealed interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
+shared sealed interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | ControlRollMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
 	shared formal Instant timestamp;
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
 }
 
-shared sealed interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
+shared sealed interface OutboundGameMessage of InitialRollMessage | PlayerReadyMessage | StartTurnMessage | PlayedMoveMessage | UndoneMovesMessage | InvalidMoveMessage | InvalidRollMessage | TurnTimedOutMessage | DesynchronizedMessage | NotYourTurnMessage | GameStateResponseMessage | GameActionResponseMessage satisfies GameMessage {
 	shared formal CheckerColor playerColor;
 	shared actual default Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "playerColor" -> playerColor.name };
 }
@@ -47,9 +47,11 @@ PlayerBeginMessage parsePlayerBeginMessage(Object json) {
 	return PlayerBeginMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class PlayerReadyMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor) satisfies OutboundGameMessage {}
+shared final class PlayerReadyMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared Integer jokerCount) satisfies OutboundGameMessage {
+	toJson() => toExtendedJson {"jokerCount" -> jokerCount};
+}
 PlayerReadyMessage parsePlayerReadyMessage(Object json) {
-	return PlayerReadyMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")));
+	return PlayerReadyMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getInteger("jokerCount"));
 }
 
 shared final class StartTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared DiceRoll roll, shared Duration maxDuration, shared Integer maxUndo) satisfies OutboundGameMessage {
@@ -90,6 +92,14 @@ InvalidMoveMessage parseInvalidMoveMessage(Object json) {
 	return InvalidMoveMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getInteger("sourcePosition"), json.getInteger("targetPosition"));
 }
 
+shared final class InvalidRollMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared DiceRoll roll) satisfies OutboundGameMessage {
+	toJson() => toExtendedJson {"rollValue1" -> roll.firstValue, "rollValue2" -> roll.secondValue};
+	
+}
+InvalidRollMessage parseInvalidRollMessage(Object json) {
+	return InvalidRollMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), DiceRoll(json.getInteger("rollValue1"), json.getInteger("rollValue2")));
+}
+
 shared final class TurnTimedOutMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor) satisfies OutboundGameMessage {}
 TurnTimedOutMessage parseTurnTimedOutMessage(Object json) {
 	return TurnTimedOutMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")));
@@ -110,6 +120,13 @@ NotYourTurnMessage parseNotYourTurnMessage(Object json) {
 shared final class TakeTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {}
 TakeTurnMessage parseTakeTurnMessage(Object json) {
 	return TakeTurnMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), Instant(json.getInteger("timestamp")));
+}
+
+shared final class ControlRollMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared DiceRoll roll, shared actual Instant timestamp = now()) satisfies InboundGameMessage {
+	toJson() => toExtendedJson {"rollValue1" -> roll.firstValue, "rollValue2" -> roll.secondValue};
+}
+ControlRollMessage parseControlRollMessage(Object json) {
+	return ControlRollMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), DiceRoll(json.getInteger("rollValue1"), json.getInteger("rollValue2")), Instant(json.getInteger("timestamp")));
 }
 
 shared final class EndTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {}

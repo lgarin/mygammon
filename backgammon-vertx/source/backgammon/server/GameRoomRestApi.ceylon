@@ -18,7 +18,8 @@ import backgammon.shared {
 	LeaveRoomMessage,
 	PlayerStateRequestMessage,
 	TakeTurnMessage,
-	applicationMessages
+	applicationMessages,
+	ControlRollMessage
 }
 
 import io.vertx.ceylon.core {
@@ -32,6 +33,10 @@ import io.vertx.ceylon.web {
 import backgammon.server.bus {
 
 	GameRoomEventBus
+}
+import backgammon.shared.game {
+
+	DiceRoll
 }
 
 final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
@@ -90,7 +95,7 @@ final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
 	
 	void handleMakeMoveRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
-		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId(), exists sourcePosition = context.getRequestSourcePosition(), exists targetPosition = context.getRequestTargetPosition()) {
+		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId(), exists sourcePosition = context.getRequestIntegerParameter("sourcePosition"), exists targetPosition = context.getRequestIntegerParameter("targetPosition")) {
 			forwardResponse(context, MakeMoveMessage(matchId, playerId, sourcePosition, targetPosition));
 		}
 	}
@@ -113,6 +118,13 @@ final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
 			forwardResponse(context, TakeTurnMessage(matchId, playerId));
+		}
+	}
+	
+	void handleControlRollRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId(), exists rollValue1 = context.getRequestIntegerParameter("rollValue1"), exists rollValue2 = context.getRequestIntegerParameter("rollValue2")) {
+			forwardResponse(context, ControlRollMessage(matchId, playerId, DiceRoll(rollValue1, rollValue2)));
 		}
 	}
 	
@@ -160,6 +172,7 @@ final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
 		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/undomoves").handler(handleUndoMovesRequest);
 		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handleEndTurnRequest);
 		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/taketurn").handler(handleTakeTurnRequest);
+		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/controlroll/:rollValue1/:rollValue2").handler(handleControlRollRequest);
 		restApi.get("/:roomId/player/:playerId/state").handler(handlePlayerStateRequest);
 		return restApi;
 	}

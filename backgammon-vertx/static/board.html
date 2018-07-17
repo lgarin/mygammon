@@ -94,6 +94,17 @@
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
+	                $("#dialog-joker").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: [{
+	                    	text: $("#i18n #_submit").text(),
+	                    	click: function() { $(this).dialog("close"); return board.onJokerConfirmed($("input[name=joker-choice]:checked").get(0)); }
+	                    }, {
+	                      	text: $("#i18n #_cancel").text(),
+	                	  	click: function() { $(this).dialog("close"); return true; }
+	                    }]
+	                });
 	                window.setInterval(function() { return board.onTimer(); }, 100);
 	            }
 	    );
@@ -291,8 +302,8 @@
       <div id="submit" class="button hidden" style="right:5px;top:303px;">
         <div id="submitText" class="submit">Submit</div>
       </div>
-      <div id="jocker" class="button hidden" style="right:5px;top:503px;">
-        <div id="jockerText" class="jocker">Jocker</div>
+      <div id="joker" class="button hidden" style="right:5px;top:503px;">
+        <div id="jokerText" class="joker">Joker</div>
       </div>
     </div><!-- end of gui -->
 
@@ -328,6 +339,23 @@
 	  <p>
 	    <b>You have a game in progress.<br/>Do you really want to logout?</b>
 	  </p>
+	</div>
+	<div id="dialog-joker" title="Play joker?"  style="display: none">
+		<fieldset>
+		    <legend>Select a joker: </legend>
+		    <div class="radio">
+  				<label><input type="radio" id="joker-take-turn" name="joker-choice" checked="checked">Play again after this turn</label>
+			</div>
+			<div class="radio">
+  				<label><input type="radio" id="joker-control-roll" name="joker-choice">Force your opponent to play the next turn with the following roll :</label>
+  				<p>
+  					<span style="padding-left: 20px"></span>
+				    <span id="jokerDiceNr1" class="btn dice-choice white-1"></span>
+		        	<span id="jokerDiceNr2" class="btn dice-choice white-2"></span>
+	        	</p>
+        	</div>
+		  </fieldset>
+		  <i>This will end your turn and consume one joker.</i>
 	</div>
 	<div id="i18n" style="display: none">
 		<div id="_logout">Logout</div>

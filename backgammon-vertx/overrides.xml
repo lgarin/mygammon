@@ -19,11 +19,22 @@
     	<remove module="io.vertx.vertx-web-templ-mvel"/>
     	<remove module="io.vertx.vertx-web-templ-pebble"/>
     	<remove module="io.vertx.vertx-web-templ-thymeleaf"/>
+    	<remove module="io.vertx.vertx-auth-common"/>
+    	<remove module="io.vertx.vertx-auth-oauth2"/>
 	</module>
 	<module module="io.vertx.ceylon.auth.common" version="3.5.0.Beta1">
     	<remove module="io.vertx.vertx-auth-common"/>
 	</module>
 	<module module="io.vertx.ceylon.auth.oauth2" version="3.5.0.Beta1">
+    	<remove module="io.vertx.vertx-auth-common"/>
     	<remove module="io.vertx.vertx-auth-oauth2"/>
+	</module>
+	<module module="io.vertx.ceylon.auth.jwt" version="3.5.0.Beta1">
+    	<remove module="io.vertx.vertx-auth-common"/>
+    	<remove module="io.vertx.vertx-auth-jwt"/>
+	</module>
+	<module module="io.vertx.ceylon.auth.htdigest" version="3.5.0.Beta1">
+    	<remove module="io.vertx.vertx-auth-common"/>
+    	<remove module="io.vertx.vertx-auth-htdigest"/>
 	</module>
 </overrides>

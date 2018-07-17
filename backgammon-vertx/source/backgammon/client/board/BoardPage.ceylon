@@ -91,6 +91,16 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 		return false;
 	}
 	
+	shared Boolean onJokerConfirmed(HTMLElement target) {
+		if (target.id == gui.jokerControlRollId, exists gameClient = tableClient?.gameClient) {
+			return gameClient.handleControlRollEvent();
+		} else if (target.id == gui.jokerTakeTurnId, exists gameClient = tableClient?.gameClient) {
+			return gameClient.handleTakeTurnEvent();
+		} else {
+			return false;
+		}
+	}
+	
 	shared Boolean onChecker(HTMLElement checker) {
 
 		if (exists gameClient = tableClient?.gameClient) {

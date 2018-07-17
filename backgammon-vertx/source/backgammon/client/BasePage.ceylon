@@ -45,7 +45,8 @@ import backgammon.shared {
 	OutboundScoreBoardMessage,
 	InboundScoreBoardMessage,
 	QueryGameStatisticMessage,
-	GameStatisticMessage
+	GameStatisticMessage,
+	ControlRollMessage
 }
 
 import ceylon.json {
@@ -174,6 +175,9 @@ abstract shared class BasePage() {
 		}
 		case (is TakeTurnMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/taketurn");
+		}
+		case (is ControlRollMessage) {
+			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/controlroll/``message.roll.firstValue``/``message.roll.secondValue``");
 		}
 		case (is EndGameMessage) {
 			// ignore

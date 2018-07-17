@@ -111,7 +111,7 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 		}
 	}
 	
-	function getRequestIntegerParameter(String name, Boolean withFailure) {
+	shared Integer? getRequestIntegerParameter(String name, Boolean withFailure = true) {
 		if (exists position = rc.request().getParam(name)) {
 			return parseInteger(position);
 		} else {
@@ -121,10 +121,6 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 			return null;
 		}
 	}
-	
-	shared Integer? getRequestSourcePosition(Boolean withFailure = true) => getRequestIntegerParameter("sourcePosition", withFailure);
-	
-	shared Integer? getRequestTargetPosition(Boolean withFailure = true) => getRequestIntegerParameter("targetPosition", withFailure);
 	
 	shared void sendRedirect(String url) {
 		if (!rc.failed()) {

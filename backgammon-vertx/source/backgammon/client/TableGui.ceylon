@@ -1,5 +1,7 @@
 import backgammon.client.browser {
-	Document
+	Document,
+	HTMLElement,
+	Element
 }
 import backgammon.shared {
 	PlayerState,
@@ -8,19 +10,24 @@ import backgammon.shared {
 import backgammon.shared.game {
 	black,
 	CheckerColor,
-	white
+	white,
+	DiceRoll
 }
 shared class TableGui(Document document) extends GameGui(document) {
 	
 	shared String undoButtonId = "undo";
 	shared String submitButtonId = "submit";
-	shared String jockerButtonId = "jocker";
+	shared String jokerButtonId = "joker";
 	shared String exitButtonId = "exit";
 	shared String statusUserId = "currentUser";
 	shared String statusBalanceId = "currentBalance";
 	shared String matchPotId = "matchPot";
 	shared String matchPotAmountId = "matchPotAmount";
 	shared String accountButtonId = "account";
+	shared String jokerDiceNr1Id = "jokerDiceNr1";
+	shared String jokerDiceNr2Id = "jokerDiceNr2";
+	shared String jokerTakeTurnId = "joker-take-turn";
+	shared String jokerControlRollId = "joker-control-roll";
 	
 	shared void hideUndoButton() {
 		addClass(undoButtonId, hiddenClass);
@@ -52,12 +59,44 @@ shared class TableGui(Document document) extends GameGui(document) {
 		removeClass(exitButtonId, hiddenClass);
 	}
 
-	shared void hideJockerButton() {
-		addClass(jockerButtonId, hiddenClass);
+	shared void hideJokerButton() {
+		addClass(jokerButtonId, hiddenClass);
+		hideDialog("dialog-joker");
 	}
 	
-	shared void showJockerButton() {
-		removeClass(jockerButtonId, hiddenClass);
+	shared void showJokerButton() {
+		removeClass(jokerButtonId, hiddenClass);
+	}
+	
+	shared void showJokerDialog(CheckerColor color) {
+		setClass(jokerDiceNr1Id, "btn", "dice-choice", "``color.oppositeColor``-1");
+		setClass(jokerDiceNr2Id, "btn", "dice-choice", "``color.oppositeColor``-2");
+		showDialog("dialog-joker");
+	}
+	
+	function findDiceValue(Element target, CheckerColor color) {
+		for (value i in 1..6) {
+			if (target.classList.contains("``color``-``i``")) {
+				return i;
+			}
+		}
+		return null;
+	}
+	
+	shared void switchJokerDice(HTMLElement target, CheckerColor color) {
+		if (exists current = findDiceValue(target, color.oppositeColor)) {
+			target.classList.remove("``color.oppositeColor``-``current``");
+			target.classList.add("``color.oppositeColor``-``(current % 6) + 1``");
+		}
+	}
+	
+	shared DiceRoll? readJokerRoll(CheckerColor color) {
+		if (exists diceNr1 = document.getElementById(jokerDiceNr1Id), exists diceNr2 = document.getElementById(jokerDiceNr2Id)) {
+			if (exists value1 = findDiceValue(diceNr1, color.oppositeColor), exists value2 = findDiceValue(diceNr2, color.oppositeColor)) {
+				return DiceRoll(value1, value2);
+			}
+		}
+		return null;
 	}
 	
 	shared void showAccountStatus(String user, Integer balance) {
@@ -148,7 +187,7 @@ shared class TableGui(Document document) extends GameGui(document) {
 		resetState(white, playerMessage);
 		hideUndoButton();
 		hideSubmitButton();
-		hideJockerButton();
+		hideJokerButton();
 	}
 	
 	shared void showEmptyGame() {

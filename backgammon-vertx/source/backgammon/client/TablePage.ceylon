@@ -71,8 +71,10 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 			return currentTableClient.handleSubmitEvent();
 		} else if (target.id == gui.undoButtonId, exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleUndoEvent();
-		} else if (target.id == gui.jockerButtonId, exists gameClient = tableClient?.gameClient) {
-			return gameClient.handleJockerEvent();
+		} else if (target.id == gui.jokerButtonId, exists gameClient = tableClient?.gameClient) {
+			return gameClient.handleJokerEvent();
+		} else if (target.id == gui.jokerDiceNr1Id || target.id == gui.jokerDiceNr2Id, exists gameClient = tableClient?.gameClient) {
+			return gameClient.handleJokerDiceEvent(target);
 		} else if (target.id == gui.exitButtonId) {
 			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
 				gui.showDialog("dialog-logout");

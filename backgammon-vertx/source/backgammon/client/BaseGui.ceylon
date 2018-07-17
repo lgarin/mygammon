@@ -46,6 +46,12 @@ shared abstract class BaseGui {
 		}
 	}
 	
+	shared void hideDialog(String dialogName) {
+		dynamic {
+			jQuery("#``dialogName``").dialog("close");
+		}
+	}
+	
 	shared void replaceVariables({<String->String>*} variableMap) {
 		dynamic {
 			for (value variableEntry in variableMap) {

@@ -99,6 +99,7 @@ shared object applicationMessages {
 	registerParser(parsePlayedMoveMessage);
 	registerParser(parseUndoneMovesMessage);
 	registerParser(parseInvalidMoveMessage);
+	registerParser(parseInvalidRollMessage);
 	registerParser(parseTurnTimedOutMessage);
 	registerParser(parseDesynchronizedMessage);
 	registerParser(parseNotYourTurnMessage);
@@ -110,6 +111,7 @@ shared object applicationMessages {
 	registerParser(parseUndoMovesMessage);
 	registerParser(parseEndTurnMessage);
 	registerParser(parseTakeTurnMessage);
+	registerParser(parseControlRollMessage);
 	registerParser(parseEndGameMessage);
 	registerParser(parseGameStateRequestMessage);
 	

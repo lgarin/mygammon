@@ -39,7 +39,7 @@ shared final class TableClient(shared PlayerId playerId, shared TableId tableId,
 		gui.showPlayerInfo(player2Color, null, null);
 		gui.showPlayerMessage(player2Color, gui.waitingTextKey, true);
 		gui.hideSubmitButton();
-		gui.hideJockerButton();
+		gui.hideJokerButton();
 		gui.hideUndoButton();
 	}
 	
@@ -71,7 +71,7 @@ shared final class TableClient(shared PlayerId playerId, shared TableId tableId,
 				gui.showCurrentPlayer(player1Color);
 				gui.showPlayerMessage(player2Color, "", true);
 				gui.hideSubmitButton();
-				gui.hideJockerButton();
+				gui.hideJokerButton();
 				gui.hideUndoButton();
 			}
 			return true;

@@ -16,6 +16,10 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 		values.add(secondValue);
 	}
 	
+	function isInRange(Integer diceValue) => diceValue >= 1 && diceValue <= 6; 
+	
+	shared Boolean valid => isInRange(firstValue) && isInRange(secondValue);
+	
 	shared Integer dicePoints => isPair then firstValue * 4 else firstValue + secondValue;
 	
 	shared Integer getValue(CheckerColor color) {
