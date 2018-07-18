@@ -349,10 +349,8 @@ shared class Game(variable Instant nextTimeout) {
 		return true;
 	}
 	
-	shared Boolean end(Instant timestamp) {
-		statistic.side(black).remainingDistance = board.remainingDistance(black);
-		statistic.side(white).remainingDistance = board.remainingDistance(white);
-		statistic.gameEnded(timestamp);
+	shared Boolean end(Instant timestamp, CheckerColor? winnerColor) {
+		statistic.gameEnded(timestamp, winnerColor, board.remainingDistance(black), board.remainingDistance(white));
 		
 		blackReady = false;
 		whiteReady = false;

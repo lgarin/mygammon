@@ -119,7 +119,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 	}
 	
 	function endGame(PlayerId playerId, Instant timestamp, PlayerId winnerId = systemPlayerId) {
-		if (game.end(timestamp)) {
+		if (game.end(timestamp, toPlayerColor(winnerId))) {
 			matchCommander(EndMatchMessage(playerId, matchId, winnerId, game.score));
 			if (exists blackPlayer = toPlayer(black).info, exists whitePlayer = toPlayer(white).info) {
 				statisticRecorder(GameStatisticMessage(matchId, blackPlayer, whitePlayer, game.currentStatistic));

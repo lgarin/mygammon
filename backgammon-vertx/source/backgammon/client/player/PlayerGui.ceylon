@@ -61,7 +61,7 @@ shared class PlayerGui(Document document) extends BoardGui(document) {
 	}
 	
 	function formatInteger(Integer integer) {
-		return "``integer < 0 then "-" else "+"````integer``";
+		return "``integer < 0 then "-" else "+"````integer.magnitude``";
 	}
 	
 	function buildGameData(RoomId roomId, PlayerId playerId, GameStatisticMessage game) {

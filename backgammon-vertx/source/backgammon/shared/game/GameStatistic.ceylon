@@ -31,7 +31,8 @@ shared final class GamePlayerStatistic() extends Object() {
 	variable Integer _playedJockers = 0;
 	shared Integer playedJockers => _playedJockers;
 	
-	shared variable Integer remainingDistance = 0;
+	variable Integer _remainingDistance = 0;
+	shared Integer remainingDistance => _remainingDistance;
 	
 	variable Instant _turnStart = Instant(0);
 	variable Duration _playTime = Duration(0);
@@ -68,6 +69,10 @@ shared final class GamePlayerStatistic() extends Object() {
 		}
 	}
 	
+	shared void gameEnded(Integer remainingDistance) {
+		_remainingDistance = remainingDistance;
+	}
+	
 	shared JsonObject toJson() {
 		value result = JsonObject();
 		result.put("startedTurn", startedTurn);
@@ -90,7 +95,7 @@ shared final class GamePlayerStatistic() extends Object() {
 		_undoneMoves = json.getInteger("undoneMoves");
 		_boltHits = json.getInteger("boltHits");
 		_playedJockers = json.getInteger("playedJockers");
-		remainingDistance = json.getInteger("remainingDistance");
+		_remainingDistance = json.getInteger("remainingDistance");
 		_playTime = Duration(json.getInteger("playTime"));
 	}
 	
@@ -103,7 +108,7 @@ shared final class GamePlayerStatistic() extends Object() {
 				_undoneMoves==that._undoneMoves && 
 				_boltHits==that._boltHits && 
 				_playedJockers==that._playedJockers && 
-				remainingDistance==that.remainingDistance && 
+				_remainingDistance==that.remainingDistance && 
 				_turnStart==that._turnStart && 
 				_playTime==that._playTime;
 		}
@@ -121,7 +126,7 @@ shared final class GamePlayerStatistic() extends Object() {
 		hash = 31*hash + _undoneMoves;
 		hash = 31*hash + _boltHits;
 		hash = 31*hash + _playedJockers;
-		hash = 31*hash + remainingDistance;
+		hash = 31*hash + _remainingDistance;
 		hash = 31*hash + _turnStart.hash;
 		hash = 31*hash + _playTime.hash;
 		return hash;
@@ -143,6 +148,9 @@ shared final class GameStatistic extends Object {
 	variable Instant _endTime = _startTime;
 	shared Instant endTime => _endTime;
 	
+	variable CheckerColor? _winnerColor = null;
+	shared CheckerColor? winnerColor => _winnerColor;
+	
 	shared new(Integer initialDistance, Integer checkerCount) extends Object() {
 		_initialDistance = initialDistance;
 		_checkerCount = checkerCount;
@@ -158,21 +166,15 @@ shared final class GameStatistic extends Object {
 		_startTime = startTime;
 	}
 	
-	shared void gameEnded(Instant endTime) {
+	shared void gameEnded(Instant endTime, CheckerColor? winnerColor, Integer remainingBlackDistance, Integer remainingWhiteDistance) {
 		_endTime = endTime;
+		_winnerColor = winnerColor;
+		blackStatistic.gameEnded(remainingBlackDistance);
+		whiteStatistic.gameEnded(remainingWhiteDistance);
 	}
 	
 	shared Duration duration => Duration(_endTime.millisecondsOfEpoch - _startTime.millisecondsOfEpoch);
 	
-	shared CheckerColor? winnerColor {
-		if (blackStatistic.remainingDistance == 0 && whiteStatistic.remainingDistance > 0) {
-			return black;
-		} else if (whiteStatistic.remainingDistance == 0 && blackStatistic.remainingDistance > 0) {
-			return white;
-		} else {
-			return null;
-		}
-	}
 	shared Integer winnerScore => if (winnerColor exists) then (blackStatistic.remainingDistance - whiteStatistic.remainingDistance).magnitude else 0;
 
 	shared Integer score(CheckerColor color) {
@@ -214,10 +216,19 @@ shared final class GameStatistic extends Object {
 		_endTime = Instant(json.getInteger("endTime"));
 		blackStatistic.fromJson(json.getObject("blackStatistic"));
 		whiteStatistic.fromJson(json.getObject("whiteStatistic"));
+		_winnerColor = parseNullableCheckerColor(json.getStringOrNull("winnerColor"));
 	}
 	
 	// TODO optimize
 	shared GameStatistic copy() => fromJson(toJson());
+	
+	function equalsOrBothNull(Object? object1, Object? object2) {
+		if (exists object1, exists object2) {
+			return object1 == object2;
+		} else {
+			return object1 exists == object2 exists;
+		}
+	}
 	
 	shared actual Boolean equals(Object that) {
 		if (is GameStatistic that) {
@@ -226,7 +237,8 @@ shared final class GameStatistic extends Object {
 				_checkerCount==that._checkerCount && 
 				blackStatistic==that.blackStatistic && 
 				whiteStatistic==that.whiteStatistic && 
-				_endTime==that._endTime;
+				_endTime==that._endTime &&
+				equalsOrBothNull(_winnerColor, that._winnerColor);
 		}
 		else {
 			return false;
