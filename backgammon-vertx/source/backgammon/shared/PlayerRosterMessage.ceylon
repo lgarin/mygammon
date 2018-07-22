@@ -65,8 +65,8 @@ PlayerStatisticOutputMessage parsePlayerStatisticOutputMessage(Object json) {
 
 shared final class PlayerDetailOutputMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statistic, shared [PlayerTransaction*] transactions) satisfies OutboundPlayerRosterMessage {
 	playerId = playerInfo.playerId;
-	toJson() => Object{ "playerInfo" -> playerInfo.toJson(), "statistic" -> statistic.toJson(), "transactions" -> JsonArray {for (t in transactions) t.toJson()} };
+	toJson() => Object{ "playerInfo" -> playerInfo.toJson(), "statistic" -> statistic.toJson(), "transactions" -> JsonArray(transactions*.toJson()) };
 }
 PlayerDetailOutputMessage parsePlayerDetailOutputMessage(Object json) {
-	return PlayerDetailOutputMessage(parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("statistic")), json.getArray("transactions").narrow<Object>().map(parsePlayerTransaction).sequence());
+	return PlayerDetailOutputMessage(parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("statistic")), json.getArray("transactions").narrow<Object>().collect(parsePlayerTransaction));
 }

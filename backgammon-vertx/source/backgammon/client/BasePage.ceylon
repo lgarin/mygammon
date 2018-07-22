@@ -116,9 +116,9 @@ abstract shared class BasePage() {
 		}
 	}
 	
-	shared void makeApiRequest(String url) {
+	shared void makeApiRequest(String url, String? data = null) {
 		value request = newXMLHttpRequest();
-		request.open("GET", url, true);
+		request.open(data exists then "POST" else "GET", url, true);
 		request.onload = void (Event event) {
 			if (request.status == 200) {
 				onServerMessage(request.responseText);
@@ -128,7 +128,7 @@ abstract shared class BasePage() {
 				onServerError(request.statusText);
 			}
 		};
-		request.send();
+		request.send(data);
 	}
 	
 	shared PlayerId? extractPlayerId() {

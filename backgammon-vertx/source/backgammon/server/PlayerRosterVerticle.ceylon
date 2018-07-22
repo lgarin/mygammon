@@ -14,7 +14,8 @@ import io.vertx.ceylon.core {
 import backgammon.shared {
 
 	InboundPlayerRosterMessage,
-	OutboundPlayerRosterMessage
+	OutboundPlayerRosterMessage,
+	PlayerDetailRequestMessage
 }
 
 final class PlayerRosterVerticle() extends Verticle() {
@@ -45,10 +46,10 @@ final class PlayerRosterVerticle() extends Verticle() {
 				}
 			}
 			
-			if (message.mutation) {
-				callback(roster.processInputMessage(message));
-			} else {
+			if (message is PlayerDetailRequestMessage) {
 				repoEventBus.queryInboundPlayerMessages(message.playerId, processPlayerHistory);
+			} else {
+				callback(roster.processInputMessage(message));
 			}
 		}
 		

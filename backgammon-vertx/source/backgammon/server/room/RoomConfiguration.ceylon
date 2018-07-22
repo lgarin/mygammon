@@ -24,4 +24,5 @@ shared class RoomConfiguration(Object? json) extends GameConfiguration(json) {
 	shared [Integer*] scoreLevels = (json?.getArrayOrNull("scoreLevels") else [100, 250, 500, 1000, 2000, 5000]).narrow<Integer>().sequence();
 	shared RoomSize roomSize => RoomSize(maxTableCount, maxPlayerCount);
 	shared MatchBet matchBet => MatchBet(playerBet, matchPot);
+	shared Duration chatMessageRetention = Duration(json?.getIntegerOrNull("chatMessageRetention") else 1 * 60 * 60 * 1000);
 }

@@ -46,7 +46,7 @@ shared final class GameMoveInfo(Integer sourcePosition, Integer targetPosition, 
 
 shared final class GameMoveSequence(Integer sourcePosition, Integer targetPosition, shared [GameMoveInfo*] moves) extends GameMove(sourcePosition, targetPosition) {
 	
-	shared actual JsonObject toJson() => JsonObject {"sourcePosition" -> sourcePosition, "targetPosition" -> targetPosition, "moves" -> JsonArray { for (e in moves) e.toJson() }};
+	shared actual JsonObject toJson() => JsonObject {"sourcePosition" -> sourcePosition, "targetPosition" -> targetPosition, "moves" -> JsonArray(moves*.toJson())};
 	
 	shared actual Boolean equals(Object that) {
 		if (is GameMoveSequence that) {

@@ -119,4 +119,9 @@ shared object applicationMessages {
 	registerParser(parseScoreBoardResponseMessage);
 	registerParser(parseQueryGameStatisticMessage);
 	registerParser(parseGameStatisticResponseMessage);
+	
+	registerParser(parsePostChatMessage);
+	registerParser(parseChatHistoryRequestMessage);
+	registerParser(parseChatPostedMessage);
+	registerParser(parseChatHistoryResponseMessage);
 }

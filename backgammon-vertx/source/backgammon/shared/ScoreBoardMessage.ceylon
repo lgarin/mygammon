@@ -49,7 +49,7 @@ shared final class GameStatisticMessage(shared MatchId matchId, shared PlayerInf
 GameStatisticMessage parseGameStatisticMessage(JsonObject json) {
 	return GameStatisticMessage(parseMatchId(json.getObject("matchId")), parsePlayerInfo(json.getObject("blackPlayer")), parsePlayerInfo(json.getObject("whitePlayer")), GameStatistic.fromJson(json.getObject("statistic")), Instant(json.getInteger("timestamp")));
 }
-[GameStatisticMessage*] parseGameStatisticArray(JsonArray json) => json.narrow<JsonObject>().map(parseGameStatisticMessage).sequence();
+[GameStatisticMessage*] parseGameStatisticArray(JsonArray json) => json.narrow<JsonObject>().collect(parseGameStatisticMessage);
 
 shared final class QueryGameStatisticMessage(shared actual PlayerId playerId, shared actual Instant timestamp = now()) satisfies InboundScoreBoardMessage {
 	toJson() => JsonObject { "playerId" -> playerId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch };

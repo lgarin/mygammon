@@ -93,7 +93,7 @@ FoundEmptyTableMessage parseFoundEmptyTableMessage(Object json) {
 shared final class PlayerListMessage(shared actual RoomId roomId, shared [PlayerState*] newPlayers = [], shared [PlayerState*] oldPlayers = [], shared [PlayerState*] updatedPlayers = []) satisfies OutboundRoomMessage {
 	shared actual Boolean success = !newPlayers.empty || !oldPlayers.empty || !updatedPlayers.empty;
 	shared actual PlayerId playerId = systemPlayerId;
-	toJson() => toExtendedJson {"newPlayers" -> JsonArray {for (e in newPlayers) e.toJson()}, "oldPlayers" -> JsonArray {for (e in oldPlayers) e.toJson()}, "updatedPlayers" -> JsonArray {for (e in updatedPlayers) e.toJson()} };
+	toJson() => toExtendedJson {"newPlayers" -> JsonArray(newPlayers*.toJson()), "oldPlayers" -> JsonArray(oldPlayers*.toJson()), "updatedPlayers" -> JsonArray(updatedPlayers*.toJson()) };
 }
 PlayerListMessage parsePlayerListMessageMessage(Object json) {
 	return PlayerListMessage(parseRoomId(json.getString("roomId")), json.getArray("newPlayers").narrow<Object>().collect(parsePlayerState), json.getArray("oldPlayers").narrow<Object>().collect(parsePlayerState), json.getArray("updatedPlayers").narrow<Object>().collect(parsePlayerState));
