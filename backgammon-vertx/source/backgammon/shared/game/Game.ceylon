@@ -98,16 +98,16 @@ shared class Game(variable Instant nextTimeout) {
 			return false;
 		} else if (board.countCheckers(target, color.oppositeColor) > 1) {
 			return false;
-		} else if (board.hasCheckersOutside(color)) {
-			if (board.homePosition(color) == target) {
+		} else if (board.homePosition(color) == target) {
+			if (board.hasCheckersOutside(color)) {
 				return false;
+			} else if (exists maxValue = roll.maxRemainingValue) {
+				return maxValue >= board.distance(source, target);
 			} else {
-				return roll.hasRemainingValue(board.distance(source, target));
+				return false;
 			}
-		} else if (exists maxValue = roll.maxRemainingValue) {
-			return maxValue >= board.distance(source, target);
 		} else {
-			return false;
+			return roll.hasRemainingValue(board.distance(source, target));
 		}
 	}
 	
