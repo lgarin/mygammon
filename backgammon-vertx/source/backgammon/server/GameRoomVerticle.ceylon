@@ -71,7 +71,7 @@ final class GameRoomVerticle() extends Verticle() {
 			roomEventBus.registerInboundMatchMessageConsumer(roomConfig.roomId, matchRoom.processMatchMessage);
 			
 			roomEventBus.registerInboundGameMessageConsumer(roomConfig.roomId, roomConfig.gameThreadCount, gameRoom.processGameMessage);
-			roomEventBus.registerGameEventMessageCosumer(roomConfig.roomId, gameRoom.processEventMessage);
+			roomEventBus.registerGameEventMessageConsumer(roomConfig.roomId, gameRoom.processEventMessage);
 			
 			matchRoom.resetPeriodicNotification(now());
 			

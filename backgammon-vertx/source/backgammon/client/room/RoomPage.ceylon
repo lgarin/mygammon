@@ -32,7 +32,7 @@ shared final class RoomPage() extends TablePage<RoomGui>(RoomGui(document)) {
 	variable RoomId? roomId = null;
 	value playerList = PlayerListModel(RoomGui.hiddenClass);
 	
-	function extractRoomId() {
+	shared actual RoomId? extractRoomId() {
 		if (!roomId exists) {
 			if (exists id = splitString(window.location.href, "/room/")) {
 				roomId = RoomId(id);
@@ -215,8 +215,9 @@ shared final class RoomPage() extends TablePage<RoomGui>(RoomGui(document)) {
 	void login(PlayerState currentPlayerState, RoomId currentRoomId) {
 		print(currentPlayerState.toJson());
 		eventBusClient.addAddress("OutboundRoomMessage-``currentRoomId``");
-		roomCommander(RoomStateRequestMessage(currentPlayerState.playerId, currentRoomId));
 		gui.showBeginState(currentPlayerState);
+		openChatClient(currentRoomId);
+		roomCommander(RoomStateRequestMessage(currentPlayerState.playerId, currentRoomId));
 	}
 	
 	shared void run() {

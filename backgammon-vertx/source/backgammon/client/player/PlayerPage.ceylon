@@ -32,7 +32,7 @@ shared final class PlayerPage() extends TablePage<PlayerGui>(PlayerGui(document)
 	variable PlayerId? queryPlayerId = null;
 	variable PlayerState? currentPlayerState = null;
 	
-	function extractRoomId() {
+	shared actual RoomId? extractRoomId() {
 		if (!roomId exists) {
 			if (exists id = splitString(window.location.href, "/room/", "/player")) {
 				roomId = RoomId(id);
@@ -188,6 +188,7 @@ shared final class PlayerPage() extends TablePage<PlayerGui>(PlayerGui(document)
 		currentPlayerState = playerState; 
 		eventBusClient.addAddress("OutboundRoomMessage-``currentRoomId``");
 		gui.showBeginState(playerState);
+		openChatClient(currentRoomId);
 		if (exists queryPlayerId = extractQueryPlayerId()) {
 			scoreCommander(QueryGameStatisticMessage(queryPlayerId));
 		} else {

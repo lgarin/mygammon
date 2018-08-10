@@ -24,19 +24,22 @@ import io.vertx.ceylon.web.handler.sockjs {
 	SockJSHandlerOptions
 }
 
-final class JsonEventBus(Vertx vertx) {
+shared final class JsonEventBus(Vertx vertx) {
 	
 	value log = logger(`package`);
 	
 	shared void sendMessage<OutboundMessage>(JsonObject message, String address, Anything parseOutboundMessage(JsonObject json), void responseHandler(Throwable|OutboundMessage response)) {
-		log.info("Req ``message.string``");
+		log.info("Req ``message``");
 		vertx.eventBus().send(address, message, void (Throwable|Message<JsonObject?> result) {
 			if (is Throwable result) {
+				log.error("Failed processing for ``message``", result);
 				responseHandler(result);
 			} else if (exists body = result.body(), is OutboundMessage response = parseOutboundMessage(body)) {
 				responseHandler(response);
 			} else {
-				responseHandler(Exception("Invalid response: ``result.body() else "<no content>"``"));
+				value error = "Invalid response: ``result.body() else "<no content>"``";
+				log.error(error);
+				responseHandler(Exception(error));
 			}
 		});
 	}
@@ -53,12 +56,14 @@ final class JsonEventBus(Vertx vertx) {
 							log.error("Failed processing for ``message.body() else message``", result);
 							message.fail(500, "Processing error: ``result.message``");
 						} else if (is JsonObject result) {
-							log.info("Rep ``result.string``");
+							log.info("Rep ``result``");
 							message.reply(result);
 						}
 					});
 			} else {
-				message.fail(500, "Invalid request: ``message``");
+				value error = "Invalid request: ``message``";
+				log.error(error);
+				message.fail(500, error);
 			}
 		});
 	}
@@ -68,14 +73,16 @@ final class JsonEventBus(Vertx vertx) {
 			if (exists body = message.body()) {
 				try { 
 					value result = process(body);
-					log.info("Res ``result.string``");
+					log.info("Res ``result``");
 					message.reply(result);
-				} catch (Exception exception) {
+				} catch (Throwable exception) {
 					log.error("Failed processing for ``message.body() else message``", exception);
 					message.fail(500, "Processing error: ``exception.message``");
 				}
 			} else {
-				message.fail(500, "Invalid request: ``message``");
+				value error = "Invalid request: ``message``";
+				log.error(error);
+				message.fail(500, error);
 			}
 		});
 	}
@@ -88,7 +95,7 @@ final class JsonEventBus(Vertx vertx) {
 					log.error("Failed processing for ``message.body() else message``", result);
 					message.fail(500, "Processing error: ``result.message``");
 				} else {
-					log.info("Res ``result.string``");
+					log.info("Res ``result``");
 					message.reply(result);
 				}
 			}
@@ -96,22 +103,24 @@ final class JsonEventBus(Vertx vertx) {
 			if (exists body = message.body()) {
 				try { 
 					process(body, reply);
-				} catch (Exception exception) {
+				} catch (Throwable exception) {
 					log.error("Failed processing for ``message.body() else message``", exception);
 					message.fail(500, "Processing error: ``exception.message``");
 				}
 			} else {
-				message.fail(500, "Invalid request: ``message``");
+				value error = "Invalid request: ``message``";
+				log.error(error);
+				message.fail(500, error);
 			}
 		});
 	}
 	
 	shared void publishMessage(JsonObject message, String address) {
-		log.info("Pub ``message.string``");
+		log.info("Pub ``message``");
 		vertx.eventBus().publish(address, message);
 	}
 		
-	function createSockJsHandler({String*} addressRegexIterable) {
+	function createSockJsHandler({String+} addressRegexIterable) {
 		value sockJsOptions = SockJSHandlerOptions {
 			heartbeatInterval = 2000;
 		};
@@ -122,9 +131,9 @@ final class JsonEventBus(Vertx vertx) {
 		return sockJSHandler.create(vertx, sockJsOptions).bridge(bridgeOptions);
 	}
 	
-	shared Router createEventBusRouter(String path, {String*} addressRegexIterable) {
+	shared Router createEventBusRouter({String+} addressRegexIterable) {
 		value router = routerFactory.router(vertx);
-		router.route(path).handler(createSockJsHandler(addressRegexIterable).handle);
+		router.route("/*").handler(createSockJsHandler(addressRegexIterable).handle);
 		return router;
 	}
 }

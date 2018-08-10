@@ -28,16 +28,6 @@ shared final class DiceRollQueue(String id) {
 		}
 	}
 	
-	shared void waitForNewRoll() {
-		try (lock) {
-			while (true) {
-				if (queue.empty) {
-					lock.waitSignal();
-				}
-			}
-		}
-	}
-	
 	shared Boolean needNewRoll() {
 		try (lock) {
 			return queue.empty;

@@ -7,7 +7,9 @@ import backgammon.shared {
 }
 
 import ceylon.json {
-	Object
+	JsonObject,
+	Emitter,
+	visit
 }
 import ceylon.time {
 	Instant
@@ -16,6 +18,11 @@ import ceylon.time {
 import io.vertx.ceylon.web {
 	RoutingContext,
 	cookieFactory=cookie
+}
+import io.vertx.ceylon.core.buffer {
+
+	bufferFactory=buffer_,
+	Buffer
 }
 
 final class GameRoomRoutingContext(RoutingContext rc) {
@@ -35,7 +42,7 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 		rc.session()?.destroy();
 		rc.user()?.clearCache();
 		rc.clearUser();
-		if (exists cookie = rc.getCookie("playerInfo")) {
+		if (exists cookie = rc.getCookie("playerId")) {
 			cookie.setMaxAge(0);
 		}
 	}
@@ -128,13 +135,39 @@ final class GameRoomRoutingContext(RoutingContext rc) {
 		}
 	}
 	
-	shared void writeJsonResponse(Object json) {
+	final class JsonBuffer(String encoding) extends Emitter(false) {
+		
+		value buffer = bufferFactory.buffer(8192);
+		value builder = StringBuilder();
+		
+		void flushToBuffer() {
+			buffer.appendString(builder.string, encoding);
+			builder.clear();
+		}
+		
+		shared actual void print(String string) {
+			builder.append(string);
+			if (builder.longerThan(1000)) {
+				flushToBuffer();
+			}
+		}
+		
+		shared Buffer encode(JsonObject json) {
+			visit(json, this);
+			if (!builder.empty) {
+				flushToBuffer();
+			}
+			return buffer;
+		}
+	}
+
+	shared void writeJsonResponse(JsonObject json) {
 		if (!rc.failed()) {
-			value response = json.string;
-			rc.response().headers().add("Content-Length", response.size.string);
-			rc.response().headers().add("Content-Type", "application/json");
+			value response = JsonBuffer("UTF-8").encode(json);
+			rc.response().headers().add("Content-Length", response.length().string);
+			rc.response().headers().add("Content-Type", "application/json; charset=utf-8");
 			rc.response().headers().add("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-			rc.response().write(response).end();
+			rc.response().end(response);
 		}
 	}
 	

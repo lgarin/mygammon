@@ -26,7 +26,8 @@ import backgammon.shared {
 	InboundChatRoomMessage,
 	PlayerStatisticRequestMessage,
 	PlayerStatisticOutputMessage,
-	PostChatMessage
+	PostChatMessage,
+	ChatPostedMessage
 }
 
 final class ChatRoomVerticle()  extends Verticle() {
@@ -41,18 +42,27 @@ final class ChatRoomVerticle()  extends Verticle() {
 		
 		void processInputMessage(InboundChatRoomMessage message, Anything(OutboundChatRoomMessage|Throwable) callback) {
 			
+			void publishAndCallback(OutboundChatRoomMessage|Throwable result) {
+				if (is ChatPostedMessage result) {
+					chatEventBus.publishOutboundMessage(result);
+				}
+				callback(result);
+			}
+			
 			void playerInfoContinuation(PlayerStatisticOutputMessage|Throwable result) {
 				if (is Throwable result) {
-					callback(result);
+					publishAndCallback(result);
 				} else {
-					callback(chatRoom.processInputMessage(message, result.playerInfo));
+					log.info("Found ``result.playerInfo.toJson()``");
+					publishAndCallback(chatRoom.processInputMessage(message, result.playerInfo));
 				}
 			}
 
 			if (message is PostChatMessage) {
+				log.info("Replay ``message.toJson()``");
 				rosterEventBus.sendInboundMessage(PlayerStatisticRequestMessage(message.playerId, message.timestamp), playerInfoContinuation);
 			} else {
-				callback(chatRoom.processInputMessage(message));
+				publishAndCallback(chatRoom.processInputMessage(message));
 			}
 		}
 		
@@ -65,7 +75,7 @@ final class ChatRoomVerticle()  extends Verticle() {
 				chatEventBus.registerAsyncConsumer(serverConfig.roomId, processInputMessage);
 				
 				chatEventBus.disableOutput = false;
-				log.info("Chat room ``serverConfig.roomId``  events : ``result``");
+				log.info("Chat room ``serverConfig.roomId`` events : ``result``");
 				startFuture.complete();
 			}
 		});

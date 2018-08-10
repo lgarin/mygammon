@@ -38,6 +38,13 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 		return tableId;
 	}
 	
+	shared actual RoomId? extractRoomId() {
+		if (exists tableId = extractTableId()) {
+			return RoomId(tableId.roomId);
+		}
+		return null;
+	}
+	
 	isBoardPreview() => window.location.href.endsWith("view");
 
 	shared Boolean onStartDrag(HTMLElement source) {
@@ -197,6 +204,7 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 
 	void login(PlayerState playerState, TableId tableId) {
 		print(playerState.toJson());
+		openChatClient(RoomId(tableId.roomId));
 		openTableClient(tableId);
 		gui.showBeginState(playerState);
 	}

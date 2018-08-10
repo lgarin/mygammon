@@ -39,6 +39,32 @@ shared abstract class BaseGui {
 		document.getElementById(elementId)?.classList?.remove(className);
 	}
 	
+	shared Boolean toggleDropDown(String elementId) {
+		if (exists element = document.getElementById(elementId)) {
+			if (element.classList.contains("open")) {
+				element.classList.remove("open");
+				return false;
+			} else {
+				element.classList.add("open");
+				return true;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	shared String? readElementValue(String elementId) {
+		dynamic {
+			return jQuery("#``elementId``").val();
+		}
+	}
+	
+	shared void writeElementValue(String elementId, String elementValue) {
+		dynamic {
+			jQuery("#``elementId``").val(elementValue);
+		}
+	}
+	
 	shared void showDialog(String dialogName, {<String->String>*} variableMap = {}) {
 		replaceVariables(variableMap);
 		dynamic {

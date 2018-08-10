@@ -14,7 +14,9 @@ import backgammon.shared {
 	OutboundScoreBoardMessage,
 	OutboundRoomMessage,
 	PlayerStateMessage,
-	OutboundTableMessage
+	OutboundTableMessage,
+	OutboundChatRoomMessage,
+	RoomId
 }
 import ceylon.time {
 
@@ -25,18 +27,32 @@ import backgammon.client.browser {
 	HTMLElement,
 	window
 }
+import backgammon.client.chat {
+
+	ChatClient
+}
 abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() given Gui satisfies TableGui {
 	variable EventBusClient? _eventBusClient = null; 
 	variable TableClient? _tableClient = null;
+	variable ChatClient? _chatClient = null;
 	
 	shared EventBusClient eventBusClient => _eventBusClient else (_eventBusClient = EventBusClient(onServerMessage, onServerError));
 	
 	shared TableClient? tableClient => _tableClient;
 	
+	shared ChatClient? chatClient => _chatClient;
+	
+	shared formal RoomId? extractRoomId();
+	
 	shared void openTableClient(TableId tableId) {
 		_tableClient = TableClient(currentPlayerId, tableId, gui, isBoardPreview(), gameCommander);
 		eventBusClient.addAddress("OutboundTableMessage-``tableId``");
 		gameCommander(TableStateRequestMessage(currentPlayerId, tableId, isBoardPreview()));
+	}
+	
+	shared void openChatClient(RoomId roomId) {
+		_chatClient = ChatClient(currentPlayerId, roomId, gui, chatCommander);
+		eventBusClient.addAddress("OutboundRoomMessage-``roomId``");
 	}
 	
 	shared void closeTableClient() {
@@ -67,16 +83,20 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 	}
 	
 	shared default Boolean onButton(HTMLElement target) {
-		if (target.id == gui.submitButtonId, exists currentTableClient = tableClient) {
-			return currentTableClient.handleSubmitEvent();
-		} else if (target.id == gui.undoButtonId, exists gameClient = tableClient?.gameClient) {
-			return gameClient.handleUndoEvent();
-		} else if (target.id == gui.jokerButtonId, exists gameClient = tableClient?.gameClient) {
-			return gameClient.handleJokerEvent();
-		} else if (target.id == gui.jokerDiceNr1Id || target.id == gui.jokerDiceNr2Id, exists gameClient = tableClient?.gameClient) {
-			return gameClient.handleJokerDiceEvent(target);
+		if (target.id == gui.submitButtonId, exists client = tableClient) {
+			return client.handleSubmitEvent();
+		} else if (target.id == gui.undoButtonId, exists client = tableClient?.gameClient) {
+			return client.handleUndoEvent();
+		} else if (target.id == gui.jokerButtonId, exists client = tableClient?.gameClient) {
+			return client.handleJokerEvent();
+		} else if (target.id == gui.jokerDiceNr1Id || target.id == gui.jokerDiceNr2Id, exists client = tableClient?.gameClient) {
+			return client.handleJokerDiceEvent(target);
+		} else if (target.id == gui.chatButtonId, exists client = chatClient) {
+			return client.toggleHistory();
+		} else if (target.id == gui.chatPostButtonId, exists client = chatClient) {
+			return client.postMessage();
 		} else if (target.id == gui.exitButtonId) {
-			if (exists currentTableClient = tableClient, currentTableClient.playerIsInMatch) {
+			if (exists client = tableClient, client.playerIsInMatch) {
 				gui.showDialog("dialog-logout");
 			} else {
 				logout();
@@ -144,6 +164,15 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 		
 		if (exists currentClient = tableClient) {
 			return currentClient.handleGameMessage(message);
+		} else {
+			return false;
+		}
+	}
+	
+	shared actual Boolean handleChatMessage(OutboundChatRoomMessage message) {
+		
+		if (exists currentClient = chatClient) {
+			return currentClient.handleChatMessage(message);
 		} else {
 			return false;
 		}

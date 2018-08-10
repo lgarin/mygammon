@@ -18,6 +18,10 @@ import io.vertx.ceylon.core.shareddata {
 
 	Counter
 }
+import ceylon.logging {
+
+	logger
+}
 
 final shared class EventSearchCriteria {
 	
@@ -48,6 +52,8 @@ final shared class EventSearchQuery(EventSearchCriteria criteria, String orderFi
 }
 
 shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer replayPageSize) {
+	
+	value log = logger(`package`);
 	
 	value eventIndexClient = ElasticSearchClient(vertx, elasticIndexUrl);
 
@@ -80,7 +86,7 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 					} else {
 						completion(ReplayResult(totalCount + processCount, maxId + 1));
 					}
-				} catch (Exception e) {
+				} catch (Throwable e) {
 					completion(e);
 				}
 			}
@@ -111,10 +117,10 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 		
 		void fetchCounter(ReplayResult replayResult) {
 			vertx.sharedData().getCounter(type, (result) {
-				if (is Counter result) {
-					initializeCounter(result, replayResult);
-				} else {
+				if (is Throwable result) {
 					completion(result);
+				} else {
+					initializeCounter(result, replayResult);
 				}
 			});
 		}
@@ -151,6 +157,7 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 		void incrementCounter(Counter counter) {
 			counter.incrementAndGet((result) {
 				if (is Throwable result) {
+					log.error("Failed to store ``event`` to ``type``", result);
 					handler(result);
 				} else {
 					eventIndexClient.insertDocument(type, result, event, handler);
@@ -159,10 +166,11 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 		}
 		
 		vertx.sharedData().getCounter(type, (result) {
-			if (is Counter result) {
-				incrementCounter(result);
-			} else {
+			if (is Throwable result) {
+				log.error("Failed to store ``event`` to ``type``", result);
 				handler(result);
+			} else {
+				incrementCounter(result);
 			}
 		});
 	}
@@ -171,6 +179,7 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 		
 		void mapResponse({<Integer->JsonObject>*}|Throwable result) {
 			if (is Throwable result) {
+				log.error("Failed to query ``type`` with ``query.toElasticSearchCriteria().toQueryString()``", result);
 				handleResponse(result);
 			} else {
 				handleResponse(result.map(Entry.item));

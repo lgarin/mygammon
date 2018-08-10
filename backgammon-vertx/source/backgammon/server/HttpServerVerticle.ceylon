@@ -15,6 +15,10 @@ import io.vertx.ceylon.web {
 import io.vertx.ceylon.web.handler {
 	staticHandler
 }
+import backgammon.server.bus {
+
+	JsonEventBus
+}
 
 final class HttpServerVerticle() extends Verticle() {
 	
@@ -27,6 +31,8 @@ final class HttpServerVerticle() extends Verticle() {
 		value roomRouterFactory = GameRoomRouterFactory(vertx, serverConfig);
 		value rosterRouterFactory = PlayerRosterRouterFactory(vertx, serverConfig);
 		value scoreRouterFactory = ScoreBoardRouterFactory(vertx, serverConfig);
+		value chatRouterFactory = ChatRoomRouterFactory(vertx, serverConfig);
+		value eventBus = JsonEventBus(vertx);
 		value router = routerFactory.router(vertx);
 		
 		log.info("Starting web server...");
@@ -37,10 +43,11 @@ final class HttpServerVerticle() extends Verticle() {
 		
 		router.mountSubRouter("/", authRouterFactory.createUserSessionRouter(serverConfig.userSessionTimeout.milliseconds));
 		
-		router.mountSubRouter("/eventbus", roomRouterFactory.createEventBusRouter());
+		router.mountSubRouter("/eventbus", eventBus.createEventBusRouter(roomRouterFactory.publishedAddresses.chain(chatRouterFactory.publishedAddresses)));
 		router.mountSubRouter("/api/room", roomRouterFactory.createApiRouter());
 		router.mountSubRouter("/api/roster", rosterRouterFactory.createApiRouter());
 		router.mountSubRouter("/api/score", scoreRouterFactory.createApiRouter());
+		router.mountSubRouter("/api/chat", chatRouterFactory.createApiRouter());
 		
 		router.mountSubRouter("/", authRouterFactory.createLoginRouter());
 		router.mountSubRouter("/", roomRouterFactory.createRootRouter());

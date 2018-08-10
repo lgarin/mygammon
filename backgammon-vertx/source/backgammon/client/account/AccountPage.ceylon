@@ -30,7 +30,7 @@ shared final class AccountPage() extends TablePage<AccountGui>(AccountGui(docume
 	variable RoomId? roomId = null;
 	variable PlayerState? currentPlayerState = null;
 	
-	function extractRoomId() {
+	shared actual RoomId? extractRoomId() {
 		if (!roomId exists) {
 			if (exists id = splitString(window.location.href, "/room/", "/account")) {
 				roomId = RoomId(id);
@@ -170,6 +170,7 @@ shared final class AccountPage() extends TablePage<AccountGui>(AccountGui(docume
 		currentPlayerState = playerState; 
 		eventBusClient.addAddress("OutboundRoomMessage-``currentRoomId``");
 		gui.showBeginState(playerState);
+		openChatClient(currentRoomId);
 		rosterCommander(PlayerDetailRequestMessage(playerState.playerId));
 		if (exists tableId = playerState.tableId) {
 			showTable(tableId);

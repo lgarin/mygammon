@@ -14,7 +14,8 @@ import backgammon.shared {
 
 	applicationMessages,
 	InboundChatRoomMessage,
-	OutboundChatRoomMessage
+	OutboundChatRoomMessage,
+	ChatPostedMessage
 }
 import ceylon.json {
 
@@ -38,11 +39,11 @@ shared final class ChatRoomEventBus(Vertx vertx, ServerConfiguration configurati
 				if (is Throwable result) {
 					responseHandler(result);
 				} else {
-					eventBus.sendMessage(formattedMessage, "ChatRoomMessage-``message.roomId``", applicationMessages.parse<OutputMessage>, responseHandler);
+					eventBus.sendMessage(formattedMessage, "InboundChatMessage-``message.roomId``", applicationMessages.parse<OutputMessage>, responseHandler);
 				}
 			});
 		} else {
-			eventBus.sendMessage(formattedMessage, "ChatRoomMessage-``message.roomId``", applicationMessages.parse<OutputMessage>, responseHandler);
+			eventBus.sendMessage(formattedMessage, "InboundChatMessage-``message.roomId``", applicationMessages.parse<OutputMessage>, responseHandler);
 		}
 	}
 	
@@ -62,10 +63,21 @@ shared final class ChatRoomEventBus(Vertx vertx, ServerConfiguration configurati
 			}
 		}
 		
-		eventBus.registerAsyncConsumer("ChatRoomMessage-``roomId``", parseRequest);
+		eventBus.registerAsyncConsumer("InboundChatMessage-``roomId``", parseRequest);
 	}
 	
 	shared void replayAllEvents(String roomId, void process(InboundChatRoomMessage message), void completion(Integer|Throwable result)) {
 		eventStore.replayAllEvents("chat-``roomId``", applicationMessages.parse<InboundChatRoomMessage>, process, completion);
 	}
+	
+	shared void publishOutboundMessage(ChatPostedMessage message) {
+		if (disableOutput) {
+			return;
+		}
+		value formattedMessage = applicationMessages.format(message); 
+		eventBus.publishMessage(formattedMessage, "OutboundChatMessage-``message.roomId``");
+	}
+	
+	shared {String+} publishedAddresses => {"^OutboundChatMessage-.*$"};
+
 }

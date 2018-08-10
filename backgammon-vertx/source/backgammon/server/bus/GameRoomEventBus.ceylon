@@ -29,9 +29,6 @@ import io.vertx.ceylon.core {
 	WorkerExecutor,
 	Vertx
 }
-import io.vertx.ceylon.web {
-	Router
-}
 
 final shared class GameRoomEventBus(Vertx vertx, ServerConfiguration configuration) {
 
@@ -167,7 +164,7 @@ final shared class GameRoomEventBus(Vertx vertx, ServerConfiguration configurati
 		});
 	}
 
-	shared void registerGameEventMessageCosumer(String roomId, void process(GameEventMessage message)) {
+	shared void registerGameEventMessageConsumer(String roomId, void process(GameEventMessage message)) {
 		eventBus.registerConsumer("GameEventMessage-``roomId``", function (Object msg) {
 			if (exists request = applicationMessages.parse<GameEventMessage>(msg)) {
 				process(request);
@@ -177,10 +174,8 @@ final shared class GameRoomEventBus(Vertx vertx, ServerConfiguration configurati
 			}
 		});
 	}
-		
-	shared Router createEventBusRouter() {
-		return eventBus.createEventBusRouter("/*", {"^OutboundRoomMessage-.*$", "^OutboundTableMessage-.*$", "^OutboundGameMessage-.*$"});
-	}
+	
+	shared {String+} publishedAddresses => {"^OutboundRoomMessage-.*$", "^OutboundTableMessage-.*$", "^OutboundGameMessage-.*$", "^OutboundChatMessage-.*$"};
 
 	shared void replayAllRoomEvents(String roomId, void process(InboundRoomMessage|InboundTableMessage|InboundMatchMessage message), void completion(Integer|Throwable result)) {
 		eventStore.replayAllEvents("room-``roomId``", applicationMessages.parse<InboundRoomMessage|InboundTableMessage|InboundMatchMessage>, process, completion);

@@ -13,11 +13,18 @@ import backgammon.shared.game {
 	white,
 	DiceRoll
 }
+import ceylon.json {
+
+	JsonArray
+}
 shared class TableGui(Document document) extends GameGui(document) {
 	
 	shared String undoButtonId = "undo";
 	shared String submitButtonId = "submit";
 	shared String jokerButtonId = "joker";
+	shared String chatButtonId = "chat";
+	shared String chatPostButtonId = "chat-post";
+	shared String chatInputFieldId = "chat-input";
 	shared String exitButtonId = "exit";
 	shared String statusUserId = "currentUser";
 	shared String statusBalanceId = "currentBalance";
@@ -201,5 +208,20 @@ shared class TableGui(Document document) extends GameGui(document) {
 		showExitButton();
 		showAccountStatus(playerState.info.name, playerState.statistic.balance);
 		showEmptyGame();
+	}
+	
+	shared void showChatMessages(JsonArray data) {
+		if (data.empty) {
+			dynamic {
+				jQuery("#chat-content ul").loadTemplate(jQuery("#chat-empty-template"));
+			}
+		} else {
+			dynamic {
+				jQuery("#chat-content ul").loadTemplate(jQuery("#chat-message-template"), JSON.parse(data.string));
+				jQuery("time.timeago").timeago();
+				//jQuery("#chat-content ul").scrollTop(jQuery("#chat-content ul li:last-child").position().top);
+				jQuery("#chat-content ul").scrollTop(10000);
+			}
+		}
 	}
 }

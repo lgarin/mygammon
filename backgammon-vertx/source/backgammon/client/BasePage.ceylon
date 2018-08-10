@@ -46,7 +46,12 @@ import backgammon.shared {
 	InboundScoreBoardMessage,
 	QueryGameStatisticMessage,
 	GameStatisticMessage,
-	ControlRollMessage
+	ControlRollMessage,
+	ApplicationMessage,
+	OutboundChatRoomMessage,
+	InboundChatRoomMessage,
+	PostChatMessage,
+	ChatHistoryRequestMessage
 }
 
 import ceylon.json {
@@ -67,21 +72,24 @@ abstract shared class BasePage() {
 	shared formal Boolean handleGameMessage(OutboundGameMessage message);
 	shared formal Boolean handleRosterMessage(OutboundPlayerRosterMessage message);
 	shared formal Boolean handleScoreMessage(OutboundScoreBoardMessage message);
+	shared formal Boolean handleChatMessage(OutboundChatRoomMessage message);
 	
 	function handleServerMessage(Object json)  {
-		
-		if (exists message = applicationMessages.parse<OutboundRoomMessage>(json)) {
+		value message = applicationMessages.parse<ApplicationMessage>(json);
+		if (is OutboundRoomMessage message) {
 			return handleRoomMessage(message);
-		} else if (exists message = applicationMessages.parse<OutboundTableMessage>(json)) {
+		} else if (is OutboundTableMessage message) {
 			return handleTableMessage(message);
-		} else if (exists message = applicationMessages.parse<OutboundMatchMessage>(json)) {
+		} else if (is OutboundMatchMessage message) {
 			return handleMatchMessage(message);
-		} else if (exists message = applicationMessages.parse<OutboundGameMessage>(json)) {
+		} else if (is OutboundGameMessage message) {
 			return handleGameMessage(message);
-		} else if (exists message = applicationMessages.parse<OutboundPlayerRosterMessage>(json)) {
+		} else if (is OutboundPlayerRosterMessage message) {
 			return handleRosterMessage(message);
-		} else if (exists message = applicationMessages.parse<OutboundScoreBoardMessage>(json)) {
+		} else if (is OutboundScoreBoardMessage message) {
 			return handleScoreMessage(message);
+		} else if (is OutboundChatRoomMessage message) {
+			return handleChatMessage(message);
 		} else {
 			return false;
 		}
@@ -238,6 +246,16 @@ abstract shared class BasePage() {
 		}
 		case (is QueryGameStatisticMessage) {
 			makeApiRequest("/api/score/playerdetail/``message.playerId``");
+		}
+	}
+	
+	shared void chatCommander(InboundChatRoomMessage message) {
+		switch (message)
+		case (is PostChatMessage) {
+			makeApiRequest("/api/chat/``message.roomId``/post", message.message);
+		}
+		case (is ChatHistoryRequestMessage) {
+			makeApiRequest("/api/chat/``message.roomId``/history");
 		}
 	}
 }

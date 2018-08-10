@@ -156,7 +156,7 @@ final class GameRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		return router;
 	}
 	
-	shared Router createApiRouter() => restApi.createRouter();
+	shared {String+} publishedAddresses => roomEventBus.publishedAddresses;
 	
-	shared Router createEventBusRouter() => roomEventBus.createEventBusRouter();
+	shared Router createApiRouter() => restApi.createRouter();
 }

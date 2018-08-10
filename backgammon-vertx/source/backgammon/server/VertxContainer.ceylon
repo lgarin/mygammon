@@ -52,7 +52,7 @@ final class VertxContainer(Module mod, String configFile, Duration startupShutdo
 	function waitLatch(CountDownLatch latch) {
 		try {
 			return latch.await(startupShutdownTimeout.milliseconds, TimeUnit.milliseconds);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			return false;
 		}
 	}
@@ -71,9 +71,9 @@ final class VertxContainer(Module mod, String configFile, Duration startupShutdo
 	shared Boolean deployVerticles([Class<Verticle,[]>*] verticleClasses) {
 		log.info("Deploying version ``mod.version``...");
 		value options = DeploymentOptions { config = configuration;  };
-		value latch = CountDownLatch(verticleClasses.size);
 		value successCount = AtomicInteger(0);
 		for (verticleClass in verticleClasses) {
+			value latch = CountDownLatch(1);
 			verticleClass().deploy(container, options, (String|Throwable ar) {
 				if (is Throwable ar) {
 					log.error("Failed to deploy ``verticleClass.declaration.name``", ar);
@@ -82,8 +82,8 @@ final class VertxContainer(Module mod, String configFile, Duration startupShutdo
 				}
 				latch.countDown();
 			});
+			waitLatch(latch);
 		}
-		waitLatch(latch);
 		if (successCount.intValue() == verticleClasses.size) {
 			log.info("Startup completed");
 			return true;

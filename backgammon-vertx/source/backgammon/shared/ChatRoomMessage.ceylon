@@ -42,7 +42,7 @@ ChatPostedMessage parseChatPostedMessage(Object json) {
 	return ChatPostedMessage(parsePlayerInfo(json.getObject("playerInfo")), parseRoomId(json.getString("roomId")), json.getString("message"), Instant(json.getInteger("timestamp")));
 }
 
-shared final class ChatHistoryResponseMessage(shared actual PlayerId playerId, shared actual RoomId roomId, [ChatPostedMessage*] history) satisfies OutboundChatRoomMessage {
+shared final class ChatHistoryResponseMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared [ChatPostedMessage*] history) satisfies OutboundChatRoomMessage {
 	toJson() => Object{ "playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "history" ->  JsonArray(history*.toJson()) };
 }
 ChatHistoryResponseMessage parseChatHistoryResponseMessage(Object json) {

@@ -20,8 +20,12 @@ import io.vertx.ceylon.web {
 	routerFactory=router,
 	Router
 }
+import io.vertx.ceylon.core.buffer {
 
-final class ChartRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig) {
+	Buffer
+}
+
+final class ChatRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig) {
 	
 	value eventBus = ChatRoomEventBus(vertx, serverConfig);
 
@@ -38,7 +42,9 @@ final class ChartRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig
 	void handleChatPostRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getCurrentPlayerId()) {
-			forwardResponse(context, PostChatMessage(playerId, roomId, rc.getBodyAsString("UTF-8") else ""));
+			rc.request().bodyHandler((Buffer body) {
+				forwardResponse(context, PostChatMessage(playerId, roomId, body.toString("UTF-8")));
+			});
 		}
 	}
 	
@@ -51,8 +57,10 @@ final class ChartRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig
 	
 	shared Router createApiRouter() {
 		value restApi = routerFactory.router(vertx);
-		restApi.post("/:roomId/chat/post").handler(handleChatPostRequest);
-		restApi.get("/:roomId/chat/history").handler(handleChatHistoryRequest);
+		restApi.post("/:roomId/post").handler(handleChatPostRequest);
+		restApi.get("/:roomId/history").handler(handleChatHistoryRequest);
 		return restApi;
 	}
+	
+	shared {String+} publishedAddresses => eventBus.publishedAddresses;
 }
