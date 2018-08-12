@@ -17,7 +17,10 @@ shared sealed interface InboundChatRoomMessage of PostChatMessage | ChatHistoryR
 	shared formal Instant timestamp;
 }
 
-shared sealed interface OutboundChatRoomMessage of ChatPostedMessage | ChatHistoryResponseMessage satisfies ChatRoomMessage {}
+shared sealed interface OutboundChatRoomMessage of ChatPostedMessage | ChatHistoryResponseMessage satisfies ChatRoomMessage {
+	shared default [PlayerId*] playerIds => [playerId];
+	shared formal OutboundChatRoomMessage withPlayerInfos(Correspondence<PlayerId, PlayerInfo> result);
+}
 
 shared final class PostChatMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared String message, shared actual Instant timestamp = now()) satisfies InboundChatRoomMessage {
 	toJson() => Object{ "playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "message" -> message, "timestamp" -> timestamp.millisecondsOfEpoch };
@@ -37,13 +40,17 @@ ChatHistoryRequestMessage parseChatHistoryRequestMessage(Object json) {
 shared final class ChatPostedMessage(shared PlayerInfo playerInfo, shared actual RoomId roomId, shared String message, shared Instant timestamp) satisfies OutboundChatRoomMessage {
 	playerId = playerInfo.playerId;
 	toJson() => Object{ "playerInfo" -> playerInfo.toJson(), "roomId" -> roomId.toJson(), "message" -> message, "timestamp" -> timestamp.millisecondsOfEpoch };
+	withPlayerInfos(Correspondence<PlayerId,PlayerInfo> result) => ChatPostedMessage(result[playerId] else playerInfo, roomId, message, timestamp);
+	
 }
 ChatPostedMessage parseChatPostedMessage(Object json) {
 	return ChatPostedMessage(parsePlayerInfo(json.getObject("playerInfo")), parseRoomId(json.getString("roomId")), json.getString("message"), Instant(json.getInteger("timestamp")));
 }
 
 shared final class ChatHistoryResponseMessage(shared actual PlayerId playerId, shared actual RoomId roomId, shared [ChatPostedMessage*] history) satisfies OutboundChatRoomMessage {
+	playerIds => set(history*.playerId).sequence();
 	toJson() => Object{ "playerId" -> playerId.toJson(), "roomId" -> roomId.toJson(), "history" ->  JsonArray(history*.toJson()) };
+	withPlayerInfos(Correspondence<PlayerId,PlayerInfo> result) => ChatHistoryResponseMessage(playerId, roomId, history*.withPlayerInfos(result).narrow<ChatPostedMessage>().sequence());
 }
 ChatHistoryResponseMessage parseChatHistoryResponseMessage(Object json) {
 	return ChatHistoryResponseMessage(parsePlayerId(json.getString("playerId")), parseRoomId(json.getString("roomId")), json.getArray("history").narrow<Object>().collect(parseChatPostedMessage) );

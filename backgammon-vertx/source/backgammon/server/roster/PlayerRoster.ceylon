@@ -16,7 +16,9 @@ import backgammon.shared {
 	PlayerDetailRequestMessage,
 	PlayerDetailOutputMessage,
 	PlayerTransaction,
-	PlayerStatisticRequestMessage
+	PlayerStatisticRequestMessage,
+	PlayerInfoRequestMessage,
+	PlayerInfoOutputMessage
 }
 
 import ceylon.collection {
@@ -110,6 +112,10 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 		}
 	}
 	
+	function readInfos(PlayerInfoRequestMessage message) {
+		return PlayerInfoOutputMessage([for (playerId in message.playerIds) statisticMap[message.playerId]?.playerInfo else PlayerInfo(playerId.id, "")]);
+	}
+	
 	shared OutboundPlayerRosterMessage processInputMessage(InboundPlayerRosterMessage message, {InboundPlayerRosterMessage*} history = {}) {
 		try (lock) {
 			switch (message)
@@ -124,6 +130,9 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 			}
 			case (is PlayerStatisticRequestMessage) {
 				return readStatistic(message);
+			}
+			case (is PlayerInfoRequestMessage) {
+				return readInfos(message);
 			}
 		}
 	}

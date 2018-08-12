@@ -11,11 +11,11 @@ shared sealed interface PlayerRosterMessage of InboundPlayerRosterMessage | Outb
 	shared formal PlayerId playerId;
 }
 
-shared sealed interface InboundPlayerRosterMessage of PlayerStatisticUpdateMessage | PlayerLoginMessage | PlayerDetailRequestMessage | PlayerStatisticRequestMessage satisfies PlayerRosterMessage {
+shared sealed interface InboundPlayerRosterMessage of PlayerStatisticUpdateMessage | PlayerLoginMessage | PlayerDetailRequestMessage | PlayerStatisticRequestMessage | PlayerInfoRequestMessage satisfies PlayerRosterMessage {
 	shared formal Instant timestamp;
 }
 
-shared sealed interface OutboundPlayerRosterMessage of PlayerStatisticOutputMessage | PlayerDetailOutputMessage satisfies PlayerRosterMessage {}
+shared sealed interface OutboundPlayerRosterMessage of PlayerStatisticOutputMessage | PlayerDetailOutputMessage | PlayerInfoOutputMessage satisfies PlayerRosterMessage {}
 
 shared final class PlayerStatisticUpdateMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statisticDelta, shared actual Instant timestamp = now()) satisfies InboundPlayerRosterMessage {
 	playerId = playerInfo.playerId;
@@ -55,12 +55,13 @@ PlayerStatisticRequestMessage parsePlayerStatisticRequestMessage(Object json) {
 	return PlayerStatisticRequestMessage(parsePlayerId(json.getString("playerId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class PlayerStatisticOutputMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statistic) satisfies OutboundPlayerRosterMessage {
-	playerId = playerInfo.playerId;
-	toJson() => Object{ "playerInfo" -> playerInfo.toJson(), "statistic" -> statistic.toJson() };
+shared final class PlayerInfoRequestMessage(shared actual PlayerId playerId, shared [PlayerId*] otherPlayerIds = [], shared actual Instant timestamp = now()) satisfies InboundPlayerRosterMessage {
+	shared [PlayerId+] playerIds => [playerId, *otherPlayerIds];
+	toJson() => Object{ "playerIds" -> JsonArray({playerId, *otherPlayerIds}*.toJson()), "timestamp" -> timestamp.millisecondsOfEpoch };
+	mutation => false;
 }
-PlayerStatisticOutputMessage parsePlayerStatisticOutputMessage(Object json) {
-	return PlayerStatisticOutputMessage(parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("statistic")));
+PlayerInfoRequestMessage parsePlayerInfoRequestMessage(Object json) {
+	return PlayerInfoRequestMessage(parsePlayerId(json.getString("playerId")), json.getArray("requestedIds").narrow<String>().collect(parsePlayerId), Instant(json.getInteger("timestamp")));
 }
 
 shared final class PlayerDetailOutputMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statistic, shared [PlayerTransaction*] transactions) satisfies OutboundPlayerRosterMessage {
@@ -69,4 +70,30 @@ shared final class PlayerDetailOutputMessage(shared PlayerInfo playerInfo, share
 }
 PlayerDetailOutputMessage parsePlayerDetailOutputMessage(Object json) {
 	return PlayerDetailOutputMessage(parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("statistic")), json.getArray("transactions").narrow<Object>().collect(parsePlayerTransaction));
+}
+
+shared final class PlayerStatisticOutputMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statistic) satisfies OutboundPlayerRosterMessage {
+	playerId = playerInfo.playerId;
+	toJson() => Object{ "playerInfo" -> playerInfo.toJson(), "statistic" -> statistic.toJson() };
+}
+PlayerStatisticOutputMessage parsePlayerStatisticOutputMessage(Object json) {
+	return PlayerStatisticOutputMessage(parsePlayerInfo(json.getObject("playerInfo")), parsePlayerStatistic(json.getObject("statistic")));
+}
+
+shared final class PlayerInfoOutputMessage(shared [PlayerInfo+] playerInfoSet) satisfies OutboundPlayerRosterMessage & Correspondence<PlayerId, PlayerInfo> {
+	playerId = playerInfoSet.first.playerId;
+	toJson() => Object{ "playerInfoSet" -> JsonArray(playerInfoSet*.toJson()) };
+	value internalMap = map({for (playerInfo in playerInfoSet) playerInfo.playerId -> playerInfo});
+	shared actual Boolean defines(PlayerId key) => internalMap.defines(key);
+	shared actual PlayerInfo? get(PlayerId key) => internalMap.get(key);
+	
+	
+}
+PlayerInfoOutputMessage parsePlayerInfoOutputMessage(Object json) {
+	value array = json.getArray("playerInfoSet").narrow<Object>().collect(parsePlayerInfo);
+	if (nonempty array) {
+		return PlayerInfoOutputMessage(array);
+	} else {
+		throw Exception("empty playerInfoSet");
+	}
 }

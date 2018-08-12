@@ -51,7 +51,8 @@ import backgammon.shared {
 	OutboundChatRoomMessage,
 	InboundChatRoomMessage,
 	PostChatMessage,
-	ChatHistoryRequestMessage
+	ChatHistoryRequestMessage,
+	PlayerInfoRequestMessage
 }
 
 import ceylon.json {
@@ -226,10 +227,13 @@ abstract shared class BasePage() {
 	shared void rosterCommander(InboundPlayerRosterMessage message) {
 		switch (message)
 		case (is PlayerStatisticUpdateMessage) {
-			// ignore
+			assert (false);
 		}
 		case (is PlayerLoginMessage) {
-			// ignore
+			assert (false);
+		}
+		case (is PlayerInfoRequestMessage) {
+			assert (false);
 		}
 		case (is PlayerDetailRequestMessage) {
 			makeApiRequest("/api/roster/playerdetail");

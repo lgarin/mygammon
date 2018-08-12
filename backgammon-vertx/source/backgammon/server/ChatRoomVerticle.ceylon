@@ -1,33 +1,28 @@
-import io.vertx.ceylon.core {
-
-	Future,
-	Verticle
-}
-import ceylon.logging {
-
-	logger
-}
-import backgammon.server.room {
-
-	RoomConfiguration
-}
-import backgammon.server.chat {
-
-	ChatRoom
-}
 import backgammon.server.bus {
-
 	ChatRoomEventBus,
 	PlayerRosterEventBus
 }
+import backgammon.server.chat {
+	ChatRoom
+}
+import backgammon.server.room {
+	RoomConfiguration
+}
 import backgammon.shared {
-
 	OutboundChatRoomMessage,
 	InboundChatRoomMessage,
-	PlayerStatisticRequestMessage,
-	PlayerStatisticOutputMessage,
-	PostChatMessage,
-	ChatPostedMessage
+	ChatPostedMessage,
+	PlayerInfoRequestMessage,
+	PlayerInfoOutputMessage
+}
+
+import ceylon.logging {
+	logger
+}
+
+import io.vertx.ceylon.core {
+	Future,
+	Verticle
 }
 
 final class ChatRoomVerticle()  extends Verticle() {
@@ -49,20 +44,18 @@ final class ChatRoomVerticle()  extends Verticle() {
 				callback(result);
 			}
 			
-			void playerInfoContinuation(PlayerStatisticOutputMessage|Throwable result) {
-				if (is Throwable result) {
-					publishAndCallback(result);
-				} else {
-					log.info("Found ``result.playerInfo.toJson()``");
-					publishAndCallback(chatRoom.processInputMessage(message, result.playerInfo));
+			value output = chatRoom.processInputMessage(message);
+			if (nonempty playerIds = output.playerIds) {
+				void playerInfoContinuation(PlayerInfoOutputMessage|Throwable result) {
+					if (is Throwable result) {
+						publishAndCallback(result);
+					} else {
+						publishAndCallback(output.withPlayerInfos(result));
+					}
 				}
-			}
-
-			if (message is PostChatMessage) {
-				log.info("Replay ``message.toJson()``");
-				rosterEventBus.sendInboundMessage(PlayerStatisticRequestMessage(message.playerId, message.timestamp), playerInfoContinuation);
+				rosterEventBus.sendInboundMessage(PlayerInfoRequestMessage(playerIds.first, playerIds.rest, message.timestamp), playerInfoContinuation);
 			} else {
-				publishAndCallback(chatRoom.processInputMessage(message));
+				publishAndCallback(output);
 			}
 		}
 		

@@ -23,7 +23,8 @@ import backgammon.shared {
 	PlayerDetailOutputMessage,
 	PlayerStatisticOutputMessage,
 	OutboundPlayerRosterMessage,
-	PlayerDetailRequestMessage
+	PlayerDetailRequestMessage,
+	PlayerInfoOutputMessage
 }
 
 shared final class AccountPage() extends TablePage<AccountGui>(AccountGui(document)) {
@@ -156,6 +157,9 @@ shared final class AccountPage() extends TablePage<AccountGui>(AccountGui(docume
 	shared actual Boolean handleRosterMessage(OutboundPlayerRosterMessage message) {
 		switch (message)
 		case (is PlayerStatisticOutputMessage) {
+			return false;
+		}
+		case (is PlayerInfoOutputMessage) {
 			return false;
 		}
 		case (is PlayerDetailOutputMessage) {

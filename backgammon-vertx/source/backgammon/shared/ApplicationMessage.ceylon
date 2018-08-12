@@ -57,10 +57,12 @@ shared object applicationMessages {
 	
 	registerParser(parsePlayerLoginMessage);
 	registerParser(parsePlayerStatisticUpdateMessage);
-	registerParser(parsePlayerDetailRequestMessage);
 	registerParser(parsePlayerStatisticRequestMessage);
+	registerParser(parsePlayerDetailRequestMessage);
+	registerParser(parsePlayerInfoRequestMessage);
 	registerParser(parsePlayerStatisticOutputMessage);
 	registerParser(parsePlayerDetailOutputMessage);
+	registerParser(parsePlayerInfoOutputMessage);
 	
 	registerParser(parseEnterRoomMessage);
 	registerParser(parseLeaveRoomMessage);
