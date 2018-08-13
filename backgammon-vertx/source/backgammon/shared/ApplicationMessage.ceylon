@@ -124,6 +124,8 @@ shared object applicationMessages {
 	
 	registerParser(parsePostChatMessage);
 	registerParser(parseChatHistoryRequestMessage);
+	registerParser(parseChatMissedRequestMessage);
 	registerParser(parseChatPostedMessage);
 	registerParser(parseChatHistoryResponseMessage);
+	registerParser(parseChatMissedResponseMessage);
 }

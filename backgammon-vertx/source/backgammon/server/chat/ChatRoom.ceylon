@@ -14,7 +14,9 @@ import backgammon.shared {
 	ChatPostedMessage,
 	PostChatMessage,
 	ChatHistoryRequestMessage,
-	ChatHistoryResponseMessage
+	ChatHistoryResponseMessage,
+	ChatMissedResponseMessage,
+	ChatMissedRequestMessage
 }
 import ceylon.collection {
 
@@ -27,23 +29,31 @@ import ceylon.time {
 shared final class ChatRoom(ServerConfiguration config) {
 	value lock = ObtainableLock("ChatRoom");
 	
-	value messages = LinkedList<PostChatMessage>();
+	value messages = LinkedList<ChatPostedMessage>();
 	
 	void clearOldMessages(Instant currentTime) {
 		value minTimestamp = currentTime.minus(config.chatMessageRetention);
 		messages.removeWhere((e) => e.timestamp < minTimestamp);
 	}
 	
-	function toPostedMessage(PostChatMessage message) => ChatPostedMessage(PlayerInfo(message.playerId.string, ""), message.roomId, message.message, message.timestamp);
+	function toPostedMessage(PostChatMessage message, Integer messageId) {
+		 return ChatPostedMessage(
+		 	PlayerInfo(message.playerId.string),
+		 	message.roomId,
+		 	messageId,
+		 	message.message, 
+		 	message.timestamp);
+	}
 	
 	function postMessage(PostChatMessage message) {
 		clearOldMessages(message.timestamp);
-		messages.add(message);
-		return toPostedMessage(message);
+		value result = toPostedMessage(message, messages.size + 1);
+		messages.add(result);
+		return result;
 	}
 	
 	function readHistory(ChatHistoryRequestMessage message) {
-		return ChatHistoryResponseMessage(message.playerId, message.roomId, messages.map(toPostedMessage).sequence());
+		return ChatHistoryResponseMessage(message.playerId, message.roomId, messages.sequence());
 	}
 	
 	shared OutboundChatRoomMessage processInputMessage(InboundChatRoomMessage message) {
@@ -54,6 +64,9 @@ shared final class ChatRoom(ServerConfiguration config) {
 			}
 			case (is ChatHistoryRequestMessage) {
 				return readHistory(message);
+			}
+			case (is ChatMissedRequestMessage) {
+				return ChatMissedResponseMessage(message.playerId, message.roomId, messages.size - message.lastMessageId);
 			}
 		}
 	}

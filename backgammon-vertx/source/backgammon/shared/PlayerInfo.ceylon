@@ -2,7 +2,7 @@ import ceylon.json {
 	JsonObject=Object
 }
 
-shared final class PlayerInfo(shared String id, shared String name, shared Integer? level = null) extends Object() {
+shared final class PlayerInfo(shared String id, shared String name = "", shared Integer? level = null) extends Object() {
 	shared JsonObject toJson() => JsonObject {"id" -> id, "name" -> name, "level" -> level};
 	shared PlayerId playerId => PlayerId(id);
 	

@@ -7,15 +7,12 @@ import backgammon.shared {
 	PostChatMessage,
 	PlayerId,
 	RoomId,
-	ChatHistoryRequestMessage
+	ChatHistoryRequestMessage,
+	ChatMissedResponseMessage
 }
 import backgammon.client {
 
 	TableGui
-}
-import ceylon.time {
-
-	Instant
 }
 import ceylon.collection {
 
@@ -27,19 +24,11 @@ import ceylon.json {
 	JsonArray,
 	JsonObject
 }
-shared final class ChatClient(PlayerId playerId, RoomId roomId, TableGui gui, Anything(InboundChatRoomMessage) chatCommander) {
+shared final class ChatClient(PlayerId playerId, RoomId roomId, TableGui gui, Anything(Integer) lastMessageIdWriter, Anything(InboundChatRoomMessage) chatCommander) {
+
+	variable TreeMap<Integer, ChatPostedMessage>? chatModel = null;
 	
-	final class ChatKey(shared Instant timestamp, shared PlayerId playerId) satisfies Comparable<ChatKey> {
-		shared actual Comparison compare(ChatKey other) {
-			value c1 = timestamp.compare(other.timestamp);
-			if (c1 == equal) {
-				return playerId.id.compare(other.playerId.id);
-			}
-			return c1;
-		}
-	}
-	
-	variable TreeMap<ChatKey, ChatPostedMessage>? chatModel = null;
+	variable Integer unreadMessageCount = 0;
 	
 	shared Boolean postMessage() {
 		value message = gui.readElementValue(gui.chatInputFieldId);
@@ -55,6 +44,9 @@ shared final class ChatClient(PlayerId playerId, RoomId roomId, TableGui gui, An
 		if (gui.toggleDropDown("chat-dropdown")) {
 			if (!chatModel exists) {
 				chatCommander(ChatHistoryRequestMessage(playerId, roomId));
+			} else {
+				unreadMessageCount = 0;
+				gui.showChatIcon(unreadMessageCount);
 			}
 		}
 		return true;
@@ -73,16 +65,30 @@ shared final class ChatClient(PlayerId playerId, RoomId roomId, TableGui gui, An
 	shared Boolean handleChatMessage(OutboundChatRoomMessage message) {
 		switch (message)
 		case (is ChatPostedMessage) {
-			value key = ChatKey(message.timestamp, message.playerId);
-			if (exists model = chatModel, !model.contains(key)) {
-				model.put(key, message);
-				displayMessages(model.items);
+			if (exists model = chatModel, !model.contains(message.messageId)) {
+				model.put(message.messageId, message);
+				if (gui.isDropDownVisible("chat-dropdown")) {
+					gui.appendChatMessage(JsonObject(toTemplateData(message)));
+					lastMessageIdWriter(message.messageId);
+				} else {
+					gui.showChatIcon(++unreadMessageCount);
+				}
+			} else {
+				gui.showChatIcon(++unreadMessageCount);
 			}
 			return true;
 		}
 		case (is ChatHistoryResponseMessage) {
-			chatModel = naturalOrderTreeMap {for (entry in message.history) ChatKey(entry.timestamp, entry.playerId) -> entry};
+			chatModel = naturalOrderTreeMap {for (entry in message.history) entry.messageId -> entry};
 			displayMessages(chatModel?.items else {});
+			lastMessageIdWriter(chatModel?.items?.last?.messageId else 0);
+			unreadMessageCount = 0;
+			gui.showChatIcon(unreadMessageCount);
+			return true;
+		}
+		case (is ChatMissedResponseMessage) {
+			unreadMessageCount = message.newMessageCount;
+			gui.showChatIcon(unreadMessageCount);
 			return true;
 		}
 	}

@@ -52,7 +52,8 @@ import backgammon.shared {
 	InboundChatRoomMessage,
 	PostChatMessage,
 	ChatHistoryRequestMessage,
-	PlayerInfoRequestMessage
+	PlayerInfoRequestMessage,
+	ChatMissedRequestMessage
 }
 
 import ceylon.json {
@@ -141,12 +142,8 @@ abstract shared class BasePage() {
 	}
 	
 	shared PlayerId? extractPlayerId() {
-		if (!playerId exists) {
-			if (exists id = splitString(document.cookie, "playerId=", "; ")) {
-				playerId = PlayerId(id);
-			} else if (exists id = splitString(document.cookie, "playerId=")) {
-				playerId = PlayerId(id);
-			}
+		if (!playerId exists, exists cookie = extractCookie("playerId")) {
+			playerId = PlayerId(cookie);
 		}
 		return playerId;
 	}
@@ -261,5 +258,23 @@ abstract shared class BasePage() {
 		case (is ChatHistoryRequestMessage) {
 			makeApiRequest("/api/chat/``message.roomId``/history");
 		}
+		case (is ChatMissedRequestMessage) {
+			makeApiRequest("/api/chat/``message.roomId``/new/``message.lastMessageId``");
+		}
+	}
+	
+	
+	shared String? extractCookie(String name) {
+		if (exists result = splitString(document.cookie, "``name``=", "; ")) {
+			return result;
+		} else if (exists result = splitString(document.cookie, "``name``=")) {
+			return result;
+		} else {
+			return null;
+		}
+	}
+	
+	shared void writeCookie(String name, String val) {
+		document.cookie = "``name``=``val``";
 	}
 }

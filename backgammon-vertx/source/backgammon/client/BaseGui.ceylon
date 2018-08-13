@@ -3,6 +3,7 @@ import backgammon.client.browser {
 	Element,
 	Document
 }
+
 shared abstract class BaseGui {
 	
 	shared static String hiddenClass = "hidden";
@@ -37,6 +38,14 @@ shared abstract class BaseGui {
 	
 	shared void removeClass(String elementId, String className) {
 		document.getElementById(elementId)?.classList?.remove(className);
+	}
+	
+	shared Boolean isDropDownVisible(String elementId) {
+		if (exists element = document.getElementById(elementId)) {
+			return element.classList.contains("open");
+		} else {
+			return false;
+		}
 	}
 	
 	shared Boolean toggleDropDown(String elementId) {

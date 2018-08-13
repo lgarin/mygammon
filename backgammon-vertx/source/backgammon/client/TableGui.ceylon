@@ -15,7 +15,8 @@ import backgammon.shared.game {
 }
 import ceylon.json {
 
-	JsonArray
+	JsonArray,
+	JsonObject
 }
 shared class TableGui(Document document) extends GameGui(document) {
 	
@@ -210,18 +211,42 @@ shared class TableGui(Document document) extends GameGui(document) {
 		showEmptyGame();
 	}
 	
+	
+	class TemplateParameters(shared Boolean append) {}
+	
 	shared void showChatMessages(JsonArray data) {
-		if (data.empty) {
-			dynamic {
+		dynamic {
+			if (data.empty) {
 				jQuery("#chat-content ul").loadTemplate(jQuery("#chat-empty-template"));
-			}
-		} else {
-			dynamic {
-				jQuery("#chat-content ul").loadTemplate(jQuery("#chat-message-template"), JSON.parse(data.string));
+			} else {
+				dynamic chatContent = jQuery("#chat-content ul"); 
+				chatContent.loadTemplate(jQuery("#chat-message-template"), JSON.parse(data.string));
 				jQuery("time.timeago").timeago();
-				//jQuery("#chat-content ul").scrollTop(jQuery("#chat-content ul li:last-child").position().top);
-				jQuery("#chat-content ul").scrollTop(10000);
+				chatContent.scrollTop(chatContent.get(0).scrollHeight);
 			}
 		}
+	}
+	
+	shared void appendChatMessage(JsonObject data) {
+		dynamic {
+			dynamic chatContent = jQuery("#chat-content ul");
+			chatContent.loadTemplate(jQuery("#chat-message-template"), JSON.parse(data.string), TemplateParameters(true));
+			jQuery("time.timeago").timeago();
+			dynamic domElement = chatContent.get(0); 
+			if (domElement.scrollHeight - domElement.scrollTop - domElement.clientHeight <= 100) {
+				chatContent.scrollTop(domElement.scrollHeight);
+			}
+		}
+	}
+	shared void showChatIcon(Integer newMessageCount) {
+		if (exists badge = document.getElementById("newChat")) {
+			badge.innerHTML = newMessageCount.string;
+		}
+		if (newMessageCount > 0) {
+			removeClass("newChat", hiddenClass);
+		} else {
+			addClass("newChat", hiddenClass);
+		}
+		removeClass("chat", hiddenClass);
 	}
 }

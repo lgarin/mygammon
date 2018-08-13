@@ -4,7 +4,8 @@ import backgammon.shared {
 	applicationMessages,
 	OutboundChatRoomMessage,
 	PostChatMessage,
-	ChatHistoryRequestMessage
+	ChatHistoryRequestMessage,
+	ChatMissedRequestMessage
 }
 import backgammon.server.bus {
 
@@ -55,10 +56,18 @@ final class ChatRoomRouterFactory(Vertx vertx, ServerConfiguration serverConfig)
 		}
 	}
 	
+	void handleChatMissedRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getCurrentPlayerId(), exists lastMessageId = context.getRequestIntegerParameter("lastMessageId")) {
+			forwardResponse(context, ChatMissedRequestMessage(playerId, roomId, lastMessageId));
+		}
+	}
+	
 	shared Router createApiRouter() {
 		value restApi = routerFactory.router(vertx);
 		restApi.post("/:roomId/post").handler(handleChatPostRequest);
 		restApi.get("/:roomId/history").handler(handleChatHistoryRequest);
+		restApi.get("/:roomId/new/:lastMessageId").handler(handleChatMissedRequest);
 		return restApi;
 	}
 	

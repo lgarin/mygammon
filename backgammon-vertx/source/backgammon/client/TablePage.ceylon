@@ -16,7 +16,8 @@ import backgammon.shared {
 	PlayerStateMessage,
 	OutboundTableMessage,
 	OutboundChatRoomMessage,
-	RoomId
+	RoomId,
+	ChatMissedRequestMessage
 }
 import ceylon.time {
 
@@ -51,8 +52,13 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 	}
 	
 	shared void openChatClient(RoomId roomId) {
-		_chatClient = ChatClient(currentPlayerId, roomId, gui, chatCommander);
-		eventBusClient.addAddress("OutboundRoomMessage-``roomId``");
+		void storeLastMessageId(Integer messageId) {
+			writeCookie("lastMessage-``roomId``", messageId.string);
+		}
+		_chatClient = ChatClient(currentPlayerId, roomId, gui, storeLastMessageId, chatCommander);
+		eventBusClient.addAddress("OutboundChatMessage-``roomId``");
+		value lastMessageId = parseInteger(extractCookie("lastMessage-``roomId``") else "0") else 0;
+		chatCommander(ChatMissedRequestMessage(currentPlayerId, roomId, lastMessageId));
 	}
 	
 	shared void closeTableClient() {

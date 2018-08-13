@@ -61,7 +61,12 @@ shared final class PlayerInfoRequestMessage(shared actual PlayerId playerId, sha
 	mutation => false;
 }
 PlayerInfoRequestMessage parsePlayerInfoRequestMessage(Object json) {
-	return PlayerInfoRequestMessage(parsePlayerId(json.getString("playerId")), json.getArray("requestedIds").narrow<String>().collect(parsePlayerId), Instant(json.getInteger("timestamp")));
+	value array = json.getArray("playerIds").narrow<String>().collect(parsePlayerId);
+	if (nonempty array) {
+		return PlayerInfoRequestMessage(array.first, array.rest, Instant(json.getInteger("timestamp")));
+	} else {
+		throw Exception("empty playerIds");
+	}
 }
 
 shared final class PlayerDetailOutputMessage(shared PlayerInfo playerInfo, shared PlayerStatistic statistic, shared [PlayerTransaction*] transactions) satisfies OutboundPlayerRosterMessage {

@@ -113,7 +113,7 @@ shared final class PlayerRoster(RoomConfiguration config, Anything(InboundPlayer
 	}
 	
 	function readInfos(PlayerInfoRequestMessage message) {
-		return PlayerInfoOutputMessage([for (playerId in message.playerIds) statisticMap[message.playerId]?.playerInfo else PlayerInfo(playerId.id, "")]);
+		return PlayerInfoOutputMessage([for (playerId in message.playerIds) statisticMap[playerId]?.playerInfo else PlayerInfo(playerId.id, "")]);
 	}
 	
 	shared OutboundPlayerRosterMessage processInputMessage(InboundPlayerRosterMessage message, {InboundPlayerRosterMessage*} history = {}) {
