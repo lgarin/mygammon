@@ -1,6 +1,5 @@
 
 body {
-    color: #FFFFFF;
     background-color: #000000;
 }
 
@@ -399,11 +398,13 @@ body {
 
 .player-level {
     display: inline-block;
-    width: 75px;
-    min-width: 75px;
-    height: 45px;
-    min-height: 45px;
+    width: 37px;
+    min-width: 37px;
+    height: 22px;
+    min-height: 22px;
     background-image: url("../images/levels.png");
+    background-size: 222px 22px;
+    margin-bottom: -6px;
 }
 
 .level-0 {
@@ -411,23 +412,23 @@ body {
 }
 
 .level-1 {
-    background-position: -75px 0px;
+    background-position: -37px 0px;
 }
 
 .level-2 {
-    background-position: -150px 0px;
+    background-position: -74px 0px;
 }
 
 .level-3 {
-    background-position: -225px 0px;
+    background-position: -111px 0px;
 }
 
 .level-4 {
-    background-position: -300px 0px;
+    background-position: -148px 0px;
 }
 
 .level-5 {
-    background-position: -375px 0px;
+    background-position: -185px 0px;
 }
 
 .white-small-checker {
@@ -451,4 +452,50 @@ body {
     background-size: 100% 200%;
     background-position: 0px 25px;
     margin-bottom: -6px;
+}
+
+
+#chat-dropdown
+{
+	padding-top: 6px;
+}
+
+#chat-content
+{
+	padding: 0px;
+}
+
+#chat-content > ul
+{
+    list-style: none;
+    margin: 0;
+}
+
+.chat-body
+{
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px dotted #B3A9A9;
+}
+
+
+#chat-content .panel-body
+{
+    overflow-y: scroll;
+    max-height: 350px;
+    width: 400px;
+}
+
+.chat-loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

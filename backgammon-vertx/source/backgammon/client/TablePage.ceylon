@@ -53,11 +53,11 @@ abstract shared class TablePage<out Gui>(shared Gui gui) extends BasePage() give
 	
 	shared void openChatClient(RoomId roomId) {
 		void storeLastMessageId(Integer messageId) {
-			writeCookie("lastMessage-``roomId``", messageId.string);
+			writeCookie("lastMessage", messageId.string, "/room/``roomId``");
 		}
 		_chatClient = ChatClient(currentPlayerId, roomId, gui, storeLastMessageId, chatCommander);
 		eventBusClient.addAddress("OutboundChatMessage-``roomId``");
-		value lastMessageId = parseInteger(extractCookie("lastMessage-``roomId``") else "0") else 0;
+		value lastMessageId = parseInteger(extractCookie("lastMessage") else "0") else 0;
 		chatCommander(ChatMissedRequestMessage(currentPlayerId, roomId, lastMessageId));
 	}
 	

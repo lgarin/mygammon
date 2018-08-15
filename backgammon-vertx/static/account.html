@@ -16,6 +16,7 @@
 		<script src="/static/javascript/jquery-ui.min.js"></script>
 		<script src="/static/javascript/datatables.min.js"></script>
 		<script src="/static/javascript/jquery.loadTemplate.min.js"></script>
+		<script src="/static/javascript/jquery.timeago.min.js"></script>
 		<script src="/static/javascript/sockjs.min.js"></script>
 		<script src="/static/javascript/vertx-eventbus.js"></script>
 		<script src="/static/javascript/require.js"></script>
@@ -85,6 +86,11 @@
                     		click: function() { $(this).dialog("close"); return true; }
                     	}]
 	                });
+	                $("#chat-input").keypress(function(e) {
+						if (e.which == 13) {
+							$("#chat-post").click();
+						}
+					});
 				}
 			);
 		</script>
@@ -113,6 +119,21 @@
 						</li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
+						<li id="chat-dropdown"> 
+							<a id="chat" class="btn hidden">Chat <span id="newChat" class="badge">&#63;</span></a>
+							<div class="dropdown-menu" id="chat-content">
+								<ul class="panel-body">
+									<li class="chat-loader"></li>
+								</ul>
+								<div class="panel-footer left input-group">
+									<input id="chat-input" type="text" class="form-control input-sm"
+										placeholder="Type your message here..." /> <span
+										class="input-group-btn">
+										<button class="btn btn-warning btn-sm" id="chat-post">Send</button>
+									</span>
+								</div>
+							</div>
+						</li> <!-- end of chat -->
 						<li id="account" class="active btn hidden">
 							<p class="navbar-text">
 								<span id="currentUser"></span>&nbsp;<span id="currentBalance" class="badge"></span>
@@ -138,9 +159,10 @@
 					<table id="transaction-table" class="hidden table table-striped" data-page-length="10" data-length-change="false" data-searching="false" data-paging="simple">
 						<thead>
 							<tr>
-								<th class="col-md-5">Type</th>
+								<th class="col-lg-4 col-md-5">Type</th>
 			       				<th class="col-md-2 text-right">Amount</th>
-			       				<th class="col-md-5 text-right">Date/Time</th>
+			       				<th class="col-lg-4 col-md-5 text-right">Date/Time</th>
+			       				<th class="col-lg-2 hidden-md hidden-sm hidden-xs text-right">Balance</th>
 			       			</tr>
 		       			</thead>
 						<tbody>
@@ -148,7 +170,7 @@
 					</table>
 				</div> <!-- end of player list -->
 				<div id="table-preview" class="col-md-6 hidden">
-					<div class="row">
+					<div>
 						<div id="whitePlayer" class="player">
 							 <div>
 					        	<span class="white-small-checker"></span>
@@ -171,7 +193,7 @@
 					         </div>
 				        </div>  <!-- end of black player -->
 					</div>
-					<div id="game-board" class="row" style="margin-left:2px">
+					<div id="game-board" style="margin-left:2px">
 				        <div id="whiteDiceNr1" class="dice white-1 hidden"></div>
 				        <div id="whiteDiceNr2" class="dice white-1 hidden"></div>
 				        <div id="whiteDiceNr3" class="dice white-1 hidden"></div>
@@ -268,7 +290,7 @@
 			        
 			       </div><!-- end of game board -->
 			       
-			       <div id="table-info" class="row" style="position:relative;top:310px;">
+			       <div id="table-info" style="position:relative;top:310px;">
 			       		
 			       </div>
 			       
@@ -276,8 +298,6 @@
 			</div>
 
 		</div><!-- end of gui -->
-
-			
 
 		<script type="text/html" id="account-info-template">
 			<table>
@@ -315,6 +335,7 @@
 				<td data-content="type"></td>
 				<td data-content="amount" class="text-right"></td>
 				<td data-content="dateTime" data-template-bind='[{"attribute": "data-order", "value": "timestamp"}]' class="text-right"></td>
+				<td class="hidden-md hidden-sm hidden-xs text-right" data-content="balance"></td>
 			</tr>
 		</script>
 		
@@ -327,6 +348,25 @@
 	       			</tr>
        			</thead>
        		</table>
+		</script>
+	
+		<script type="text/html" id="chat-message-template">
+			<li class="left chat-body"><span class="pull-left player-level" data-class="player-level"></span>
+				<div>
+					<p class="header">
+						<strong class="primary-font" data-content-text="player-name"></strong>
+						<small class="pull-right text-muted">
+							<span class="glyphicon glyphicon-time"></span>
+							<time class="timeago" data-template-bind='[{"attribute": "datetime", "value": "message-time"}]'></time>
+						</small>
+					</p>
+					<p data-content-text="message-text"></p>
+				</div>
+			</li>
+		</script>
+		
+		<script type="text/html" id="chat-empty-template">
+			<i>No message for the moment. Be the first to post a message here.</i>
 		</script>
 	
 		<div id="dialog-accept" title="Join the game?" style="display: none">

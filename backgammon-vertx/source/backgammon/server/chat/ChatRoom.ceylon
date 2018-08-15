@@ -29,6 +29,7 @@ import ceylon.time {
 shared final class ChatRoom(ServerConfiguration config) {
 	value lock = ObtainableLock("ChatRoom");
 	
+	variable Integer messageCounter = 0;
 	value messages = LinkedList<ChatPostedMessage>();
 	
 	void clearOldMessages(Instant currentTime) {
@@ -47,7 +48,7 @@ shared final class ChatRoom(ServerConfiguration config) {
 	
 	function postMessage(PostChatMessage message) {
 		clearOldMessages(message.timestamp);
-		value result = toPostedMessage(message, messages.size + 1);
+		value result = toPostedMessage(message, ++messageCounter);
 		messages.add(result);
 		return result;
 	}
@@ -66,7 +67,7 @@ shared final class ChatRoom(ServerConfiguration config) {
 				return readHistory(message);
 			}
 			case (is ChatMissedRequestMessage) {
-				return ChatMissedResponseMessage(message.playerId, message.roomId, messages.size - message.lastMessageId);
+				return ChatMissedResponseMessage(message.playerId, message.roomId, messages.count((e) => e.messageId > messageCounter));
 			}
 		}
 	}

@@ -88,7 +88,11 @@
                     		click: function() { $(this).dialog("close"); return true; }
                     	}]
 	                });
-
+					$("#chat-input").keypress(function(e) {
+						if (e.which == 13) {
+							$("#chat-post").click();
+						}
+					});
 	            	window.setInterval(function() { return room.onTimer(); }, 100);
 				}
 			);

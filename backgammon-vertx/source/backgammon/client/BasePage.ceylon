@@ -274,7 +274,7 @@ abstract shared class BasePage() {
 		}
 	}
 	
-	shared void writeCookie(String name, String val) {
-		document.cookie = "``name``=``val``";
+	shared void writeCookie(String name, String val, String path) {
+		document.cookie = "``name``=``val``; path=``path``";
 	}
 }

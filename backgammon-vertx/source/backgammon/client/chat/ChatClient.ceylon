@@ -65,15 +65,15 @@ shared final class ChatClient(PlayerId playerId, RoomId roomId, TableGui gui, An
 	shared Boolean handleChatMessage(OutboundChatRoomMessage message) {
 		switch (message)
 		case (is ChatPostedMessage) {
-			if (exists model = chatModel, !model.contains(message.messageId)) {
+			if (exists model = chatModel, !model.defines(message.messageId)) {
 				model.put(message.messageId, message);
+				gui.appendChatMessage(JsonObject(toTemplateData(message)));
 				if (gui.isDropDownVisible("chat-dropdown")) {
-					gui.appendChatMessage(JsonObject(toTemplateData(message)));
 					lastMessageIdWriter(message.messageId);
 				} else {
 					gui.showChatIcon(++unreadMessageCount);
 				}
-			} else {
+			} else if (!chatModel exists) {
 				gui.showChatIcon(++unreadMessageCount);
 			}
 			return true;
