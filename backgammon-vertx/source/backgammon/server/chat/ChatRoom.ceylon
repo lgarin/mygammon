@@ -67,7 +67,7 @@ shared final class ChatRoom(ServerConfiguration config) {
 				return readHistory(message);
 			}
 			case (is ChatMissedRequestMessage) {
-				return ChatMissedResponseMessage(message.playerId, message.roomId, messages.count((e) => e.messageId > messageCounter));
+				return ChatMissedResponseMessage(message.playerId, message.roomId, messages.count((e) => e.messageId > message.lastMessageId));
 			}
 		}
 	}

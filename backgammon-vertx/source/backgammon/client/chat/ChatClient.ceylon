@@ -67,7 +67,11 @@ shared final class ChatClient(PlayerId playerId, RoomId roomId, TableGui gui, An
 		case (is ChatPostedMessage) {
 			if (exists model = chatModel, !model.defines(message.messageId)) {
 				model.put(message.messageId, message);
-				gui.appendChatMessage(JsonObject(toTemplateData(message)));
+				if (model.size == 1) {
+					displayMessages({message});
+				} else {
+					gui.appendChatMessage(JsonObject(toTemplateData(message)));
+				}
 				if (gui.isDropDownVisible("chat-dropdown")) {
 					lastMessageIdWriter(message.messageId);
 				} else {
@@ -80,8 +84,8 @@ shared final class ChatClient(PlayerId playerId, RoomId roomId, TableGui gui, An
 		}
 		case (is ChatHistoryResponseMessage) {
 			chatModel = naturalOrderTreeMap {for (entry in message.history) entry.messageId -> entry};
-			displayMessages(chatModel?.items else {});
-			lastMessageIdWriter(chatModel?.items?.last?.messageId else 0);
+			displayMessages(message.history);
+			lastMessageIdWriter(message.history.last?.messageId else 0);
 			unreadMessageCount = 0;
 			gui.showChatIcon(unreadMessageCount);
 			return true;
