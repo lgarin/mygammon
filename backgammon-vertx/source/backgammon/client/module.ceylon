@@ -1,4 +1,4 @@
 native("js")
-module backgammon.client "2.2.1" {
-	shared import backgammon.shared "2.2.1";
+module backgammon.client "2.2.2" {
+	shared import backgammon.shared "2.2.2";
 }
