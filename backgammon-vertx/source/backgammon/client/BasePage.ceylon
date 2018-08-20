@@ -53,7 +53,8 @@ import backgammon.shared {
 	PostChatMessage,
 	ChatHistoryRequestMessage,
 	PlayerInfoRequestMessage,
-	ChatMissedRequestMessage
+	ChatMissedRequestMessage,
+	UndoTurnMessage
 }
 
 import ceylon.json {
@@ -184,6 +185,9 @@ abstract shared class BasePage() {
 		}
 		case (is ControlRollMessage) {
 			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/controlroll/``message.roll.firstValue``/``message.roll.secondValue``");
+		}
+		case (is UndoTurnMessage) {
+			makeApiRequest("/api/room/``message.roomId``/table/``message.tableId.table``/match/``message.matchId.timestamp.millisecondsOfEpoch``/undoturn");
 		}
 		case (is EndGameMessage) {
 			// ignore

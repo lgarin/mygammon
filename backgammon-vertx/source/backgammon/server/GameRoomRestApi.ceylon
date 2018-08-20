@@ -19,7 +19,8 @@ import backgammon.shared {
 	PlayerStateRequestMessage,
 	TakeTurnMessage,
 	applicationMessages,
-	ControlRollMessage
+	ControlRollMessage,
+	UndoTurnMessage
 }
 
 import io.vertx.ceylon.core {
@@ -128,6 +129,13 @@ final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
 		}
 	}
 	
+	void handleUndoTurnRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
+			forwardResponse(context, UndoTurnMessage(matchId, playerId));
+		}
+	}
+	
 	void handlePlayerListRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getCurrentPlayerId()) {
@@ -173,6 +181,7 @@ final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
 		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/endturn").handler(handleEndTurnRequest);
 		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/taketurn").handler(handleTakeTurnRequest);
 		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/controlroll/:rollValue1/:rollValue2").handler(handleControlRollRequest);
+		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/undoturn").handler(handleUndoTurnRequest);
 		restApi.get("/:roomId/player/:playerId/state").handler(handlePlayerStateRequest);
 		return restApi;
 	}

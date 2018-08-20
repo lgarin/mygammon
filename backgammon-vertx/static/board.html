@@ -376,7 +376,7 @@
 		<fieldset>
 		    <legend>Select a joker: </legend>
 		    <div class="radio">
-  				<label><input type="radio" id="joker-take-turn" name="joker-choice" checked="checked">Play again after this turn</label>
+  				<label><input type="radio" id="joker-take-turn" name="joker-choice">Play again after this turn</label>
 			</div>
 			<div class="radio">
   				<label><input type="radio" id="joker-control-roll" name="joker-choice">Force your opponent to play the next turn with the following roll :</label>
@@ -386,6 +386,9 @@
 		        	<span id="jokerDiceNr2" class="btn dice-choice white-2"></span>
 	        	</p>
         	</div>
+        	<div class="radio">
+  				<label><input type="radio" id="joker-undo-turn" name="joker-choice">Force your opponent to replay its previous turn with a diffrent roll.</label>
+			</div>
 		  </fieldset>
 		  <i>This will end your turn and consume one joker.</i>
 	</div>

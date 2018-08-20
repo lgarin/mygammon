@@ -11,6 +11,7 @@ import ceylon.time {
 shared class Game(variable Instant nextTimeout) {
 
 	shared GameBoard board = GameBoard();
+	
 	value currentMoves = ArrayList<GameMoveInfo>();
 	
 	value checkerCount = 12; 
@@ -29,6 +30,14 @@ shared class Game(variable Instant nextTimeout) {
 	
 	variable Integer blackJoker = 0;
 	variable Integer whiteJoker = 0;
+	
+	void useJoker(CheckerColor color) {
+		switch (color)
+		case (black) { blackJoker--; }
+		case (white) { whiteJoker--; }
+	}
+	
+	variable GameState startState = GameState();
 	
 	value statistic = GameStatistic(board.remainingDistance(black), checkerCount);
 	shared GameStatistic currentStatistic => statistic.copy();
@@ -87,6 +96,8 @@ shared class Game(variable Instant nextTimeout) {
 	
 	shared Boolean canControlRoll(CheckerColor playerColor) => canPlayJoker(playerColor);
 	
+	shared Boolean canUndoTurn(CheckerColor playerColor) => canPlayJoker(playerColor) && startState.previousState exists;
+	
 	function isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
 		if (!board.isInRange(source) || !board.isInRange(target)) {
 			return false;
@@ -118,6 +129,10 @@ shared class Game(variable Instant nextTimeout) {
 		remainingUndo = maxUndo;
 		_currentRoll = roll;
 		nextTimeout = timestamp.plus(maxDuration);
+		value oldState = startState;
+		oldState.previousState = null;
+		startState = buildState(timestamp);
+		startState.previousState = oldState;
 		statistic.side(player).turnStarted(roll, timestamp);
 		return true;
 	}
@@ -189,7 +204,7 @@ shared class Game(variable Instant nextTimeout) {
 		}
 	}
 	
-	shared Boolean undoTurnMoves(CheckerColor color) {
+	shared Boolean undoMoves(CheckerColor color) {
 		if (!isCurrentColor(color) || remainingUndo <= 0) {
 			return false;
 		} else if (exists roll = currentRoll, !currentMoves.empty) {
@@ -285,7 +300,7 @@ shared class Game(variable Instant nextTimeout) {
 
 	shared Boolean hasWon(CheckerColor color)=> board.countCheckers(board.homePosition(color), color) == checkerCount;
 	
-	function switchTurn(CheckerColor currentColor, CheckerColor nextColor, Instant timestamp) {
+	function switchTurn(CheckerColor currentColor, CheckerColor nextColor, Boolean joker, Instant timestamp) {
 		if (!isCurrentColor(currentColor)) {
 			return false;
 		} else if (hasWon(currentColor)) {
@@ -296,21 +311,22 @@ shared class Game(variable Instant nextTimeout) {
 		} else {
 			currentMoves.clear();
 			_currentColor = nextColor;
-			statistic.side(currentColor).turnEnded(timestamp, nextColor == currentColor);
+			statistic.side(currentColor).turnEnded(timestamp, joker);
 			return true;
 		}
 	}
 	
 	shared Boolean endTurn(CheckerColor color, Instant timestamp) {
-		return switchTurn(color, color.oppositeColor, timestamp);
+		if (switchTurn(color, color.oppositeColor, false, timestamp)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	shared Boolean takeTurn(CheckerColor color, Instant timestamp) {
-		if (color == black && blackJoker > 0 && switchTurn(color, color, timestamp)) {
-			blackJoker--;
-			return true;
-		} else if (color == white && whiteJoker > 0 && switchTurn(color, color, timestamp)) {
-			whiteJoker--;
+		if (canTakeTurn(color) && switchTurn(color, color, true, timestamp)) {
+			useJoker(color);
 			return true;
 		} else {
 			return false;
@@ -318,11 +334,19 @@ shared class Game(variable Instant nextTimeout) {
 	}
 	
 	shared Boolean controlRoll(CheckerColor color, Instant timestamp) {
-		if (color == black && blackJoker > 0 && switchTurn(color, color.oppositeColor, timestamp)) {
-			blackJoker--;
+		if (canControlRoll(color) && switchTurn(color, color.oppositeColor, true, timestamp)) {
+			useJoker(color);
 			return true;
-		} else if (color == white && whiteJoker > 0 && switchTurn(color, color.oppositeColor, timestamp)) {
-			whiteJoker--;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean undoTurn(CheckerColor color, Instant timestamp) {
+		if (canUndoTurn(color) && switchTurn(color, color.oppositeColor, true, timestamp), exists previousState = startState.previousState) {
+			resetState(previousState, timestamp);
+			startState = GameState();
+			useJoker(color);
 			return true;
 		} else {
 			return false;
@@ -386,6 +410,12 @@ shared class Game(variable Instant nextTimeout) {
 		result.blackCheckerCounts = board.checkerCounts(black);
 		result.whiteCheckerCounts = board.checkerCounts(white);
 		result.currentMoves = currentMoves.sequence();
+		// TODO
+		/*
+		if (exists previousState = startState.previousState) {
+			result.previousState = previousState;
+		}
+		 */
 		return result;
 	}
 	
@@ -406,6 +436,8 @@ shared class Game(variable Instant nextTimeout) {
 		board.setCheckerCounts(white, state.whiteCheckerCounts);
 		currentMoves.clear();
 		currentMoves.addAll(state.currentMoves);
+		// TODO
+		//startState = state.previousState else GameState();
 	}
 	
 	shared Integer remainingJoker(CheckerColor color) {

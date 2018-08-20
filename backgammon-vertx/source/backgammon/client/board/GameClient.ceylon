@@ -25,7 +25,9 @@ import backgammon.shared {
 	InvalidRollMessage,
 	ControlRollMessage,
 	takeTurnJoker,
-	controlRollJoker
+	controlRollJoker,
+	undoTurnJoker,
+	UndoTurnMessage
 }
 import backgammon.shared.game {
 	Game,
@@ -64,7 +66,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
-	variable [PlayerBeginMessage|MakeMoveMessage|EndTurnMessage|TakeTurnMessage|ControlRollMessage*] nextActions = [];
+	variable [PlayerBeginMessage|MakeMoveMessage|EndTurnMessage|TakeTurnMessage|ControlRollMessage|UndoTurnMessage*] nextActions = [];
 	
 	void addDelayedGameMessage(InboundGameMessage message, Duration delay) {
 		delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(message, delay));
@@ -225,6 +227,9 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 			case (controlRollJoker) {
 				game.controlRoll(message.playerColor.oppositeColor, now());
 			}
+			case (undoTurnJoker) {
+				game.undoTurn(message.playerColor.oppositeColor, now());
+			}
 			case (null) {
 				game.endTurn(message.playerColor.oppositeColor, now());
 			}
@@ -281,7 +286,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	function showUndoneMoves(UndoneMovesMessage message) {
-		if (game.undoTurnMoves(message.playerColor)) {
+		if (game.undoMoves(message.playerColor)) {
 			gui.redrawCheckers(game.board);
 			if (exists color = playerColor, game.canUndoMoves(color)) {
 				gui.showUndoButton();
@@ -447,7 +452,11 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	
 	shared Boolean handleJokerEvent() {
 		if (exists color = playerColor, game.canPlayJoker(color)) {
-			gui.showJokerDialog(color);
+			if (!game.canUndoTurn(color)) {
+				gui.showJokerDialog(color, {gui.jokerUndoTurnId});
+			} else {
+				gui.showJokerDialog(color, {});
+			}
 			return true;
 		} else {
 			return false;
@@ -494,6 +503,25 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 				nextActions = nextActions.withTrailing(ControlRollMessage(matchId, playerId, roll));
 			} else {
 				messageBroadcaster(ControlRollMessage(matchId, playerId, roll));
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean handleUndoTurnEvent() {
+		if (exists color = playerColor, game.canUndoTurn(color)) {
+			gui.hidePossibleMoves();
+			gui.showSelectedChecker(null);
+			gui.hideJokerButton();
+			gui.hideSubmitButton();
+			gui.hideUndoButton();
+			
+			if (hasQueuedActions) {
+				nextActions = nextActions.withTrailing(UndoTurnMessage(matchId, playerId));
+			} else {
+				messageBroadcaster(UndoTurnMessage(matchId, playerId));
 			}
 			return true;
 		} else {

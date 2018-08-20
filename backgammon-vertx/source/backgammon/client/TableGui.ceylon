@@ -36,6 +36,7 @@ shared class TableGui(Document document) extends GameGui(document) {
 	shared String jokerDiceNr2Id = "jokerDiceNr2";
 	shared String jokerTakeTurnId = "joker-take-turn";
 	shared String jokerControlRollId = "joker-control-roll";
+	shared String jokerUndoTurnId = "joker-undo-turn";
 	
 	shared void hideUndoButton() {
 		addClass(undoButtonId, hiddenClass);
@@ -76,7 +77,17 @@ shared class TableGui(Document document) extends GameGui(document) {
 		removeClass(jokerButtonId, hiddenClass);
 	}
 	
-	shared void showJokerDialog(CheckerColor color) {
+	shared void showJokerDialog(CheckerColor color, {String*} disabledJockerIds) {
+		for (jokerId in {jokerTakeTurnId, jokerControlRollId, jokerUndoTurnId}) {
+			if (is HTMLElement radio = document.getElementById(jokerId)) {
+				radio.disabled = false;
+			}
+		}
+		for (jokerId in disabledJockerIds) {
+			if (is HTMLElement radio = document.getElementById(jokerId)) {
+				radio.disabled = true;
+			}
+		}
 		setClass(jokerDiceNr1Id, "btn", "dice-choice", "``color.oppositeColor``-1");
 		setClass(jokerDiceNr2Id, "btn", "dice-choice", "``color.oppositeColor``-2");
 		showDialog("dialog-joker");

@@ -23,6 +23,8 @@ shared final class GameState() extends Object() {
 	shared variable [Integer*] whiteCheckerCounts = [];
 	shared variable [GameMoveInfo*] currentMoves = [];
 	
+	shared variable GameState? previousState = null;
+	
 	shared JsonObject toJson() {
 		value result = JsonObject();
 		result.put("currentColor", currentColor?.name else null);
@@ -38,6 +40,9 @@ shared final class GameState() extends Object() {
 		result.put("blackCheckerCounts", JsonArray(blackCheckerCounts));
 		result.put("whiteCheckerCounts", JsonArray(whiteCheckerCounts));
 		result.put("currentMoves", JsonArray(currentMoves*.toJson()));
+		if (exists previous = previousState) {
+			result.put("previousState", previous.toJson());
+		}
 		return result;
 	}
 	
@@ -99,5 +104,8 @@ shared GameState parseGameState(JsonObject json) {
 	result.blackCheckerCounts = json.getArray("blackCheckerCounts").narrow<Integer>().sequence();
 	result.whiteCheckerCounts = json.getArray("whiteCheckerCounts").narrow<Integer>().sequence();
 	result.currentMoves = json.getArray("currentMoves").narrow<JsonObject>().collect(parseGameMove);
+	result.previousState = parseNullableGameState(json.getObjectOrNull("previousState"));
 	return result;
 }
+
+shared GameState? parseNullableGameState(JsonObject? json) => if (exists json) then parseGameState(json) else null;

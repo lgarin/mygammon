@@ -17,7 +17,7 @@ import ceylon.time {
 
 shared sealed interface GameMessage of InboundGameMessage | OutboundGameMessage | GameEventMessage satisfies MatchMessage {}
 
-shared sealed interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | ControlRollMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
+shared sealed interface InboundGameMessage of StartGameMessage | PlayerBeginMessage | MakeMoveMessage | UndoMovesMessage | EndTurnMessage | TakeTurnMessage | ControlRollMessage | UndoTurnMessage | EndGameMessage | GameStateRequestMessage satisfies GameMessage {
 	shared formal Instant timestamp;
 	shared default actual Object toBaseJson() => Object {"playerId" -> playerId.toJson(), "matchId" -> matchId.toJson(), "timestamp" -> timestamp.millisecondsOfEpoch};
 }
@@ -127,6 +127,11 @@ shared final class ControlRollMessage(shared actual MatchId matchId, shared actu
 }
 ControlRollMessage parseControlRollMessage(Object json) {
 	return ControlRollMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), DiceRoll(json.getInteger("rollValue1"), json.getInteger("rollValue2")), Instant(json.getInteger("timestamp")));
+}
+
+shared final class UndoTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {}
+UndoTurnMessage parseUndoTurnMessage(Object json) {
+	return UndoTurnMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), Instant(json.getInteger("timestamp")));
 }
 
 shared final class EndTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual Instant timestamp = now()) satisfies InboundGameMessage {}

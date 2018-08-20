@@ -39,7 +39,9 @@ import backgammon.shared {
 	InvalidRollMessage,
 	GameJoker,
 	takeTurnJoker,
-	controlRollJoker
+	controlRollJoker,
+	undoTurnJoker,
+	UndoTurnMessage
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -181,7 +183,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
-		} else if (game.undoTurnMoves(playerColor)) {
+		} else if (game.undoMoves(playerColor)) {
 			messageBroadcaster(UndoneMovesMessage(matchId, toPlayerId(playerColor), playerColor));
 			return true;
 		} else {
@@ -268,6 +270,21 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
+	function undoTurn(CheckerColor playerColor, Instant timestamp) {
+		
+		if (!game.isCurrentColor(playerColor)) {
+			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
+			return false;
+		} else if (game.undoTurn(playerColor, timestamp)) {
+			return beginNextTurn(timestamp, undoTurnJoker);
+		} else if (game.hasWon(playerColor)) {
+			return endGame(toPlayerId(playerColor), timestamp, toPlayerId(playerColor));
+		} else {
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.buildState(timestamp)));
+			return false;
+		}
+	}
+	
 	function definePlayerInfo(PlayerId playerId, PlayerInfo playerInfo) {
 		if (playerId == player1.id) {
 			player1.info = playerInfo;
@@ -312,6 +329,10 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		case (is ControlRollMessage) {
 			matchCommander(PingMatchMessage(message.playerId, matchId));
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, controlRoll(playerColor, message.roll, message.timestamp));
+		}
+		case (is UndoTurnMessage) {
+			matchCommander(PingMatchMessage(message.playerId, matchId));
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, undoTurn(playerColor, message.timestamp));
 		}
 		case (is GameStateRequestMessage) {
 			return GameStateResponseMessage(matchId, message.playerId, playerColor, game.buildState(message.timestamp));

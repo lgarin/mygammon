@@ -360,6 +360,7 @@ shared dynamic HTMLElement satisfies Element {
 	
 	// user interaction
 	shared formal variable Boolean hidden;
+	shared formal variable Boolean disabled;
 	shared formal void click();
 	shared formal variable Integer tabIndex;
 	shared formal void focus();
