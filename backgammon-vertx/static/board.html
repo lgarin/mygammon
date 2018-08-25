@@ -106,6 +106,14 @@
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
+	                $("#dialog-joker-take-turn, #dialog-joker-control-roll, #dialog-joker-undo-turn").dialog({
+	                	autoOpen: false,
+	                    modal: true,
+	                    buttons: [{
+	                    	text: $("#i18n #_ok").text(),
+	                    	click: function() { $(this).dialog("close"); return true; }
+	                    }]
+	                });
 	                $("#chat-input").keypress(function(e) {
 						if (e.which == 13) {
 							$("#chat-post").click();
@@ -324,7 +332,10 @@
         <div id="submitText" class="submit">Submit</div>
       </div>
       <div id="joker" class="button hidden" style="right:5px;top:503px;">
-        <div id="jokerText" class="joker">Joker</div>
+      	<div class="joker">
+        	<span id="jokerText">Joker</span>
+        	<span id="jokerRemaining" class="badge">&#63;</span>
+        </div>
       </div>
     </div><!-- end of gui -->
 
@@ -372,6 +383,21 @@
 	    <b>You have a game in progress.<br/>Do you really want to logout?</b>
 	  </p>
 	</div>
+	<div id="dialog-joker-take-turn" title="Joker played" style="display: none">
+	  <p>
+	  	<b>Your opponent has taken your turn. You must wait for your next turn.</b>
+	  </p>
+	</div>
+	<div id="dialog-joker-control-roll" title="Joker played" style="display: none">
+	  <p>
+	  	<b>Your opponent has fixed your dice roll for this turn.</b>
+	  </p>
+	</div>
+	<div id="dialog-joker-undo-turn" title="Joker played" style="display: none">
+	  <p>
+	  	<b>Your opponent has undone your previous turn. You must replay it now.</b>
+	  </p>
+	</div>
 	<div id="dialog-joker" title="Play joker?"  style="display: none">
 		<fieldset>
 		    <legend>Select a joker: </legend>
@@ -385,6 +411,7 @@
 				    <span id="jokerDiceNr1" class="btn dice-choice white-1"></span>
 		        	<span id="jokerDiceNr2" class="btn dice-choice white-2"></span>
 	        	</p>
+	       		<i style="padding-left: 20px">Click on the dices to change the roll.</i>
         	</div>
         	<div class="radio">
   				<label><input type="radio" id="joker-undo-turn" name="joker-choice">Force your opponent to replay its previous turn with a diffrent roll.</label>
@@ -396,6 +423,7 @@
 		<div id="_logout">Logout</div>
 		<div id="_leave">Leave</div>
 		<div id="_cancel">Cancel</div>
+		<div id="_ok">Ok</div>
 		<div id="_retry">Play again</div>
 		<div id="_timeout">Timeout</div>
 		<div id="_undo">Undo</div>

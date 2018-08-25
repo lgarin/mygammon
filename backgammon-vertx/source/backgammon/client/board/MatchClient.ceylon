@@ -66,6 +66,7 @@ shared final class MatchClient(PlayerId playerId, shared MatchState match, Table
 		gui.hideSubmitButton();
 		gui.hideJokerButton();
 		gui.hideUndoButton();
+		gui.hideAllDialogs();
 		if (playerId == winnerId) {
 			gui.showDialog("dialog-won", {"game-score" -> score.string});
 		} else if (exists looserId = match.opponentId(winnerId), playerId == looserId) {

@@ -17,5 +17,5 @@ shared class GameConfiguration(Object? json) {
 	shared Integer maxUndoPerTurn = json?.getIntegerOrNull("maxUndoPerTurn") else 1;
 	shared Integer maxSkippedPlayerTurn = json?.getIntegerOrNull("maxSkippedPlayerTurn") else 3;
 	shared Integer maxSkippedGameTurn = 2 * maxSkippedPlayerTurn - 1;
-	shared Integer jokerCount = json?.getIntegerOrNull("jokerCount") else 2;
+	shared Integer jokerCount = json?.getIntegerOrNull("jokerCount") else 3;
 }

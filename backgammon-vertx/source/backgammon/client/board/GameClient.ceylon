@@ -66,7 +66,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
-	variable [PlayerBeginMessage|MakeMoveMessage|EndTurnMessage|TakeTurnMessage|ControlRollMessage|UndoTurnMessage*] nextActions = [];
+	variable [MakeMoveMessage|EndTurnMessage|TakeTurnMessage|ControlRollMessage|UndoTurnMessage*] nextActions = [];
 	
 	void addDelayedGameMessage(InboundGameMessage message, Duration delay) {
 		delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(message, delay));
@@ -148,6 +148,8 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	shared void showState() {
+		gui.hideAllDialogs();
+		
 		value currentTime = now();
 		
 		if (exists currentColor = game.currentColor, exists currentRoll = game.currentRoll) {
@@ -183,7 +185,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 		}
 		
 		if (exists color = playerColor, game.canPlayJoker(color)) {
-			gui.showJokerButton();
+			gui.showJokerButton(game.remainingJoker(color));
 		} else {
 			gui.hideJokerButton();
 		}
@@ -210,7 +212,6 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	function showPlayerReady(PlayerReadyMessage message) {
 		if (game.begin(message.playerColor, now(), message.jokerCount)) {
 			gui.showPlayerMessage(message.playerColor, gui.readyTextKey, false);
-			nextActions = [PlayerBeginMessage(message.matchId, message.playerId, Instant(0))];
 			return true;
 		} else {
 			return false;
@@ -218,19 +219,30 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	function showTurnStart(StartTurnMessage message) {
+		gui.hideAllDialogs();
 		
-		if (nextActions.narrow<PlayerBeginMessage>().empty) {
-			switch (message.joker)
-			case (takeTurnJoker) {
-				game.takeTurn(message.playerColor, now());
+		switch (message.joker)
+		case (takeTurnJoker) {
+			game.takeTurn(message.playerColor, now());
+			if (exists color = playerColor, color != message.playerColor) {
+				gui.showDialog("dialog-``gui.jokerTakeTurnId``");
 			}
-			case (controlRollJoker) {
-				game.controlRoll(message.playerColor.oppositeColor, now());
+		}
+		case (controlRollJoker) {
+			game.controlRoll(message.playerColor.oppositeColor, now());
+			if (exists color = playerColor, color == message.playerColor) {
+				gui.showDialog("dialog-``gui.jokerControlRollId``");
 			}
-			case (undoTurnJoker) {
-				game.undoTurn(message.playerColor.oppositeColor, now());
+		}
+		case (undoTurnJoker) {
+			game.undoTurn(message.playerColor.oppositeColor, now());
+			gui.redrawCheckers(game.board);
+			if (exists color = playerColor, color == message.playerColor) {
+				gui.showDialog("dialog-``gui.jokerUndoTurnId``");
 			}
-			case (null) {
+		}
+		case (null) {
+			if (game.started) {
 				game.endTurn(message.playerColor.oppositeColor, now());
 			}
 		}
@@ -252,7 +264,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 			}
 			
 			if (message.playerId == playerId && game.canPlayJoker(message.playerColor)) {
-				gui.showJokerButton();
+				gui.showJokerButton(game.remainingJoker(message.playerColor));
 			} else {
 				gui.hideJokerButton();
 			}
@@ -393,7 +405,6 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	shared Boolean handleTimerEvent(Instant time) {
-		
 		handleDelayedActions(time);
 		
 		if (game.timedOut(time)) {
@@ -452,11 +463,17 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	
 	shared Boolean handleJokerEvent() {
 		if (exists color = playerColor, game.canPlayJoker(color)) {
-			if (!game.canUndoTurn(color)) {
-				gui.showJokerDialog(color, {gui.jokerUndoTurnId});
-			} else {
-				gui.showJokerDialog(color, {});
+			variable {String*} enabledJokerIds = {};
+			if (game.canControlRoll(color)) {
+				enabledJokerIds = enabledJokerIds.follow(gui.jokerControlRollId);
 			}
+			if (game.canTakeTurn(color)) {
+				enabledJokerIds = enabledJokerIds.follow(gui.jokerTakeTurnId);
+			}
+			if (game.canUndoTurn(color)) {
+				enabledJokerIds = enabledJokerIds.follow(gui.jokerUndoTurnId);
+			}
+			gui.showJokerDialog(color, enabledJokerIds);
 			return true;
 		} else {
 			return false;
@@ -580,7 +597,6 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 			return false;
 		}
 	}
-	
 	
 	shared Boolean handleDrop(HTMLElement targetElement, HTMLElement sourceElement) {
 		if (exists sourcePosition = gui.getPosition(sourceElement), exists targetPosition = gui.getPosition(targetElement)) {
