@@ -18,7 +18,7 @@ shared final class DiceRoller() {
 	
 	value lazyRandom => random else (random = SecureRandom());
 	
-	function rollOne() => lazyRandom.nextInt(5) + 1;
+	function rollOne() => lazyRandom.nextInt(6) + 1;
 	
 	shared DiceRoll roll() {
 		try (lock) {
