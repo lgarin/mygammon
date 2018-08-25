@@ -16,7 +16,8 @@ import backgammon.shared.game {
 }
 import ceylon.time {
 	now,
-	Instant
+	Instant,
+	Duration
 }
 
 class GameTest() {
@@ -30,8 +31,8 @@ class GameTest() {
 		assert (!game.isCurrentColor(black));
 		assert (!game.isCurrentColor(white));
 		assert (game.currentRoll is Null);
-		assert ([12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] == game.board.checkerCounts(black));
-		assert ([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12] == game.board.checkerCounts(white));
+		assert ([12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] == game.checkerCounts(black));
+		assert ([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12] == game.checkerCounts(white));
 		assert (!game.mustRollDice(black));
 		assert (!game.mustRollDice(white));
 		assert (!game.canUndoMoves(white));
@@ -114,5 +115,23 @@ class GameTest() {
 		
 		value sequence = game.computeBestMoveSequence(black, DiceRoll(4, 5), 12, 16);
 		assert (sequence == [GameMoveInfo(12, 16, 4, false)]);
+	}
+	
+	test
+	shared void undoFirstTurn() {
+		game.initialRoll(DiceRoll(2, 1), now(), Duration(100));
+		game.begin(black, now(), 1);
+		game.begin(white, now(), 1);
+		game.beginTurn(black, DiceRoll(2, 1), now(), Duration(100), 1);
+		game.moveChecker(black, blackStartPosition, blackStartPosition + 2);
+		game.endTurn(black, now());
+		game.beginTurn(white, DiceRoll(1, 1), now(), Duration(100), 1);
+		game.undoTurn(white, now());
+		assert ([12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] == game.checkerCounts(black));
+		assert ([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12] == game.checkerCounts(white));
+		assert (1 == game.remainingJoker(black));
+		assert (0 == game.remainingJoker(white));
+		assert (true == game.isCurrentColor(black));
+		assert (false == game.canUndoTurn(black));
 	}
 }

@@ -130,7 +130,7 @@ shared class Game(variable Instant nextTimeout) {
 		_currentRoll = roll;
 		nextTimeout = timestamp.plus(maxDuration);
 		value oldState = startState;
-		oldState.previousState = null;
+		startState.previousState = null;
 		startState = buildState(timestamp);
 		startState.previousState = oldState;
 		statistic.side(player).turnStarted(roll, timestamp);
@@ -345,7 +345,6 @@ shared class Game(variable Instant nextTimeout) {
 	shared Boolean undoTurn(CheckerColor color, Instant timestamp) {
 		if (canUndoTurn(color) && switchTurn(color, color.oppositeColor, true, timestamp), exists previousState = startState.previousState) {
 			resetState(previousState, timestamp);
-			startState = GameState();
 			useJoker(color);
 			return true;
 		} else {
@@ -410,12 +409,7 @@ shared class Game(variable Instant nextTimeout) {
 		result.blackCheckerCounts = board.checkerCounts(black);
 		result.whiteCheckerCounts = board.checkerCounts(white);
 		result.currentMoves = currentMoves.sequence();
-		// TODO
-		/*
-		if (exists previousState = startState.previousState) {
-			result.previousState = previousState;
-		}
-		 */
+		result.previousState = startState;
 		return result;
 	}
 	
@@ -436,8 +430,7 @@ shared class Game(variable Instant nextTimeout) {
 		board.setCheckerCounts(white, state.whiteCheckerCounts);
 		currentMoves.clear();
 		currentMoves.addAll(state.currentMoves);
-		// TODO
-		//startState = state.previousState else GameState();
+		startState = state.previousState else GameState();
 	}
 	
 	shared Integer remainingJoker(CheckerColor color) {

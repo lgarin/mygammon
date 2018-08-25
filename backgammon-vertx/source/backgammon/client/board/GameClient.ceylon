@@ -183,7 +183,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 		}
 		
 		if (exists color = playerColor, game.canPlayJoker(color)) {
-			gui.showJokerButton();
+			gui.showJokerButton(game.remainingJoker(color));
 		} else {
 			gui.hideJokerButton();
 		}
@@ -252,7 +252,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 			}
 			
 			if (message.playerId == playerId && game.canPlayJoker(message.playerColor)) {
-				gui.showJokerButton();
+				gui.showJokerButton(game.remainingJoker(message.playerColor));
 			} else {
 				gui.hideJokerButton();
 			}
@@ -452,11 +452,17 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	
 	shared Boolean handleJokerEvent() {
 		if (exists color = playerColor, game.canPlayJoker(color)) {
-			if (!game.canUndoTurn(color)) {
-				gui.showJokerDialog(color, {gui.jokerUndoTurnId});
-			} else {
-				gui.showJokerDialog(color, {});
+			variable {String*} enabledJokerIds = {};
+			if (game.canControlRoll(color)) {
+				enabledJokerIds = enabledJokerIds.follow(gui.jokerControlRollId);
 			}
+			if (game.canTakeTurn(color)) {
+				enabledJokerIds = enabledJokerIds.follow(gui.jokerTakeTurnId);
+			}
+			if (game.canUndoTurn(color)) {
+				enabledJokerIds = enabledJokerIds.follow(gui.jokerUndoTurnId);
+			}
+			gui.showJokerDialog(color, enabledJokerIds);
 			return true;
 		} else {
 			return false;
