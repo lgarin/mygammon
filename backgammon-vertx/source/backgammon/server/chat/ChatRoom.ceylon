@@ -54,7 +54,14 @@ shared final class ChatRoom(ServerConfiguration config) {
 	}
 	
 	function readHistory(ChatHistoryRequestMessage message) {
+		clearOldMessages(message.timestamp);
 		return ChatHistoryResponseMessage(message.playerId, message.roomId, messages.sequence());
+	}
+	
+	function missedMessageCount(ChatMissedRequestMessage message) {
+		clearOldMessages(message.timestamp);
+		value count = messages.count((e) => e.messageId > message.lastMessageId);
+		return ChatMissedResponseMessage(message.playerId, message.roomId, count);	
 	}
 	
 	shared OutboundChatRoomMessage processInputMessage(InboundChatRoomMessage message) {
@@ -67,7 +74,7 @@ shared final class ChatRoom(ServerConfiguration config) {
 				return readHistory(message);
 			}
 			case (is ChatMissedRequestMessage) {
-				return ChatMissedResponseMessage(message.playerId, message.roomId, messages.count((e) => e.messageId > message.lastMessageId));
+				return missedMessageCount(message);
 			}
 		}
 	}
