@@ -19,6 +19,10 @@ import ceylon.time {
 	Instant,
 	Duration
 }
+import backgammon.shared {
+
+	undoTurnJoker
+}
 
 class GameTest() {
 	
@@ -120,8 +124,8 @@ class GameTest() {
 	test
 	shared void undoFirstTurn() {
 		game.initialRoll(DiceRoll(2, 1), now(), Duration(100));
-		game.begin(black, now(), 1);
-		game.begin(white, now(), 1);
+		game.begin(black, now());
+		game.begin(white, now());
 		game.beginTurn(black, DiceRoll(2, 1), now(), Duration(100), 1);
 		game.moveChecker(black, blackStartPosition, blackStartPosition + 2);
 		game.endTurn(black, now());
@@ -129,9 +133,9 @@ class GameTest() {
 		game.undoTurn(white, now());
 		assert ([12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] == game.checkerCounts(black));
 		assert ([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12] == game.checkerCounts(white));
-		assert (1 == game.remainingJoker(black));
-		assert (0 == game.remainingJoker(white));
+		assert (3 == game.remainingJokerCount(black));
+		assert (2 == game.remainingJokerCount(white));
 		assert (true == game.isCurrentColor(black));
-		assert (false == game.canUndoTurn(black));
+		assert (false == game.canPlayJoker(black, undoTurnJoker));
 	}
 }

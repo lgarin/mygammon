@@ -220,8 +220,8 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 	}
 	
 	function beginGame(CheckerColor playerColor, Instant timestamp) {
-		if (game.begin(playerColor, timestamp, configuration.jokerCount)) {
-			messageBroadcaster(PlayerReadyMessage(matchId, toPlayerId(playerColor), playerColor, configuration.jokerCount));
+		if (game.begin(playerColor, timestamp)) {
+			messageBroadcaster(PlayerReadyMessage(matchId, toPlayerId(playerColor), playerColor));
 			if (exists currentColor = game.currentColor) {
 				return beginFirstTurn(currentColor, timestamp);
 			} else if (exists roll = game.currentRoll, roll.isPair) {

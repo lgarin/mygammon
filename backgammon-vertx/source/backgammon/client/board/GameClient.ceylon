@@ -184,8 +184,8 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 			gui.hideUndoButton();
 		}
 		
-		if (exists color = playerColor, game.canPlayJoker(color)) {
-			gui.showJokerButton(game.remainingJoker(color));
+		if (exists color = playerColor, game.canPlayAnyJoker(color)) {
+			gui.showJokerButton(game.remainingJokerCount(color));
 		} else {
 			gui.hideJokerButton();
 		}
@@ -210,7 +210,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	function showPlayerReady(PlayerReadyMessage message) {
-		if (game.begin(message.playerColor, now(), message.jokerCount)) {
+		if (game.begin(message.playerColor, now())) {
 			gui.showPlayerMessage(message.playerColor, gui.readyTextKey, false);
 			return true;
 		} else {
@@ -263,8 +263,8 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 				gui.hideSubmitButton();
 			}
 			
-			if (message.playerId == playerId && game.canPlayJoker(message.playerColor)) {
-				gui.showJokerButton(game.remainingJoker(message.playerColor));
+			if (message.playerId == playerId && game.canPlayAnyJoker(message.playerColor)) {
+				gui.showJokerButton(game.remainingJokerCount(message.playerColor));
 			} else {
 				gui.hideJokerButton();
 			}
@@ -461,18 +461,11 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 		}
 	}
 	
+	value jokerIdMap = [controlRollJoker -> gui.jokerControlRollId, takeTurnJoker -> gui.jokerTakeTurnId, undoTurnJoker -> gui.jokerUndoTurnId];
+	
 	shared Boolean handleJokerEvent() {
-		if (exists color = playerColor, game.canPlayJoker(color)) {
-			variable {String*} enabledJokerIds = {};
-			if (game.canControlRoll(color)) {
-				enabledJokerIds = enabledJokerIds.follow(gui.jokerControlRollId);
-			}
-			if (game.canTakeTurn(color)) {
-				enabledJokerIds = enabledJokerIds.follow(gui.jokerTakeTurnId);
-			}
-			if (game.canUndoTurn(color)) {
-				enabledJokerIds = enabledJokerIds.follow(gui.jokerUndoTurnId);
-			}
+		if (exists color = playerColor, game.canPlayAnyJoker(color)) {
+			value enabledJokerIds = jokerIdMap.filter((joker->id) => game.canPlayJoker(color, joker)).map((joker->id) => id);
 			gui.showJokerDialog(color, enabledJokerIds);
 			return true;
 		} else {
@@ -490,7 +483,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	shared Boolean handleTakeTurnEvent() {
-		if (exists color = playerColor, game.canTakeTurn(color)) {
+		if (exists color = playerColor, game.canPlayJoker(color, takeTurnJoker)) {
 			gui.hidePossibleMoves();
 			gui.showSelectedChecker(null);
 			gui.hideJokerButton();
@@ -509,7 +502,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	shared Boolean handleControlRollEvent() {
-		if (exists color = playerColor, game.canControlRoll(color), exists roll = gui.readJokerRoll(color)) {
+		if (exists color = playerColor, game.canPlayJoker(color, controlRollJoker), exists roll = gui.readJokerRoll(color)) {
 			gui.hidePossibleMoves();
 			gui.showSelectedChecker(null);
 			gui.hideJokerButton();
@@ -528,7 +521,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	shared Boolean handleUndoTurnEvent() {
-		if (exists color = playerColor, game.canUndoTurn(color)) {
+		if (exists color = playerColor, game.canPlayJoker(color, undoTurnJoker)) {
 			gui.hidePossibleMoves();
 			gui.showSelectedChecker(null);
 			gui.hideJokerButton();

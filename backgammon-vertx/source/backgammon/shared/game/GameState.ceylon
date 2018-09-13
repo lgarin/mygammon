@@ -5,6 +5,11 @@ import ceylon.json {
 import ceylon.time {
 	Duration
 }
+import backgammon.shared {
+
+	GameJoker,
+	parseGameJoker
+}
 
 shared final class GameState() extends Object() {
 	
@@ -16,8 +21,8 @@ shared final class GameState() extends Object() {
 	shared variable Boolean whiteReady = false;
 	shared variable Duration? remainingTime = null;
 	
-	shared variable Integer blackJoker = 0;
-	shared variable Integer whiteJoker = 0;
+	shared variable [GameJoker*] blackJokers = [];
+	shared variable [GameJoker*] whiteJokers = [];
 	
 	shared variable [Integer*] blackCheckerCounts = [];
 	shared variable [Integer*] whiteCheckerCounts = [];
@@ -35,8 +40,8 @@ shared final class GameState() extends Object() {
 		result.put("blackReady", blackReady);
 		result.put("whiteReady", whiteReady);
 		result.put("remainingTime", remainingTime?.milliseconds);
-		result.put("blackJoker", blackJoker);
-		result.put("whiteJoker", whiteJoker);
+		result.put("blackJokers", JsonArray(blackJokers*.string));
+		result.put("whiteJokers", JsonArray(whiteJokers*.string));
 		result.put("blackCheckerCounts", JsonArray(blackCheckerCounts));
 		result.put("whiteCheckerCounts", JsonArray(whiteCheckerCounts));
 		result.put("currentMoves", JsonArray(currentMoves*.toJson()));
@@ -64,7 +69,10 @@ shared final class GameState() extends Object() {
 				equalsOrBothNull(remainingTime, that.remainingTime) &&
 				blackCheckerCounts.sequence()==that.blackCheckerCounts.sequence() && 
 				whiteCheckerCounts.sequence()==that.whiteCheckerCounts.sequence() && 
-				currentMoves.sequence()==that.currentMoves.sequence();
+				currentMoves.sequence()==that.currentMoves.sequence() &&
+				blackJokers.sequence()==that.blackJokers.sequence() &&
+				whiteJokers.sequence()==that.whiteJokers.sequence() &&
+				equalsOrBothNull(previousState, that.previousState);
 		}
 		else {
 			return false;
@@ -99,8 +107,8 @@ shared GameState parseGameState(JsonObject json) {
 	result.blackReady = json.getBoolean("blackReady");
 	result.whiteReady = json.getBoolean("whiteReady");
 	result.remainingTime = json.getIntegerOrNull("remainingTime") exists then Duration(json.getInteger("remainingTime")) else null;
-	result.blackJoker = json.getInteger("blackJoker");
-	result.whiteJoker = json.getInteger("whiteJoker");
+	result.blackJokers = json.getArray("blackJokers").narrow<String>().collect(parseGameJoker);
+	result.whiteJokers = json.getArray("whiteJokers").narrow<String>().collect(parseGameJoker);
 	result.blackCheckerCounts = json.getArray("blackCheckerCounts").narrow<Integer>().sequence();
 	result.whiteCheckerCounts = json.getArray("whiteCheckerCounts").narrow<Integer>().sequence();
 	result.currentMoves = json.getArray("currentMoves").narrow<JsonObject>().collect(parseGameMove);

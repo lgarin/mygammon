@@ -7,6 +7,13 @@ import ceylon.time {
 	Instant,
 	Duration
 }
+import backgammon.shared {
+
+	GameJoker,
+	undoTurnJoker,
+	takeTurnJoker,
+	controlRollJoker
+}
 
 shared class Game(variable Instant nextTimeout) {
 
@@ -28,13 +35,13 @@ shared class Game(variable Instant nextTimeout) {
 	variable Boolean blackReady = false;
 	variable Boolean whiteReady = false;
 	
-	variable Integer blackJoker = 0;
-	variable Integer whiteJoker = 0;
+	variable [GameJoker*] blackJokers = [takeTurnJoker, controlRollJoker, undoTurnJoker];
+	variable [GameJoker*] whiteJokers = [takeTurnJoker, controlRollJoker, undoTurnJoker];
 	
-	void useJoker(CheckerColor color) {
+	void useJoker(CheckerColor color, GameJoker joker) {
 		switch (color)
-		case (black) { blackJoker--; }
-		case (white) { whiteJoker--; }
+		case (black) { blackJokers = blackJokers.select((GameJoker current) => current != joker); }
+		case (white) { whiteJokers = whiteJokers.select((GameJoker current) => current != joker); }
 	}
 	
 	variable GameState? startState = null;
@@ -91,17 +98,20 @@ shared class Game(variable Instant nextTimeout) {
 		}
 	}
 	
-	shared Boolean canPlayJoker(CheckerColor playerColor) => remainingJoker(playerColor) > 0 && isCurrentColor(playerColor);
+	shared Boolean canPlayAnyJoker(CheckerColor playerColor) => remainingJokerCount(playerColor) > 0 && isCurrentColor(playerColor);
 	
-	shared Boolean canTakeTurn(CheckerColor playerColor) => canPlayJoker(playerColor);
+	value previousTurnColor => startState?.previousState?.currentColor;
 	
-	shared Boolean canControlRoll(CheckerColor playerColor) => canPlayJoker(playerColor);
-	
-	shared Boolean canUndoTurn(CheckerColor playerColor) {
-		if (canPlayJoker(playerColor), exists previousColor = startState?.previousState?.currentColor) {
-			return previousColor != playerColor;
+	shared Boolean canPlayJoker(CheckerColor playerColor, GameJoker joker) {
+		if (isCurrentColor(playerColor) && remainingJokers(playerColor).contains(joker)) {
+			if (joker == undoTurnJoker) {
+				return (previousTurnColor else playerColor) != playerColor;
+			} else {
+				return true;
+			}
+		} else {
+			return false;
 		}
-		return false;
 	}
 	
 	function isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
@@ -331,8 +341,8 @@ shared class Game(variable Instant nextTimeout) {
 	}
 
 	shared Boolean takeTurn(CheckerColor color, Instant timestamp) {
-		if (canTakeTurn(color) && switchTurn(color, color, true, timestamp)) {
-			useJoker(color);
+		if (canPlayJoker(color, takeTurnJoker) && switchTurn(color, color, true, timestamp)) {
+			useJoker(color, takeTurnJoker);
 			return true;
 		} else {
 			return false;
@@ -340,8 +350,8 @@ shared class Game(variable Instant nextTimeout) {
 	}
 	
 	shared Boolean controlRoll(CheckerColor color, Instant timestamp) {
-		if (canControlRoll(color) && switchTurn(color, color.oppositeColor, true, timestamp)) {
-			useJoker(color);
+		if (canPlayJoker(color, controlRollJoker) && switchTurn(color, color.oppositeColor, true, timestamp)) {
+			useJoker(color, controlRollJoker);
 			return true;
 		} else {
 			return false;
@@ -349,24 +359,22 @@ shared class Game(variable Instant nextTimeout) {
 	}
 	
 	shared Boolean undoTurn(CheckerColor color, Instant timestamp) {
-		if (canUndoTurn(color) && switchTurn(color, color.oppositeColor, true, timestamp), exists previousState = startState?.previousState) {
+		if (canPlayJoker(color, undoTurnJoker) && switchTurn(color, color.oppositeColor, true, timestamp), exists previousState = startState?.previousState) {
 			resetState(previousState, timestamp);
-			useJoker(color);
+			useJoker(color, undoTurnJoker);
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
-	shared Boolean begin(CheckerColor color, Instant timestamp, Integer jokerCount) {
+	shared Boolean begin(CheckerColor color, Instant timestamp) {
 		if (currentColor exists) {
 			return false;
 		} else if (!blackReady && color == black) {
 			blackReady = true;
-			blackJoker = jokerCount;
 		} else if (!whiteReady && color == white) {
 			whiteReady = true;
-			whiteJoker = jokerCount;
 		} else {
 			return false;
 		}
@@ -410,8 +418,8 @@ shared class Game(variable Instant nextTimeout) {
 		result.blackReady = blackReady;
 		result.whiteReady = whiteReady;
 		result.remainingTime = remainingTime(timestamp);
-		result.blackJoker = blackJoker;
-		result.whiteJoker = whiteJoker;
+		result.blackJokers = blackJokers;
+		result.whiteJokers = whiteJokers;
 		result.blackCheckerCounts = board.checkerCounts(black);
 		result.whiteCheckerCounts = board.checkerCounts(white);
 		result.currentMoves = currentMoves.sequence();
@@ -430,8 +438,8 @@ shared class Game(variable Instant nextTimeout) {
 		} else {
 			nextTimeout = Instant(0);
 		}
-		blackJoker = state.blackJoker;
-		whiteJoker = state.whiteJoker;
+		blackJokers = state.blackJokers;
+		whiteJokers = state.whiteJokers;
 		board.setCheckerCounts(black, state.blackCheckerCounts);
 		board.setCheckerCounts(white, state.whiteCheckerCounts);
 		currentMoves.clear();
@@ -439,10 +447,16 @@ shared class Game(variable Instant nextTimeout) {
 		startState = state.previousState;
 	}
 	
-	shared Integer remainingJoker(CheckerColor color) {
+	shared Integer remainingJokerCount(CheckerColor color) {
 		return switch (color)
-			case (black) blackJoker
-			case (white) whiteJoker;
+			case (black) blackJokers.size
+			case (white) whiteJokers.size;
+	}
+	
+	shared [GameJoker*] remainingJokers(CheckerColor color) {
+		return switch (color)
+		case (black) blackJokers
+		case (white) whiteJokers;
 	}
 }
 

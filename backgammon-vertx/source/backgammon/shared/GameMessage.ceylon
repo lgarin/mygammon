@@ -47,11 +47,9 @@ PlayerBeginMessage parsePlayerBeginMessage(Object json) {
 	return PlayerBeginMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), Instant(json.getInteger("timestamp")));
 }
 
-shared final class PlayerReadyMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared Integer jokerCount) satisfies OutboundGameMessage {
-	toJson() => toExtendedJson {"jokerCount" -> jokerCount};
-}
+shared final class PlayerReadyMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor) satisfies OutboundGameMessage {}
 PlayerReadyMessage parsePlayerReadyMessage(Object json) {
-	return PlayerReadyMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")), json.getInteger("jokerCount"));
+	return PlayerReadyMessage(parseMatchId(json.getObject("matchId")), parsePlayerId(json.getString("playerId")), parseCheckerColor(json.getString("playerColor")));
 }
 
 shared final class StartTurnMessage(shared actual MatchId matchId, shared actual PlayerId playerId, shared actual CheckerColor playerColor, shared DiceRoll roll, shared Duration maxDuration, shared Integer maxUndo, shared GameJoker? joker = null) satisfies OutboundGameMessage {
