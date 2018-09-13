@@ -52,8 +52,8 @@ shared class AccountGui(Document document) extends BoardGui(document) {
 	}
 	
 	function buildTransactionArray([PlayerTransaction*] transactions) {
-		variable Integer balance = 0;
-		return JsonArray {for (t in transactions) JsonObject { "type" -> t.type, "amount" -> t.amount, "balance" -> (balance += t.amount), "dateTime" -> formatTimestamp(t.timestamp.dateTime()), "timestamp" -> t.timestamp.millisecondsOfEpoch }};
+		variable Integer balance = transactions.fold(0)((Integer sum, PlayerTransaction t) => sum + t.amount);
+		return JsonArray {for (t in transactions) JsonObject { "type" -> t.type, "amount" -> t.amount, "balance" -> (balance -= t.amount), "dateTime" -> formatTimestamp(t.timestamp.dateTime()), "timestamp" -> t.timestamp.millisecondsOfEpoch }};
 	}
 
 	shared actual void showBeginState(PlayerState playerState) {
