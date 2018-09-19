@@ -37,6 +37,7 @@ shared class TableGui(Document document) extends GameGui(document) {
 	shared String jokerTakeTurnId = "joker-take-turn";
 	shared String jokerControlRollId = "joker-control-roll";
 	shared String jokerUndoTurnId = "joker-undo-turn";
+	shared String jokerReplayTurnId = "joker-replay-turn";
 	
 	shared void hideUndoButton() {
 		addClass(undoButtonId, hiddenClass);
@@ -81,7 +82,7 @@ shared class TableGui(Document document) extends GameGui(document) {
 	}
 	
 	shared void showJokerDialog(CheckerColor color, {String*} enabledJockerIds) {
-		for (jokerId in {jokerTakeTurnId, jokerControlRollId, jokerUndoTurnId}) {
+		for (jokerId in {jokerTakeTurnId, jokerControlRollId, jokerUndoTurnId, jokerReplayTurnId}) {
 			if (is HTMLElement radio = document.getElementById(jokerId)) {
 				radio.disabled = true;
 				radio.checked = false;

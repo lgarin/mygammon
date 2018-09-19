@@ -12,7 +12,8 @@ import backgammon.shared {
 	GameJoker,
 	undoTurnJoker,
 	takeTurnJoker,
-	controlRollJoker
+	controlRollJoker,
+	replayTurnJoker
 }
 
 shared class Game(variable Instant nextTimeout) {
@@ -35,8 +36,8 @@ shared class Game(variable Instant nextTimeout) {
 	variable Boolean blackReady = false;
 	variable Boolean whiteReady = false;
 	
-	variable [GameJoker*] blackJokers = [takeTurnJoker, controlRollJoker, undoTurnJoker];
-	variable [GameJoker*] whiteJokers = [takeTurnJoker, controlRollJoker, undoTurnJoker];
+	variable [GameJoker*] blackJokers = [takeTurnJoker, controlRollJoker, undoTurnJoker, replayTurnJoker];
+	variable [GameJoker*] whiteJokers = [takeTurnJoker, controlRollJoker, undoTurnJoker, replayTurnJoker];
 	
 	void useJoker(CheckerColor color, GameJoker joker) {
 		switch (color)
@@ -103,16 +104,16 @@ shared class Game(variable Instant nextTimeout) {
 	value previousTurnColor => startState?.previousState?.currentColor;
 	
 	shared Boolean canPlayJoker(CheckerColor playerColor, GameJoker joker) {
-		if (isCurrentColor(playerColor) && remainingJokers(playerColor).contains(joker)) {
-			if (joker == undoTurnJoker) {
-				return (previousTurnColor else playerColor) != playerColor;
-			} else {
-				return true;
-			}
+	if (isCurrentColor(playerColor) && remainingJokers(playerColor).contains(joker)) {
+		if (joker == undoTurnJoker) {
+			return (previousTurnColor else playerColor) != playerColor && currentMoves.empty;
 		} else {
-			return false;
+			return true;
 		}
+	} else {
+		return false;
 	}
+}
 	
 	function isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
 		if (!board.isInRange(source) || !board.isInRange(target)) {
@@ -362,6 +363,16 @@ shared class Game(variable Instant nextTimeout) {
 		if (canPlayJoker(color, undoTurnJoker) && switchTurn(color, color.oppositeColor, true, timestamp), exists previousState = startState?.previousState) {
 			resetState(previousState, timestamp);
 			useJoker(color, undoTurnJoker);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean replayTurn(CheckerColor color, Instant timestamp) {
+		if (canPlayJoker(color, replayTurnJoker) && switchTurn(color, color, true, timestamp), exists previousState = startState) {
+			resetState(previousState, timestamp);
+			useJoker(color, replayTurnJoker);
 			return true;
 		} else {
 			return false;

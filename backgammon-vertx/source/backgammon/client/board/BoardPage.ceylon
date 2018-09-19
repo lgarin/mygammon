@@ -105,6 +105,8 @@ shared final class BoardPage() extends TablePage<BoardGui>(BoardGui(document)) {
 			return gameClient.handleTakeTurnEvent();
 		} else if (target.id == gui.jokerUndoTurnId, exists gameClient = tableClient?.gameClient) {
 			return gameClient.handleUndoTurnEvent();
+		} else if (target.id == gui.jokerReplayTurnId, exists gameClient = tableClient?.gameClient) {
+			return gameClient.handleReplayTurnEvent();
 		} else {
 			return false;
 		}

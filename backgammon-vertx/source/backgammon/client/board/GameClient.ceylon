@@ -27,7 +27,9 @@ import backgammon.shared {
 	takeTurnJoker,
 	controlRollJoker,
 	undoTurnJoker,
-	UndoTurnMessage
+	UndoTurnMessage,
+	replayTurnJoker,
+	ReplayTurnMessage
 }
 import backgammon.shared.game {
 	Game,
@@ -66,7 +68,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 	}
 	
 	variable [DelayedGameMessage*] delayedMessage = [];
-	variable [MakeMoveMessage|EndTurnMessage|TakeTurnMessage|ControlRollMessage|UndoTurnMessage*] nextActions = [];
+	variable [MakeMoveMessage|EndTurnMessage|TakeTurnMessage|ControlRollMessage|UndoTurnMessage|ReplayTurnMessage*] nextActions = [];
 	
 	void addDelayedGameMessage(InboundGameMessage message, Duration delay) {
 		delayedMessage = delayedMessage.withTrailing(DelayedGameMessage(message, delay));
@@ -239,6 +241,13 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 			gui.redrawCheckers(game.board);
 			if (exists color = playerColor, color == message.playerColor) {
 				gui.showDialog("dialog-``gui.jokerUndoTurnId``");
+			}
+		}
+		case (replayTurnJoker) {
+			game.replayTurn(message.playerColor, now());
+			gui.redrawCheckers(game.board);
+			if (exists color = playerColor, color != message.playerColor) {
+				gui.showDialog("dialog-``gui.jokerReplayTurnId``");
 			}
 		}
 		case (null) {
@@ -461,7 +470,7 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 		}
 	}
 	
-	value jokerIdMap = [controlRollJoker -> gui.jokerControlRollId, takeTurnJoker -> gui.jokerTakeTurnId, undoTurnJoker -> gui.jokerUndoTurnId];
+	value jokerIdMap = [controlRollJoker -> gui.jokerControlRollId, takeTurnJoker -> gui.jokerTakeTurnId, undoTurnJoker -> gui.jokerUndoTurnId, replayTurnJoker -> gui.jokerReplayTurnId];
 	
 	shared Boolean handleJokerEvent() {
 		if (exists color = playerColor, game.canPlayAnyJoker(color)) {
@@ -532,6 +541,25 @@ shared final class GameClient(PlayerId playerId, MatchId matchId, CheckerColor? 
 				nextActions = nextActions.withTrailing(UndoTurnMessage(matchId, playerId));
 			} else {
 				messageBroadcaster(UndoTurnMessage(matchId, playerId));
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean handleReplayTurnEvent() {
+		if (exists color = playerColor, game.canPlayJoker(color, replayTurnJoker)) {
+			gui.hidePossibleMoves();
+			gui.showSelectedChecker(null);
+			gui.hideJokerButton();
+			gui.hideSubmitButton();
+			gui.hideUndoButton();
+			
+			if (hasQueuedActions) {
+				nextActions = nextActions.withTrailing(ReplayTurnMessage(matchId, playerId));
+			} else {
+				messageBroadcaster(ReplayTurnMessage(matchId, playerId));
 			}
 			return true;
 		} else {

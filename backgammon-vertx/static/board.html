@@ -106,7 +106,7 @@
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
-	                $("#dialog-joker-take-turn, #dialog-joker-control-roll, #dialog-joker-undo-turn").dialog({
+	                $("#dialog-joker-take-turn, #dialog-joker-control-roll, #dialog-joker-undo-turn, #dialog-joker-replay-turn").dialog({
 	                	autoOpen: false,
 	                    modal: true,
 	                    buttons: [{
@@ -398,6 +398,11 @@
 	  	<b>Your opponent has undone your previous turn. You must replay it now.</b>
 	  </p>
 	</div>
+	<div id="dialog-joker-replay-turn" title="Joker played" style="display: none">
+	  <p>
+	  	<b>Your opponent replays her/his turn with a new dice roll.</b>
+	  </p>
+	</div>
 	<div id="dialog-joker" title="Play joker?"  style="display: none">
 		<fieldset>
 		    <legend>Select a joker: </legend>
@@ -414,10 +419,13 @@
 	       		<i style="padding-left: 20px">Click on the dices to change the roll.</i>
         	</div>
         	<div class="radio">
-  				<label><input type="radio" id="joker-undo-turn" name="joker-choice">Force your opponent to replay its previous turn with a diffrent roll.</label>
+  				<label><input type="radio" id="joker-undo-turn" name="joker-choice">Force your opponent to replay its previous turn with a new roll.</label>
+			</div>
+			<div class="radio">
+  				<label><input type="radio" id="joker-replay-turn" name="joker-choice">Replay your current turn with a new roll.</label>
 			</div>
 		  </fieldset>
-		  <i>This will end your turn and consume one joker.</i>
+		  <i>This action will end your turn and consume the selected joker.</i>
 	</div>
 	<div id="i18n" style="display: none">
 		<div id="_logout">Logout</div>
