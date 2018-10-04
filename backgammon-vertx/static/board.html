@@ -406,6 +406,9 @@
 	<div id="dialog-joker" title="Play joker?"  style="display: none">
 		<fieldset>
 		    <legend>Select a joker: </legend>
+			<div class="radio">
+  				<label><input type="radio" id="joker-replay-turn" name="joker-choice">Replay your current turn with a new roll.</label>
+			</div>
 		    <div class="radio">
   				<label><input type="radio" id="joker-take-turn" name="joker-choice">Play again after this turn</label>
 			</div>
@@ -420,9 +423,6 @@
         	</div>
         	<div class="radio">
   				<label><input type="radio" id="joker-undo-turn" name="joker-choice">Force your opponent to replay its previous turn with a new roll.</label>
-			</div>
-			<div class="radio">
-  				<label><input type="radio" id="joker-replay-turn" name="joker-choice">Replay your current turn with a new roll.</label>
 			</div>
 		  </fieldset>
 		  <i>This action will end your turn and consume the selected joker.</i>
