@@ -15,54 +15,6 @@
     box-shadow: inset 0 0 5px #000000;
 }
 
-#blackDiceNr1 {
-	position: absolute;
-	top: 133px;
-	left:227px;
-}
-
-#blackDiceNr2 {
-	position: absolute;
-	top: 133px;
-	left:257px;
-}
-
-#blackDiceNr3 {
-	position: absolute;
-	top: 133px;
-	left:287px;
-}
-
-#blackDiceNr4 {
-	position: absolute;
-	top: 133px;
-	left:317px;
-}
-
-#whiteDiceNr1 {
-	position: absolute;
-	top: 133px;
-	left:140px;
-}
-
-#whiteDiceNr2 {
-	position: absolute;
-	top: 133px;
-	left:110px;
-}
-
-#whiteDiceNr3 {
-	position: absolute;
-	top: 133px;
-	left:80px;
-}
-
-#whiteDiceNr4 {
-	position: absolute;
-	top: 133px;
-	left:50px;
-}
-
 .point {
   position: absolute;
   height: 122px;
