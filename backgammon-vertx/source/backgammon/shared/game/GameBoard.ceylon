@@ -104,19 +104,13 @@ shared final class GameBoard() {
 			case (black) +1;
 	}
 	
-	shared [Integer*] targetRange(CheckerColor color, Integer sourcePosition, Integer maxDistance) {
-		if (maxDistance < 1 || maxDistance >= boardPointCount) {
-			return [];
-		} else if (sourcePosition == startPosition(color)) {
-			return targetRange(color, graveyardPosition(color), maxDistance);
-		}
-		
+	function positiveTargetRange(CheckerColor color, Integer sourcePosition, Integer maxDistance) {
 		switch (color)
 		case (white) {
 			if (sourcePosition <= whiteHomePosition || sourcePosition > whiteGraveyardPosition) {
 				return [];
 			}
-			value endPosition = sourcePosition-maxDistance;
+			value endPosition = sourcePosition - maxDistance;
 			if (endPosition > whiteHomePosition) {  
 				return sourcePosition-1..endPosition; 
 			} else {
@@ -127,12 +121,50 @@ shared final class GameBoard() {
 			if (sourcePosition >= blackHomePosition || sourcePosition < blackGraveyardPosition) {
 				return [];
 			}
-			value endPosition = sourcePosition+maxDistance;
+			value endPosition = sourcePosition + maxDistance;
 			if (endPosition < blackHomePosition) {  
 				return sourcePosition+1..endPosition; 
 			} else {
 				return sourcePosition+1..blackHomePosition;
 			}
+		}
+	}
+	
+	function negativeTargetRange(CheckerColor color, Integer sourcePosition, Integer maxDistance) {
+		switch (color)
+		case (white) {
+			if (sourcePosition <= whiteHomePosition || sourcePosition > whiteGraveyardPosition) {
+				return [];
+			}
+			value endPosition = sourcePosition + maxDistance;
+			if (endPosition > whiteGraveyardPosition) {  
+				return sourcePosition+1..whiteGraveyardPosition; 
+			} else {
+				return sourcePosition+1..endPosition;
+			}
+		}
+		case (black) {
+			if (sourcePosition >= blackHomePosition || sourcePosition < blackGraveyardPosition) {
+				return [];
+			}
+			value endPosition = sourcePosition - maxDistance;
+			if (endPosition < blackGraveyardPosition) {  
+				return sourcePosition-1..blackGraveyardPosition; 
+			} else {
+				return sourcePosition-1..endPosition;
+			}
+		}
+	}
+	
+	shared [Integer*] targetRange(CheckerColor color, Integer sourcePosition, Integer maxDistance) {
+		if (maxDistance == 0) {
+			return [];
+		} else if (sourcePosition == startPosition(color)) {
+			return targetRange(color, graveyardPosition(color), maxDistance);
+		} else if (maxDistance < 0) {
+			return negativeTargetRange(color, sourcePosition, -maxDistance);
+		} else {
+			return positiveTargetRange(color, sourcePosition, maxDistance);
 		}
 	}
 	

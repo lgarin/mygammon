@@ -106,7 +106,7 @@
 	                	  	click: function() { $(this).dialog("close"); return true; }
 	                    }]
 	                });
-	                $("#dialog-joker-take-turn, #dialog-joker-control-roll, #dialog-joker-undo-turn, #dialog-joker-replay-turn").dialog({
+	                $("#dialog-joker-take-turn, #dialog-joker-control-roll, #dialog-joker-undo-turn, #dialog-joker-replay-turn, #dialog-joker-place-checker").dialog({
 	                	autoOpen: false,
 	                    modal: true,
 	                    buttons: [{
@@ -403,6 +403,11 @@
 	  	<b>Your opponent replays her/his turn with a new dice roll.</b>
 	  </p>
 	</div>
+	<div id="dialog-joker-place-checker" title="Joker played" style="display: none">
+	  <p>
+	  	<b>Your opponent will move your checkers backward instead of playing its turn.</b>
+	  </p>
+	</div>
 	<div id="dialog-joker" title="Play joker?"  style="display: none">
 		<fieldset>
 		    <legend>Select a joker: </legend>
@@ -423,6 +428,9 @@
         	</div>
         	<div class="radio">
   				<label><input type="radio" id="joker-undo-turn" name="joker-choice">Force your opponent to replay its previous turn with a new roll.</label>
+			</div>
+			<div class="radio">
+  				<label><input type="radio" id="joker-place-checker" name="joker-choice">Move the checkers of your opponent backward.</label>
 			</div>
 		  </fieldset>
 		  <i>This action will end your turn and consume the selected joker.</i>

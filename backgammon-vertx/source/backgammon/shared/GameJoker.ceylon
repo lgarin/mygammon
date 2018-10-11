@@ -1,5 +1,5 @@
 
-shared abstract class GameJoker() of takeTurnJoker | controlRollJoker | undoTurnJoker | replayTurnJoker {
+shared abstract class GameJoker() of takeTurnJoker | controlRollJoker | undoTurnJoker | replayTurnJoker | placeCheckerJoker {
 	shared formal String name;
 	string => name;
 }
@@ -20,6 +20,12 @@ shared object replayTurnJoker extends GameJoker() {
 	name => "replayTurn";
 }
 
+shared object placeCheckerJoker extends GameJoker() {
+	name => "placeChecker";
+}
+
+shared [GameJoker+] allGameJokers = [takeTurnJoker, controlRollJoker, undoTurnJoker, replayTurnJoker, placeCheckerJoker];
+
 shared GameJoker parseGameJoker(String name) {
 	if (name == takeTurnJoker.name) {
 		return takeTurnJoker;
@@ -29,6 +35,8 @@ shared GameJoker parseGameJoker(String name) {
 		return undoTurnJoker;
 	} else if (name == replayTurnJoker.name) {
 		return replayTurnJoker;
+	} else if (name == placeCheckerJoker.name) {
+		return placeCheckerJoker;
 	} else {
 		throw Exception("Invalid joker: ``name``");
 	}

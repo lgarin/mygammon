@@ -21,7 +21,9 @@ import ceylon.time {
 }
 import backgammon.shared {
 
-	undoTurnJoker
+	undoTurnJoker,
+	allGameJokers,
+	placeCheckerJoker
 }
 
 class GameTest() {
@@ -133,9 +135,32 @@ class GameTest() {
 		game.undoTurn(white, now());
 		assert ([12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] == game.checkerCounts(black));
 		assert ([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12] == game.checkerCounts(white));
-		assert (3 == game.remainingJokerCount(black));
-		assert (2 == game.remainingJokerCount(white));
+		assert (allGameJokers.size == game.remainingJokerCount(black));
+		assert (allGameJokers.size - 1 == game.remainingJokerCount(white));
 		assert (true == game.isCurrentColor(black));
 		assert (false == game.canPlayJoker(black, undoTurnJoker));
+	}
+	
+	test
+	shared void placeCheckers() {
+		game.initialRoll(DiceRoll(2, 1), now(), Duration(100));
+		game.begin(black, now());
+		game.begin(white, now());
+		game.beginTurn(black, DiceRoll(5, 6), now(), Duration(100), 1);
+		game.moveChecker(black, blackStartPosition, 5);
+		game.moveChecker(black, blackStartPosition, 6);
+		game.endTurn(black, now());
+		game.beginTurn(white, DiceRoll(1, 1), now(), Duration(100), 1);
+		game.placeChecker(white, now());
+		game.beginTurn(white, DiceRoll(-6,-6), now(), Duration(100), 1);
+		assert (game.hasAvailableMove(white, DiceRoll(-6, -6)));
+		game.moveChecker(white, 5, 1);
+		game.moveChecker(white, 6, 1);
+		assert ([10,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] == game.checkerCounts(black));
+		assert ([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12] == game.checkerCounts(white));
+		assert (allGameJokers.size == game.remainingJokerCount(black));
+		assert (allGameJokers.size - 1 == game.remainingJokerCount(white));
+		assert (true == game.isCurrentColor(white));
+		assert (false == game.canPlayJoker(white, placeCheckerJoker));
 	}
 }

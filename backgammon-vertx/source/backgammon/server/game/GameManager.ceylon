@@ -43,7 +43,9 @@ import backgammon.shared {
 	undoTurnJoker,
 	UndoTurnMessage,
 	replayTurnJoker,
-	ReplayTurnMessage
+	ReplayTurnMessage,
+	PlaceCheckerMessage,
+	placeCheckerJoker
 }
 import backgammon.shared.game {
 	GameConfiguration,
@@ -302,6 +304,21 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		}
 	}
 	
+	function placeChecker(CheckerColor playerColor, Instant timestamp) {
+		
+		if (!game.isCurrentColor(playerColor)) {
+			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
+			return false;
+		} else if (game.placeChecker(playerColor, timestamp)) {
+			return beginNextTurn(timestamp, placeCheckerJoker, DiceRoll(-6, -6));
+		} else if (game.hasWon(playerColor)) {
+			return endGame(toPlayerId(playerColor), timestamp, toPlayerId(playerColor));
+		} else {
+			messageBroadcaster(DesynchronizedMessage(matchId, toPlayerId(playerColor), playerColor, game.buildState(timestamp)));
+			return false;
+		}
+	}
+	
 	function definePlayerInfo(PlayerId playerId, PlayerInfo playerInfo) {
 		if (playerId == player1.id) {
 			player1.info = playerInfo;
@@ -354,6 +371,10 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		case (is ReplayTurnMessage) {
 			matchCommander(PingMatchMessage(message.playerId, matchId));
 			return GameActionResponseMessage(matchId, message.playerId, playerColor, replayTurn(playerColor, message.timestamp));
+		}
+		case (is PlaceCheckerMessage) {
+			matchCommander(PingMatchMessage(message.playerId, matchId));
+			return GameActionResponseMessage(matchId, message.playerId, playerColor, placeChecker(playerColor, message.timestamp));
 		}
 		case (is GameStateRequestMessage) {
 			return GameStateResponseMessage(matchId, message.playerId, playerColor, game.buildState(message.timestamp));

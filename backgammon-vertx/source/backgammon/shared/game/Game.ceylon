@@ -13,7 +13,9 @@ import backgammon.shared {
 	undoTurnJoker,
 	takeTurnJoker,
 	controlRollJoker,
-	replayTurnJoker
+	replayTurnJoker,
+	placeCheckerJoker,
+	allGameJokers
 }
 
 shared class Game(variable Instant nextTimeout) {
@@ -36,8 +38,8 @@ shared class Game(variable Instant nextTimeout) {
 	variable Boolean blackReady = false;
 	variable Boolean whiteReady = false;
 	
-	variable [GameJoker*] blackJokers = [takeTurnJoker, controlRollJoker, undoTurnJoker, replayTurnJoker];
-	variable [GameJoker*] whiteJokers = [takeTurnJoker, controlRollJoker, undoTurnJoker, replayTurnJoker];
+	variable [GameJoker*] blackJokers = allGameJokers;
+	variable [GameJoker*] whiteJokers = allGameJokers;
 	
 	void useJoker(CheckerColor color, GameJoker joker) {
 		switch (color)
@@ -104,19 +106,41 @@ shared class Game(variable Instant nextTimeout) {
 	value previousTurnColor => startState?.previousState?.currentColor;
 	
 	shared Boolean canPlayJoker(CheckerColor playerColor, GameJoker joker) {
-	if (isCurrentColor(playerColor) && remainingJokers(playerColor).contains(joker)) {
-		if (joker == undoTurnJoker) {
-			return (previousTurnColor else playerColor) != playerColor && currentMoves.empty;
+		if (isCurrentColor(playerColor) && remainingJokers(playerColor).contains(joker)) {
+			if (joker == undoTurnJoker || joker == placeCheckerJoker) {
+				return (previousTurnColor else playerColor) != playerColor && currentMoves.empty;
+			} else {
+				return true;
+			}
 		} else {
-			return true;
+			return false;
 		}
-	} else {
-		return false;
 	}
-}
+	
+	function isLegalCheckerPlacement(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
+		if (!board.isInRange(source) || !board.isInRange(target)) {
+			return false;
+		} else if (board.directionSign(color) != (target - source).sign) {
+			return false;
+		} else if (board.countCheckers(source, color.oppositeColor) == 0) {
+			return false;
+		} else if (board.countCheckers(target, color) > 0) {
+			return false;
+		} else if (board.graveyardPosition(color.oppositeColor) == source) {
+			return false;
+		} else if (board.homePosition(color.oppositeColor) == source) {
+			return false;
+		} else if (exists minValue = roll.minRemainingValue) {
+			return -minValue >= board.distance(source, target);
+		} else {
+			return false;
+		}
+	}
 	
 	function isLegalCheckerMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
-		if (!board.isInRange(source) || !board.isInRange(target)) {
+		if (roll.isJoker) {
+			return isLegalCheckerPlacement(color, roll, source, target);
+		} else if (!board.isInRange(source) || !board.isInRange(target)) {
 			return false;
 		} else if (board.directionSign(color) != (target - source).sign) {
 			return false;
@@ -138,7 +162,7 @@ shared class Game(variable Instant nextTimeout) {
 			return roll.hasRemainingValue(board.distance(source, target));
 		}
 	}
-
+	
 	shared Boolean beginTurn(CheckerColor player, DiceRoll roll, Instant timestamp, Duration maxDuration, Integer maxUndo) {
 		if (!isCurrentColor(player)) {
 			return false;
@@ -154,18 +178,36 @@ shared class Game(variable Instant nextTimeout) {
 		return true;
 	}
 	
-	shared {GameMove*} computeNextMoves(CheckerColor color, DiceRoll roll, Integer? sourcePosition = null) {
-		if (exists maxValue = roll.maxRemainingValue) {
-			value sourceRange = if (exists pos = sourcePosition) then pos..pos else board.playRange(color);
-			return {
-				for (source in sourceRange)
-					for (target in board.targetRange(color, source, maxValue)) 
-						if (isLegalCheckerMove(color, roll, source, target))
-							GameMove(source, target) 
-			};
+	function computeSourceRange(CheckerColor color, Integer? sourcePosition) {
+		if (exists position = sourcePosition) {
+			return position..position;
 		} else {
-			return {}; 
+			return board.playRange(color);
 		}
+	}
+	
+	function computeMaxDistance(DiceRoll roll) {
+		if (roll.isJoker, exists minValue = roll.minRemainingValue) {
+			return minValue;
+		} else if (exists maxValue = roll.maxRemainingValue) {
+			return maxValue;
+		} else {
+			return 0;
+		}
+	}
+	
+	shared {GameMove*} computeNextMoves(CheckerColor color, DiceRoll roll, Integer? sourcePosition = null) {
+		value maxDistance = computeMaxDistance(roll);
+		if (maxDistance == 0) {
+			return {};
+		}
+		value sourceColor = roll.isJoker then color.oppositeColor else color;
+		return {
+			for (source in computeSourceRange(sourceColor, sourcePosition))
+				for (target in board.targetRange(sourceColor, source, maxDistance)) 
+					if (isLegalCheckerMove(color, roll, source, target))
+						GameMove(source, target) 
+		};
 	}
 	
 	shared Boolean hasAvailableMove(CheckerColor color, DiceRoll roll) {
@@ -179,11 +221,7 @@ shared class Game(variable Instant nextTimeout) {
 			return false;
 		}
 	}
-	
-	function useRollValue(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
-		return roll.useValueAtLeast(board.distance(source, target));
-	}
-	
+
 	function hitChecker(CheckerColor color, Integer source, Integer target) {
 		if (board.countCheckers(target, color.oppositeColor) > 0) {
 			return color.oppositeColor;
@@ -191,8 +229,18 @@ shared class Game(variable Instant nextTimeout) {
 		return null;
 	}
 	
+	function makeLegalPlacement(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
+		value rollValue = roll.useValueAtMost(board.distance(source, target));
+		assert (exists rollValue);
+		assert (board.moveChecker(color.oppositeColor, source, target));
+		return GameMoveInfo(source, target, rollValue, false);
+	}
+	
 	function makeLegalMove(CheckerColor color, DiceRoll roll, Integer source, Integer target) {
-		value rollValue = useRollValue(color, roll, source, target);
+		if (roll.isJoker) {
+			return makeLegalPlacement(color, roll, source, target);
+		}
+		value rollValue = roll.useValueAtLeast(board.distance(source, target));
 		assert (exists rollValue);
 		value bolt = hitChecker(color, source, target);
 		if (exists bolt) {
@@ -261,7 +309,7 @@ shared class Game(variable Instant nextTimeout) {
 			} else {
 				allMoves.put(moveKey, newMoves);
 			}
-			if (roll.maxRemainingValue exists) {
+			if (roll.remainingValues nonempty) {
 				appendNextMoves(allMoves, color, roll, GameMoveSequence(moveKey.sourcePosition, moveKey.targetPosition, newMoves));
 			}
 			undoMove(moveInfo, roll, color);
@@ -373,6 +421,16 @@ shared class Game(variable Instant nextTimeout) {
 		if (canPlayJoker(color, replayTurnJoker) && switchTurn(color, color, true, timestamp), exists previousState = startState) {
 			resetState(previousState, timestamp);
 			useJoker(color, replayTurnJoker);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	shared Boolean placeChecker(CheckerColor color, Instant timestamp) {
+		if (canPlayJoker(color, placeCheckerJoker) && switchTurn(color, color, true, timestamp), exists previousState = startState) {
+			resetState(previousState, timestamp);
+			useJoker(color, placeCheckerJoker);
 			return true;
 		} else {
 			return false;

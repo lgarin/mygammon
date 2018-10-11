@@ -49,29 +49,29 @@ shared class GameGui(Document document) extends BaseGui(document) {
 		return "``minutes``:``formatSeconds(seconds)``";
 	}
 	
-	void showDice(CheckerColor color, Integer index, String diceClass, Integer? diceValue) {
-		if (exists diceValue) {
+	void showDice(CheckerColor color, Integer index, String diceClass, Integer diceValue) {
+		if (diceValue != 0) {
 			setClass("``color``DiceNr``index+1``", diceClass, "``color``-``diceValue``");
 		} else {
 			addClass("``color``DiceNr``index+1``", "hidden");
 		}
 	}
 	
-	shared void showActiveDice(CheckerColor color, Integer index, Integer? diceValue) {
+	shared void showActiveDice(CheckerColor color, Integer index, Integer diceValue) {
 		showDice(color, index, "dice", diceValue);
 	}
 	
-	shared void showFadedDice(CheckerColor color, Integer index, Integer? diceValue) {
+	shared void showFadedDice(CheckerColor color, Integer index, Integer diceValue) {
 		showDice(color, index, "dice-faded", diceValue);
 	}
 	
-	shared void showCrossedDice(CheckerColor color, Integer index, Integer? diceValue) {
+	shared void showCrossedDice(CheckerColor color, Integer index, Integer diceValue) {
 		showDice(color, index, "dice-crossed", diceValue);
 	}
 	
 	shared void hideAllDices(CheckerColor color) {
 		for (i in 0..3) {
-			showActiveDice(color, i, null);
+			showActiveDice(color, i, 0);
 		}
 	}
 	

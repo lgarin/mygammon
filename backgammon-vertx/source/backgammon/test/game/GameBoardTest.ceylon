@@ -209,15 +209,23 @@ class GameBoardTest() {
 	}
 	
 	test
+	shared void negativeRangeSpansWholeDistance() {
+		assert (4..2 == board.targetRange(black, 5, -3));
+		assert (22..23 == board.targetRange(white, 21, -2));
+	}
+	
+	test
+	shared void negativeRangeIsLimitedByGraveyard() {
+		assert (4..0 == board.targetRange(black, 5, -6));
+		assert (22..25 == board.targetRange(white, 21, -6));
+	}
+	
+	test
 	shared void noTargetPositionsForInvalidInput() {
 		assert (board.targetRange(black, -2, 4).empty);
 		assert (board.targetRange(black, 27, 4).empty);
 		assert (board.targetRange(white, 0, 4).empty);
 		assert (board.targetRange(white, 28, 4).empty);
-		assert (board.targetRange(black, 2, -1).empty);
-		assert (board.targetRange(black, 2, 27).empty);
-		assert (board.targetRange(white, 24, -1).empty);
-		assert (board.targetRange(white, 24, 26).empty);
 	}
 	
 	test

@@ -38,6 +38,7 @@ shared class TableGui(Document document) extends GameGui(document) {
 	shared String jokerControlRollId = "joker-control-roll";
 	shared String jokerUndoTurnId = "joker-undo-turn";
 	shared String jokerReplayTurnId = "joker-replay-turn";
+	shared String jokerPlaceCheckerId = "joker-place-checker";
 	
 	shared void hideUndoButton() {
 		addClass(undoButtonId, hiddenClass);

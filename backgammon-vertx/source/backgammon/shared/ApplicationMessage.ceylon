@@ -116,6 +116,7 @@ shared object applicationMessages {
 	registerParser(parseControlRollMessage);
 	registerParser(parseUndoTurnMessage);
 	registerParser(parseReplayTurnMessage);
+	registerParser(parsePlaceCheckerMessage);
 	registerParser(parseEndGameMessage);
 	registerParser(parseGameStateRequestMessage);
 	

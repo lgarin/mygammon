@@ -39,8 +39,10 @@ shared final class GamePlayerStatistic() extends Object() {
 	shared Duration playTime => _playTime;
 
 	shared void turnStarted(DiceRoll diceRoll, Instant timestamp) {
-		_startedTurn++;
-		_dicePoints += diceRoll.dicePoints;
+		if (!diceRoll.isJoker) {
+			_startedTurn++;
+			_dicePoints += diceRoll.dicePoints;
+		}
 		_turnStart = timestamp;
 	}
 	

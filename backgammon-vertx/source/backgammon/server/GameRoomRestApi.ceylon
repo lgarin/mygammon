@@ -21,7 +21,8 @@ import backgammon.shared {
 	applicationMessages,
 	ControlRollMessage,
 	UndoTurnMessage,
-	ReplayTurnMessage
+	ReplayTurnMessage,
+	PlaceCheckerMessage
 }
 
 import io.vertx.ceylon.core {
@@ -144,6 +145,13 @@ final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
 		}
 	}
 	
+	void handlePlaceCheckerRequest(RoutingContext rc) {
+		value context = GameRoomRoutingContext(rc);
+		if (exists matchId = context.getRequestMatchId(), exists playerId = context.getCurrentPlayerId()) {
+			forwardResponse(context, PlaceCheckerMessage(matchId, playerId));
+		}
+	}
+	
 	void handlePlayerListRequest(RoutingContext rc) {
 		value context = GameRoomRoutingContext(rc);
 		if (exists roomId = context.getRequestRoomId(), exists playerId = context.getCurrentPlayerId()) {
@@ -191,6 +199,7 @@ final class GameRoomRestApi(Vertx vertx, GameRoomEventBus eventBus) {
 		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/controlroll/:rollValue1/:rollValue2").handler(handleControlRollRequest);
 		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/undoturn").handler(handleUndoTurnRequest);
 		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/replayturn").handler(handleReplayTurnRequest);
+		restApi.get("/:roomId/table/:tableIndex/match/:matchTimestamp/placechecker").handler(handlePlaceCheckerRequest);
 		restApi.get("/:roomId/player/:playerId/state").handler(handlePlayerStateRequest);
 		return restApi;
 	}

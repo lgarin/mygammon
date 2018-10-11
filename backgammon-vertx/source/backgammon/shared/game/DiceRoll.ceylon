@@ -4,7 +4,9 @@ import ceylon.collection {
 
 shared final class DiceRoll(shared Integer firstValue, shared Integer secondValue) extends Object() {
 	
-	shared Boolean isPair => firstValue == secondValue;
+	shared Boolean isPair => firstValue == secondValue && firstValue > 0;
+	
+	shared Boolean isJoker => firstValue < 0 && secondValue < 0;
 	
 	value values = ArrayList<Integer>(4);
 	
@@ -28,6 +30,8 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 			case (white) secondValue;
 	}
 	
+	shared CheckerColor adaptColor(CheckerColor color) => isJoker then color.oppositeColor else color; 
+	
 	shared [<Integer->Boolean>*] state {
 		if (isPair) {
 			if (values.size > 3) {
@@ -46,7 +50,7 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 		}
 	}
 	
-	shared List<Integer> remainingValues => values;
+	shared [Integer*] remainingValues => values.sequence();
 	
 	function minValueAtLeast(Integer pointValue) => min(values.select((element) => element >= pointValue));
 
@@ -57,7 +61,18 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 		return null;
 	}
 	
+	function maxValueAtMost(Integer pointValue) => max(values.select((element) => element <= pointValue));
+	
+	shared Integer? useValueAtMost(Integer pointValue) {
+		if (exists result = maxValueAtMost(pointValue), values.removeLast(result)) {
+			return result;
+		}
+		return null;
+	}
+	
 	shared Integer? maxRemainingValue => max(values);
+	
+	shared Integer? minRemainingValue => min(values);
 	
 	shared Boolean hasRemainingValue(Integer diceValue) => values.contains(diceValue);
 	
@@ -65,13 +80,13 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 		if (isPair) {
 			if (diceValue != firstValue) {
 				return false;
-			} else if (remainingValues.size > 4) {
+			} else if (values.size > 4) {
 				return false;
 			}
 		} else {
 			if (diceValue != firstValue && diceValue != secondValue) {
 				return false;
-			} else if (remainingValues.contains(diceValue)) {
+			} else if (values.contains(diceValue)) {
 				return false;
 			}
 		}
