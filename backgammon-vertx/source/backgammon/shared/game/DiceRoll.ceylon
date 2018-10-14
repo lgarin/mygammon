@@ -20,7 +20,7 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 	
 	function isInRange(Integer diceValue) => diceValue >= 1 && diceValue <= 6; 
 	
-	shared Boolean valid => isInRange(firstValue) && isInRange(secondValue);
+	shared Boolean isValid => isInRange(firstValue) && isInRange(secondValue);
 	
 	shared Integer dicePoints => isPair then firstValue * 4 else firstValue + secondValue;
 	
@@ -33,7 +33,19 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 	shared CheckerColor adaptColor(CheckerColor color) => isJoker then color.oppositeColor else color; 
 	
 	shared [<Integer->Boolean>*] state {
-		if (isPair) {
+		if (isJoker) {
+			if (firstValue == secondValue) {
+				if (values.size > 1) {
+					return [firstValue->true, secondValue->true];
+				} else if (values.size > 0) {
+					return [firstValue->true, secondValue->false];
+				} else {
+					return [firstValue->false, secondValue->false];
+				}
+			} else {
+				return [firstValue->values.contains(firstValue), secondValue->values.contains(secondValue)];
+			}
+		} else if (isPair) {
 			if (values.size > 3) {
 				return [firstValue->true, secondValue->true, firstValue->true, secondValue->true];
 			} else if (values.size > 2) {
@@ -77,7 +89,15 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 	shared Boolean hasRemainingValue(Integer diceValue) => values.contains(diceValue);
 	
 	shared Boolean addRemainingValue(Integer diceValue) {
-		if (isPair) {
+		if (isJoker) {
+			if (diceValue != firstValue && diceValue != secondValue) {
+				return false;
+			} else if (values.size > 2) {
+				return false;
+			} else if (values.contains(diceValue) && firstValue != secondValue) {
+				return false;
+			}
+		} else if (isPair) {
 			if (diceValue != firstValue) {
 				return false;
 			} else if (values.size > 4) {
@@ -134,5 +154,5 @@ shared final class DiceRoll(shared Integer firstValue, shared Integer secondValu
 		return hash;
 	}
 	
-	string = "``firstValue````values.contains(firstValue) then "+" else "-"``:``secondValue````values.contains(secondValue) then "+" else "-"``";
+	string => state.fold("")((partial, diceValue->state) => partial + "/" + diceValue.string + (state then "+" else "-"));
 }

@@ -154,6 +154,7 @@ class GameTest() {
 		game.placeChecker(white, now());
 		game.beginTurn(white, DiceRoll(-6,-6), now(), Duration(100), 1);
 		assert (game.hasAvailableMove(white, DiceRoll(-6, -6)));
+		assert (!game.computeAllMoves(white, DiceRoll(-6, -6), 5).empty);
 		game.moveChecker(white, 5, 1);
 		game.moveChecker(white, 6, 1);
 		assert ([10,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] == game.checkerCounts(black));

@@ -34,11 +34,12 @@ shared class TableGui(Document document) extends GameGui(document) {
 	shared String accountButtonId = "account";
 	shared String jokerDiceNr1Id = "jokerDiceNr1";
 	shared String jokerDiceNr2Id = "jokerDiceNr2";
-	shared String jokerTakeTurnId = "joker-take-turn";
-	shared String jokerControlRollId = "joker-control-roll";
-	shared String jokerUndoTurnId = "joker-undo-turn";
-	shared String jokerReplayTurnId = "joker-replay-turn";
-	shared String jokerPlaceCheckerId = "joker-place-checker";
+	value allJokerIds = ["joker-take-turn", "joker-control-roll", "joker-undo-turn", "joker-replay-turn", "joker-place-checker"];
+	shared String jokerTakeTurnId = allJokerIds[0];
+	shared String jokerControlRollId = allJokerIds[1];
+	shared String jokerUndoTurnId = allJokerIds[2];
+	shared String jokerReplayTurnId = allJokerIds[3];
+	shared String jokerPlaceCheckerId = allJokerIds[4];
 	
 	shared void hideUndoButton() {
 		addClass(undoButtonId, hiddenClass);
@@ -83,7 +84,7 @@ shared class TableGui(Document document) extends GameGui(document) {
 	}
 	
 	shared void showJokerDialog(CheckerColor color, {String*} enabledJockerIds) {
-		for (jokerId in {jokerTakeTurnId, jokerControlRollId, jokerUndoTurnId, jokerReplayTurnId}) {
+		for (jokerId in allJokerIds) {
 			if (is HTMLElement radio = document.getElementById(jokerId)) {
 				radio.disabled = true;
 				radio.checked = false;

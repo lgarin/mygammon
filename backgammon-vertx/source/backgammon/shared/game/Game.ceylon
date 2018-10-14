@@ -43,8 +43,8 @@ shared class Game(variable Instant nextTimeout) {
 	
 	void useJoker(CheckerColor color, GameJoker joker) {
 		switch (color)
-		case (black) { blackJokers = blackJokers.select((GameJoker current) => current != joker); }
-		case (white) { whiteJokers = whiteJokers.select((GameJoker current) => current != joker); }
+		case (black) { blackJokers = blackJokers.select((current) => current != joker); }
+		case (white) { whiteJokers = whiteJokers.select((current) => current != joker); }
 	}
 	
 	variable GameState? startState = null;
@@ -109,6 +109,8 @@ shared class Game(variable Instant nextTimeout) {
 		if (isCurrentColor(playerColor) && remainingJokers(playerColor).contains(joker)) {
 			if (joker == undoTurnJoker || joker == placeCheckerJoker) {
 				return (previousTurnColor else playerColor) != playerColor && currentMoves.empty;
+			} else if (joker == replayTurnJoker) {
+				return !(currentRoll?.isJoker else true) && currentMoves.empty;
 			} else {
 				return true;
 			}
@@ -263,9 +265,10 @@ shared class Game(variable Instant nextTimeout) {
 	
 	void undoMove(GameMoveInfo move, DiceRoll roll, CheckerColor color) {
 		assert (roll.addRemainingValue(move.rollValue));
-		assert (board.moveChecker(color, move.targetPosition, move.sourcePosition));
+		assert (board.moveChecker(roll.adaptColor(color), move.targetPosition, move.sourcePosition));
 		if (move.hitBlot) {
-			assert (board.moveChecker(color.oppositeColor, board.graveyardPosition(color.oppositeColor), move.targetPosition));
+			value oppositeColor = roll.adaptColor(color).oppositeColor;
+			assert (board.moveChecker(oppositeColor, board.graveyardPosition(oppositeColor), move.targetPosition));
 		}
 	}
 	
@@ -291,10 +294,9 @@ shared class Game(variable Instant nextTimeout) {
 		if (hitCompare != equal) {
 			return hitCompare;
 		}
-		value roll1 = seq1.fold(0)((partial, element) => partial + element.rollValue);
-		value roll2 = seq2.fold(0)((partial, element) => partial + element.rollValue);
-		value rollCompare = roll1 <=> roll2;
-		return rollCompare.reversed;
+		value roll1 = seq1.fold(0)((partial, element) => partial + element.rollValue.magnitude);
+		value roll2 = seq2.fold(0)((partial, element) => partial + element.rollValue.magnitude);
+		return roll2 <=> roll1;
 	}
 	
 	void appendNextMoves(HashMap<GameMove, {GameMoveInfo*}> allMoves, CheckerColor color, DiceRoll roll, GameMoveSequence? previousMove) {

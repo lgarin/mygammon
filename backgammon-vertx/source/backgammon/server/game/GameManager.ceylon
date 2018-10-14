@@ -260,7 +260,7 @@ final class GameManager(StartGameMessage startGameMessage, GameConfiguration con
 		if (!game.isCurrentColor(playerColor)) {
 			messageBroadcaster(NotYourTurnMessage(matchId, toPlayerId(playerColor), playerColor));
 			return false;
-		} else if (!nextRoll.valid) {
+		} else if (!nextRoll.isValid) {
 			increaseInvalidMoveCount(playerColor);
 			messageBroadcaster(InvalidRollMessage(matchId, toPlayerId(playerColor), playerColor, nextRoll));
 			return false;
