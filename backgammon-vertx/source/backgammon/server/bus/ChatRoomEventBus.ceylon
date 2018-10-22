@@ -27,7 +27,7 @@ shared final class ChatRoomEventBus(Vertx vertx, ServerConfiguration configurati
 	shared variable Boolean disableOutput = false;
 	
 	value eventBus = JsonEventBus(vertx);
-	value eventStore = JsonEventStore(vertx, configuration.elasticIndexUrl, configuration.replayPageSize);
+	value eventStore = JsonEventStore(vertx, configuration.elasticIndexUrl, configuration.replayPageSize, configuration.replayPageTimeout);
 	
 	shared void sendInboundMessage<OutputMessage>(InboundChatRoomMessage message, void responseHandler(Throwable|OutputMessage response)) given OutputMessage satisfies OutboundChatRoomMessage {
 		if (disableOutput) {

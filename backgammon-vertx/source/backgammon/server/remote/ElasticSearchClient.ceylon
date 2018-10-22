@@ -18,6 +18,10 @@ import java.net {
 
 	URLEncoder
 }
+import ceylon.time {
+
+	Duration
+}
 
 shared interface ElasticSearchCriteria {
 	shared formal String toQueryString();
@@ -154,13 +158,28 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 		request.end();
 	}
 	
-	shared void listDocuments(String index, Integer offset, Integer maxCount, void handleResponse({<Integer->JsonObject>*}|Throwable result)) {
-		value url = "``baseUrl``/backgammon-``index``/doc/_search?sort=_id&from=``offset``&size=``maxCount``&filter_path=hits.hits._id,hits.hits._source";
+	function parseScrollId(JsonObject json) => json.getStringOrNull("_scroll_id");
+	
+	shared void firstDocuments(String index, Integer pageSize, Duration scrollTimeout, void handleResponse(String? scrollId, {<Integer->JsonObject>*}|Throwable result)) {
+		value url = "``baseUrl``/backgammon-``index``/_search?scroll=``scrollTimeout.milliseconds``ms&size=``pageSize``&sort=_id&filter_path=_scroll_id,hits.hits._id,hits.hits._source";
 		get(url, (result) {
 			if (is Throwable result) {
-				handleResponse(result);
+				handleResponse(null, result);
 			} else {
-				handleResponse(parseHits(result.toJsonObject()));
+				value payload = result.toJsonObject();
+				handleResponse(parseScrollId(payload), parseHits(payload));
+			}
+		});
+	}
+	
+	shared void nextDocuments(String scrollId, Duration scrollTimeout, void handleResponse(String? scrollId, {<Integer->JsonObject>*}|Throwable result)) {
+		value url = "``baseUrl``/_search/scroll?scroll=``scrollTimeout.milliseconds``ms&scroll_id=``scrollId``&filter_path=_scroll_id,hits.hits._id,hits.hits._source";
+		get(url, (result) {
+			if (is Throwable result) {
+				handleResponse(null, result);
+			} else {
+				value payload = result.toJsonObject();
+				handleResponse(parseScrollId(payload), parseHits(payload));
 			}
 		});
 	}

@@ -15,6 +15,7 @@ shared final class ServerConfiguration(Object? json) extends RoomConfiguration(j
 	shared String elasticIndexUrl =  json?.getStringOrNull("elasticIndexUrl") else "http://localhost:9200";
 
 	shared Integer replayPageSize = json?.getIntegerOrNull("replayPageSize") else 1000;
+	shared Duration replayPageTimeout = Duration(json?.getIntegerOrNull("replayPageTimeout") else 1000);
 	
 	shared String hostname = json?.getStringOrNull("hostname") else "localhost";
 	shared Integer port = json?.getIntegerOrNull("port") else 8081;

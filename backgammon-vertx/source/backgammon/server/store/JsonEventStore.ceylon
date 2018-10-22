@@ -22,6 +22,10 @@ import ceylon.logging {
 
 	logger
 }
+import ceylon.time {
+
+	Duration
+}
 
 final shared class EventSearchCriteria {
 	
@@ -51,18 +55,19 @@ final shared class EventSearchQuery(EventSearchCriteria criteria, String orderFi
 	shared ElasticSearchCriteria toElasticSearchCriteria() => criteria.toElasticSearchCriteria();
 }
 
-shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer replayPageSize) {
+shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer replayPageSize, Duration replayPageTimeout) {
 	
 	value log = logger(`package`);
 	
 	value eventIndexClient = ElasticSearchClient(vertx, elasticIndexUrl);
 
-	final class ReplayResult(shared Integer eventCount, shared Integer nextId) {
+	final class ReplayResult(shared Integer eventCount, shared Integer maxId) {
+		shared ReplayResult combine(ReplayResult other) => ReplayResult(eventCount + other.eventCount, Integer.max([maxId, other.maxId]));
 	}
 	
-	void processAllDocuments(String type, void process(JsonObject document), void completion(ReplayResult|Throwable result), Integer totalCount = 0, variable Integer maxId = 0) {
+	void processAllDocuments(String type, void process(JsonObject document), void completion(ReplayResult|Throwable result)) {
 		
-		function processPage({<Integer->JsonObject>*} page) {
+		function processPage(variable Integer maxId, {<Integer->JsonObject>*} page) {
 			variable value eventCount = 0;
 			for (id -> document in page) {
 				if (id <= maxId) {
@@ -72,25 +77,27 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 				eventCount++;
 				process(document);
 			}
-			return eventCount;
+			return ReplayResult(eventCount, maxId);
 		}
 		
-		eventIndexClient.listDocuments(type, totalCount, replayPageSize, (result) {
+		void handleDocuments(ReplayResult previous)(String? scrollId, {<Integer->JsonObject>*}|Throwable result) {
 			if (is Throwable result) {
 				completion(result);
 			} else {
 				try {
-					value processCount = processPage(result);
-					if (processCount >= replayPageSize) {
-						processAllDocuments(type, process, completion, totalCount + processCount, maxId);
+					value current = processPage(previous.maxId, result);
+					if (exists scrollId, current.eventCount >= replayPageSize) {
+						eventIndexClient.nextDocuments(scrollId, replayPageTimeout, handleDocuments(previous.combine(current)));
 					} else {
-						completion(ReplayResult(totalCount + processCount, maxId + 1));
+						completion(previous.combine(current));
 					}
 				} catch (Throwable e) {
 					completion(e);
 				}
 			}
-		});
+		}
+		
+		eventIndexClient.firstDocuments(type, replayPageSize, replayPageTimeout, handleDocuments(ReplayResult(0, 0)));
 	}
 	
 	shared void replayAllEvents<OutboundMessage>(String type, Anything parseOutboundMessage(JsonObject json), void process(OutboundMessage message), void completion(Integer|Throwable result)) {
@@ -104,13 +111,14 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 		}
 		
 		void initializeCounter(Counter counter, ReplayResult replayResult) {
-			counter.compareAndSet(0, replayResult.nextId, (result) {
+			value nextId = replayResult.maxId + 1;
+			counter.compareAndSet(0, nextId, (result) {
 				if (is Throwable result) {
 					completion(result);
 				} else if (result) {
 					completion(replayResult.eventCount);
 				} else {
-					completion(Exception("Could not set counter ``type`` to ``replayResult.nextId``"));
+					completion(Exception("Could not set counter ``type`` to ``nextId``"));
 				}
 			});
 		}

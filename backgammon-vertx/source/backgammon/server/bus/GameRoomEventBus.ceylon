@@ -35,7 +35,7 @@ final shared class GameRoomEventBus(Vertx vertx, ServerConfiguration configurati
 	shared variable Boolean disableOutput = false;
 	
 	value eventBus = JsonEventBus(vertx);
-	value eventStore = JsonEventStore(vertx, configuration.elasticIndexUrl, configuration.replayPageSize);
+	value eventStore = JsonEventStore(vertx, configuration.elasticIndexUrl, configuration.replayPageSize, configuration.replayPageTimeout);
 
 	void rethrowExceptionHandler(Anything result) {
 		if (is Throwable result) {

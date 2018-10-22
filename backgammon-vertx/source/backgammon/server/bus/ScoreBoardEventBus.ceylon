@@ -25,7 +25,7 @@ final shared class ScoreBoardEventBus(Vertx vertx, ServerConfiguration configura
 	shared variable Boolean disableOutput = false;
 	
 	value eventBus = JsonEventBus(vertx);
-	value eventStore = JsonEventStore(vertx, configuration.elasticIndexUrl, configuration.replayPageSize);
+	value eventStore = JsonEventStore(vertx, configuration.elasticIndexUrl, configuration.replayPageSize, configuration.replayPageTimeout);
 	
 	shared void sendInboundMessage<OutputMessage>(InboundScoreBoardMessage message, void responseHandler(Throwable|OutputMessage response)) given OutputMessage satisfies OutboundScoreBoardMessage {
 		if (disableOutput) {
