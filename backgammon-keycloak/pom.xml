@@ -58,7 +58,7 @@
 							<Dependencies>org.keycloak.keycloak-services</Dependencies>
 						</manifestEntries>
 					</archive>
-					<outputDirectory>C:/Dev/wildfly-11.0.0.Final/standalone/deployments</outputDirectory>
+					<outputDirectory>target/deployments</outputDirectory>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -71,7 +71,7 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>C:/Dev/wildfly-11.0.0.Final/themes/mygammon</outputDirectory>
+							<outputDirectory>target/themes/mygammon</outputDirectory>
 							<resources>
 								<resource>
 									<directory>src/main/resources/theme/mygammon</directory>
