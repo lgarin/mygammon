@@ -1,0 +1,161 @@
+{
+  "realm" : "MyGammon",
+  "users" : [ {
+    "id" : "14d9b69d-d194-4ba4-9d0c-f59c1bbc4124",
+    "createdTimestamp" : 1494964640699,
+    "username" : "lgarin@gmx.ch",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : true,
+    "firstName" : "Lucien",
+    "lastName" : "Garin",
+    "email" : "lgarin@gmx.ch",
+    "attributes" : {
+      "terms_and_conditions" : [ "1494965255" ],
+      "birthdate" : [ "1999-01-12" ]
+    },
+    "credentials" : [ {
+      "type" : "password",
+      "hashedSaltedValue" : "F3/F8ttl474JDLfVrjRnJD77F/AqvFfxLrngQ6LZYafPuIoKpCl4xxkQ7x1QLD0GKOBblvQBBMy6zstS0crW+A==",
+      "salt" : "TldXhtCLu1+24alKxQPGwA==",
+      "hashIterations" : 27500,
+      "counter" : 0,
+      "algorithm" : "pbkdf2-sha256",
+      "digits" : 0,
+      "period" : 0,
+      "createdDate" : 1514320092348,
+      "config" : { }
+    } ],
+    "disableableCredentialTypes" : [ "password" ],
+    "requiredActions" : [ ],
+    "federatedIdentities" : [ {
+      "identityProvider" : "google",
+      "userId" : "110373632426734936359",
+      "userName" : "lgarin@gmx.ch"
+    } ],
+    "realmRoles" : [ "offline_access", "uma_authorization" ],
+    "clientRoles" : {
+      "account" : [ "manage-account", "view-profile" ]
+    },
+    "clientConsents" : [ {
+      "clientId" : "game",
+      "grantedProtocolMappers" : {
+        "openid-connect" : [ "username", "full name", "email", "family name", "given name" ]
+      },
+      "grantedRealmRoles" : [ "uma_authorization" ],
+      "grantedClientRoles" : {
+        "account" : [ "manage-account", "view-profile" ]
+      },
+      "createdDate" : 1499684861462,
+      "lastUpdatedDate" : 1499684861513
+    } ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "5cf6c6e3-8db0-4073-8e5c-7f7ea3bd9040",
+    "createdTimestamp" : 1494242052459,
+    "username" : "service-account-game",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : false,
+    "email" : "service-account-game@placeholder.org",
+    "serviceAccountClientId" : "game",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "offline_access", "uma_authorization" ],
+    "clientRoles" : {
+      "account" : [ "manage-account", "view-profile" ]
+    },
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "b9387b31-1c81-4ccf-9f0e-2441c9626020",
+    "createdTimestamp" : 1515278229001,
+    "username" : "test3",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : false,
+    "email" : "test3@test.com",
+    "attributes" : {
+      "terms_and_conditions" : [ "1515278239" ]
+    },
+    "credentials" : [ {
+      "type" : "password",
+      "hashedSaltedValue" : "TgVMoPLNOM9Pz3a3GnwS+YZa37OQRGekUe/HUeEay1n9bTdaPdUwH/3TCI5TQ6nI/wz9hjsOv+qYWihQ/rd0LQ==",
+      "salt" : "sbu4Ga/rzE5xw1QJCHzCgg==",
+      "hashIterations" : 20000,
+      "counter" : 0,
+      "algorithm" : "pbkdf2",
+      "digits" : 0,
+      "period" : 0,
+      "createdDate" : 1515278229302,
+      "config" : { }
+    } ],
+    "disableableCredentialTypes" : [ "password" ],
+    "requiredActions" : [ "TERMS_AND_CONDITIONS" ],
+    "realmRoles" : [ "offline_access", "uma_authorization" ],
+    "clientRoles" : {
+      "account" : [ "manage-account", "view-profile" ]
+    },
+    "clientConsents" : [ {
+      "clientId" : "game",
+      "grantedProtocolMappers" : {
+        "openid-connect" : [ "username", "full name", "email", "family name", "given name" ]
+      },
+      "grantedRealmRoles" : [ "uma_authorization" ],
+      "grantedClientRoles" : {
+        "account" : [ "manage-account", "view-profile" ]
+      },
+      "createdDate" : 1515278341917,
+      "lastUpdatedDate" : 1515278341932
+    } ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "640fd8ea-9b3f-4668-9748-c65b9a22034e",
+    "createdTimestamp" : 1514894486281,
+    "username" : "test@test.com",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : true,
+    "firstName" : "Test",
+    "lastName" : "My",
+    "email" : "test@test.com",
+    "attributes" : {
+      "birthdate" : [ "1999-01-07" ]
+    },
+    "credentials" : [ {
+      "type" : "password",
+      "hashedSaltedValue" : "LonUArZy8ooMuJlKs99wMvIreg9L90yO3AR0Lb/s1Xy30XGrS5evS4Ydw+jGMiqzK8JZCYd7RRnF8sQ8YbLZHg==",
+      "salt" : "qAY+P3DIHmRKS7pIOGDBvQ==",
+      "hashIterations" : 27500,
+      "counter" : 0,
+      "algorithm" : "pbkdf2-sha256",
+      "digits" : 0,
+      "period" : 0,
+      "createdDate" : 1514894531010,
+      "config" : { }
+    } ],
+    "disableableCredentialTypes" : [ "password" ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "offline_access", "uma_authorization" ],
+    "clientRoles" : {
+      "account" : [ "manage-account", "view-profile" ]
+    },
+    "clientConsents" : [ {
+      "clientId" : "game",
+      "grantedProtocolMappers" : {
+        "openid-connect" : [ "username", "full name", "email", "family name", "given name" ]
+      },
+      "grantedRealmRoles" : [ "uma_authorization" ],
+      "grantedClientRoles" : {
+        "account" : [ "manage-account", "view-profile" ]
+      },
+      "createdDate" : 1514894616231,
+      "lastUpdatedDate" : 1514894616246
+    } ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  } ]
+}

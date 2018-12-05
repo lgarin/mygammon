@@ -1,16 +1,12 @@
 FROM jboss/keycloak:3.4.3.Final
-COPY MyGammon.json /tmp
 COPY target/deployments/backgammon-keycloak.jar /opt/jboss/keycloak/standalone/deployments/
 COPY target/themes/mygammon /opt/jboss/keycloak/themes
-ENV ADMIN_USER admin
-ENV ADMIN_PWD admin
-RUN ["keycloak/bin/add-user-keycloak.sh", "-u", "$ADMIN_USER", "-p", "$ADMIN_PWD"]
+RUN ["keycloak/bin/add-user-keycloak.sh", "-u", "admin", "-p", "admin"]
 ENV POSTGRES_PORT_5432_TCP_ADDR postgres
 ENV POSTGRES_PORT_5432_TCP_PORT 5432
 ENV POSTGRES_DATABASE keycloak
 ENV POSTGRES_USER keycloak
 ENV POSTGRES_PASSWORD password
 RUN ["/bin/sh", "/opt/jboss/keycloak/bin/change-database.sh", "postgres"]
-# RUN -e KEYCLOAK_IMPORT=/tmp/MyGammon.json jboss/keycloak
 EXPOSE 8080
 ENTRYPOINT [ "/opt/jboss/keycloak/bin/standalone.sh", "-b", "0.0.0.0"]
