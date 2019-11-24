@@ -1,6 +1,6 @@
 {
   "realm": "MyGammon",
-  "auth-server-url": "http://localhost:8080/auth",
+  "auth-server-url": "http://keycloak:8080/auth",
   "ssl-required": "none",
   "resource": "game",
   "use-resource-role-mappings": true,

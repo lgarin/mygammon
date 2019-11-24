@@ -161,7 +161,7 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 	function parseScrollId(JsonObject json) => json.getStringOrNull("_scroll_id");
 	
 	shared void firstDocuments(String index, Integer pageSize, Duration scrollTimeout, void handleResponse(String? scrollId, {<Integer->JsonObject>*}|Throwable result)) {
-		value url = "``baseUrl``/backgammon-``index``/_search?scroll=``scrollTimeout.milliseconds``ms&size=``pageSize``&sort=_id&filter_path=_scroll_id,hits.hits._id,hits.hits._source";
+		value url = "``baseUrl``/backgammon-``index``/_search?scroll=``scrollTimeout.milliseconds``ms&size=``pageSize``&sort=_doc&filter_path=_scroll_id,hits.hits._id,hits.hits._source";
 		get(url, (result) {
 			if (is Throwable result) {
 				handleResponse(null, result);

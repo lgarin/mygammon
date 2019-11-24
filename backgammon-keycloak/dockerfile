@@ -1,6 +1,6 @@
 FROM jboss/keycloak:3.4.3.Final
 COPY target/deployments/backgammon-keycloak.jar /opt/jboss/keycloak/standalone/deployments/
-COPY target/themes/mygammon /opt/jboss/keycloak/themes
+COPY target/themes/mygammon /opt/jboss/keycloak/themes/mygammon
 RUN ["keycloak/bin/add-user-keycloak.sh", "-u", "admin", "-p", "admin"]
 ENV POSTGRES_PORT_5432_TCP_ADDR postgres
 ENV POSTGRES_PORT_5432_TCP_PORT 5432

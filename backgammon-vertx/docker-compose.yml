@@ -1,4 +1,5 @@
 version: '3.7'
+
 services:
   keycloak:
     image: "mygammon/keycloak:v1"
@@ -19,6 +20,28 @@ services:
       - PGDATA=/var/lib/postgresql/data/dbdata
     volumes:
       - "postgres:/var/lib/postgresql/data/dbdata"
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.2
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch:/usr/share/elasticsearch/data
+  vertx:
+    image: "mygammon/vertx:v1"
+    ports:
+      - "8081:8081"
+    links:
+      - "elasticsearch:elasticsearch"
+      - "keycloak:keycloak"
+    depends_on:
+      - elasticsearch
+      - keycloak
+    volumes:
+      - vertx:/app
 volumes:
   keycloak:
   postgres:
+  elasticsearch:
+  vertx:

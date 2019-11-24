@@ -1,0 +1,9 @@
+FROM ceylon/ceylon:1.3.3
+
+COPY dist/client /app/client
+COPY dist/modules /app/modules
+COPY static /app/static
+COPY resource /app/resource
+COPY overrides.xml /app
+EXPOSE 8081
+CMD ceylon run --overrides=overrides.xml --flat-classpath backgammon.server 
