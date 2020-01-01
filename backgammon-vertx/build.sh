@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-DIST_DIR=//gd04b/dev/backgammon
+DIST_DIR=//rvz03/dev/backgammon/dist
 VERSION_PATTERN="[0-9]+\.[0-9]+\.[0-9]+"
 
 CURRENT_VERSION=$(sed -rn "s/.*backgammon.client.($VERSION_PATTERN).*/\1/gp" static/board.html)
@@ -9,15 +9,16 @@ if [[ -z "$V_MAJOR" || -z "$V_MINOR" || -z "$V_PATCH" ]] ; then
   echo "Unable to detect current version"
   exit 1
 fi 
-VERSION_DIR="$DIST_DIR/dist-$V_MAJOR.$V_MINOR.$V_PATCH"
 NEW_VERSION="$V_MAJOR.$V_MINOR.$((V_PATCH + 1))"
 
 echo "Building version $CURRENT_VERSION"
-mkdir $VERSION_DIR
-./ceylonb compile --offline --out=$VERSION_DIR/modules --overrides=overrides.xml backgammon.shared backgammon.server
-./ceylonb compile-js --offline --compact backgammon.shared backgammon.client
-./ceylonb copy --offline --out=$VERSION_DIR/client --js --with-dependencies --include-language backgammon.client
-cp -r static $VERSION_DIR
+mkdir -p $DIST_DIR/modules || rm -r $DIST_DIR/modules/*
+./ceylonb compile --offline --out=$DIST_DIR/modules --overrides=resource/overrides.xml backgammon.shared backgammon.server
+mkdir -p $DIST_DIR/client || rm -r $DIST_DIR/client/*
+./ceylonb compile-js --offline --overrides=resource/overrides.xml --compact backgammon.shared backgammon.client
+./ceylonb copy --offline --overrides=resource/overrides.xml --out=$DIST_DIR/client --js --with-dependencies --include-language backgammon.client
+mkdir -p $DIST_DIR/static || rm -r $DIST_DIR/static/*
+cp -r static/* $DIST_DIR/static
 git tag -f -a -m "Released version $CURRENT_VERSION" $CURRENT_VERSION
 
 echo "Preparing next version $NEW_VERSION"
