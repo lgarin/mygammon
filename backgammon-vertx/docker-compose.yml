@@ -8,7 +8,7 @@ services:
     volumes:
       - "keycloak:/opt/jboss/keycloak/standalone"
     ports:
-      - "18788:8080"
+      - "8080:8080"
     links:
       - "postgres:postgres"
     depends_on:
@@ -28,6 +28,8 @@ services:
       - discovery.type=single-node
     volumes:
       - elasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
 volumes:
   keycloak:
   postgres:
