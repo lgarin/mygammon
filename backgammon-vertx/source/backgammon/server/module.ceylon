@@ -1,5 +1,5 @@
 native("jvm")
-module backgammon.server "2.3.2" {
+module backgammon.server "2.3.3" {
 	shared import java.base "8";
 	shared import maven:"org.apache.logging.log4j:log4j-api" "2.8.2";
 	import maven:"io.vertx:vertx-core" "3.5.0";
@@ -13,5 +13,5 @@ module backgammon.server "2.3.2" {
 	import io.vertx.ceylon.web "3.5.0.Beta1";
 	import io.vertx.ceylon.auth.common "3.5.0.Beta1";
 	import io.vertx.ceylon.auth.oauth2 "3.5.0.Beta1";
-	shared import backgammon.shared "2.3.2";
+	shared import backgammon.shared "2.3.3";
 }
