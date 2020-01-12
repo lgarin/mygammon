@@ -4,7 +4,7 @@ services:
   keycloak:
     build:
       dockerfile: dockerfile
-      context: ../keycloak/backgammon-vertx
+      context: ../backgammon-keycloak
     volumes:
       - "keycloak:/opt/jboss/keycloak/standalone"
     ports:
@@ -23,7 +23,7 @@ services:
     volumes:
       - "postgres:/var/lib/postgresql/data/dbdata"
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.2
+    image: elasticsearch:7.5.1
     environment:
       - discovery.type=single-node
     volumes:

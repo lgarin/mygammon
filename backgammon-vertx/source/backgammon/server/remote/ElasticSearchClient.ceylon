@@ -103,7 +103,8 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 	}
 	
 	shared void insertDocument(String index, Integer id, JsonObject document, void handleResponse(Throwable? result)) {
-		put("``baseUrl``/backgammon-``index``/doc/``idPadding+id``/_create", document, (result) {
+		document.put("id", id);
+		put("``baseUrl``/backgammon-``index``/_doc/``idPadding+id``", document, (result) {
 			if (is Throwable result) {
 				handleResponse(result);
 			} else {
@@ -155,13 +156,15 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 				}
 			}
 		};
-		request.end();
+		request.headers().add("Content-Type", "application/json");
+		value body = JsonObject {"mappings" -> JsonObject {"properties" -> JsonObject {"id" -> JsonObject {"type" -> "long"}}}};
+		request.end(body.string);
 	}
 	
 	function parseScrollId(JsonObject json) => json.getStringOrNull("_scroll_id");
 	
 	shared void firstDocuments(String index, Integer pageSize, Duration scrollTimeout, void handleResponse(String? scrollId, {<Integer->JsonObject>*}|Throwable result)) {
-		value url = "``baseUrl``/backgammon-``index``/_search?scroll=``scrollTimeout.milliseconds``ms&size=``pageSize``&sort=_doc&filter_path=_scroll_id,hits.hits._id,hits.hits._source";
+		value url = "``baseUrl``/backgammon-``index``/_search?scroll=``scrollTimeout.milliseconds``ms&size=``pageSize``&sort=id&filter_path=_scroll_id,hits.hits._id,hits.hits._source";
 		get(url, (result) {
 			if (is Throwable result) {
 				handleResponse(null, result);
