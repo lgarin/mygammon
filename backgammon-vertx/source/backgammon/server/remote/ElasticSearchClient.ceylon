@@ -39,19 +39,11 @@ shared class OrSearchCriteria(ElasticSearchCriteria left, ElasticSearchCriteria 
 	toQueryString() => "(``left.toQueryString()``%20OR%20``right.toQueryString()``)";
 }
 
-final shared class ElasticSortOrder(shared String orderField, shared Boolean ascending = true) {
-	value order => ascending then  "asc" else "desc";
-	shared String toOrderString() => "``orderField``:``order``";
-}
-
 shared object elasticSearchCriteriaBuilder {
 	
 	shared ElasticSearchCriteria term(String name, String term) => FieldSearchCriteria(name, term);
 	shared ElasticSearchCriteria and(ElasticSearchCriteria left, ElasticSearchCriteria right) => AndSearchCriteria(left, right);
 	shared ElasticSearchCriteria or(ElasticSearchCriteria left, ElasticSearchCriteria right) => OrSearchCriteria(left, right);
-	
-	shared ElasticSortOrder asc(String name) => ElasticSortOrder(name, true);
-	shared ElasticSortOrder desc(String name) => ElasticSortOrder(name, false);
 }
 
 final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
@@ -115,8 +107,8 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 	
 	function parseHits(JsonObject response) {
 		function createIdDocumentEntry(Value val) {
-			if (is JsonObject val, exists stringId = val.getStringOrNull("_id"), is Integer id = Integer.parse(stringId), exists doc = val.getObjectOrNull("_source")) {
-				return [id - idPadding -> doc];
+			if (is JsonObject val, exists doc = val.getObjectOrNull("_source"), exists id = doc.getIntegerOrNull("id")) {
+				return [id -> doc];
 			} else {
 				return [];
 			}
@@ -164,7 +156,7 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 	function parseScrollId(JsonObject json) => json.getStringOrNull("_scroll_id");
 	
 	shared void firstDocuments(String index, Integer pageSize, Duration scrollTimeout, void handleResponse(String? scrollId, {<Integer->JsonObject>*}|Throwable result)) {
-		value url = "``baseUrl``/backgammon-``index``/_search?scroll=``scrollTimeout.milliseconds``ms&size=``pageSize``&sort=id&filter_path=_scroll_id,hits.hits._id,hits.hits._source";
+		value url = "``baseUrl``/backgammon-``index``/_search?scroll=``scrollTimeout.milliseconds``ms&size=``pageSize``&sort=id&filter_path=_scroll_id,hits.hits._source";
 		get(url, (result) {
 			if (is Throwable result) {
 				handleResponse(null, result);
@@ -176,7 +168,7 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 	}
 	
 	shared void nextDocuments(String scrollId, Duration scrollTimeout, void handleResponse(String? scrollId, {<Integer->JsonObject>*}|Throwable result)) {
-		value url = "``baseUrl``/_search/scroll?scroll=``scrollTimeout.milliseconds``ms&scroll_id=``scrollId``&filter_path=_scroll_id,hits.hits._id,hits.hits._source";
+		value url = "``baseUrl``/_search/scroll?scroll=``scrollTimeout.milliseconds``ms&scroll_id=``scrollId``&filter_path=_scroll_id,hits.hits._source";
 		get(url, (result) {
 			if (is Throwable result) {
 				handleResponse(null, result);
@@ -187,9 +179,9 @@ final shared class ElasticSearchClient(Vertx vertx, String baseUrl) {
 		});
 	}
 	
-	shared void queryDocuments(String index, ElasticSearchCriteria criteria, ElasticSortOrder order, Integer offset, Integer maxCount, void handleResponse({<Integer->JsonObject>*}|Throwable result)) {
+	shared void queryDocuments(String index, ElasticSearchCriteria criteria, void handleResponse({<Integer->JsonObject>*}|Throwable result)) {
 		
-		value url = "``baseUrl``/backgammon-``index``/doc/_search?q=``criteria.toQueryString()``&sort=``order.toOrderString()``&track_scores=false&from=``offset``&size=``maxCount``&filter_path=hits.hits._id,hits.hits._source";
+		value url = "``baseUrl``/backgammon-``index``/doc/_search?q=``criteria.toQueryString()``&track_scores=false&filter_path=hits.hits._source";
 		get(url, (result) {
 			if (is Throwable result) {
 				handleResponse(result);

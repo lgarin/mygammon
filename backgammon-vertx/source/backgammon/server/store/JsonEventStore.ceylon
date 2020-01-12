@@ -11,7 +11,6 @@ import backgammon.server.remote {
 
 	ElasticSearchClient,
 	ElasticSearchCriteria,
-	ElasticSortOrder,
 	elasticSearchCriteriaBuilder
 }
 import io.vertx.ceylon.core.shareddata {
@@ -43,16 +42,7 @@ final shared class EventSearchCriteria {
 		criteria = elasticSearchCriteriaBuilder.and(left.criteria, right.criteria);
 	}
 
-	shared EventSearchQuery descendingOrder(String orderField) => EventSearchQuery(this, orderField, false);
-	
-	shared EventSearchQuery ascendingOrder(String orderField) => EventSearchQuery(this, orderField, false);
-	
 	shared ElasticSearchCriteria toElasticSearchCriteria() => criteria;
-}
-
-final shared class EventSearchQuery(EventSearchCriteria criteria, String orderField, Boolean ascending = true) {
-	shared ElasticSortOrder toElasticSortOrder() => ascending then elasticSearchCriteriaBuilder.asc(orderField) else elasticSearchCriteriaBuilder.desc(orderField);
-	shared ElasticSearchCriteria toElasticSearchCriteria() => criteria.toElasticSearchCriteria();
 }
 
 shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer replayPageSize, Duration replayPageTimeout) {
@@ -183,16 +173,16 @@ shared final class JsonEventStore(Vertx vertx, String elasticIndexUrl, Integer r
 		});
 	}
 
-	shared void queryEvents(String type, EventSearchQuery query, void handleResponse({<JsonObject>*}|Throwable result)) {
+	shared void queryEvents(String type, EventSearchCriteria criteria, void handleResponse({<JsonObject>*}|Throwable result)) {
 		
 		void mapResponse({<Integer->JsonObject>*}|Throwable result) {
 			if (is Throwable result) {
-				log.error("Failed to query ``type`` with ``query.toElasticSearchCriteria().toQueryString()``", result);
+				log.error("Failed to query ``type`` with ``criteria.toElasticSearchCriteria().toQueryString()``", result);
 				handleResponse(result);
 			} else {
 				handleResponse(result.map(Entry.item));
 			}
 		}
-		eventIndexClient.queryDocuments(type, query.toElasticSearchCriteria(), query.toElasticSortOrder(), 0, replayPageSize, mapResponse);
+		eventIndexClient.queryDocuments(type, criteria.toElasticSearchCriteria(), mapResponse);
 	}
 }

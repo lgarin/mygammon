@@ -82,15 +82,15 @@ final shared class ScoreBoardEventBus(Vertx vertx, ServerConfiguration configura
 			if (is Throwable result) {
 				completion(result);
 			} else {
-				completion(result.map(applicationMessages.parse<GameStatisticMessage>).narrow<GameStatisticMessage>());
+				completion(result.map(applicationMessages.parse<GameStatisticMessage>).narrow<GameStatisticMessage>().sort(byIncreasing(GameStatisticMessage.timestamp)));
 			}
 		}
 		value classTerm = EventSearchCriteria.term("class", `GameStatisticMessage`.declaration.name);
 		value blackPlayerTerm = EventSearchCriteria.term("blackPlayer.id", playerId.string);
 		value whitePlayerTerm = EventSearchCriteria.term("whitePlayer.id", playerId.string);
 		value playerCondition = EventSearchCriteria.or(blackPlayerTerm, whitePlayerTerm);
-		value query = EventSearchCriteria.and(classTerm, playerCondition).ascendingOrder("timestamp");
-		eventStore.queryEvents("score-board", query, mapResult);
+		value criteria = EventSearchCriteria.and(classTerm, playerCondition);
+		eventStore.queryEvents("score-board", criteria, mapResult);
 	}
 	
 	shared void replayAllEvents(void process(InboundScoreBoardMessage message), void completion(Integer|Throwable result)) {

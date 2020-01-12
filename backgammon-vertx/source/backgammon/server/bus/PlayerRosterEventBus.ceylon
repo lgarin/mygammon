@@ -86,11 +86,10 @@ final shared class PlayerRosterEventBus(Vertx vertx, ServerConfiguration configu
 			if (is Throwable result) {
 				completion(result);
 			} else {
-				completion(result.map(applicationMessages.parse<InboundPlayerRosterMessage>).narrow<InboundPlayerRosterMessage>());
+				completion(result.map(applicationMessages.parse<InboundPlayerRosterMessage>).narrow<InboundPlayerRosterMessage>().sort(byIncreasing(InboundPlayerRosterMessage.timestamp)));
 			}
 		}
-		value playerIdTerm = EventSearchCriteria.term("playerInfo.id", playerId.string);
-		value query = playerIdTerm.ascendingOrder("timestamp");
-		eventStore.queryEvents("player-roster", query, mapResult);
+		value criteria = EventSearchCriteria.term("playerInfo.id", playerId.string);
+		eventStore.queryEvents("player-roster", criteria, mapResult);
 	}
 }
