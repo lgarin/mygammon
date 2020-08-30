@@ -12,7 +12,7 @@ overrides=resource\\overrides.xml
 fullyexportmavendependencies=false
 
 [repository "MAVEN"]
-url=aether:C:\\Dev\\maven\\settings.xml
+url=aether:resource\\settings.xml
 
 [repository "CACHE"]
 url=C:\\Dev\\ceylon\\cache
