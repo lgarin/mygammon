@@ -10,12 +10,13 @@ encoding=Cp1252
 autoexportmavendependencies=false
 overrides=resource\\overrides.xml
 fullyexportmavendependencies=false
+no-default-repositories=true
 
 [repository "MAVEN"]
 url=aether:resource\\settings.xml
 
 [repository "CACHE"]
-url=C:\\Dev\\ceylon\\cache
+url=C:\\Dev\\backgammon\\backgammon-vertx\\cache
 
 [repository "REMOTE"]
 url=https://modules.ceylon-lang.org/repo/1
